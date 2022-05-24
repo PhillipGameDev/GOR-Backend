@@ -1,0 +1,15 @@
+﻿using System.Threading.Tasks;
+using GameOfRevenge.Common.Models;
+using GameOfRevenge.Common.Models.Kingdom;
+using GameOfRevenge.Common.Models.Kingdom.AttackAlertReport;
+using GameOfRevenge.Common.Net;
+using static GameOfRevenge.Common.Models.Kingdom.AttackAlertReport.UnderAttackReport;
+
+namespace GameOfRevenge.Common.Interface.UserData
+{
+    public interface IKingdomPvPManager
+    {
+        Task<Response<AttackStatusData>> AttackOtherPlayer(int attackerId, int defenderId, MarchingArmy army, MapLocation location);
+        Task<Response<BattleReport>> BattleSimulation(int attackerId, PlayerCompleteData attackerData, int defenderId, PlayerCompleteData defenderData);
+    }
+}

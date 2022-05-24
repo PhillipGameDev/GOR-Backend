@@ -1,0 +1,212 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="15.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <Import Project="$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props" Condition="Exists('$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props')" />
+  <PropertyGroup>
+    <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
+    <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
+    <ProjectGuid>{48D376D8-31DC-4C0F-B4D4-7DD1A4A4978B}</ProjectGuid>
+    <OutputType>Library</OutputType>
+    <AppDesignerFolder>Properties</AppDesignerFolder>
+    <RootNamespace>GameOfRevenge</RootNamespace>
+    <AssemblyName>GameOfRevenge</AssemblyName>
+    <TargetFrameworkVersion>v4.7.2</TargetFrameworkVersion>
+    <FileAlignment>512</FileAlignment>
+    <Deterministic>true</Deterministic>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
+    <DebugSymbols>true</DebugSymbols>
+    <DebugType>full</DebugType>
+    <Optimize>false</Optimize>
+    <OutputPath>..\Photon\deploy\GameOfRevenge\</OutputPath>
+    <DefineConstants>DEBUG;TRACE</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
+    <DebugType>pdbonly</DebugType>
+    <Optimize>true</Optimize>
+    <OutputPath>C:\GameOfRevengePhoton\Photon-OnPremise-Server-SDK_v4-0-29-11263\deploy\GameOfRevenge\</OutputPath>
+    <DefineConstants>TRACE</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+  </PropertyGroup>
+  <ItemGroup>
+    <Reference Include="ExitGames.Logging.Log4Net">
+      <HintPath>..\Lib\ExitGames.Logging.Log4Net.dll</HintPath>
+    </Reference>
+    <Reference Include="ExitGamesLibs">
+      <HintPath>..\Lib\ExitGamesLibs.dll</HintPath>
+    </Reference>
+    <Reference Include="log4net">
+      <HintPath>..\Lib\log4net.dll</HintPath>
+    </Reference>
+    <Reference Include="Newtonsoft.Json, Version=13.0.0.0, Culture=neutral, PublicKeyToken=30ad4fe6b2a6aeed, processorArchitecture=MSIL">
+      <HintPath>..\packages\Newtonsoft.Json.13.0.1\lib\net45\Newtonsoft.Json.dll</HintPath>
+    </Reference>
+    <Reference Include="Photon.SocketServer">
+      <HintPath>..\Lib\Photon.SocketServer.dll</HintPath>
+    </Reference>
+    <Reference Include="PhotonHostRuntimeInterfaces">
+      <HintPath>..\Lib\PhotonHostRuntimeInterfaces.dll</HintPath>
+      <EmbedInteropTypes>True</EmbedInteropTypes>
+    </Reference>
+    <Reference Include="System" />
+    <Reference Include="System.Configuration" />
+    <Reference Include="System.Configuration.ConfigurationManager, Version=5.0.0.0, Culture=neutral, PublicKeyToken=cc7b13ffcd2ddd51, processorArchitecture=MSIL">
+      <HintPath>..\packages\System.Configuration.ConfigurationManager.5.0.0\lib\net461\System.Configuration.ConfigurationManager.dll</HintPath>
+    </Reference>
+    <Reference Include="System.Core" />
+    <Reference Include="System.Data.OracleClient" />
+    <Reference Include="System.Drawing" />
+    <Reference Include="System.Net" />
+    <Reference Include="System.Security" />
+    <Reference Include="System.Security.AccessControl, Version=5.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL">
+      <HintPath>..\packages\System.Security.AccessControl.5.0.0\lib\net461\System.Security.AccessControl.dll</HintPath>
+    </Reference>
+    <Reference Include="System.Security.Permissions, Version=5.0.0.0, Culture=neutral, PublicKeyToken=cc7b13ffcd2ddd51, processorArchitecture=MSIL">
+      <HintPath>..\packages\System.Security.Permissions.5.0.0\lib\net461\System.Security.Permissions.dll</HintPath>
+    </Reference>
+    <Reference Include="System.Security.Principal.Windows, Version=5.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL">
+      <HintPath>..\packages\System.Security.Principal.Windows.5.0.0\lib\net461\System.Security.Principal.Windows.dll</HintPath>
+    </Reference>
+    <Reference Include="System.ServiceProcess" />
+    <Reference Include="System.Transactions" />
+    <Reference Include="System.Web.Extensions" />
+    <Reference Include="System.Xml.Linq" />
+    <Reference Include="System.Data.DataSetExtensions" />
+    <Reference Include="Microsoft.CSharp" />
+    <Reference Include="System.Data" />
+    <Reference Include="System.Net.Http" />
+    <Reference Include="System.Xml" />
+    <Reference Include="WindowsBase" />
+  </ItemGroup>
+  <ItemGroup>
+    <Compile Include="Buildings\Handlers\Academy.cs" />
+    <Compile Include="Buildings\Handlers\BlackSmith.cs" />
+    <Compile Include="Buildings\Handlers\BarracksBuilding.cs" />
+    <Compile Include="Buildings\Handlers\CityCounsilBuilding.cs" />
+    <Compile Include="Buildings\Handlers\Embassy.cs" />
+    <Compile Include="Buildings\Handlers\Farm.cs" />
+    <Compile Include="Buildings\Handlers\Gate.cs" />
+    <Compile Include="Buildings\Handlers\InfantryCamp.cs" />
+    <Compile Include="Buildings\Handlers\Infirmary.cs" />
+    <Compile Include="Buildings\Handlers\ResourceGenerator.cs" />
+    <Compile Include="Buildings\Handlers\Market.cs" />
+    <Compile Include="Buildings\Handlers\Mine.cs" />
+    <Compile Include="Buildings\Handlers\PlayerBuildingManager.cs" />
+    <Compile Include="Buildings\Handlers\SawMill.cs" />
+    <Compile Include="Buildings\Handlers\ShootingRange.cs" />
+    <Compile Include="Buildings\Handlers\Stable.cs" />
+    <Compile Include="Buildings\Handlers\TrainingHeroes.cs" />
+    <Compile Include="Buildings\Handlers\WareHouse.cs" />
+    <Compile Include="Buildings\Handlers\WatchTower.cs" />
+    <Compile Include="Buildings\Handlers\Workshop.cs" />
+    <Compile Include="Buildings\Interface\IPlayerBuildingManager.cs" />
+    <Compile Include="GlobalConst.cs" />
+    <Compile Include="Helpers\DictDecode.cs" />
+    <Compile Include="Helpers\DictEncode.cs" />
+    <Compile Include="Buildings\Handlers\GameBuildingManager.cs" />
+    <Compile Include="GameHandlers\GameLobbyHandler.cs" />
+    <Compile Include="GameHandlers\InterestArea.cs" />
+    <Compile Include="GameHandlers\MmoActor.cs" />
+    <Compile Include="GameApplication\GameService.cs" />
+    <Compile Include="GameHandlers\PlayerAttackHandler.cs" />
+    <Compile Include="GameHandlers\PlayerSocketDataManager.cs" />
+    <Compile Include="GameHandlers\UserProfile.cs" />
+    <Compile Include="GameHandlers\WorldHandler.cs" />
+    <Compile Include="Helpers\DictionaryEncode.cs" />
+    <Compile Include="Helpers\GlobalHelper.cs" />
+    <Compile Include="Helpers\MessageCounters.cs" />
+    <Compile Include="GameApplication\GorMmoPeer.cs" />
+    <Compile Include="GameApplication\PhotonApplication.cs" />
+    <Compile Include="GameHandlers\CountryGrid.cs" />
+    <Compile Include="GameHandlers\PlayersManager.cs" />
+    <Compile Include="GameHandlers\Region.cs" />
+    <Compile Include="Buildings\Interface\IGameBuildingManager.cs" />
+    <Compile Include="Interface\IGorMmoPeer.cs" />
+    <Compile Include="Interface\IInterestArea.cs" />
+    <Compile Include="Interface\IPlayerAttackHandler.cs" />
+    <Compile Include="Interface\IPlayerSocketDataManager.cs" />
+    <Compile Include="Interface\IPlayersManager.cs" />
+    <Compile Include="Interface\IGameServices.cs" />
+    <Compile Include="Interface\IWorld.cs" />
+    <Compile Include="Interface\IWorldHandler.cs" />
+    <Compile Include="Model\BoundingBox.cs" />
+    <Compile Include="Model\Common\AttackResponse.cs" />
+    <Compile Include="Model\Common\AttackResultResponse.cs" />
+    <Compile Include="Model\Common\ChatMessageRespose.cs" />
+    <Compile Include="Model\Common\CommonBuildingResponse.cs" />
+    <Compile Include="Model\Common\CommonResponse.cs" />
+    <Compile Include="Model\Common\GateResponse.cs" />
+    <Compile Include="Model\Common\GemsCostResponse.cs" />
+    <Compile Include="Model\Common\IaEnterResponse.cs" />
+    <Compile Include="Model\Common\IaExitResponse.cs" />
+    <Compile Include="Model\Common\Location.cs" />
+    <Compile Include="Model\Common\NewCommonBuildingResponse.cs" />
+    <Compile Include="Model\Common\QuestUpdateResponse.cs" />
+    <Compile Include="Model\Common\UpgradeTechnologyResponse.cs" />
+    <Compile Include="Model\EventCode.cs" />
+    <Compile Include="Model\Model.cs" />
+    <Compile Include="Model\OperationCode.cs" />
+    <Compile Include="Model\Operation\AttackRequest.cs" />
+    <Compile Include="Model\Operation\CameraMoveRequest.cs" />
+    <Compile Include="Model\Operation\ChatMessage.cs" />
+    <Compile Include="Model\Operation\CollectResourceRequest.cs" />
+    <Compile Include="Model\Operation\CollectResourceResponse.cs" />
+    <Compile Include="Model\Operation\CreateStructureRequest.cs" />
+    <Compile Include="Model\Operation\CommonBuildingRequest.cs" />
+    <Compile Include="Model\Common\PlayerBuildingBuildingStatuResponse.cs" />
+    <Compile Include="Model\Common\TimerCompleteResponse.cs" />
+    <Compile Include="Model\Common\TroopTrainingTimeResponse.cs" />
+    <Compile Include="Model\Common\UpdateResourceResponse.cs" />
+    <Compile Include="Model\Common\StructureCreateUpgradeResponse.cs" />
+    <Compile Include="Model\Common\UserProfileResponse.cs" />
+    <Compile Include="Model\Common\WoundedTroopTimerStatusResponse.cs" />
+    <Compile Include="Model\Operation\GateRequest.cs" />
+    <Compile Include="Model\Operation\InstantBuildRequest.cs" />
+    <Compile Include="Model\Operation\PlayerBuildingBuildingStatusRequest.cs" />
+    <Compile Include="Model\Operation\PlayerConnectRequest.cs" />
+    <Compile Include="Model\Operation\RecruitTroopRequest.cs" />
+    <Compile Include="Model\Operation\ResourceBoostUpRequest.cs" />
+    <Compile Include="Model\Operation\TeleportLocation.cs" />
+    <Compile Include="Model\Operation\TroopTrainingStatusRequest.cs" />
+    <Compile Include="Model\Operation\UpgradeStructureRequest.cs" />
+    <Compile Include="Model\Operation\UpgradeTechnologyRequest.cs" />
+    <Compile Include="Model\Operation\WoundedTroopHealRequest.cs" />
+    <Compile Include="Model\Operation\WoundedTroopTimerStatusRequest.cs" />
+    <Compile Include="Model\ReturnCode.cs" />
+    <Compile Include="Model\RoomParameterKey.cs" />
+    <Compile Include="Model\Vector.cs" />
+    <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="ResourcesHandler\IPlayerResources.cs" />
+    <Compile Include="ResourcesHandler\PlayerResources.cs" />
+    <Compile Include="Troops\ConcreteTroopFactory.cs" />
+    <Compile Include="Troops\GameTroops.cs" />
+    <Compile Include="Troops\IGameTroop.cs" />
+    <Compile Include="Troops\ITroop.cs" />
+    <Compile Include="Troops\Knight.cs" />
+    <Compile Include="Troops\Swordsmen.cs" />
+    <Compile Include="Troops\Archer.cs" />
+    <Compile Include="Troops\SeigeTroop.cs" />
+    <Compile Include="Troops\Troop.cs" />
+    <Compile Include="Troops\TroopFactory.cs" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="app.config">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Include="packages.config" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\GameOfRevenge\GameOfRevenge.Business\GameOfRevenge.Business.csproj">
+      <Project>{422bc36b-e2b4-4f70-8256-dd6ea0c5ded4}</Project>
+      <Name>GameOfRevenge.Business</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\GameOfRevenge\GameOfRevenge.Common\GameOfRevenge.Common.csproj">
+      <Project>{b419737b-04fd-4dd9-85e8-1d58afa7c73c}</Project>
+      <Name>GameOfRevenge.Common</Name>
+    </ProjectReference>
+  </ItemGroup>
+  <ItemGroup />
+  <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
+</Project>

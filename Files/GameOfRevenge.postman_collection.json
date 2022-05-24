@@ -1,0 +1,1722 @@
+{
+	"info": {
+		"_postman_id": "f11e3613-1e38-4be5-b4be-b000bfcf60e8",
+		"name": "GameOfRevenge",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"item": [
+		{
+			"name": "Account",
+			"item": [
+				{
+					"name": "TestConnection",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{url}}/api/Account/TestConnection",
+							"host": [
+								"{{url}}"
+							],
+							"path": [
+								"api",
+								"Account",
+								"TestConnection"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "TryLoginOrRegister",
+					"event": [
+						{
+							"listen": "prerequest",
+							"script": {
+								"exec": [
+									""
+								],
+								"type": "text/javascript"
+							}
+						},
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"var res = pm.response.json();\r",
+									"pm.collectionVariables.set('token', res.data.jwtToken);"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"auth": {
+							"type": "noauth"
+						},
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "formdata",
+							"formdata": [
+								{
+									"key": "identifier",
+									"value": "TestAccount",
+									"type": "text"
+								},
+								{
+									"key": "name",
+									"value": "TestAccount",
+									"type": "text"
+								},
+								{
+									"key": "accept",
+									"value": "true",
+									"type": "text"
+								}
+							]
+						},
+						"url": {
+							"raw": "{{url}}/api/Account/TryLoginOrRegister",
+							"host": [
+								"{{url}}"
+							],
+							"path": [
+								"api",
+								"Account",
+								"TryLoginOrRegister"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "GetAccountInfoByIdentifier",
+					"request": {
+						"auth": {
+							"type": "noauth"
+						},
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "formdata",
+							"formdata": [
+								{
+									"key": "identifier",
+									"value": "TestAccount",
+									"type": "text"
+								},
+								{
+									"key": "name",
+									"value": "TestAccount",
+									"type": "text",
+									"disabled": true
+								},
+								{
+									"key": "accept",
+									"value": "true",
+									"type": "text",
+									"disabled": true
+								}
+							]
+						},
+						"url": {
+							"raw": "{{url}}/api/Account/GetAccountInfoByIdentifier",
+							"host": [
+								"{{url}}"
+							],
+							"path": [
+								"api",
+								"Account",
+								"GetAccountInfoByIdentifier"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "GetAccountInfoById",
+					"request": {
+						"auth": {
+							"type": "noauth"
+						},
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "formdata",
+							"formdata": [
+								{
+									"key": "id",
+									"value": "1",
+									"type": "text"
+								}
+							]
+						},
+						"url": {
+							"raw": "{{url}}/api/Account/GetAccountInfoById",
+							"host": [
+								"{{url}}"
+							],
+							"path": [
+								"api",
+								"Account",
+								"GetAccountInfoById"
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "GameDef",
+			"item": [
+				{
+					"name": "GetAllResources",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{url}}/api/GameDef/GetAllResources",
+							"host": [
+								"{{url}}"
+							],
+							"path": [
+								"api",
+								"GameDef",
+								"GetAllResources"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "GetAllTroopData",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{url}}/api/GameDef/GetAllTroopData",
+							"host": [
+								"{{url}}"
+							],
+							"path": [
+								"api",
+								"GameDef",
+								"GetAllTroopData"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "GetAllStructureData",
+					"protocolProfileBehavior": {
+						"disableBodyPruning": true
+					},
+					"request": {
+						"method": "GET",
+						"header": [],
+						"body": {
+							"mode": "formdata",
+							"formdata": []
+						},
+						"url": {
+							"raw": "{{url}}/api/GameDef/GetAllStructureData",
+							"host": [
+								"{{url}}"
+							],
+							"path": [
+								"api",
+								"GameDef",
+								"GetAllStructureData"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "GetAllTechnology",
+					"protocolProfileBehavior": {
+						"disableBodyPruning": true
+					},
+					"request": {
+						"method": "GET",
+						"header": [],
+						"body": {
+							"mode": "formdata",
+							"formdata": []
+						},
+						"url": {
+							"raw": "{{url}}/api/GameDef/GetAllTechnology",
+							"host": [
+								"{{url}}"
+							],
+							"path": [
+								"api",
+								"GameDef",
+								"GetAllTechnology"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "GetAllTroopTraningBuildings",
+					"request": {
+						"auth": {
+							"type": "noauth"
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{url}}/api/GameDef/GetAllTroopTraningBuildingRel",
+							"host": [
+								"{{url}}"
+							],
+							"path": [
+								"api",
+								"GameDef",
+								"GetAllTroopTraningBuildingRel"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "GetAllInventory",
+					"protocolProfileBehavior": {
+						"disableBodyPruning": true
+					},
+					"request": {
+						"method": "GET",
+						"header": [],
+						"body": {
+							"mode": "formdata",
+							"formdata": []
+						},
+						"url": {
+							"raw": "{{url}}/api/GameDef/GetAllInventory",
+							"host": [
+								"{{url}}"
+							],
+							"path": [
+								"api",
+								"GameDef",
+								"GetAllInventory"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "GetCityCounselBuffs",
+					"protocolProfileBehavior": {
+						"disableBodyPruning": true
+					},
+					"request": {
+						"method": "GET",
+						"header": [],
+						"body": {
+							"mode": "formdata",
+							"formdata": []
+						},
+						"url": {
+							"raw": "{{url}}/api/GameDef/GetCityCounselBuffs",
+							"host": [
+								"{{url}}"
+							],
+							"path": [
+								"api",
+								"GameDef",
+								"GetCityCounselBuffs"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "GetAllHeros",
+					"protocolProfileBehavior": {
+						"disableBodyPruning": true
+					},
+					"request": {
+						"method": "GET",
+						"header": [],
+						"body": {
+							"mode": "formdata",
+							"formdata": []
+						},
+						"url": {
+							"raw": "{{url}}/api/GameDef/GetAllHeros",
+							"host": [
+								"{{url}}"
+							],
+							"path": [
+								"api",
+								"GameDef",
+								"GetAllHeros"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "BuildingLevelDescription",
+					"protocolProfileBehavior": {
+						"disableBodyPruning": true
+					},
+					"request": {
+						"method": "GET",
+						"header": [],
+						"body": {
+							"mode": "formdata",
+							"formdata": []
+						},
+						"url": {
+							"raw": "{{url}}/api/GameDef/BuildingLevelDescription",
+							"host": [
+								"{{url}}"
+							],
+							"path": [
+								"api",
+								"GameDef",
+								"BuildingLevelDescription"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "GetAllBoost",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{url}}/api/GameDef/GetAllBoost",
+							"host": [
+								"{{url}}"
+							],
+							"path": [
+								"api",
+								"GameDef",
+								"GetAllBoost"
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "Mail",
+			"item": [
+				{
+					"name": "ReadMail",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "formdata",
+							"formdata": [
+								{
+									"key": "id",
+									"value": "1",
+									"type": "text"
+								}
+							]
+						},
+						"url": {
+							"raw": "{{url}}/api/mail/ReadMail",
+							"host": [
+								"{{url}}"
+							],
+							"path": [
+								"api",
+								"mail",
+								"ReadMail"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "DeleteMail",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "formdata",
+							"formdata": [
+								{
+									"key": "id",
+									"value": "1",
+									"type": "text"
+								}
+							]
+						},
+						"url": {
+							"raw": "{{url}}/api/mail/DeleteMail",
+							"host": [
+								"{{url}}"
+							],
+							"path": [
+								"api",
+								"mail",
+								"DeleteMail"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "GetAllmail",
+					"protocolProfileBehavior": {
+						"disableBodyPruning": true
+					},
+					"request": {
+						"method": "GET",
+						"header": [],
+						"body": {
+							"mode": "formdata",
+							"formdata": []
+						},
+						"url": {
+							"raw": "{{url}}/api/mail/GetAllMail",
+							"host": [
+								"{{url}}"
+							],
+							"path": [
+								"api",
+								"mail",
+								"GetAllMail"
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "Clan",
+			"item": [
+				{
+					"name": "Create/Delete/Get",
+					"item": [
+						{
+							"name": "CreateClan",
+							"request": {
+								"method": "POST",
+								"header": [],
+								"body": {
+									"mode": "formdata",
+									"formdata": [
+										{
+											"key": "name",
+											"value": "derr",
+											"type": "text"
+										},
+										{
+											"key": "tag",
+											"value": "der",
+											"type": "text"
+										},
+										{
+											"key": "description",
+											"value": "121212",
+											"type": "text"
+										},
+										{
+											"key": "isPublic",
+											"value": "false",
+											"type": "text"
+										}
+									]
+								},
+								"url": {
+									"raw": "{{url}}/api/clan/CreateClan",
+									"host": [
+										"{{url}}"
+									],
+									"path": [
+										"api",
+										"clan",
+										"CreateClan"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "DeleteClan",
+							"request": {
+								"method": "POST",
+								"header": [],
+								"body": {
+									"mode": "formdata",
+									"formdata": [
+										{
+											"key": "clanId",
+											"value": "18",
+											"type": "text"
+										}
+									]
+								},
+								"url": {
+									"raw": "{{url}}/api/clan/DeleteClan",
+									"host": [
+										"{{url}}"
+									],
+									"path": [
+										"api",
+										"clan",
+										"DeleteClan"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "ClanMembers",
+							"protocolProfileBehavior": {
+								"disableBodyPruning": true
+							},
+							"request": {
+								"method": "GET",
+								"header": [],
+								"body": {
+									"mode": "formdata",
+									"formdata": [
+										{
+											"key": "clanId",
+											"value": "19",
+											"type": "text"
+										}
+									]
+								},
+								"url": {
+									"raw": "{{url}}/api/clan/ClanMembers",
+									"host": [
+										"{{url}}"
+									],
+									"path": [
+										"api",
+										"clan",
+										"ClanMembers"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "ClanInvites",
+							"protocolProfileBehavior": {
+								"disableBodyPruning": true
+							},
+							"request": {
+								"method": "GET",
+								"header": [],
+								"body": {
+									"mode": "formdata",
+									"formdata": [
+										{
+											"key": "clanId",
+											"value": "17",
+											"type": "text"
+										}
+									]
+								},
+								"url": {
+									"raw": "{{url}}/api/clan/ClanInvites",
+									"host": [
+										"{{url}}"
+									],
+									"path": [
+										"api",
+										"clan",
+										"ClanInvites"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "FullClanData",
+							"protocolProfileBehavior": {
+								"disableBodyPruning": true
+							},
+							"request": {
+								"method": "GET",
+								"header": [],
+								"body": {
+									"mode": "formdata",
+									"formdata": [
+										{
+											"key": "clanId",
+											"value": "17",
+											"type": "text"
+										}
+									]
+								},
+								"url": {
+									"raw": "{{url}}/api/clan/FullClanData",
+									"host": [
+										"{{url}}"
+									],
+									"path": [
+										"api",
+										"clan",
+										"FullClanData"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "GetClansList",
+							"protocolProfileBehavior": {
+								"disableBodyPruning": true
+							},
+							"request": {
+								"method": "GET",
+								"header": [],
+								"body": {
+									"mode": "formdata",
+									"formdata": [
+										{
+											"key": "tag",
+											"value": "",
+											"type": "text"
+										},
+										{
+											"key": "name",
+											"value": "",
+											"type": "text"
+										},
+										{
+											"key": "clause",
+											"value": "",
+											"type": "text"
+										},
+										{
+											"key": "page",
+											"value": "",
+											"type": "text"
+										},
+										{
+											"key": "count",
+											"value": "",
+											"type": "text"
+										}
+									]
+								},
+								"url": {
+									"raw": "{{url}}/api/clan/GetClansList",
+									"host": [
+										"{{url}}"
+									],
+									"path": [
+										"api",
+										"clan",
+										"GetClansList"
+									]
+								}
+							},
+							"response": []
+						}
+					]
+				},
+				{
+					"name": "PlayerClanDetails",
+					"item": [
+						{
+							"name": "MyClan",
+							"protocolProfileBehavior": {
+								"disableBodyPruning": true
+							},
+							"request": {
+								"method": "GET",
+								"header": [],
+								"body": {
+									"mode": "formdata",
+									"formdata": []
+								},
+								"url": {
+									"raw": "{{url}}/api/clan/MyClan",
+									"host": [
+										"{{url}}"
+									],
+									"path": [
+										"api",
+										"clan",
+										"MyClan"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "MyClanInvitations",
+							"protocolProfileBehavior": {
+								"disableBodyPruning": true
+							},
+							"request": {
+								"method": "GET",
+								"header": [],
+								"body": {
+									"mode": "formdata",
+									"formdata": []
+								},
+								"url": {
+									"raw": "{{url}}/api/clan/MyClanInvitations",
+									"host": [
+										"{{url}}"
+									],
+									"path": [
+										"api",
+										"clan",
+										"MyClanInvitations"
+									]
+								}
+							},
+							"response": []
+						}
+					]
+				},
+				{
+					"name": "Invite/Accept/Reject/Join",
+					"item": [
+						{
+							"name": "JoinClanRequest",
+							"request": {
+								"method": "POST",
+								"header": [],
+								"body": {
+									"mode": "formdata",
+									"formdata": [
+										{
+											"key": "clanId",
+											"value": "25",
+											"type": "text"
+										}
+									]
+								},
+								"url": {
+									"raw": "{{url}}/api/clan/JoinClanRequest",
+									"host": [
+										"{{url}}"
+									],
+									"path": [
+										"api",
+										"clan",
+										"JoinClanRequest"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "ReplyToJoinRequest",
+							"request": {
+								"method": "POST",
+								"header": [],
+								"body": {
+									"mode": "formdata",
+									"formdata": [
+										{
+											"key": "requestId",
+											"value": "25",
+											"type": "text"
+										},
+										{
+											"key": "accept",
+											"value": "false",
+											"type": "text"
+										}
+									]
+								},
+								"url": {
+									"raw": "{{url}}/api/clan/ReplyToJoinRequest",
+									"host": [
+										"{{url}}"
+									],
+									"path": [
+										"api",
+										"clan",
+										"ReplyToJoinRequest"
+									]
+								}
+							},
+							"response": []
+						}
+					]
+				}
+			]
+		},
+		{
+			"name": "Player",
+			"item": [
+				{
+					"name": "Inventory",
+					"item": [
+						{
+							"name": "GetItemList",
+							"protocolProfileBehavior": {
+								"disableBodyPruning": true
+							},
+							"request": {
+								"method": "GET",
+								"header": [],
+								"body": {
+									"mode": "formdata",
+									"formdata": []
+								},
+								"url": {
+									"raw": "{{url}}/api/Player/GetItemList",
+									"host": [
+										"{{url}}"
+									],
+									"path": [
+										"api",
+										"Player",
+										"GetItemList"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "BuyItem",
+							"request": {
+								"method": "POST",
+								"header": [],
+								"body": {
+									"mode": "formdata",
+									"formdata": [
+										{
+											"key": "itemId",
+											"value": "2",
+											"type": "text"
+										},
+										{
+											"key": "count",
+											"value": "10",
+											"type": "text"
+										}
+									]
+								},
+								"url": {
+									"raw": "{{url}}/api/Player/BuyItem",
+									"host": [
+										"{{url}}"
+									],
+									"path": [
+										"api",
+										"Player",
+										"BuyItem"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "UseItem",
+							"request": {
+								"method": "POST",
+								"header": [],
+								"body": {
+									"mode": "formdata",
+									"formdata": [
+										{
+											"key": "itemId",
+											"value": "2",
+											"type": "text"
+										},
+										{
+											"key": "count",
+											"value": "10",
+											"type": "text"
+										}
+									]
+								},
+								"url": {
+									"raw": "{{url}}/api/Player/UseItem",
+									"host": [
+										"{{url}}"
+									],
+									"path": [
+										"api",
+										"Player",
+										"UseItem"
+									]
+								}
+							},
+							"response": []
+						}
+					]
+				},
+				{
+					"name": "Buff",
+					"item": [
+						{
+							"name": "GetBuffList",
+							"protocolProfileBehavior": {
+								"disableBodyPruning": true
+							},
+							"request": {
+								"method": "GET",
+								"header": [],
+								"body": {
+									"mode": "formdata",
+									"formdata": []
+								},
+								"url": {
+									"raw": "{{url}}/api/Player/GetBuffList",
+									"host": [
+										"{{url}}"
+									],
+									"path": [
+										"api",
+										"Player",
+										"GetBuffList"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "AddBuff",
+							"request": {
+								"method": "POST",
+								"header": [],
+								"body": {
+									"mode": "formdata",
+									"formdata": [
+										{
+											"key": "itemId",
+											"value": "6",
+											"type": "text"
+										},
+										{
+											"key": "count",
+											"value": "10",
+											"type": "text"
+										}
+									]
+								},
+								"url": {
+									"raw": "{{url}}/api/Player/AddBuff",
+									"host": [
+										"{{url}}"
+									],
+									"path": [
+										"api",
+										"Player",
+										"AddBuff"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "RemoveBuff",
+							"request": {
+								"method": "POST",
+								"header": [],
+								"body": {
+									"mode": "formdata",
+									"formdata": [
+										{
+											"key": "itemId",
+											"value": "2",
+											"type": "text"
+										},
+										{
+											"key": "count",
+											"value": "2",
+											"type": "text"
+										}
+									]
+								},
+								"url": {
+									"raw": "{{url}}/api/Player/RemoveBuff",
+									"host": [
+										"{{url}}"
+									],
+									"path": [
+										"api",
+										"Player",
+										"RemoveBuff"
+									]
+								}
+							},
+							"response": []
+						}
+					]
+				},
+				{
+					"name": "Gate",
+					"item": [
+						{
+							"name": "GetGateHp",
+							"protocolProfileBehavior": {
+								"disableBodyPruning": true
+							},
+							"request": {
+								"method": "GET",
+								"header": [],
+								"body": {
+									"mode": "formdata",
+									"formdata": []
+								},
+								"url": {
+									"raw": "{{url}}/api/Player/GetGateHp",
+									"host": [
+										"{{url}}"
+									],
+									"path": [
+										"api",
+										"Player",
+										"GetGateHp"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "RepairGateCost",
+							"protocolProfileBehavior": {
+								"disableBodyPruning": true
+							},
+							"request": {
+								"method": "GET",
+								"header": [],
+								"body": {
+									"mode": "formdata",
+									"formdata": []
+								},
+								"url": {
+									"raw": "{{url}}/api/Player/RepairGateCost",
+									"host": [
+										"{{url}}"
+									],
+									"path": [
+										"api",
+										"Player",
+										"RepairGateCost"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "RepairGate",
+							"request": {
+								"method": "POST",
+								"header": [],
+								"body": {
+									"mode": "formdata",
+									"formdata": []
+								},
+								"url": {
+									"raw": "{{url}}/api/Player/RepairGate",
+									"host": [
+										"{{url}}"
+									],
+									"path": [
+										"api",
+										"Player",
+										"RepairGate"
+									]
+								}
+							},
+							"response": []
+						}
+					]
+				},
+				{
+					"name": "Resource",
+					"item": [
+						{
+							"name": "AddResources",
+							"request": {
+								"method": "POST",
+								"header": [],
+								"body": {
+									"mode": "formdata",
+									"formdata": [
+										{
+											"key": "food",
+											"value": "100",
+											"type": "text"
+										},
+										{
+											"key": "wood",
+											"value": "100",
+											"type": "text"
+										},
+										{
+											"key": "ore",
+											"value": "100",
+											"type": "text"
+										},
+										{
+											"key": "gems",
+											"value": "100000",
+											"type": "text"
+										}
+									]
+								},
+								"url": {
+									"raw": "{{url}}/api/Player/AddResources",
+									"host": [
+										"{{url}}"
+									],
+									"path": [
+										"api",
+										"Player",
+										"AddResources"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "CollectResources",
+							"request": {
+								"method": "POST",
+								"header": [],
+								"body": {
+									"mode": "formdata",
+									"formdata": [
+										{
+											"key": "locId",
+											"value": "100",
+											"type": "text"
+										}
+									]
+								},
+								"url": {
+									"raw": "{{url}}/api/Player/CollectResources",
+									"host": [
+										"{{url}}"
+									],
+									"path": [
+										"api",
+										"Player",
+										"CollectResources"
+									]
+								}
+							},
+							"response": []
+						}
+					]
+				},
+				{
+					"name": "Hero",
+					"item": [
+						{
+							"name": "GetHeroList",
+							"protocolProfileBehavior": {
+								"disableBodyPruning": true
+							},
+							"request": {
+								"method": "GET",
+								"header": [],
+								"body": {
+									"mode": "formdata",
+									"formdata": []
+								},
+								"url": {
+									"raw": "{{url}}/api/Player/GetHeroList",
+									"host": [
+										"{{url}}"
+									],
+									"path": [
+										"api",
+										"Player",
+										"GetHeroList"
+									]
+								}
+							},
+							"response": []
+						}
+					]
+				},
+				{
+					"name": "Technology",
+					"item": [
+						{
+							"name": "GetUserTechnologyData",
+							"protocolProfileBehavior": {
+								"disableBodyPruning": true
+							},
+							"request": {
+								"method": "GET",
+								"header": [],
+								"body": {
+									"mode": "formdata",
+									"formdata": []
+								},
+								"url": {
+									"raw": "{{url}}/api/Player/GetUserTechnologyData",
+									"host": [
+										"{{url}}"
+									],
+									"path": [
+										"api",
+										"Player",
+										"GetUserTechnologyData"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "UpgradeTechnologyDataByType",
+							"request": {
+								"method": "POST",
+								"header": [],
+								"body": {
+									"mode": "formdata",
+									"formdata": [
+										{
+											"key": "type",
+											"value": "2",
+											"type": "text"
+										}
+									]
+								},
+								"url": {
+									"raw": "{{url}}/api/Player/UpgradeTechnologyDataByType",
+									"host": [
+										"{{url}}"
+									],
+									"path": [
+										"api",
+										"Player",
+										"UpgradeTechnologyDataByType"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "UpgradeTechnologyDataById",
+							"request": {
+								"method": "POST",
+								"header": [],
+								"body": {
+									"mode": "formdata",
+									"formdata": [
+										{
+											"key": "id",
+											"value": "2",
+											"type": "text"
+										}
+									]
+								},
+								"url": {
+									"raw": "{{url}}/api/Player/UpgradeTechnologyDataById",
+									"host": [
+										"{{url}}"
+									],
+									"path": [
+										"api",
+										"Player",
+										"UpgradeTechnologyDataById"
+									]
+								}
+							},
+							"response": []
+						}
+					]
+				},
+				{
+					"name": "Troop",
+					"item": [
+						{
+							"name": "GetUserTroopData",
+							"protocolProfileBehavior": {
+								"disableBodyPruning": true
+							},
+							"request": {
+								"method": "GET",
+								"header": [],
+								"body": {
+									"mode": "formdata",
+									"formdata": []
+								},
+								"url": {
+									"raw": "{{url}}/api/Player/GetUserTroopData",
+									"host": [
+										"{{url}}"
+									],
+									"path": [
+										"api",
+										"Player",
+										"GetUserTroopData"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "TrainTroopByType",
+							"request": {
+								"method": "POST",
+								"header": [],
+								"body": {
+									"mode": "formdata",
+									"formdata": [
+										{
+											"key": "type",
+											"value": "1",
+											"type": "text"
+										},
+										{
+											"key": "level",
+											"value": "1",
+											"type": "text"
+										},
+										{
+											"key": "count",
+											"value": "25",
+											"type": "text"
+										},
+										{
+											"key": "buildingId",
+											"value": "14",
+											"type": "text"
+										}
+									]
+								},
+								"url": {
+									"raw": "{{url}}/api/Player/TrainTroopByType",
+									"host": [
+										"{{url}}"
+									],
+									"path": [
+										"api",
+										"Player",
+										"TrainTroopByType"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "TrainTroopById",
+							"request": {
+								"method": "POST",
+								"header": [],
+								"body": {
+									"mode": "formdata",
+									"formdata": [
+										{
+											"key": "id",
+											"value": "1",
+											"type": "text"
+										},
+										{
+											"key": "level",
+											"value": "1",
+											"type": "text"
+										},
+										{
+											"key": "count",
+											"value": "25",
+											"type": "text"
+										},
+										{
+											"key": "buildingId",
+											"value": "14",
+											"type": "text"
+										}
+									]
+								},
+								"url": {
+									"raw": "{{url}}/api/Player/TrainTroopById",
+									"host": [
+										"{{url}}"
+									],
+									"path": [
+										"api",
+										"Player",
+										"TrainTroopById"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "AddTroopByType",
+							"request": {
+								"method": "POST",
+								"header": [],
+								"body": {
+									"mode": "formdata",
+									"formdata": [
+										{
+											"key": "type",
+											"value": "1",
+											"type": "text"
+										},
+										{
+											"key": "level",
+											"value": "1",
+											"type": "text"
+										},
+										{
+											"key": "count",
+											"value": "25",
+											"type": "text"
+										}
+									]
+								},
+								"url": {
+									"raw": "{{url}}/api/Player/AddTroopByType",
+									"host": [
+										"{{url}}"
+									],
+									"path": [
+										"api",
+										"Player",
+										"AddTroopByType"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "AddTroopByType Copy",
+							"request": {
+								"method": "POST",
+								"header": [],
+								"body": {
+									"mode": "formdata",
+									"formdata": [
+										{
+											"key": "type",
+											"value": "1",
+											"type": "text"
+										},
+										{
+											"key": "level",
+											"value": "1",
+											"type": "text"
+										},
+										{
+											"key": "count",
+											"value": "25",
+											"type": "text"
+										}
+									]
+								},
+								"url": {
+									"raw": "{{url}}/api/Player/AddTroopByType",
+									"host": [
+										"{{url}}"
+									],
+									"path": [
+										"api",
+										"Player",
+										"AddTroopByType"
+									]
+								}
+							},
+							"response": []
+						}
+					]
+				},
+				{
+					"name": "GetUserData",
+					"protocolProfileBehavior": {
+						"disableBodyPruning": true
+					},
+					"request": {
+						"method": "GET",
+						"header": [],
+						"body": {
+							"mode": "formdata",
+							"formdata": []
+						},
+						"url": {
+							"raw": "{{url}}/api/Player/GetUserData",
+							"host": [
+								"{{url}}"
+							],
+							"path": [
+								"api",
+								"Player",
+								"GetUserData"
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "Tutorial",
+			"item": [
+				{
+					"name": "GetTutorialInfo",
+					"event": [
+						{
+							"listen": "prerequest",
+							"script": {
+								"exec": [
+									""
+								],
+								"type": "text/javascript"
+							}
+						},
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"var res = pm.response.json();\r",
+									"pm.collectionVariables.set('token', res.data.jwtToken);"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"auth": {
+							"type": "noauth"
+						},
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "formdata",
+							"formdata": [
+								{
+									"key": "identifier",
+									"value": "TestAccount",
+									"type": "text"
+								}
+							]
+						},
+						"url": {
+							"raw": "{{url}}/api/Account/GetTutorialInfo",
+							"host": [
+								"{{url}}"
+							],
+							"path": [
+								"api",
+								"Account",
+								"GetTutorialInfo"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "UpdateTutorialInfo",
+					"event": [
+						{
+							"listen": "prerequest",
+							"script": {
+								"exec": [
+									""
+								],
+								"type": "text/javascript"
+							}
+						},
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"var res = pm.response.json();\r",
+									"pm.collectionVariables.set('token', res.data.jwtToken);"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"auth": {
+							"type": "noauth"
+						},
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "formdata",
+							"formdata": [
+								{
+									"key": "identifier",
+									"value": "TestAccount1",
+									"type": "text"
+								},
+								{
+									"key": "data",
+									"value": "sadsadsa",
+									"type": "text"
+								},
+								{
+									"key": "isComplete",
+									"value": "true",
+									"type": "text"
+								}
+							]
+						},
+						"url": {
+							"raw": "{{url}}/api/Account/UpdateTutorialInfo",
+							"host": [
+								"{{url}}"
+							],
+							"path": [
+								"api",
+								"Account",
+								"UpdateTutorialInfo"
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		}
+	],
+	"auth": {
+		"type": "bearer",
+		"bearer": [
+			{
+				"key": "token",
+				"value": "{{token}}",
+				"type": "string"
+			}
+		]
+	},
+	"event": [
+		{
+			"listen": "prerequest",
+			"script": {
+				"type": "text/javascript",
+				"exec": [
+					""
+				]
+			}
+		},
+		{
+			"listen": "test",
+			"script": {
+				"type": "text/javascript",
+				"exec": [
+					""
+				]
+			}
+		}
+	],
+	"variable": [
+		{
+			"key": "url",
+			"value": " http://localhost:4000"
+		},
+		{
+			"key": "token",
+			"value": ""
+		}
+	]
+}
