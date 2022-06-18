@@ -2,8 +2,10 @@
 {
     public enum MailType
     {
-        String,
+        Text,
+        Message,
         BattleReport,
-        UnderAttack
+        UnderAttack,
+        Notification
     }
 }

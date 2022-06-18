@@ -15,7 +15,8 @@ namespace GameOfRevenge.Common.Email
             PlayerId = reader.GetValue(index) == DBNull.Value ? 0 : reader.GetInt32(index); index++;
             MailType = reader.GetValue(index) == DBNull.Value ? default : reader.GetString(index).ToEnum<MailType>(); index++;
             Content = reader.GetValue(index) == DBNull.Value ? string.Empty : reader.GetString(index); index++;
-            Read = reader.GetValue(index) != DBNull.Value && reader.GetBoolean(index);
+            Read = reader.GetValue(index) != DBNull.Value && reader.GetBoolean(index); index++;
+            Date = reader.GetValue(index) == DBNull.Value ? DateTime.MinValue : reader.GetDateTime(index);
         }
 
         public BaseMailType<T> GetType<T>()
@@ -26,6 +27,7 @@ namespace GameOfRevenge.Common.Email
                 PlayerId = PlayerId,
                 MailType = MailType,
                 Read = Read,
+                Date = Date,
                 Content = JsonConvert.DeserializeObject<T>(Content)
             };
         }
