@@ -27,7 +27,7 @@ namespace GameOfRevenge.Common.Models.Structure
             IsRedeemed = reader.GetValue(index) == DBNull.Value ? false: reader.GetBoolean(index); index++;
             Food = reader.GetValue(index) == DBNull.Value ? 0 : reader.GetInt32(index); index++;
             Wood = reader.GetValue(index) == DBNull.Value ? 0 : reader.GetInt32(index); index++;
-            Ore = reader.GetValue(index) == DBNull.Value ? 0 : reader.GetInt32(index); index++;
+            Ore = reader.GetValue(index) == DBNull.Value ? 0 : reader.GetInt32(index);
         }
     }
 }
