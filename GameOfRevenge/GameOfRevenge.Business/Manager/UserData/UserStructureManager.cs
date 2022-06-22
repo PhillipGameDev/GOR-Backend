@@ -19,12 +19,12 @@ namespace GameOfRevenge.Business.Manager.UserData
     public class UserStructureManager : BaseUserDataManager, IUserStructureManager
     {
         private readonly UserResourceManager userResourceManager;
-        private readonly MarketManager marketManager;
+        private readonly UserMarketManager marketManager;
 
         public UserStructureManager()
         {
             userResourceManager = new UserResourceManager();
-            marketManager = new MarketManager();
+            marketManager = new UserMarketManager();
         }
 
         public async Task<Response<UserStructureData>> CheckBuildingStatus(int playerId, StructureType type)
