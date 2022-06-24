@@ -36,7 +36,7 @@ namespace GameOfRevenge.WebServer.Controllers.Api
         [HttpGet]
         public async Task<IActionResult> GetUserData() => ReturnResponse(await userResourceManager.GetPlayerData(Token.PlayerId));
 
-        #region Gate
+#region Gate
         [HttpGet]
         public async Task<IActionResult> GetGateHp() => ReturnResponse(await userStructureManager.GetGateHp(Token.PlayerId));
 
@@ -45,9 +45,9 @@ namespace GameOfRevenge.WebServer.Controllers.Api
 
         [HttpPost]
         public async Task<IActionResult> RepairGate() => ReturnResponse(await userStructureManager.RepairGate(Token.PlayerId));
-        #endregion
+#endregion
 
-        #region Resource
+#region Resource
         [HttpPost]
         public async Task<IActionResult> AddResources(int food, int wood, int ore, int gems)
         {
@@ -64,7 +64,19 @@ namespace GameOfRevenge.WebServer.Controllers.Api
         {
             return ReturnResponse(await userStructureManager.CollectResource(Token.PlayerId, locId));
         }
-        #endregion
+
+        [HttpPost]
+        public async Task<IActionResult> GetAllPlayerStoredData(int structureLocationId = -1)
+        {
+            return ReturnResponse(await userResourceManager.GetAllPlayerStoredData(Token.PlayerId, structureLocationId));
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> StoreResource(int structureLocationId, int valueId, int value)
+        {
+            return ReturnResponse(await userResourceManager.StoreResource(Token.PlayerId, structureLocationId, valueId, value));
+        }
+#endregion
 
         #region Inventory Item
         [HttpPost]
@@ -87,9 +99,9 @@ namespace GameOfRevenge.WebServer.Controllers.Api
             var response = await userInventoryManager.GetPlayerData(Token.PlayerId);
             return ReturnResponse(new Response<List<InventoryInfo>>(response.Data?.Items, response.Case, response.Message));
         }
-        #endregion
+#endregion
 
-        #region Buff
+#region Buff
         [HttpPost]
         public async Task<IActionResult> AddBuff(InventoryItemType itemId, int count)
         {
@@ -110,18 +122,18 @@ namespace GameOfRevenge.WebServer.Controllers.Api
             var response = await userInventoryManager.GetPlayerData(Token.PlayerId);
             return ReturnResponse(new Response<List<UserBuffDetails>>(response.Data?.Buffs, response.Case, response.Message));
         }
-        #endregion
+#endregion
 
-        #region Hero
+#region Hero
         [HttpGet]
         public async Task<IActionResult> GetHeroList()
         {
             var response = await userManager.GetPlayerData(Token.PlayerId);
             return ReturnResponse(new Response<List<UserHeroDetails>>(response.Data?.Heros, response.Case, response.Message));
         }
-        #endregion
+#endregion
 
-        #region Technology
+#region Technology
         [HttpGet]
         public async Task<IActionResult> GetUserTechnologyData()
         {
@@ -142,9 +154,9 @@ namespace GameOfRevenge.WebServer.Controllers.Api
             var response = await userTechnologyManager.UpgradeTechnology(Token.PlayerId, id);
             return ReturnResponse(response);
         }
-        #endregion
+#endregion
 
-        #region Troops
+#region Troops
         [HttpGet]
         public async Task<IActionResult> GetUserTroopData()
         {
@@ -188,9 +200,9 @@ namespace GameOfRevenge.WebServer.Controllers.Api
         //    return ReturnResponse(response);
         //}
 
-        #endregion
+#endregion
 
-        #region Instant Build
+#region Instant Build
         [HttpGet]
         public IActionResult GetInstantBuildCost(StructureType type, int level) => ReturnResponse(instantProgressManager.GetInstantBuildCost(Token.PlayerId, type, level));
 
@@ -202,7 +214,7 @@ namespace GameOfRevenge.WebServer.Controllers.Api
 
         [HttpPost]
         public async Task<IActionResult> SpeedUpBuildStructure(int locId) => ReturnResponse(await instantProgressManager.SpeedUpBuildStructure(Token.PlayerId, locId));
-        #endregion
+#endregion
 
         [HttpGet]
         public IActionResult GetInstantRecruitCost(TroopType type, int level, int count) => ReturnResponse(instantProgressManager.GetInstantRecruitCost(type, level, count));

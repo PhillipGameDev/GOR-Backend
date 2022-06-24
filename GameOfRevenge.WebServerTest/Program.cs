@@ -2,6 +2,7 @@ using System;
 using GameOfRevenge.Business;
 using System.Configuration;
 using System.Threading.Tasks;
+using GameOfRevenge.Business.Manager.UserData;
 
 namespace GameOfRevenge.WebServer
 {
@@ -21,7 +22,12 @@ namespace GameOfRevenge.WebServer
 
         private static async Task Test()
         {
-            await Startup.ReloadDataBaseDataAsync();
+            var manager = new PlayerDataManager();
+            var response = await manager.GetAllPlayerStoredData(1071);
+            string res = Newtonsoft.Json.JsonConvert.SerializeObject(response);
+            System.Console.WriteLine(res);
+//            await Startup.ReloadDataBaseDataAsync();
+            
         }
     }
 }
