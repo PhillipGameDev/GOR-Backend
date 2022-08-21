@@ -11,7 +11,7 @@ namespace GameOfRevenge.Business.Manager.GameDef
     {
         public async Task<Response<List<MarketProductTable>>> GetAllProducts()
         {
-            return await Db.ExecuteSPMultipleRow<MarketProductTable>("GetAllProducts", (s) => { });
+            return await Db.ExecuteSPMultipleRow<MarketProductTable>("GetAllProducts");
         }
     }
 }

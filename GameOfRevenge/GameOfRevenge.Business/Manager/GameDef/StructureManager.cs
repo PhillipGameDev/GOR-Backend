@@ -9,13 +9,41 @@ using GameOfRevenge.Common.Interface;
 using GameOfRevenge.Common.Models.Structure;
 using GameOfRevenge.Common.Models;
 using GameOfRevenge.Business.Manager.Base;
+using GameOfRevenge.Common.Models.Troop;
 
 namespace GameOfRevenge.Business.Manager.GameDef
 {
     public class StructureManager : BaseManager, IStructureManager
     {
+        public async Task<Response<List<TroopTable>>> GetAllStructDataRequirementRel2()
+        {
+            try
+            {
+                return await Db.ExecuteSPMultipleRow<TroopTable>("GetAllTroops");
+            }
+            catch (InvalidModelExecption ex)
+            {
+                return new Response<List<TroopTable>>()
+                {
+                    Case = 200,
+                    Data = null,
+                    Message = ex.Message
+                };
+            }
+            catch (Exception ex)
+            {
+                return new Response<List<TroopTable>>()
+                {
+                    Case = 0,
+                    Data = null,
+                    Message = ErrorManager.ShowError(ex)
+                };
+            }
+        }
+
         public async Task<Response<List<StructureDataRequirementRel>>> GetAllStructDataRequirementRel()
         {
+            System.Console.WriteLine("ENTRO ACA");
             try
             {
                 var respStructs = await GetAllStructures();
@@ -39,7 +67,7 @@ namespace GameOfRevenge.Business.Manager.GameDef
                             Info = structure,
                             Levels = new List<StructureDataRequirement>(),
                             Locations = new List<int>(),
-                            BuildLimit = new Dictionary<int, int>()
+                            BuildLimit = new Dictionary<string, int>()
                         };
 
                         foreach (var itemData in structDatas.Where(x => x.Id == structure.Id))
@@ -65,7 +93,7 @@ namespace GameOfRevenge.Business.Manager.GameDef
                         {
                             if (buildLimit.BuildStructure == structure.Code)
                             {
-                                structDataReqRel.BuildLimit.Add(buildLimit.TownHallLevel, buildLimit.MaxBuildCount);
+                                structDataReqRel.BuildLimit.Add(buildLimit.TownHallLevel.ToString(), buildLimit.MaxBuildCount);
                             }
                         }
 

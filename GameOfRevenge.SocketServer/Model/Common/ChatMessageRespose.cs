@@ -9,6 +9,9 @@ namespace GameOfRevenge.Model
         [DataMember(Code = (byte)RoomParameterKey.CommonMessage, IsOptional = true)]
         public string ChatMessage { get; set; }
 
+        [DataMember(Code = (byte)RoomParameterKey.AllianceId, IsOptional = true)]
+        public int AllianceId { get; set; }
+
         [DataMember(Code = (byte)RoomParameterKey.UserName, IsOptional = true)]
         public string UserName { get; set; }
 

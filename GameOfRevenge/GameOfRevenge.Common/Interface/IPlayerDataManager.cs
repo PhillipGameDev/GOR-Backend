@@ -7,13 +7,27 @@ namespace GameOfRevenge.Common.Interface
 {
     public interface IPlayerDataManager
     {
-        Task<Response<List<PlayerDataTable>>> GetAllPlayerData(int playerId);
+        Task<Response<List<PlayerDataTable>>> GetAllPlayerData(int playerId, DataType type = DataType.Unknown);
+        Task<Response<List<PlayerDataTable>>> GetAllPlayerData(int playerId, DataType type, int valueId);
+
         Task<Response> AddOrUpdateAllPlayerData(List<PlayerDataTable> playerDatas);
-        Task<Response<PlayerDataTable>> AddOrUpdatePlayerData(int playerId, DataType type, int valueId, string value);
-        Task<Response<PlayerDataTable>> GetPlayerData(int playerId, DataType type, int valueId);
-        Task<Response<PlayerDataTable>> GetPlayerDataById(int playerDataId);
-        Task<Response> RemovePlayerData(int playerId, DataType type, int valueId);
+//        Task<Response<PlayerDataTable>> AddOrUpdatePlayerData(int playerId, DataType type, int valueId, string value);
+
+        Task<Response<PlayerDataTableUpdated>> AddOrUpdatePlayerData(int playerId, DataType type, int valueId, string value, bool unique = true);
+
+//        Task<Response<PlayerDataTableUpdated>> UpdatePlayerData(int playerId, DataType type, int valueId, string value);
+        Task<Response<PlayerDataTableUpdated>> UpdatePlayerDataID(int playerId, long playerDataId, string value);
+
+        Task<Response<PlayerDataTableUpdated>> IncrementPlayerData(int playerId, DataType type, int valueId, int? value);
+        Task<Response<PlayerDataTableUpdated>> IncrementPlayerData(int playerId, long playerDataId, int value);
+
         Task<Response> RemoveAllPlayerData(int playerId);
+        Task<Response<PlayerDataTableUpdated>> RemovePlayerData(int playerId, DataType type, int valueId);
+        Task<Response<PlayerDataTableUpdated>> RemovePlayerData(int playerId, long playerDataId);
+
+        Task<Response<PlayerDataTable>> GetPlayerData(int playerId, DataType type, int valueId);
+        Task<Response<PlayerDataTable>> GetPlayerDataById(long playerDataId);
+
         Task<Response<List<PlayerDataTable>>> AddPlayerResourceData(int playerId, int food, int wood, int ore, int gem);
         Task<Response<List<PlayerDataTable>>> RemovePlayerResourceData(int playerId, int food, int wood, int ore, int gem);
         Task<Response<List<PlayerDataTable>>> UpdatePlayerResourceData(int playerId, int food, int wood, int ore, int gem);

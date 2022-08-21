@@ -8,14 +8,18 @@ namespace GameOfRevenge.WebServer.Controllers.Api
 {
     //[ApiController]
     [Route("api/[controller]/[action]")]
+    [Produces("application/json")]
     [Authorize(AuthenticationSchemes = AuthHelper.AuthenticationSchemeJwt)]
     public abstract class BaseApiController : ControllerBase
     {
         protected Player Token => HttpContext.GetUser();
 
-        protected IActionResult ReturnResponse(object response)
+        protected IActionResult ReturnResponse(object response)//, string contentType = null)
         {
-            return Ok(response);
+            OkObjectResult result = Ok(response);
+//            if (contentType != null) result.ContentTypes.Add(contentType);
+
+            return result;
         }
 
         protected IActionResult ReturnResponse()

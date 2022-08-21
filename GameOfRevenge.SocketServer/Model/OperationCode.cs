@@ -23,6 +23,7 @@
         RepairGate = 19,
         GateHp = 20,
         GlobalChat = 21,
+        AllianceChat = 29,
         CheckUnderAttack = 22,
 
         InstantBuild = 23,
@@ -31,5 +32,6 @@
         GetInstantBuildCost = 26,
 
         InstantRecruit = 27,
+        HelpStructure = 28
     }
 }

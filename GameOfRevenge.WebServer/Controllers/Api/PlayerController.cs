@@ -3,10 +3,13 @@ using System.Collections.Generic;
 using Microsoft.AspNetCore.Mvc;
 using GameOfRevenge.Common.Net;
 using GameOfRevenge.Common.Models;
+using GameOfRevenge.Common.Models.Boost;
 using GameOfRevenge.Common.Models.Inventory;
 using GameOfRevenge.Common.Interface.UserData;
 using GameOfRevenge.Common;
 using GameOfRevenge.Common.Models.Structure;
+using GameOfRevenge.Common.Models.Hero;
+using GameOfRevenge.Common.Models.PlayerData;
 
 namespace GameOfRevenge.WebServer.Controllers.Api
 {
@@ -16,12 +19,16 @@ namespace GameOfRevenge.WebServer.Controllers.Api
         private readonly IUserResourceManager userResourceManager;
         private readonly IUserStructureManager userStructureManager;
         private readonly IUserInventoryManager userInventoryManager;
-        private readonly IUserActiveBuffsManager userActiveBuffsManager;
+        private readonly IUserActiveBoostsManager userActiveBuffsManager;
         private readonly IUserTroopManager userTroopManager;
         private readonly IUserTechnologyManager userTechnologyManager;
         private readonly IInstantProgressManager instantProgressManager;
+        private readonly IUserHeroManager userHeroManager;
 
-        public PlayerController(IUserResourceManager userResourceManager, IUserStructureManager userStructureManager, IUserInventoryManager userInventoryManager, IUserActiveBuffsManager userActiveBuffsManager, IUserTechnologyManager userTechnologyManager, IUserTroopManager userTroopManager, IInstantProgressManager instantProgressManager)
+        public PlayerController(IUserResourceManager userResourceManager, IUserStructureManager userStructureManager,
+                                IUserInventoryManager userInventoryManager, IUserActiveBoostsManager userActiveBuffsManager,
+                                IUserTechnologyManager userTechnologyManager, IUserTroopManager userTroopManager,
+                                IInstantProgressManager instantProgressManager, IUserHeroManager userHeroManager)
         {
             userManager = userResourceManager;
             this.userResourceManager = userResourceManager;
@@ -31,10 +38,15 @@ namespace GameOfRevenge.WebServer.Controllers.Api
             this.userTechnologyManager = userTechnologyManager;
             this.userTroopManager = userTroopManager;
             this.instantProgressManager = instantProgressManager;
+            this.userHeroManager = userHeroManager;
         }
 
-        [HttpGet]
-        public async Task<IActionResult> GetUserData() => ReturnResponse(await userResourceManager.GetPlayerData(Token.PlayerId));
+        [HttpPost]
+        public async Task<IActionResult> GetUserData(int playerId = 0)
+        {
+            int plyId = (playerId == 0)? Token.PlayerId : playerId;
+            return ReturnResponse(await userResourceManager.GetFullPlayerData(plyId));
+        }
 
 #region Gate
         [HttpGet]
@@ -78,49 +90,262 @@ namespace GameOfRevenge.WebServer.Controllers.Api
         }
 #endregion
 
-        #region Inventory Item
+#region Inventory Item
+/*        [HttpPost]
+        public async Task<IActionResult> UpdateItem(int playerDataId, int value)
+        {
+//            if (!Token.IsAdmin) return StatusCode(401);
+            return ReturnResponse(await userInventoryManager.UpdateItem(Token.PlayerId, playerDataId, value));
+        }*/
+
+        [HttpPost]
+        public async Task<IActionResult> UpdateItemType(InventoryItemType type, int? value)
+        {
+            if ((type == InventoryItemType.Unknown) || (value == null))
+            {
+                return ReturnResponse(new Response()
+                {
+                    Case = 0,
+                    Message = "Invalid parameters"
+                });
+            }
+            else
+            {
+                var response = await userInventoryManager.UpdateItem(Token.PlayerId, type, -1, (int)value);
+                return ReturnResponse(response);
+            }
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> UpdateItemID(long id, int? value)
+        {
+            if ((id <= 0) || (value == null))
+            {
+                return ReturnResponse(new Response()
+                {
+                    Case = 0,
+                    Message = "Invalid parameters"
+                });
+            }
+            else
+            {
+                var response = await userInventoryManager.UpdateItem(Token.PlayerId, InventoryItemType.Unknown, id, (int)value);
+                return ReturnResponse(response);
+            }
+        }
+
+
+
+
+        [HttpPost]
+        public async Task<IActionResult> AddUniqueItem(InventoryItemType type, int value = 1)
+        {
+            if ((type == InventoryItemType.Unknown))
+            {
+                return ReturnResponse(new Response()
+                {
+                    Case = 0,
+                    Message = "Invalid parameters"
+                });
+            }
+            else
+            {
+                return ReturnResponse(await userInventoryManager.AddUniqueItem(Token.PlayerId, type, value));
+            }
+        }
+
+
+
+
+        [HttpPost]
+        public async Task<IActionResult> AddItem(InventoryItemType type, int value = 1)//TODO:implement a way to check if old value is higher
+        {
+            if ((type == InventoryItemType.Unknown))
+            {
+                return ReturnResponse(new Response()
+                {
+                    Case = 0,
+                    Message = "Invalid parameters"
+                });
+            }
+            else
+            {
+                return ReturnResponse(await userInventoryManager.AddItem(Token.PlayerId, type, value));
+            }
+        }
+
+        /*        [HttpPost]
+                public async Task<IActionResult> AddItem(InventoryItemType itemType, int value, bool unique = true)
+                {
+                    return ReturnResponse(await userInventoryManager.AddItem(Token.PlayerId, itemType, value, unique));
+                }*/
+
+
+
+        [HttpPost]
+        public async Task<IActionResult> IncrementItemType(InventoryItemType type, int? amount)
+        {
+            if ((type == InventoryItemType.Unknown) || (amount == null))
+            {
+                return ReturnResponse(new Response()
+                {
+                    Case = 0,
+                    Message = "Invalid parameters"
+                });
+            }
+            else
+            {
+                var response = await userInventoryManager.IncrementItem(Token.PlayerId, type, -1, (int)amount);
+                return ReturnResponse(response);
+            }
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> IncrementItemID(long id, int? amount)
+        {
+            if ((id <= 0) || (amount == null))
+            {
+                return ReturnResponse(new Response()
+                {
+                    Case = 0,
+                    Message = "Invalid parameters"
+                });
+            }
+            else
+            {
+                var response = await userInventoryManager.IncrementItem(Token.PlayerId, InventoryItemType.Unknown, id, (int)amount);
+                return ReturnResponse(response);
+            }
+        }
+
+
+
+        [HttpPost]
+        public async Task<IActionResult> RemoveItemType(InventoryItemType type)
+        {
+            if (type == InventoryItemType.Unknown)
+            {
+                return ReturnResponse(new Response()
+                {
+                    Case = 0,
+                    Message = "Invalid parameters"
+                });
+            }
+            else
+            {
+                var response = await userInventoryManager.RemoveItem(Token.PlayerId, type, -1);
+                return ReturnResponse(response);
+            }
+        }
+
+
+        [HttpPost]
+        public async Task<IActionResult> RemoveItemID(long id)
+        {
+            if (id <= 0)
+            {
+                return ReturnResponse(new Response()
+                {
+                    Case = 0,
+                    Message = "Invalid parameters"
+                });
+            }
+            else
+            {
+                var response = await userInventoryManager.RemoveItem(Token.PlayerId, InventoryItemType.Unknown, id);
+                return ReturnResponse(response);
+            }
+        }
+
+
         [HttpPost]
         public async Task<IActionResult> BuyAndUseItem(InventoryItemType itemId, int count)
         {
-            var buyResponse = await userInventoryManager.BuyItem(Token.PlayerId, itemId, count);
-            if (!buyResponse.IsSuccess) return ReturnResponse(buyResponse);
-            else return ReturnResponse(await userInventoryManager.UseItem(Token.PlayerId, itemId, count));
+/*            var response = await userInventoryManager.BuyItem(Token.PlayerId, itemId, count);
+            if (response.IsSuccess)
+            {
+                response = await userInventoryManager.UseItem(Token.PlayerId, itemId, count);
+            }*/
+
+            return ReturnResponse();//response);
         }
 
         [HttpPost]
-        public async Task<IActionResult> BuyItem(InventoryItemType itemId, int count) => ReturnResponse(await userInventoryManager.BuyItem(Token.PlayerId, itemId, count));
+        public async Task<IActionResult> BuyItem(InventoryItemType itemId, int count)
+        {
+            return ReturnResponse();// await userInventoryManager.BuyItem(Token.PlayerId, itemId, count));
+        }
+
+
+
 
         [HttpPost]
-        public async Task<IActionResult> UseItem(InventoryItemType itemId, int count) => ReturnResponse(await userInventoryManager.UseItem(Token.PlayerId, itemId, count));
+        public async Task<IActionResult> UseItem(InventoryItemType itemId, int count)
+        {
+            return ReturnResponse(await userInventoryManager.UseItem(Token.PlayerId, itemId, count));
+        }
 
         [HttpGet]
-        public async Task<IActionResult> GetItemList()
+        public async Task<IActionResult> GetItemList(InventoryItemType? type)
         {
-            var response = await userInventoryManager.GetPlayerData(Token.PlayerId);
-            return ReturnResponse(new Response<List<InventoryInfo>>(response.Data?.Items, response.Case, response.Message));
+            if (type == InventoryItemType.Unknown)
+            {
+                return ReturnResponse(new Response()
+                {
+                    Case = 0,
+                    Message = "Invalid item type"
+                });
+            }
+            else
+            {
+                var response = await userInventoryManager.GetFullPlayerData(Token.PlayerId);
+                if (response.IsSuccess && response.HasData)
+                {
+                    string msg = string.Empty;
+                    List<UserItemDetails> items = response.Data.Items;
+                    if (items != null)
+                    {
+                        if (type != null)
+                        {
+                            items = items.FindAll(item => item.ItemType == type);
+                        }
+                        else
+                        {
+                            msg = "Full ";
+                        }
+                    }
+                    else
+                    {
+                        items = new List<UserItemDetails>();
+                    }
+                    return ReturnResponse(new Response<List<UserItemDetails>>(items, response.Case, msg + "Item List"));
+                }
+
+                return ReturnResponse(response);
+            }
         }
 #endregion
 
-#region Buff
+#region Boost
         [HttpPost]
-        public async Task<IActionResult> AddBuff(InventoryItemType itemId, int count)
+        public async Task<IActionResult> AddBoost(BoostType itemId, int count)
         {
-            if (!Token.IsAdmin) return StatusCode(401);
-            return ReturnResponse(await userActiveBuffsManager.AddBuff(Token.PlayerId, itemId, count));
+//            if (!Token.IsAdmin) return StatusCode(401);
+            return ReturnResponse(await userActiveBuffsManager.AddBoost(Token.PlayerId, itemId, count));
         }
 
         [HttpPost]
-        public async Task<IActionResult> RemoveBuff(InventoryItemType itemId, int count)
+        public async Task<IActionResult> RemoveBoost(BoostType itemId, int count)
         {
-            if (!Token.IsAdmin) return StatusCode(401);
-            return ReturnResponse(await userActiveBuffsManager.RemoveBuff(Token.PlayerId, itemId, count));
+//            if (!Token.IsAdmin) return StatusCode(401);
+            return ReturnResponse(await userActiveBuffsManager.RemoveBoost(Token.PlayerId, itemId, count));
         }
 
         [HttpGet]
-        public async Task<IActionResult> GetBuffList()
+        public async Task<IActionResult> GetBoostList()
         {
-            var response = await userInventoryManager.GetPlayerData(Token.PlayerId);
-            return ReturnResponse(new Response<List<UserBuffDetails>>(response.Data?.Buffs, response.Case, response.Message));
+            var response = await userInventoryManager.GetFullPlayerData(Token.PlayerId);
+            return ReturnResponse(new Response<List<FullUserBoostDetails>>(response.Data?.Boosts, response.Case, response.Message));
         }
 #endregion
 
@@ -128,16 +353,45 @@ namespace GameOfRevenge.WebServer.Controllers.Api
         [HttpGet]
         public async Task<IActionResult> GetHeroList()
         {
-            var response = await userManager.GetPlayerData(Token.PlayerId);
-            return ReturnResponse(new Response<List<UserHeroDetails>>(response.Data?.Heros, response.Case, response.Message));
+            var response = await userManager.GetFullPlayerData(Token.PlayerId);
+            return ReturnResponse(new Response<List<UserHeroDetails>>(response.Data?.Heroes, response.Case, response.Message));
         }
-#endregion
 
-#region Technology
+        [HttpPost]
+        public async Task<IActionResult> UnlockHero(HeroType type)
+        {
+            var response = await userHeroManager.UnlockHero(Token.PlayerId, type);
+            if (response.IsSuccess && response.HasData)
+            {
+                return ReturnResponse(new Response<UserHeroDetails>(response.Data, response.Case, "Hero unlocked"));
+            }
+            else
+            {
+                return ReturnResponse(new Response(response.Case, response.Message));
+            }
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> AddHeroWarPoints(HeroType heroType, int value)
+        {
+            var response = await userHeroManager.AddHeroWarPoints(Token.PlayerId, heroType, value);
+            if (response.IsSuccess && response.HasData)
+            {
+                return ReturnResponse(new Response<UserHeroDetails>(response.Data, response.Case, response.Message));
+            }
+            else
+            {
+                return ReturnResponse(new Response(response.Case, response.Message));
+            }
+        }
+        #endregion
+
+        #region Technology
         [HttpGet]
         public async Task<IActionResult> GetUserTechnologyData()
         {
-            var response = await userManager.GetPlayerData(Token.PlayerId);
+            var response = await userManager.GetFullPlayerData(Token.PlayerId);
+
             return ReturnResponse(new Response<List<TechnologyInfos>>(response.Data?.Technologies, response.Case, response.Message));
         }
 
@@ -160,7 +414,7 @@ namespace GameOfRevenge.WebServer.Controllers.Api
         [HttpGet]
         public async Task<IActionResult> GetUserTroopData()
         {
-            var response = await userManager.GetPlayerData(Token.PlayerId);
+            var response = await userManager.GetFullPlayerData(Token.PlayerId);
             return ReturnResponse(new Response<List<TroopInfos>>(response.Data?.Troops, response.Case, response.Message));
         }
 
@@ -179,18 +433,19 @@ namespace GameOfRevenge.WebServer.Controllers.Api
         }
 
         [HttpPost]
-        public async Task<IActionResult> AddTroopByType(TroopType type, int level, int count)
+        public async Task<IActionResult> AddTroopByType(TroopType type, int level, int amount)
         {
             //if (!Token.IsAdmin) return StatusCode(401);
-            var response = await userTroopManager.AddTroops(Token.PlayerId, type, level, count);
+            var response = await userTroopManager.AddTroops(Token.PlayerId, type, level, amount);
             return ReturnResponse(response);
         }
 
         [HttpPost]
-        public async Task<IActionResult> AddTroopById(int id, int level, int count)
+        public async Task<IActionResult> AddTroopById(int id, int level, int amount)
         {
             //if (!Token.IsAdmin) return StatusCode(401);
-            var response = await userTroopManager.AddTroops(Token.PlayerId, id, level, count);
+            //TODO: implement error messages, when parameter amount is set as count, there are no fail message.
+            var response = await userTroopManager.AddTroops(Token.PlayerId, id, level, amount);
             return ReturnResponse(response);
         }
 
@@ -201,6 +456,12 @@ namespace GameOfRevenge.WebServer.Controllers.Api
         //}
 
 #endregion
+        [HttpPost]
+        public async Task<IActionResult> HelpBuilding(int toPlayerId, StructureType type, int locId, int helpPower)
+        {
+            return ReturnResponse(await userStructureManager.HelpBuilding(Token.PlayerId, toPlayerId, type, locId, helpPower));
+        }
+
 
 #region Instant Build
         [HttpGet]
@@ -213,7 +474,8 @@ namespace GameOfRevenge.WebServer.Controllers.Api
         public async Task<IActionResult> InstantBuildStructure(StructureType type, int level, int locId) => ReturnResponse(await instantProgressManager.InstantBuildStructure(Token.PlayerId, type, level, locId));
 
         [HttpPost]
-        public async Task<IActionResult> SpeedUpBuildStructure(int locId) => ReturnResponse(await instantProgressManager.SpeedUpBuildStructure(Token.PlayerId, locId));
+        public async Task<IActionResult> SpeedUpBuildStructure(int locId) =>
+            ReturnResponse(await instantProgressManager.SpeedUpBuildStructure(Token.PlayerId, locId));
 #endregion
 
         [HttpGet]

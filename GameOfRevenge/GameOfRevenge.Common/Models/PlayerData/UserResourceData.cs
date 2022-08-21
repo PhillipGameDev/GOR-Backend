@@ -1,9 +1,10 @@
 ﻿using GameOfRevenge.Common.Interface.Model.Table;
-using GameOfRevenge.Common.Models.Hero;
 using GameOfRevenge.Common.Models.Inventory;
+using GameOfRevenge.Common.Models.Boost;
 using GameOfRevenge.Common.Models.Structure;
 using GameOfRevenge.Common.Models.Table;
 using System.Collections.Generic;
+using Newtonsoft.Json;
 
 namespace GameOfRevenge.Common.Models.PlayerData
 {
@@ -32,8 +33,34 @@ namespace GameOfRevenge.Common.Models.PlayerData
 
     }
 
-    public class UserBuffData : BaseUserDataTable<InventoryItemType, UserBuffDetails>, IBaseUserDataTable<InventoryItemType, UserBuffDetails>, IReadOnlyBaseUserDataTable<InventoryItemType, UserBuffDetails>, IBaseDataTypeTable<InventoryItemType, UserBuffDetails>, IReadOnlyBaseDataTypeTable<InventoryItemType, UserBuffDetails>
+    public class UserInventoryDataUpdated : UserInventoryData//, BaseUserDataTableUpdated<InventoryItemType, int>, IBaseUserDataTableUpdated<InventoryItemType, int>, IReadOnlyBaseUserDataTable<InventoryItemType, int>, IBaseDataTypeTable<InventoryItemType, int>, IReadOnlyBaseDataTypeTable<InventoryItemType, int>
+    {
+        [JsonProperty(Order = 1)]
+        public string OldValue { get; set; }
+    }
+
+    public class UserBoostData : BaseUserDataTable<BoostType, UserBoostDetails>, IBaseUserDataTable<BoostType, UserBoostDetails>, IReadOnlyBaseUserDataTable<BoostType, UserBoostDetails>, IBaseDataTypeTable<BoostType, UserBoostDetails>, IReadOnlyBaseDataTypeTable<BoostType, UserBoostDetails>
     {
 
     }
+
+    public class UserHeroData : BaseUserDataTable<string, int>, IBaseUserDataTable<string, int>, IReadOnlyBaseUserDataTable<string, int>, IBaseDataTypeTable<string, int>, IReadOnlyBaseDataTypeTable<string, int>
+    {
+        public UserHeroDetails ToUserHeroDetails()
+        {
+            return new UserHeroDetails()
+            {
+                Id = this.Id,
+                Code = this.ValueId,
+                BattleCount = this.Value,
+//                Unlocked = true,
+                IsMarching = false
+            };
+        }
+    }
+
+    public class UserKingData : BaseUserDataTable<int, UserKingDetails>, IBaseUserDataTable<int, UserKingDetails>, IReadOnlyBaseUserDataTable<int, UserKingDetails>, IBaseDataTypeTable<int, UserKingDetails>, IReadOnlyBaseDataTypeTable<int, UserKingDetails>
+    {
+    }
+
 }

@@ -26,6 +26,8 @@ namespace GameOfRevenge.Business.DataLink
 
         public string ConnectionString { get => string.IsNullOrWhiteSpace(connectionString) ? Config.ConnectionString : connectionString; set => connectionString = value; }
 
+        string IBaseDbManager.ConnectionString => throw new NotImplementedException();
+
         public async Task<Response> ExecuteSPNoData(string spName) => await ExecuteSPNoData(spName, null, false);
         public async Task<Response> ExecuteSPNoData(string spName, IDictionary<string, object> spParams) => await ExecuteSPNoData(spName, spParams, false);
         public async Task<Response> ExecuteSPNoData(string spName, IDictionary<string, object> spParams, bool throwError)

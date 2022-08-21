@@ -27,6 +27,16 @@ namespace GameOfRevenge.WebServer.Controllers.Api
             return ReturnResponse(response);
         }
 
+        [HttpPost]
+        public async Task<IActionResult> XSendMail(int id, string type, string content)
+        {
+
+            Common.Email.MailType mailType = (Common.Email.MailType)System.Enum.Parse(typeof(Common.Email.MailType), type, true);
+            var response = await mailManager.SendMail(id, mailType, content);
+//            var response = await mailManager.SendMail(id, Common.Email.MailType.Text, content);
+            return ReturnResponse(response);
+        }
+
         [HttpGet]
         public async Task<IActionResult> GetAllMail()
         {

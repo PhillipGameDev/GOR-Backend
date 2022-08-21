@@ -10,6 +10,7 @@ namespace GameOfRevenge.Common.Models.Clan
         public int Id { get; set; }
         public int ClanId { get; set; }
         public int PlayerId { get; set; }
+        public string Name { get; set; }
         public ClanRole Role { get; set; }
 
         public void LoadFromDataReader(IDataReader reader)
@@ -18,7 +19,8 @@ namespace GameOfRevenge.Common.Models.Clan
             Id = reader.GetValue(index) == DBNull.Value ? 0 : reader.GetInt32(index); index++;
             ClanId = reader.GetValue(index) == DBNull.Value ? 0 : reader.GetInt32(index); index++;
             Role = reader.GetValue(index) == DBNull.Value ? ClanRole.Other : reader.GetString(index).ToEnum<ClanRole>(); index++;
-            PlayerId = reader.GetValue(index) == DBNull.Value ? 0 : reader.GetInt32(index);
+            PlayerId = reader.GetValue(index) == DBNull.Value ? 0 : reader.GetInt32(index); index++;
+            Name = reader.GetValue(index) == DBNull.Value ? string.Empty : reader.GetString(index);
         }
     }
 }

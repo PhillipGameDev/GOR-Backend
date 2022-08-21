@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using GameOfRevenge.Business.CacheData;
 using GameOfRevenge.Common.Net;
+using GameOfRevenge.Common.Models.Boost;
 using GameOfRevenge.Common.Models.Inventory;
 using GameOfRevenge.Common.Models.Troop;
 using GameOfRevenge.Common.Helper;
@@ -24,14 +25,16 @@ namespace GameOfRevenge.WebServer.Controllers.Api
         }
 
         [HttpGet]
-        public IActionResult GetCityCounselBuffs()
+        public IActionResult GetCityBoosts()
         {
-            var response = new Response<IReadOnlyList<IReadOnlyBuffItemRel>>(CacheInventoryDataManager.BuffItemRelations, 100, "City buff list");
+//            var response = new Response<IReadOnlyList<IReadOnlyBoostTypeTable>>(CacheBoostDataManager.BoostInfos, 100, "City boost list");
+//            CacheBoostDataManager.boostTypes;
+            var response = CacheBoostDataManager.BoostInfos;
             return ReturnResponse(response);
         }
 
         [HttpGet]
-        public IActionResult GetAllHeros()
+        public IActionResult GetAllHeroes()
         {
             var response = CacheHeroDataManager.HeroInfos;
             return ReturnResponse(response);
@@ -40,20 +43,48 @@ namespace GameOfRevenge.WebServer.Controllers.Api
         [HttpGet]
         public IActionResult GetAllBoost()
         {
-            var response = CacheBoostDataManager.BoostInfos;
-            return ReturnResponse(response);
+//            var response = CacheBoostDataManager.BoostInfos;
+            return ReturnResponse();
         }
 
         [HttpGet]
-        public IActionResult GetAllInventory()
+        public IActionResult GetAllItems()
         {
-            var response = CacheInventoryDataManager.ItemInfos;
-            return ReturnResponse(response);
+            var response = CacheInventoryDataManager.ItemList;
+//            var response = new List<InventoryDataTable> ();
+//            response.Add(new InventoryDataTable {Id = 111,Code=InventoryItemType.Weapon,Name="name test",Rarity = Common.RarityType.Rare });
+            if (response != null)
+            {
+
+                //config.Formatters.JsonFormatter.S‌​erializerSettings
+/*                JsonSerializerSettings settings = new JsonSerializerSettings
+                {
+                    Formatting = Formatting.None,
+                    NullValueHandling = NullValueHandling.Ignore,
+                    ReferenceLoopHandling = ReferenceLoopHandling.Ignore,
+                    PreserveReferencesHandling = PreserveReferencesHandling.None
+                };*/
+                //                System.Web.Http.GlobalConfiguration.Configuration.Formatters.JsonFormatter.UseDataContractJsonSerializer = true;
+
+//                string json = JsonConvert.SerializeObject(response);//, settings);
+
+                return ReturnResponse(response);//, "application/json");
+
+
+                //                return ReturnResponse(Content(JsonConvert.SerializeObject(response), "application/json"));
+                //                var json = JsonConvert.SerializeObject(response);
+                //return ReturnResponse(json);
+            }
+            else
+            {
+                return ReturnResponse();
+            }
         }
 
         [HttpGet]
         public IActionResult GetAllTechnology()
         {
+//            var response = new Response<IReadOnlyList<Common.Models.Technology.IReadOnlyTechnologyDataRequirementRel>>(CacheTechnologyDataManager.TechnologyInfos, 100, "Technology list");
             var response = CacheTechnologyDataManager.TechnologyInfos;
             return ReturnResponse(response);
         }
@@ -87,12 +118,13 @@ namespace GameOfRevenge.WebServer.Controllers.Api
         }
 
         [HttpGet]
-        public IActionResult GetAllTroopTraningBuildingRel()
+        public IActionResult GetAllTroopBuildingRelation()
         {
-            var response = new Response<IReadOnlyList<IReadOnlyTroopBuildingRelation>>(CaseType.Success, "Troop and structure relation")
+/*            var response = new Response<IReadOnlyList<IReadOnlyTroopBuildingRelation>>(CaseType.Success, "Troop and building relation")
             {
                 Data = CacheTroopDataManager.TroopBuildingRelation
-            };
+            };*/
+            var response = CacheTroopDataManager.TroopBuildingRelation;
 
             return ReturnResponse(response);
         }

@@ -3,7 +3,7 @@ using System.Threading.Tasks;
 using GameOfRevenge.Common;
 using GameOfRevenge.Common.Net;
 using GameOfRevenge.Common.Interface.UserData;
-using GameOfRevenge.Common.Models.Inventory;
+using GameOfRevenge.Common.Models.Boost;
 using GameOfRevenge.Common.Models.PlayerData;
 using GameOfRevenge.Business.Manager.Base;
 using GameOfRevenge.Common.Models;
@@ -13,48 +13,50 @@ using GameOfRevenge.Business.CacheData;
 
 namespace GameOfRevenge.Business.Manager.UserData
 {
-    public class UserActiveBuffsManager : BaseUserDataManager, IUserActiveBuffsManager
+    public class UserActiveBoostManager : BaseUserDataManager, IUserActiveBoostsManager
     {
-        public async Task<Response<UserBuffData>> AddBuff(int playerId, InventoryItemType type) => await AddBuff(playerId, type, 1);
-        public async Task<Response<UserBuffData>> AddBuff(int playerId, InventoryItemType type, int count)
+        public async Task<Response<UserBoostData>> AddBoost(int playerId, BoostType type) => await AddBoost(playerId, type, 1);
+        public async Task<Response<UserBoostData>> AddBoost(int playerId, BoostType type, int count)
         {
             try
             {
-                BuffType buffType = GetBuffType(type);
-                if (BuffType.Other == buffType) throw new DataNotExistExecption("Buff was null");
+                BoostType boostType = GetBoostType(type);
+                if (BoostType.Unknown == boostType) throw new DataNotExistExecption("Boost was null");
                 var timeStamp = DateTime.UtcNow;
-                if (count <= 0) return new Response<UserBuffData>(CaseType.Success, "Count was zero");
+                if (count <= 0) return new Response<UserBoostData>(CaseType.Success, "Count was zero");
 
-                int invId = CacheInventoryDataManager.GetFullInventoryItemData(type).Info.Id;
-                var buffRespData = await manager.GetPlayerData(playerId, DataType.ActiveBuffs, invId);
-                UserBuffData buffData;
+//                int invId = CacheBoostDataManager.GetFullBoostDataByType(type).Info.BoostTypeId;
+                int valueId = CacheBoostDataManager.GetFullBoostDataByType(type).BoostTypeId;//CacheBoostDataManager.GetFullBoostDataByType(type).Info.BoostTypeId;
+                var boostRespData = await manager.GetPlayerData(playerId, DataType.ActiveBoost, valueId);
+                UserBoostData boostData;
 
-                if (buffRespData.IsSuccess && buffRespData.HasData)
+                if (boostRespData.IsSuccess && boostRespData.HasData)
                 {
-                    buffData = PlayerDataToUserBuffData(buffRespData.Data);
-                    if (buffData == null) throw new DataNotExistExecption("Buff was null");
-                    if (buffData.Value == null || buffData.Value.TimeLeft <= 0)
+                    boostData = PlayerDataToUserBoostData(boostRespData.Data);
+                    if (boostData == null) throw new DataNotExistExecption("Boost was null");
+                    if (boostData.Value == null || boostData.Value.TimeLeft <= 0)
                     {
-                        buffData.Value = new UserBuffDetails
+                        boostData.Value = new FullUserBoostDetails
                         {
-                            BuffType = buffType,
+                            Id = boostData.Id,
+                            BoostType = boostType,
                             StartTime = timeStamp,
                             EndTime = timeStamp.AddDays(count)
                         };
                     }
                     else
                     {
-                        buffData.Value.EndTime = buffData.Value.EndTime.AddDays(count);
+                        boostData.Value.EndTime = boostData.Value.EndTime.AddDays(count);
                     }
                 }
                 else
                 {
-                    buffData = new UserBuffData()
+                    boostData = new UserBoostData()
                     {
-                        DataType = DataType.ActiveBuffs,
-                        Value = new UserBuffDetails()
+                        DataType = DataType.ActiveBoost,
+                        Value = new UserBoostDetails()
                         {
-                            BuffType = buffType,
+                            BoostType = boostType,
                             StartTime = timeStamp,
                             EndTime = timeStamp.AddDays(count)
                         },
@@ -62,13 +64,13 @@ namespace GameOfRevenge.Business.Manager.UserData
                     };
                 }
 
-                var resp = await manager.AddOrUpdatePlayerData(playerId, DataType.ActiveBuffs, invId, JsonConvert.SerializeObject(buffData.Value));
-                if (resp.IsSuccess & resp.HasData) return new Response<UserBuffData>(buffData, resp.Case, resp.Message);
-                else return new Response<UserBuffData>(resp.Case, resp.Message);
+                var resp = await manager.AddOrUpdatePlayerData(playerId, DataType.ActiveBoost, valueId, JsonConvert.SerializeObject(boostData.Value));
+                if (resp.IsSuccess & resp.HasData) return new Response<UserBoostData>(boostData, resp.Case, resp.Message);
+                else return new Response<UserBoostData>(resp.Case, resp.Message);
             }
             catch (InvalidModelExecption ex)
             {
-                return new Response<UserBuffData>()
+                return new Response<UserBoostData>()
                 {
                     Case = 200,
                     Message = ErrorManager.ShowError(ex)
@@ -76,7 +78,7 @@ namespace GameOfRevenge.Business.Manager.UserData
             }
             catch (DataNotExistExecption ex)
             {
-                return new Response<UserBuffData>()
+                return new Response<UserBoostData>()
                 {
                     Case = 201,
                     Message = ErrorManager.ShowError(ex)
@@ -84,7 +86,7 @@ namespace GameOfRevenge.Business.Manager.UserData
             }
             catch (RequirementExecption ex)
             {
-                return new Response<UserBuffData>()
+                return new Response<UserBoostData>()
                 {
                     Case = 202,
                     Message = ErrorManager.ShowError(ex)
@@ -92,7 +94,7 @@ namespace GameOfRevenge.Business.Manager.UserData
             }
             catch (Exception)
             {
-                return new Response<UserBuffData>()
+                return new Response<UserBoostData>()
                 {
                     Case = 0,
                     Message = ErrorManager.ShowError()
@@ -101,24 +103,26 @@ namespace GameOfRevenge.Business.Manager.UserData
 
         }
 
-        public async Task<Response<UserBuffData>> RemoveBuff(int playerId, InventoryItemType type)
+        public async Task<Response<UserBoostData>> RemoveBoost(int playerId, BoostType type)
         {
             try
             {
-                if (BuffType.Other == GetBuffType(type)) throw new DataNotExistExecption("Buff was null");
+                if (BoostType.Unknown == GetBoostType(type)) throw new DataNotExistExecption("Boost was null");
 
                 var timeStamp = DateTime.UtcNow;
-                var resp = await manager.AddOrUpdatePlayerData(playerId, DataType.ActiveBuffs, CacheInventoryDataManager.GetFullInventoryItemData(type).Info.Id, string.Empty);
+                int valueId = CacheBoostDataManager.GetFullBoostDataByType(type).BoostTypeId;
+//                var valueId = CacheBoostDataManager.GetFullBoostDataByType(type).Info.BoostTypeId;
+                var resp = await manager.AddOrUpdatePlayerData(playerId, DataType.ActiveBoost, valueId, string.Empty);
                 if (resp.IsSuccess & resp.HasData)
                 {
-                    var buffData = PlayerDataToUserBuffData(resp.Data);
-                    return new Response<UserBuffData>(buffData, resp.Case, resp.Message);
+                    var buffData = PlayerDataToUserBoostData(resp.Data);
+                    return new Response<UserBoostData>(buffData, resp.Case, resp.Message);
                 }
-                else return new Response<UserBuffData>(resp.Case, resp.Message);
+                else return new Response<UserBoostData>(resp.Case, resp.Message);
             }
             catch (InvalidModelExecption ex)
             {
-                return new Response<UserBuffData>()
+                return new Response<UserBoostData>()
                 {
                     Case = 200,
                     Message = ErrorManager.ShowError(ex)
@@ -126,7 +130,7 @@ namespace GameOfRevenge.Business.Manager.UserData
             }
             catch (DataNotExistExecption ex)
             {
-                return new Response<UserBuffData>()
+                return new Response<UserBoostData>()
                 {
                     Case = 201,
                     Message = ErrorManager.ShowError(ex)
@@ -134,7 +138,7 @@ namespace GameOfRevenge.Business.Manager.UserData
             }
             catch (RequirementExecption ex)
             {
-                return new Response<UserBuffData>()
+                return new Response<UserBoostData>()
                 {
                     Case = 202,
                     Message = ErrorManager.ShowError(ex)
@@ -142,37 +146,38 @@ namespace GameOfRevenge.Business.Manager.UserData
             }
             catch (Exception)
             {
-                return new Response<UserBuffData>()
+                return new Response<UserBoostData>()
                 {
                     Case = 0,
                     Message = ErrorManager.ShowError()
                 };
             }
         }
-        public async Task<Response<UserBuffData>> RemoveBuff(int playerId, InventoryItemType type, int count)
+        public async Task<Response<UserBoostData>> RemoveBoost(int playerId, BoostType type, int count)
         {
             try
             {
-                BuffType buffType = GetBuffType(type);
-                if (BuffType.Other == buffType) throw new DataNotExistExecption("Buff was null");
+                BoostType buffType = GetBoostType(type);
+                if (BoostType.Unknown == buffType) throw new DataNotExistExecption("Boost was null");
 
                 var timeStamp = DateTime.UtcNow;
-                if (count <= 0) return new Response<UserBuffData>(CaseType.Success, "Count was zero");
+                if (count <= 0) return new Response<UserBoostData>(CaseType.Success, "Count was zero");
 
-                int invId = CacheInventoryDataManager.GetFullInventoryItemData(type).Info.Id;
-                var buffRespData = await manager.GetPlayerData(playerId, DataType.ActiveBuffs, invId);
-                UserBuffData buffData = null;
+                var invId = CacheBoostDataManager.GetFullBoostDataByType(type).BoostTypeId;
+                var buffRespData = await manager.GetPlayerData(playerId, DataType.ActiveBoost, invId);
+                UserBoostData buffData = null;
 
                 if (buffRespData.IsSuccess && buffRespData.HasData)
                 {
-                    buffData = PlayerDataToUserBuffData(buffRespData.Data);
+                    buffData = PlayerDataToUserBoostData(buffRespData.Data);
                     if (buffData != null)
                     {
                         if (buffData.Value == null || buffData.Value.TimeLeft <= 0)
                         {
-                            buffData.Value = new UserBuffDetails
+                            buffData.Value = new FullUserBoostDetails
                             {
-                                BuffType = buffType,
+                                Id = buffData.Id,
+                                BoostType = buffType,
                                 StartTime = timeStamp,
                                 EndTime = timeStamp.AddDays(-count)
                             };
@@ -186,13 +191,13 @@ namespace GameOfRevenge.Business.Manager.UserData
 
                 if (buffData.Value.TimeLeft <= 0) buffData.Value = null;
                 string strValue = buffData.Value == null ? string.Empty : JsonConvert.SerializeObject(buffData.Value);
-                var resp = await manager.AddOrUpdatePlayerData(playerId, DataType.ActiveBuffs, invId, strValue);
-                if (resp.IsSuccess & resp.HasData) return new Response<UserBuffData>(buffData, resp.Case, resp.Message);
-                else return new Response<UserBuffData>(resp.Case, resp.Message);
+                var resp = await manager.AddOrUpdatePlayerData(playerId, DataType.ActiveBoost, invId, strValue);
+                if (resp.IsSuccess & resp.HasData) return new Response<UserBoostData>(buffData, resp.Case, resp.Message);
+                else return new Response<UserBoostData>(resp.Case, resp.Message);
             }
             catch (InvalidModelExecption ex)
             {
-                return new Response<UserBuffData>()
+                return new Response<UserBoostData>()
                 {
                     Case = 200,
                     Message = ErrorManager.ShowError(ex)
@@ -200,7 +205,7 @@ namespace GameOfRevenge.Business.Manager.UserData
             }
             catch (DataNotExistExecption ex)
             {
-                return new Response<UserBuffData>()
+                return new Response<UserBoostData>()
                 {
                     Case = 201,
                     Message = ErrorManager.ShowError(ex)
@@ -208,7 +213,7 @@ namespace GameOfRevenge.Business.Manager.UserData
             }
             catch (RequirementExecption ex)
             {
-                return new Response<UserBuffData>()
+                return new Response<UserBoostData>()
                 {
                     Case = 202,
                     Message = ErrorManager.ShowError(ex)
@@ -216,7 +221,7 @@ namespace GameOfRevenge.Business.Manager.UserData
             }
             catch (Exception)
             {
-                return new Response<UserBuffData>()
+                return new Response<UserBoostData>()
                 {
                     Case = 0,
                     Message = ErrorManager.ShowError()

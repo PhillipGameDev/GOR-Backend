@@ -13,10 +13,25 @@ namespace GameOfRevenge.Common.Interface.UserData
     public interface IBaseUserManager
     {
         UserResourceData PlayerDataToUserResourceData(PlayerDataTable playerData);
+        UserResourceData PlayerDataToUserResourceData(PlayerDataTableUpdated playerDataUpdated);
+
         UserStructureData PlayerDataToUserStructureData(PlayerDataTable playerData);
+        UserStructureData PlayerDataToUserStructureData(PlayerDataTableUpdated playerDataUpdated);
+
         UserTroopData PlayerDataToUserTroopData(PlayerDataTable playerData);
+        UserTroopData PlayerDataToUserTroopData(PlayerDataTableUpdated playerDataUpdated);
+
         UserInventoryData PlayerDataToUserInventoryData(PlayerDataTable playerData);
+        UserInventoryDataUpdated PlayerDataToUserInventoryData(PlayerDataTableUpdated playerDataUpdated);
+
+        UserBoostData PlayerDataToUserBoostData(PlayerDataTable playerData);
+        UserBoostData PlayerDataToUserBoostData(PlayerDataTableUpdated playerDataUpdated);
+
+        UserHeroData PlayerDataToUserHeroData(PlayerDataTable playerData);
+        UserHeroData PlayerDataToUserHeroData(PlayerDataTableUpdated playerDataUpdated);
+
         UserTechnologyData PlayerDataToUserTechnologyData(PlayerDataTable playerData);
+        UserTechnologyData PlayerDataToUserTechnologyData(PlayerDataTableUpdated playerDataUpdated);
 
         PlayerDataTable UserResourceDataToPlayerData(UserResourceData playerData);
         PlayerDataTable UserStructureDataToPlayerData(UserStructureData playerData);
@@ -26,15 +41,16 @@ namespace GameOfRevenge.Common.Interface.UserData
 
         Dictionary<int, UserStructureData> GetMultipleBuildings(UserStructureData structure);
         UserStructureData GetStructureDataAccLoc(UserStructureData structure, int locId);
-        Task<Response<PlayerCompleteData>> GetPlayerData(int playerId);
+
+        Task<Response<PlayerCompleteData>> GetFullPlayerData(int playerId);
 
         bool HasRequirements(IReadOnlyList<IReadOnlyDataRequirement> requirements, List<StructureInfos> structures, ResourcesList resourcess);
         bool HasRequirements(IReadOnlyList<IReadOnlyDataRequirement> requirements, List<StructureInfos> structures, ResourcesList resourcess, int count);
         bool HasRequirements(IReadOnlyList<IReadOnlyDataRequirement> requirements, ResourcesList resourcess, int count);
         bool HasRequirements(IReadOnlyList<IReadOnlyDataRequirement> requirements, List<StructureInfos> structures);
 
-        PlayerDataTable UserBuffDataToPlayerData(UserBuffData playerData);
-        UserBuffData PlayerDataToUserBuffData(PlayerDataTable playerData);
+        PlayerDataTable UserBoostDataToPlayerData(UserBoostData playerData);
+//        UserBuffData PlayerDataToUserBuffData(PlayerDataTable playerData);
 
         int GetInstantBuildCost(int timeLeft);
     }

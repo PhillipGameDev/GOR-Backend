@@ -10,9 +10,9 @@ namespace GameOfRevenge.Business.Manager.GameDef
 {
     public class BoostManager : BaseManager
     {
-        public async Task<Response<List<BoostTable>>> GetAllBoosts() => await Db.ExecuteSPMultipleRow<BoostTable>("GetAllBoosts");
+//        public async Task<Response<List<BoostTable>>> GetAllBoosts() => await Db.ExecuteSPMultipleRow<BoostTable>("GetAllBoosts");
         public async Task<Response<List<BoostTypeTable>>> GetAllBoostTypes() => await Db.ExecuteSPMultipleRow<BoostTypeTable>("GetAllBoostTypes");
-        public async Task<Response<List<BoostTypeRel>>> GetAllBoostRelData()
+/*        public async Task<Response<List<BoostTypeRel>>> GetAllBoostRelData()
         {
             var types = await GetAllBoostTypes();
             if (!types.IsSuccess) return new Response<List<BoostTypeRel>>(types.Case, types.Message);
@@ -34,6 +34,6 @@ namespace GameOfRevenge.Business.Manager.GameDef
             }
 
             return response;
-        }
+        }*/
     }
 }

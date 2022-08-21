@@ -43,7 +43,7 @@ namespace GameOfRevenge.Business.Manager
                     {
                         await resManager.AddMainResource(response.Data.PlayerId, 10000, 10000, 10000, 100);
 #if DEBUG
-                        await resManager.AddMainResource(response.Data.PlayerId, 1000000, 1000000, 1000000, 100000);
+                        await resManager.AddMainResource(response.Data.PlayerId, 100000, 100000, 100000, 10000);
 #endif
                         var cityCounselLocs = CacheData.CacheStructureDataManager.GetFullStructureData(StructureType.CityCounsel).Locations;
                         var gateLocs = CacheData.CacheStructureDataManager.GetFullStructureData(StructureType.Gate).Locations;

@@ -22,9 +22,30 @@ namespace GameOfRevenge.Business.CacheData
         private static List<StructureType> structureTypes;
 
         public static bool IsLoaded { get => isLoaded && structureInfos != null; }
-        public static List<BuildingInfoData> StructureInfoFactory { get { CheckLoadCacheMemory(); return LoadInfoOnly(); } }
-        public static IReadOnlyList<IReadOnlyStructureDataRequirementRel> StructureInfos { get { CheckLoadCacheMemory(); return structureInfos.ToList(); } }
-        public static IReadOnlyList<StructureType> StructureTypes { get { CheckLoadCacheMemory(); return structureTypes; } }
+        public static List<BuildingInfoData> StructureInfoFactory
+        {
+            get
+            {
+                CheckLoadCacheMemory();
+                return LoadInfoOnly();
+            }
+        }
+        public static IReadOnlyList<IReadOnlyStructureDataRequirementRel> StructureInfos
+        {
+            get
+            {
+                CheckLoadCacheMemory();
+                return structureInfos;//.ToList();
+            }
+        }
+        public static IReadOnlyList<StructureType> StructureTypes
+        {
+            get
+            {
+                CheckLoadCacheMemory();
+                return structureTypes;
+            }
+        }
 
 
         public static IReadOnlyStructureTable GetStructureTable(int structureId)
@@ -121,13 +142,14 @@ namespace GameOfRevenge.Business.CacheData
 
             var resManager = new StructureManager();
             var response = await resManager.GetAllStructDataRequirementRel();
-
             if (response.IsSuccess && response.HasData)
             {
+
                 structureTypes = new List<StructureType>();
                 structureInfos = response.Data;
                 foreach (var structure in response.Data)
                 {
+                    if (structure.Info == null) continue;
                     if (structureTypes.Contains(structure.Info.Code)) continue;
                     if (structure.Info.Code == StructureType.Other) continue;
                     structureTypes.Add(structure.Info.Code);
@@ -136,7 +158,14 @@ namespace GameOfRevenge.Business.CacheData
                 {
                     foreach (var structure in structures.Levels)
                     {
-                        if (structure.Data.Level == 1 && (structures.Info.Code == StructureType.CityCounsel || structures.Info.Code == StructureType.Gate || structures.Info.Code == StructureType.Warehouse)) structure.Data.TimeToBuild = 0;
+                        //TODO: put these overrided values on database
+                        if ((structure.Data.Level == 1) &&
+                            ((structures.Info.Code == StructureType.CityCounsel) ||
+                            (structures.Info.Code == StructureType.Gate) ||
+                            (structures.Info.Code == StructureType.Warehouse)))
+                        {
+                            structure.Data.TimeToBuild = 0;
+                        }
                         //#if DEBUG
                         //                        else structure.Data.TimeToBuild = 60;
                         //#endif
@@ -159,12 +188,14 @@ namespace GameOfRevenge.Business.CacheData
         public static void CheckLoadCacheMemory()
         {
             if (isLoaded) return;
-            else LoadCacheMemory();
+
+            LoadCacheMemory();
         }
         public static async Task CheckLoadCacheMemoryAsync()
         {
             if (isLoaded) return;
-            else await LoadCacheMemoryAsync();
+
+            await LoadCacheMemoryAsync();
         }
         public static void ClearCache()
         {

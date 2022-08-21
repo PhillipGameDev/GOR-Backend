@@ -17,7 +17,7 @@ namespace GameOfRevenge.GameHandlers
 {
     public class GameLobbyHandler
     {
-        private static readonly ILogger log = LogManager.GetCurrentClassLogger();
+        public static readonly ILogger log = LogManager.GetCurrentClassLogger();
         public IWorld GridWorld { get { return GameService.WorldHandler.DefaultWorld; } }
 
         public async Task<SendResult> OnLobbyMessageRecived(IGorMmoPeer peer, OperationRequest operationRequest, SendParameters sendParameters)
@@ -28,32 +28,35 @@ namespace GameOfRevenge.GameHandlers
 
                 switch ((OperationCode)operationRequest.OperationCode)
                 {
-                    case OperationCode.PlayerConnectToServer: return HandlPlayerConnectToGameServer(peer, operationRequest);
-                    case OperationCode.UserTeleport: return HandlePlayerTeleport(peer, operationRequest);
-                    case OperationCode.JoinKingdomRoom: return HandlePlayerJoinKingdomView(peer, operationRequest);
-                    case OperationCode.LeaveKingdomRoom: return HandlePlayerLeaveKingdomView(peer, operationRequest);
-                    case OperationCode.PlayerCameraMove: return HandlePlayerCameraMove(peer, operationRequest);
-                    case OperationCode.CreateStructure: return await HandleCreateStructure(peer, operationRequest);
-                    case OperationCode.UpgradeStructure: return await HandleUpgradeStructure(peer, operationRequest);
-                    case OperationCode.PlayerBuildingStatus: return await HandlePlayerBuildingStatus(peer, operationRequest);
-                    case OperationCode.RecruitTroopRequest: return await HandleRecruitToopRequest(peer, operationRequest);
-                    case OperationCode.RecruitTroopStatus: return await HandleRecruitTroopStatus(peer, operationRequest);
-                    case OperationCode.TroopTrainerTimeBoost: return HandleTroopBoostUp(peer, operationRequest);
-                    case OperationCode.CollectResourceRequest: return await HandleCollectResourceRequest(peer, operationRequest);
-                    case OperationCode.BoostResourceTime: return HandleBoostResources(peer, operationRequest);
-                    case OperationCode.AttackRequest: return HandleAttackRequest(peer, operationRequest);
-                    case OperationCode.WoundedHealReqeust: return HandleWoundedHealRequest(peer, operationRequest);
-                    case OperationCode.WoundedHealTimerRequest: return HandleWoundedHealTimerStatus(peer, operationRequest);
-                    case OperationCode.UpgradeTechnology: return UpgradeTechnologyRequest(peer, operationRequest);
-                    case OperationCode.RepairGate: return RepairGateRequest(peer, operationRequest);
-                    case OperationCode.GateHp: return GetGateHpRequest(peer, operationRequest);
-                    case OperationCode.GlobalChat: return GlobalChat(peer, operationRequest);
-                    case OperationCode.Ping: return peer.SendOperation(operationRequest.OperationCode, ReturnCode.OK);
-                    case OperationCode.GetInstantBuildCost: return GetInstantBuildCost(peer, operationRequest);
-                    case OperationCode.InstantBuild: return await HandleInstantBuild(peer, operationRequest);
-                    case OperationCode.SpeedUpBuildCost: return await SpeedUpBuildCost(peer, operationRequest);
-                    case OperationCode.SpeedUpBuild: return await HandleSpeedUpBuild(peer, operationRequest);
-                    case OperationCode.InstantRecruit: return await HandleInstantRecruit(peer, operationRequest);
+                    case OperationCode.PlayerConnectToServer: return HandlPlayerConnectToGameServer(peer, operationRequest);//1
+                    case OperationCode.UserTeleport: return HandlePlayerTeleport(peer, operationRequest);//3
+                    case OperationCode.JoinKingdomRoom: return HandlePlayerJoinKingdomView(peer, operationRequest);//4
+                    case OperationCode.LeaveKingdomRoom: return HandlePlayerLeaveKingdomView(peer, operationRequest);//5
+                    case OperationCode.PlayerCameraMove: return HandlePlayerCameraMove(peer, operationRequest);//6
+                    case OperationCode.CreateStructure: return await HandleCreateStructure(peer, operationRequest);//7
+                    case OperationCode.UpgradeStructure: return await HandleUpgradeStructure(peer, operationRequest);//8
+                    case OperationCode.PlayerBuildingStatus: return await HandlePlayerBuildingStatus(peer, operationRequest);//9
+                    case OperationCode.RecruitTroopRequest: return await HandleRecruitToopRequest(peer, operationRequest);//10
+                    case OperationCode.RecruitTroopStatus: return await HandleRecruitTroopStatus(peer, operationRequest);//11
+                    case OperationCode.TroopTrainerTimeBoost: return HandleTroopBoostUp(peer, operationRequest);//12
+                    case OperationCode.CollectResourceRequest: return await HandleCollectResourceRequest(peer, operationRequest);//13
+                    case OperationCode.BoostResourceTime: return HandleBoostResources(peer, operationRequest);//14
+                    case OperationCode.AttackRequest: return HandleAttackRequest(peer, operationRequest);//15
+                    case OperationCode.WoundedHealReqeust: return HandleWoundedHealRequest(peer, operationRequest);//16
+                    case OperationCode.WoundedHealTimerRequest: return HandleWoundedHealTimerStatus(peer, operationRequest);//17
+                    case OperationCode.UpgradeTechnology: return UpgradeTechnologyRequest(peer, operationRequest);//18
+                    case OperationCode.RepairGate: return RepairGateRequest(peer, operationRequest);//19
+                    case OperationCode.GateHp: return GetGateHpRequest(peer, operationRequest);//20
+                    case OperationCode.GlobalChat: return GlobalChat(peer, operationRequest);//21
+                    case OperationCode.AllianceChat: return AllianceChat(peer, operationRequest);//21
+                    case OperationCode.Ping: return peer.SendOperation(operationRequest.OperationCode, ReturnCode.OK);//2
+                    case OperationCode.GetInstantBuildCost: return GetInstantBuildCost(peer, operationRequest);//26
+                    case OperationCode.InstantBuild: return await HandleInstantBuild(peer, operationRequest);//23
+                    case OperationCode.SpeedUpBuildCost: return await SpeedUpBuildCost(peer, operationRequest);//25
+                    case OperationCode.SpeedUpBuild: return await HandleSpeedUpBuild(peer, operationRequest);//24
+                    case OperationCode.InstantRecruit: return await HandleInstantRecruit(peer, operationRequest);//27
+                    case OperationCode.HelpStructure: return HandleHelpStructure(peer, operationRequest);
+//                    OperationCode.CheckUnderAttack = 22
                     default: return peer.SendOperation(operationRequest.OperationCode, ReturnCode.InvalidOperation);
                 }
             }
@@ -162,14 +165,36 @@ namespace GameOfRevenge.GameHandlers
 
         private SendResult GlobalChat(IGorMmoPeer peer, OperationRequest operationRequest)
         {
-            var operation = new ChatMessage(peer.Protocol, operationRequest);
+            GameLobbyHandler.log.Info(">>>>>GLOBAL CHAT");
+            var operation = new ChatMessageRequest(peer.Protocol, operationRequest);
             ChatMessageRespose response = new ChatMessageRespose()
             {
                 ChatMessage = operation.Message,
                 UserName = operation.UserName,
-                CurrentTime = DateTime.UtcNow.ToString("dd/MM/yyyy  HH/mm/ss")
+                AllianceId = 0,
+                CurrentTime = DateTime.UtcNow.ToString("dd/MM/yyyy HH/mm/ss")
             };
-            return peer.Broadcast(OperationCode.GlobalChat, ReturnCode.OK, response.GetDictionary());
+            var data = response.GetDictionary();
+            GameLobbyHandler.log.Info(">>>>>data ="+data);
+
+            return peer.Broadcast(OperationCode.GlobalChat, ReturnCode.OK, data);
+        }
+
+        private SendResult AllianceChat(IGorMmoPeer peer, OperationRequest operationRequest)
+        {
+            GameLobbyHandler.log.Info(">>>>>ALLIANCE CHAT");
+            var operation = new ChatMessageRequest(peer.Protocol, operationRequest);
+            ChatMessageRespose response = new ChatMessageRespose()
+            {
+                ChatMessage = operation.Message,
+                UserName = operation.UserName,
+                AllianceId = 0,
+                CurrentTime = DateTime.UtcNow.ToString("dd/MM/yyyy HH/mm/ss")
+            };
+            var data = response.GetDictionary();
+            GameLobbyHandler.log.Info(">>>>>data =" + data);
+
+            return peer.Broadcast(OperationCode.AllianceChat, ReturnCode.OK, data);
         }
 
         private SendResult GetGateHpRequest(IGorMmoPeer peer, OperationRequest operationRequest)
@@ -237,6 +262,7 @@ namespace GameOfRevenge.GameHandlers
         public async Task<SendResult> HandleRecruitToopRequest(IGorMmoPeer peer, OperationRequest operationRequest)
         {
             var operation = new RecruitTroopRequest(peer.Protocol, operationRequest);
+            log.Info("============== HandleRecruitToopRequest >" + JsonConvert.SerializeObject(operation));
             if (!operation.IsValid) return SendOperationResponse(peer, operationRequest, new Response(CaseType.Error, operation.GetErrorMessage()));
 
             var response = await GameService.BUsertroopManager.TrainTroops(peer.Actor.PlayerId, (TroopType)operation.TroopType, operation.TroopLevel, operation.TroopCount, operation.LocationId);
@@ -245,64 +271,120 @@ namespace GameOfRevenge.GameHandlers
 
             if (response.IsSuccess && response.HasData)
             {
-                GameService.NewRealTimeUpdateManager.TrainTroopsUpdate(peer.Actor.PlayerId, ((TroopType)operation.TroopType).ToString(), operation.TroopLevel, operation.TroopLevel);
+                //update any task that require training troops
+                GameService.NewRealTimeUpdateManager.TrainTroopsUpdate(peer.Actor.PlayerId, ((TroopType)operation.TroopType).ToString(), operation.TroopLevel, operation.TroopCount);
             }
 
-            return SendOperationResponse(peer, operationRequest, response);
+/*            var traningTroopResp = new TroopTrainResponse()
+            {
+                LocationId = operation.LocationId,
+                StructureType = operation.StructureType,
+
+                TotalTime = troopInfo.TotalTime,
+                TrainingTime = troopInfo.TimeLeft
+            };*/
+
+
+            if (response.IsSuccess && response.HasData)
+            {
+                var response2 = await GameService.BUsertroopManager.GetFullPlayerData(peer.Actor.PlayerId);
+                Dictionary<byte, object> data = null;
+
+                if (response2.IsSuccess)
+                {
+                    data = GetTroopTrainingData(operation.LocationId, operation.StructureType, (TroopType)operation.TroopType, response2);
+                }
+                else
+                {
+                    response.Case = 0;
+                    response.Message = "Invalid troop data";
+                }
+
+                //                Dictionary<byte, object> data = GetTroopTrainingData(operation.LocationId, operation.StructureType, (TroopType)operation.TroopType, response2);
+
+                //                return SendOperationResponse(peer, operationRequest, response, response.Data);
+                return peer.SendOperation(operationRequest.OperationCode, ReturnCode.OK, data, debuMsg: response.Message);
+//                return peer.SendOperation(operationRequest.OperationCode, ReturnCode.OK, uresponse.GetDictionary(), debuMsg: response.Message);
+            }
+            else
+            {
+                return SendOperationResponse(peer, operationRequest, response);
+            }
         }
 
         public async Task<SendResult> HandleRecruitTroopStatus(IGorMmoPeer peer, OperationRequest operationRequest)
         {
             var operation = new TroopTrainingStatusRequest(peer.Protocol, operationRequest);
+            log.Info(">>>>>>>>> HandleRecruitTroopStatus >"+JsonConvert.SerializeObject(operation));
 
             if (!operation.IsValid) return SendOperationResponse(peer, operationRequest, new Response(CaseType.Error, operation.GetErrorMessage()));
 
-            var response = await GameService.BUsertroopManager.GetPlayerData(peer.Actor.PlayerId);
+            var response = await GameService.BUsertroopManager.GetFullPlayerData(peer.Actor.PlayerId);
             Dictionary<byte, object> data = null;
 
             if (response.IsSuccess)
             {
-                var troopData = response.Data.Troops.FirstOrDefault(x => x.TroopType == (TroopType)operation.TroopType)?.TroopData;
-                if (troopData != null && troopData.Count > 0)
-                {
-                    var breakAll = false;
-                    var troopTraning = troopData.Select(x => x.InTraning)?.ToList();
-                    if (troopTraning != null && troopTraning.Count > 0)
-                    {
-                        foreach (var traning in troopTraning)
-                        {
-                            foreach (var troopInfo in traning)
-                            {
-                                if (troopInfo.BuildingLocId == operation.LocationId)
-                                {
-                                    var traningTroopResp = new TroopTrainingTimeResponse()
-                                    {
-                                        LocationId = operation.LocationId,
-                                        StructureType = operation.StructureType,
-                                        TotalTime = troopInfo.TotalTime,
-                                        TrainingTime = troopInfo.TimeLeft
-                                    };
-
-                                    data = traningTroopResp.GetDictionary();
-
-                                    breakAll = true;
-                                }
-
-                                if (breakAll) break;
-                            }
-                            if (breakAll) break;
-                        }
-                    }
-                }
+                data = GetTroopTrainingData(operation.LocationId, operation.StructureType, (TroopType)operation.TroopType, response);
             }
-
-            if (data == null)
+            else
             {
                 response.Case = 0;
                 response.Message = "Invalid troop data";
             }
+//            return peer.SendOperation(operationRequest.OperationCode, ReturnCode.InvalidOperation, debuMsg: "troop not training on location");
 
             return SendOperationResponse(peer, operationRequest, response, data);
+        }
+
+        private Dictionary<byte, object> GetTroopTrainingData(int locationId, int structureType, TroopType troopType, Response<Common.Models.PlayerCompleteData> response)
+        {
+            Dictionary<byte, object> data = null;
+
+            var troopData = response.Data.Troops.FirstOrDefault(x => x.TroopType == troopType)?.TroopData;
+            if (troopData != null && troopData.Count > 0)
+            {
+                var breakAll = false;
+                var troopTraning = troopData.Select(x => x.InTraning).Where(x => x != null)?.ToList();
+                if (troopTraning != null && troopTraning.Count > 0)
+                {
+                    foreach (var traning in troopTraning)
+                    {
+                        foreach (var troopInfo in traning)
+                        {
+                            if (troopInfo.BuildingLocId == locationId)
+                            {
+                                var traningTroopResp = new TroopTrainingTimeResponse()
+                                {
+                                    LocationId = locationId,
+                                    StructureType = structureType,
+                                    TotalTime = troopInfo.TotalTime,
+                                    TrainingTime = troopInfo.TimeLeft
+                                };
+
+                                data = traningTroopResp.GetDictionary();
+                                //                                    return peer.SendOperation(operationRequest.OperationCode, ReturnCode.OK, data, debuMsg: response.Message);
+
+                                breakAll = true;
+                            }
+
+                            if (breakAll) break;
+                        }
+                        if (breakAll) break;
+                    }
+                }
+                else
+                {
+                    response.Case = 0;
+                    response.Message = "Troop not training";
+                }
+            }
+            else
+            {
+                response.Case = 0;
+                response.Message = "Troop not found";
+            }
+
+            return data;
         }
 
         public SendResult HandleTroopBoostUp(IGorMmoPeer peer, OperationRequest operationRequest)
@@ -358,10 +440,16 @@ namespace GameOfRevenge.GameHandlers
 
         public SendResult HandleAttackRequest(IGorMmoPeer peer, OperationRequest operationRequest)
         {
+            log.Debug("@@@@@@@ HANDLE ATTACK REQUEST FROM "+peer.Actor.PlayerId);
             var operation = new AttackRequest(peer.Protocol, operationRequest);
-            if (!operation.IsValid) return peer.SendOperation(operationRequest.OperationCode, ReturnCode.InvalidOperation, debuMsg: operation.GetErrorMessage());
+            if (!operation.IsValid)
+            {
+                log.Debug("@@@@ ATTACK INVALID");
+                return peer.SendOperation(operationRequest.OperationCode, ReturnCode.InvalidOperation, debuMsg: operation.GetErrorMessage());
+            }
 
             peer.Actor.PlayerAttackHandler.AttackRequest(operation);
+            log.Debug("@@@@ ATTACK OK!!");
             return SendResult.Ok;
         }
 
@@ -453,6 +541,23 @@ namespace GameOfRevenge.GameHandlers
                 peer.Actor.InterestArea.CameraMove(region);
                 return peer.SendOperation(operationRequest.OperationCode, ReturnCode.OK);
             }
+
+            return SendResult.Ok;
+        }
+
+        public SendResult HandleHelpStructure(IGorMmoPeer peer, OperationRequest operationRequest)
+        {
+            var operation = new HelpStructureRequest(peer.Protocol, operationRequest);
+            if (!operation.IsValid) return peer.SendOperation(operationRequest.OperationCode, ReturnCode.InvalidOperation, debuMsg: operation.GetErrorMessage());
+
+            HelpStructureRespose response = new HelpStructureRespose()
+            {
+                PlayerId = operation.PlayerId,
+                StructureType = operation.StructureType,
+                StructureLocationId = operation.StructureLocationId
+            };
+
+            peer.Broadcast(OperationCode.HelpStructure, ReturnCode.OK, response.GetDictionary());
 
             return SendResult.Ok;
         }

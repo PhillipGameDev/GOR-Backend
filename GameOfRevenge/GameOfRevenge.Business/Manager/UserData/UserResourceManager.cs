@@ -19,7 +19,7 @@ namespace GameOfRevenge.Business.Manager.UserData
             if (info == null) throw new InvalidModelExecption("Unexpected error occured");
             else return info.Id;
         }
-      
+
         private async Task<float> GetPlayerDataValue(int playerId, int resId)
         {
             var response = await manager.GetPlayerData(playerId, DataType.Resource, resId);
@@ -36,7 +36,7 @@ namespace GameOfRevenge.Business.Manager.UserData
             if (playerId <= 0) throw new InvalidModelExecption("Invalid player id");
             if (valueId <= 0) throw new InvalidModelExecption("Invalid value id");
         }
-        
+
         public async Task<Response<List<UserResourceData>>> AddMainResource(int playerId, float food, float wood, float ore, float gems)
         {
             var foodData = await AddFoodResource(playerId, food);
@@ -168,6 +168,89 @@ namespace GameOfRevenge.Business.Manager.UserData
                 Data = new List<UserResourceData>() { foodData.Data, woodData.Data, oreData.Data, gemData.Data }
             };
         }
+
+        public async Task<Response<List<StoredDataTable>>> GetAllPlayerStoredData(int playerId, int structureLocationId = -1)
+        {
+            return await manager.GetAllPlayerStoredData(playerId, structureLocationId);
+/*            if (response.IsSuccess)
+            {
+                return new Response(<StoredDataTable>()
+                {
+                    Case = response.Case,
+                    Data = response.Data,
+                    Message = response.Message
+                };
+            }
+            else
+            {
+                return new Response()//<UserResourceData>()
+                {
+                    Case = response.Case,
+                    //                    Data = null,
+                    Message = response.Message
+                };
+            }*/
+        }
+
+        public async Task<Response> StoreResource(int playerId, int structureLocationId, int valueId, int value)
+        {
+            return await manager.StoreResource(playerId, structureLocationId, valueId, value);
+/*            var response = await manager.StoreResource(playerId, structureLocationId, resId, value);
+            if (response.IsSuccess)
+            {
+                return new Response()//<UserResourceData>()
+                {
+                    Case = response.Case,
+//                    Data = PlayerDataToUserResourceData(response.Data),
+                    Message = response.Message
+                };
+            }
+            else
+            {
+                return new Response()//<UserResourceData>()
+                {
+                    Case = response.Case,
+//                    Data = null,
+                    Message = response.Message
+                };
+            }*/
+        }
+
+/*        public async Task<Response> StoreResource(int playerId, int structureLocationId, int resId, int value)
+        {
+            //            var response = await manager.TransferResource(playerId, structureLocationId, DataType.Resource, resId, value);
+
+            try
+            {
+                var spParams = new Dictionary<string, object>()
+                {
+                    { "PlayerId", playerId },
+                    { "StructureLocationId", structureLocationId },
+                    { "DataTypeId", DataType.Resource },
+                    { "ObjectId", resId },
+                    { "Value", value }
+                };
+
+                return await Db.ExecuteSPNoData("AddOrUpdatePlayerStoredData", spParams);
+            }
+            catch (InvalidModelExecption ex)
+            {
+                return new Response()
+                {
+                    Case = 200,
+                    Message = ex.Message
+                };
+            }
+            catch (Exception ex)
+            {
+                return new Response()
+                {
+                    Case = 0,
+                    Message = ErrorManager.ShowError(ex)
+                };
+            }
+        }*/
+
         public async Task<Response<UserResourceData>> UpdateResource(int playerId, int resId, float value)
         {
             Validate(playerId, resId);

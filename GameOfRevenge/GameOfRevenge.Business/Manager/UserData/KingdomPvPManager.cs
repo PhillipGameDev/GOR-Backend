@@ -1,4 +1,5 @@
-﻿using GameOfRevenge.Business.CacheData;
+﻿using ExitGames.Logging;
+using GameOfRevenge.Business.CacheData;
 using GameOfRevenge.Business.Manager.Base;
 using GameOfRevenge.Common;
 using GameOfRevenge.Common.Email;
@@ -40,6 +41,8 @@ namespace GameOfRevenge.Business.Manager.UserData
 
     public class KingdomPvPManager : BaseUserDataManager, IKingdomPvPManager
     {
+        public static readonly ILogger log = LogManager.GetCurrentClassLogger();
+
         private readonly IUserTroopManager userTroopManager = new UserTroopManager();
         private readonly IUserMailManager mailManager = new UserMailManager();
         private readonly IAccountManager accManager = new AccountManager();
@@ -55,13 +58,13 @@ namespace GameOfRevenge.Business.Manager.UserData
 
                 if (army == null || army.Troops == null || army.Troops.Count == 0) throw new RequirementExecption("Zero marching army was sended to attack");
 
-                var attacker = await GetPlayerData(attackerId);
+                var attacker = await GetFullPlayerData(attackerId);
                 if (!attacker.IsSuccess || !attacker.HasData) throw new DataNotExistExecption(attacker.Message);
-                var defender = await GetPlayerData(defenderId);
+                var defender = await GetFullPlayerData(defenderId);
                 if (!defender.IsSuccess || !defender.HasData) throw new DataNotExistExecption(defender.Message);
 
-                var buffSheildData = defender.Data.Buffs.Where(x => x.BuffType == BuffType.Shield).FirstOrDefault();
-                if (buffSheildData != null && buffSheildData.TimeLeft > 0) throw new RequirementExecption("Defender has sheild activated");
+                var boostShieldData = defender.Data.Boosts.Where(x => x.BoostType == BoostType.Fog).FirstOrDefault();
+                if (boostShieldData != null && boostShieldData.TimeLeft > 0) throw new RequirementExecption("Defender has shield activated");
 
                 if (attacker.Data.Troops == null || attacker.Data.Troops.Count == 0) throw new RequirementExecption("User does not have any army");
                 if (attacker.Data.MarchingArmy != null)
@@ -121,160 +124,174 @@ namespace GameOfRevenge.Business.Manager.UserData
 
         private async Task<Response<UnderAttackReport>> SendAlertMail(int attackerId, int defenderId, Response<PlayerCompleteData> attacker, Response<PlayerCompleteData> defender, MapLocation loc)
         {
+            int maxWatchLevel = 0;
+            var watchTowers = defender.Data.Structures.Where(x => x.StructureType == StructureType.WatchTower)?.FirstOrDefault()?.Buildings;
+            if (watchTowers != null)
+            {
+                foreach (var bldg in watchTowers)
+                {
+                    if ((bldg.TimeLeft <= 0) && (bldg.Level > maxWatchLevel)) maxWatchLevel = bldg.Level;
+                }
+            }
+            maxWatchLevel = 100;
+            var attackerMailInfo = new UnderAttackReport()
+            {
+                Id = attackerId,
+                Defenderid = defenderId
+            };
+
             try
             {
-                var watchTower = defender.Data.Structures.Where(x => x.StructureType == StructureType.WatchTower)?.FirstOrDefault()?.Buildings;
-                int maxLevel = 0;
-                foreach (var bldg in watchTower)
-                {
-                    if (bldg.TimeLeft <= 0 && bldg.Level > maxLevel)
-                        maxLevel = bldg.Level;
-                }
+                await GenerateAlertMailFieldsFields(attackerId, attacker, loc, maxWatchLevel, attackerMailInfo);
+            }
+            catch { }
 
-                var attackerMailInfo = new UnderAttackReport()
-                {
-                    Id = attackerId,
-                    Defenderid = defenderId
-                };
-
-                await GenerateAlertMailFieldsFields(attackerId, attacker, loc, maxLevel, attackerMailInfo);
+            try
+            {
                 await mailManager.SendMail(defenderId, MailType.UnderAttack, JsonConvert.SerializeObject(attackerMailInfo));
-
-                return new Response<UnderAttackReport>(attackerMailInfo, CaseType.Success, "Scucess");
             }
             catch (Exception ex)
             {
                 return new Response<UnderAttackReport>(CaseType.Error, ErrorManager.ShowError(ex));
             }
+
+            return new Response<UnderAttackReport>(attackerMailInfo, CaseType.Success, "Success");
         }
 
-        private static async Task GenerateAlertMailFieldsFields(int attackerId, Response<PlayerCompleteData> attacker, MapLocation location, int maxLevel, UnderAttackReport attackerMailInfo)
+        private static async Task GenerateAlertMailFieldsFields(int attackerId, Response<PlayerCompleteData> attacker, MapLocation location, int watchTowerLevel, UnderAttackReport attackerMailInfo)
         {
-            var troopNames = new List<TroopData>();
-            var heroNames = new List<TroopData>();
-
-            try
+            //Reveals the incoming troops Player name.
+            if (watchTowerLevel > 0)
             {
-                //Reveals the incoming troops Player name.
-                if (maxLevel >= 1)
+                var attackerInfo = await new AccountManager().GetAccountInfo(attackerId);
+                if ((attackerInfo != null) && attackerInfo.IsSuccess && attackerInfo.HasData)
                 {
-                    var attackerName = string.Empty;
-                    var attackerInfo = await new AccountManager().GetAccountInfo(attackerId);
-                    if (attackerInfo.IsSuccess && attackerInfo.HasData) attackerName = attackerInfo.Data.Name;
-                    attackerMailInfo.Name = attackerName;
-                }
-
-                //Reveals the exact loaction of the incoming troops origin.
-                if (maxLevel >= 3) attackerMailInfo.Location = location;
-
-                //Reveals the incoming troops estimated time of arrival.
-                if (maxLevel >= 7) attackerMailInfo.TimeTaken = attacker.Data.MarchingArmy.TimeLeft;
-
-                //Reveals the total size of incoming troops.
-                if (maxLevel >= 11)
-                {
-                    var armySize = 0;
-
-                    foreach (var troop in attacker.Data.MarchingArmy.Troops)
-                    {
-                        if (troop != null)
-                        {
-                            foreach (var item in troop.TroopData)
-                            {
-                                if (item != null)
-                                {
-                                    armySize += item.FinalCount;
-
-                                    troopNames.Add(new TroopData()
-                                    {
-                                        Type = troop.TroopType.ToString(),
-                                        Level = item.Level,
-                                        Name = $"{troop.TroopType}  {item.Level}",
-                                        Count = item.FinalCount
-                                    }); ;
-                                }
-                            }
-                        }
-                    }
-
-                    attackerMailInfo.TotalTroopSize = armySize;
-                }
-
-                //Reveals the exact king level of the incoming troops.
-                if (maxLevel >= 17) attackerMailInfo.KingLevel = 0;
-
-                //"Reveals the number of each soldier type frome the incoming troops."
-                if (maxLevel < 23) foreach (var item in troopNames) item.Count = 0;
-
-                //Reveals the soldier types of the incoming troops.
-                if (maxLevel >= 19) attackerMailInfo.Troops = troopNames;
-
-                //Displays the amount of heroes in the dispatch.
-                if (maxLevel >= 25) attackerMailInfo.TotalHeroSize = attacker.Data.MarchingArmy.Heros.Count;
-
-
-                //Displays the type of Heroes in the dispatch.
-                if (maxLevel >= 30)
-                {
-                    foreach (var item in attacker.Data.MarchingArmy.Heros)
-                    {
-                        var heroData = CacheHeroDataManager.GetFullHeroData(item);
-                        heroNames.Add(new TroopData()
-                        {
-                            Name = heroData.Info.Name
-                        });
-                    }
-
-                    attackerMailInfo.Heros = heroNames;
+                    attackerMailInfo.Name = attackerInfo.Data.Name;
                 }
             }
-            catch (Exception)
-            {
 
+            //Reveals the exact location of the incoming troops origin.
+            if (watchTowerLevel >= 3) attackerMailInfo.Location = location;
+
+            //Reveals the incoming troops estimated time of arrival.
+            if (watchTowerLevel >= 7) attackerMailInfo.TimeTaken = attacker.Data.MarchingArmy.TimeLeft;
+
+            var troops = new List<TroopData>();
+            //Reveals the total size of incoming troops.
+            if (watchTowerLevel >= 11)
+            {
+                var armySize = 0;
+                foreach (var troop in attacker.Data.MarchingArmy.Troops)
+                {
+                    if (troop == null) continue;
+
+                    foreach (var item in troop.TroopData)
+                    {
+                        if (item == null) continue;
+
+                        armySize += item.FinalCount;
+
+                        troops.Add(new TroopData()
+                        {
+                            Type = troop.TroopType.ToString(),
+                            Level = item.Level,
+                            Name = $"{troop.TroopType} Lvl.{item.Level}",
+                            Count = item.FinalCount
+                        }); ;
+                    }
+                }
+
+                attackerMailInfo.TotalTroopSize = armySize;
+            }
+
+            //Reveals the exact king level of the incoming troops. TODO: ?
+            if (watchTowerLevel >= 17) attackerMailInfo.KingLevel = 0;
+
+            //Reveals the soldier types of the incoming troops.
+            if (watchTowerLevel >= 19) attackerMailInfo.Troops = troops;
+
+            //"Reveals the number of each soldier type from the incoming troops."
+            if (watchTowerLevel < 23) foreach (var item in troops) item.Count = 0;
+
+            attackerMailInfo.TotalHeroSize = 0;
+            attackerMailInfo.Heros = null;
+            if ((attacker.Data.MarchingArmy.Heroes != null) && (attacker.Data.MarchingArmy.Heroes.Count > 0) &&
+                (watchTowerLevel >= 25))
+            {
+                //Displays the amount of heroes in the dispatch.
+                attackerMailInfo.TotalHeroSize = attacker.Data.MarchingArmy.Heroes.Count;
+
+                //Displays the type of Heroes in the dispatch.
+                if (watchTowerLevel >= 30)
+                {
+                    var heroNames = new List<TroopData>();
+                    foreach (var item in attacker.Data.MarchingArmy.Heroes)
+                    {
+                        var heroData = CacheHeroDataManager.GetFullHeroData(item);
+                        if (heroData != null)
+                        {
+                            heroNames.Add(new TroopData() { Name = heroData.Info.Name });
+                        }
+                    }
+                    attackerMailInfo.Heros = heroNames;
+                }
             }
         }
 
         public async Task<Response<BattleReport>> BattleSimulation(int attackerId, PlayerCompleteData attackerArmy, int defenderId, PlayerCompleteData defenderArmy)
         {
+            log.Debug("------------BATTLE SIMULATION "+attackerId+" vs "+defenderId);
+            DateTime timestart = DateTime.UtcNow;
             try
             {
                 ValidationHelper.KeyId(attackerId);
                 ValidationHelper.KeyId(defenderId);
 
-                var p1 = await accManager.GetAccountInfo(attackerId);
+                log.Debug("TIMER1 = " + (DateTime.UtcNow - timestart).TotalSeconds);
+                //TODO: Improve request, use only one request instead of two requests
                 var p2 = await accManager.GetAccountInfo(defenderId);
+                if (!p2.IsSuccess || !p2.HasData) throw new DataNotExistExecption(p2.Message);
 
+                log.Debug("TIMER2 = " + (DateTime.UtcNow - timestart).TotalSeconds);
+                var p1 = await accManager.GetAccountInfo(attackerId);
                 if (!p1.IsSuccess || !p1.HasData) throw new DataNotExistExecption(p1.Message);
-                if (!p2.IsSuccess || !p2.HasData) throw new DataNotExistExecption(p1.Message);
 
+                log.Debug("TIMER3 = " + (DateTime.UtcNow - timestart).TotalSeconds);
                 if (attackerArmy == null || attackerArmy.MarchingArmy == null || attackerArmy.MarchingArmy.Troops == null)
                 {
-                    var user1Resp = await GetPlayerData(attackerId);
+                    var user1Resp = await GetFullPlayerData(attackerId);//TODO: check this request, maybe all player data is not necessary
                     if (!user1Resp.IsSuccess || !user1Resp.HasData) throw new DataNotExistExecption(user1Resp.Message);
                     attackerArmy = user1Resp.Data;
                 }
                 var attackerModifier = GetAtkDefModifier(attackerArmy);
+                log.Debug("TIMER4 = " + (DateTime.UtcNow - timestart).TotalSeconds);
 
-                if (defenderArmy == null || defenderArmy.Troops == null)
+                if ((defenderArmy == null) || (defenderArmy.Troops == null))
                 {
-                    var user2Resp = await GetPlayerData(defenderId);
+                    var user2Resp = await GetFullPlayerData(defenderId);
                     if (!user2Resp.IsSuccess || !user2Resp.HasData) throw new DataNotExistExecption(user2Resp.Message);
                     defenderArmy = user2Resp.Data;
                 }
+                log.Debug("DEFENDER ARMy =" + (defenderArmy != null));
                 var defenderModifier = GetAtkDefModifier(defenderArmy);
+                log.Debug("TIMER5 = " + (DateTime.UtcNow - timestart).TotalSeconds);
 
-                var attackerPower = new BattlePower()
+                var attackerPower = new BattlePower();
+                attackerPower.PlayerId = p1.Data.PlayerId;
+                attackerPower.PlayerName = p1.Data.Name;
+                attackerPower.Army = RemoveUnwantedData(attackerArmy.MarchingArmy.Troops);
+                attackerPower.AttackModifier = attackerModifier.Item1;
+                attackerPower.DefenceModifier = attackerModifier.Item2;
+                if ((attackerArmy.MarchingArmy.Heroes != null) && (attackerArmy.MarchingArmy.Heroes.Count > 0))
                 {
-                    PlayerId = p1.Data.PlayerId,
-                    PlayerName = p1.Data.Name,
-                    Army = RemoveUnwantedData(attackerArmy.MarchingArmy.Troops),
-                    AttackModifier = attackerModifier.Item1,
-                    DefenceModifier = attackerModifier.Item2,
-                    Heros = defenderArmy.MarchingArmy.Heros,
-                };
+                    attackerPower.Heros = attackerArmy.MarchingArmy.Heroes;
+                }
+                log.Debug("TIMER5.5 = " + (DateTime.UtcNow - timestart).TotalSeconds);
 
                 var defenderGate = defenderArmy.Structures.Where(x => x.StructureType == StructureType.Gate)?.FirstOrDefault()?.Buildings.OrderBy(x => x.Level).FirstOrDefault();
+                log.Debug("defenderGate = " + (defenderGate != null));
                 var gateLevelData = CacheStructureDataManager.GetFullStructureData(StructureType.Gate).Levels.Where(x => x.Data.Level == defenderGate.Level).FirstOrDefault().Data;
+                log.Debug("TIMER6 = " + (DateTime.UtcNow - timestart).TotalSeconds);
 
                 var defenderPower = new BattlePower()
                 {
@@ -285,11 +302,14 @@ namespace GameOfRevenge.Business.Manager.UserData
                     DefenceModifier = defenderModifier.Item2,
                     GateHp = gateLevelData.HitPoint
                 };
+                log.Debug("TIMER6.1 = " + (DateTime.UtcNow - timestart).TotalSeconds);
 
                 SetTroopsAlive(attackerPower);
                 SetTroopsAlive(defenderPower);
+                log.Debug("TIMER6.2 = " + (DateTime.UtcNow - timestart).TotalSeconds);
                 RecalculatePower(attackerPower);
                 RecalculatePower(defenderPower);
+                log.Debug("TIMER7 = " + (DateTime.UtcNow - timestart).TotalSeconds);
 
                 while (attackerPower.HitPoint > 0 && defenderPower.HitPoint > 0)
                 {
@@ -297,12 +317,17 @@ namespace GameOfRevenge.Business.Manager.UserData
                     RecalculatePower(attackerPower);
                     RecalculatePower(defenderPower);
                 }
+                log.Debug("TIMER8 = " + (DateTime.UtcNow - timestart).TotalSeconds);
 
-                var atkHealingbuff = attackerArmy.Buffs.Exists(x => x.BuffType == BuffType.LifeSaver && x.TimeLeft > 0);
-                var defHealingbuff = defenderArmy.Buffs.Exists(x => x.BuffType == BuffType.LifeSaver && x.TimeLeft > 0);
+                var atkHealingBoost = attackerArmy.Boosts.Exists(x => (x.BoostType == BoostType.LifeSaver) && (x.TimeLeft > 0));
+                log.Debug("TIMER8.1 = " + (DateTime.UtcNow - timestart).TotalSeconds);
+                var defHealingBoost = defenderArmy.Boosts.Exists(x => (x.BoostType == BoostType.LifeSaver) && (x.TimeLeft > 0));
 
-                CaclulateTroopLoss(attackerPower, atkHealingbuff);
-                CaclulateTroopLoss(defenderPower, defHealingbuff);
+                log.Debug("TIMER8.2 = " + (DateTime.UtcNow - timestart).TotalSeconds);
+                CaclulateTroopLoss(attackerPower, atkHealingBoost);
+                log.Debug("TIMER8.3 = " + (DateTime.UtcNow - timestart).TotalSeconds);
+                CaclulateTroopLoss(defenderPower, defHealingBoost);
+                log.Debug("TIMER9 = " + (DateTime.UtcNow - timestart).TotalSeconds);
 
                 bool attackerWin = attackerPower.HitPoint > defenderPower.HitPoint;
 
@@ -312,34 +337,48 @@ namespace GameOfRevenge.Business.Manager.UserData
                     Defender = SetClientReport(defenderPower),
                     AttackerWon = attackerWin
                 };
+                log.Debug("TIMER11 = " + (DateTime.UtcNow - timestart).TotalSeconds);
 
                 await RemoveTroops(attackerArmy, attackerPower);
                 await RemoveTroops(defenderArmy, defenderPower);
+                log.Debug("TIMER12 = " + (DateTime.UtcNow - timestart).TotalSeconds);
 
-                if (attackerWin)
-                {
-                    await GiveLoot(defenderArmy, attackerPower, finalReport);
+                if (attackerWin) await GiveLoot(defenderArmy, attackerPower, finalReport);
 
-                    finalReport.Message = "You succesfully raided enemy city";
-                    await mailManager.SendMail(attackerId, MailType.BattleReport, JsonConvert.SerializeObject(finalReport));
-                    finalReport.Message = "You failed to defend against enemy raid";
-                    await mailManager.SendMail(defenderId, MailType.BattleReport, JsonConvert.SerializeObject(finalReport));
-                }
-                else
-                {
-                    finalReport.Message = "You failed to raid the enemy city";
-                    await mailManager.SendMail(attackerId, MailType.BattleReport, JsonConvert.SerializeObject(finalReport));
-                    finalReport.Message = "You succesfully defended the against enemy seige";
-                    await mailManager.SendMail(defenderId, MailType.BattleReport, JsonConvert.SerializeObject(finalReport));
-                }
+                log.Debug("TIMER13 = " + (DateTime.UtcNow - timestart).TotalSeconds);
 
-                finalReport.Message = "Attacked succesfully";
                 await manager.AddOrUpdatePlayerData(attackerId, DataType.Marching, 1, string.Empty);
+                log.Debug("TIMER15 = " + (DateTime.UtcNow - timestart).TotalSeconds);
                 await structManager.UpdateGate(defenderId, defenderPower.GateHp);
+                log.Debug("TIMER16 = " + (DateTime.UtcNow - timestart).TotalSeconds);
 
-                return new Response<BattleReport>(finalReport, 100, JsonConvert.SerializeObject(finalReport));
+                string json = JsonConvert.SerializeObject(finalReport);
+                log.Debug("TIMER17 = " + (DateTime.UtcNow - timestart).TotalSeconds);
+                _ = Task.Run(async () =>
+                {
+                    log.Debug("aaaaaaaaa = " + (DateTime.UtcNow - timestart).TotalSeconds);
+                    if (attackerWin)
+                    {
+                        await mailManager.SendMail(attackerId, MailType.BattleReport,
+                                                    json.Replace("INSERTMESSAGEHERE", "You succesfully raided enemy city"));
+
+                        await mailManager.SendMail(defenderId, MailType.BattleReport,
+                                                    json.Replace("INSERTMESSAGEHERE", "You failed to defend against enemy raid"));
+                    }
+                    else
+                    {
+                        await mailManager.SendMail(attackerId, MailType.BattleReport,
+                                                    json.Replace("INSERTMESSAGEHERE", "You failed to raid the enemy city"));
+
+                        await mailManager.SendMail(defenderId, MailType.BattleReport,
+                                                    json.Replace("INSERTMESSAGEHERE", "You succesfully defended the against enemy seige"));
+                    }
+                    log.Debug("bbbbbbbb = " + (DateTime.UtcNow - timestart).TotalSeconds);
+                });
+                log.Debug("TIMER18 = " + (DateTime.UtcNow - timestart).TotalSeconds);
+
+                return new Response<BattleReport>(finalReport, 100, json.Replace("INSERTMESSAGEHERE", "Attacked succesfully"));
             }
-
             catch (InvalidModelExecption ex)
             {
                 return new Response<BattleReport>()
@@ -376,40 +415,49 @@ namespace GameOfRevenge.Business.Manager.UserData
 
         private static (int, int) GetAtkDefModifier(PlayerCompleteData completeData)
         {
-
-
-
             int attack = 0;
             int? valueAttack = completeData.Technologies.Where(x => x.TechnologyType == TechnologyType.ArmyAttack)?.FirstOrDefault()?.Level;
-            if (valueAttack.HasValue) attack = valueAttack.Value;
+            if ((valueAttack != null) && valueAttack.HasValue) attack = valueAttack.Value;
 
             int defence = 0;
             int? valueDefence = completeData.Technologies.Where(x => x.TechnologyType == TechnologyType.ArmyDefence)?.FirstOrDefault()?.Level;
-            if (valueDefence.HasValue) defence = valueDefence.Value;
+            if ((valueDefence != null) && valueDefence.HasValue) defence = valueDefence.Value;
 
-            if (completeData.Buffs.Exists(x => x.BuffType == BuffType.Blessing && x.TimeLeft > 0))
+            if (completeData.Boosts.Exists(x => (x.BoostType == BoostType.Blessing) && (x.TimeLeft > 0)))
             {
                 attack += 5;
                 defence += 5;
             }
 
-            try
+            if ((completeData.MarchingArmy != null) && (completeData.MarchingArmy.Heroes != null))
             {
-                var heros = completeData.MarchingArmy.Heros.Select(x => CacheHeroDataManager.GetFullHeroData(x));
-                foreach (var hero in heros)
+                var heros = completeData.MarchingArmy.Heroes.Select(x => CacheHeroDataManager.GetFullHeroData(x));
+                if (heros != null)
                 {
-                    foreach (var boost in hero.Boosts)
+                    foreach (var hero in heros)
                     {
-                        var boostData = CacheBoostDataManager.GetFullBoostDataByBoostId(boost.BoostId);
-                        var boostDataValue = boostData.Values.FirstOrDefault(x => x.BoostId == boost.BoostId);
-                        if (boostData.Info.BoostType == BoostType.ArmyAttack) attack += boostDataValue.Percentage;
-                        if (boostData.Info.BoostType == BoostType.ArmyDefence) defence += boostDataValue.Percentage;
+                        foreach (var boost in hero.Boosts)
+                        {
+                            try
+                            {
+/*                                var boostData = CacheBoostDataManager.GetFullBoostDataByBoostId(boost.BoostId);//throw exceptions
+                                if ((boostData.Info.BoostType == BoostType.SpeedGathering_armyAttack) ||
+                                    (boostData.Info.BoostType == BoostType.Fog_armyDefence))
+                                {
+                                    var boostDataValue = boostData.Values.First(x => x.BoostId == boost.BoostId);
+                                    if (boostDataValue != null)
+                                    {
+                                        if (boostData.Info.BoostType == BoostType.SpeedGathering_armyAttack)
+                                            attack += boostDataValue.Percentage;
+                                        else
+                                            defence += boostDataValue.Percentage;
+                                    }
+                                }*/
+                            }
+                            catch { }
+                        }
                     }
                 }
-            }
-            catch (Exception)
-            {
-
             }
 
             return (attack, defence);
@@ -417,43 +465,47 @@ namespace GameOfRevenge.Business.Manager.UserData
 
         private async Task RemoveTroops(PlayerCompleteData defenderArmy, BattlePower power)
         {
+            if (power.TroopsAlive == null) return;
 
-            try
+            foreach (var data in defenderArmy.Troops)
             {
-                foreach (var data in defenderArmy.Troops)
+                if (data == null) continue;
+
+                bool hasChange = false;
+                foreach (var aliveTroop in power.TroopsAlive)
                 {
-                    bool hasChange = false;
-                    if (data != null)
+                    if ((aliveTroop == null) || (aliveTroop.Type != data.TroopType)) continue;
+
+                    var wounded = aliveTroop.TotalCount - aliveTroop.Count;
+                    if (wounded <= 0) continue;
+
+                    var troopData = data.TroopData.Find(x => x.Level == aliveTroop.Level);
+                    if (troopData != null)
                     {
-                        foreach (var aliveTroop in power.TroopsAlive)
-                        {
-                            if (aliveTroop != null && aliveTroop.Type == data.TroopType)
-                            {
-                                var wounded = aliveTroop.TotalCount - aliveTroop.Count;
-                                if (wounded <= 0) continue;
-
-                                var troopData = data.TroopData.Where(x => x.Level == aliveTroop.Level).FirstOrDefault();
-                                if (troopData != null)
-                                {
-                                    troopData.Count -= aliveTroop.Dead;
-                                    troopData.Wounded = aliveTroop.TotalCount - aliveTroop.Count;
-                                    hasChange = true;
-                                }
-                            }
-                        }
+                        troopData.Count -= aliveTroop.Dead;
+                        troopData.Wounded = wounded;
+                        hasChange = true;
                     }
-
-                    if (hasChange) await userTroopManager.UpdateTroops(power.PlayerId, data.TroopType, data.TroopData);
                 }
-            }
-            catch (Exception)
-            {
 
+                if (hasChange)
+                {
+                    try
+                    {
+                        await userTroopManager.UpdateTroops(power.PlayerId, data.TroopType, data.TroopData);
+                    }
+                    catch { }
+                }
             }
         }
 
         private static ClientBattleReport SetClientReport(BattlePower attackerPower)
         {
+            List<string> heroes = null;
+            if ((attackerPower.Heros != null) && (attackerPower.Heros.Count > 0))
+            {
+                heroes = attackerPower.Heros.Select(x => CacheHeroDataManager.GetFullHeroData(x).Info.Name)?.ToList();
+            }
             return new ClientBattleReport()
             {
                 PlayerId = attackerPower.PlayerId,
@@ -462,65 +514,106 @@ namespace GameOfRevenge.Business.Manager.UserData
                 Survived = attackerPower.Survived,
                 Wounded = attackerPower.Wounded,
                 Dead = attackerPower.Dead,
-                Heros = attackerPower.Heros?.Select(x => CacheHeroDataManager.GetFullHeroData(x).Info.Name)?.ToList(),
+                Heros = heroes
             };
         }
 
         private async Task GiveLoot(PlayerCompleteData defenderArmy, BattlePower attackerPower, BattleReport finalReport)
         {
+            int perCount = attackerPower.TotalLoad / 3;
+
+            //                finalReport.Attacker.Food = 0;
+            //                finalReport.Attacker.Wood = 0;
+            //                finalReport.Attacker.Ore = 0;
+
+            //var dfood = defenderArmy.Resources.Food;
+            //var dwood = defenderArmy.Resources.Wood;
+            //var dore = defenderArmy.Resources.Ore;
+            //var minRes = 0;
+
+            //var wareHouse = defenderArmy.Structures.FirstOrDefault(x => x.StructureType == StructureType.Warehouse).Buildings.FirstOrDefault();
+            //if (wareHouse != null)
+            //{
+            //    var wareHouseData = CacheStructureDataManager.GetFullStructureLevelData(StructureType.Warehouse, wareHouse.Level);
+            //    minRes = wareHouseData.Data.SafeDeposit;
+            //}
+
+
+            //TODO: Improve logic to remove more resources
+            int food = 0;
+            var remainFood = defenderArmy.Resources.Food - perCount;
+            if (remainFood > 0)
+            {
+                food = perCount;
+            }
+            else
+            {
+                remainFood = 0;
+                finalReport.Attacker.Food = defenderArmy.Resources.Food;
+            }
+
+            int wood = 0;
+            var remainWood = defenderArmy.Resources.Wood - perCount;
+            if (remainWood > 0)
+            {
+                wood = perCount;
+            }
+            else
+            {
+                remainWood = 0;
+                wood = defenderArmy.Resources.Food;
+            }
+
+            int ore = 0;
+            var remainOre = defenderArmy.Resources.Ore - perCount;
+            if (remainOre > 0)
+            {
+                ore = perCount;
+            }
+            else
+            {
+                remainOre = 0;
+                ore = defenderArmy.Resources.Food;
+            }
+
             try
             {
-                int perCount = attackerPower.TotalLoad / 3;
+                await resManager.AddMainResource(finalReport.Attacker.PlayerId, food, wood, ore, 0);
+                finalReport.Attacker.Food = food;
+                finalReport.Attacker.Wood = wood;
+                finalReport.Attacker.Ore = ore;
+            }
+            catch { }
 
-                finalReport.Attacker.Food = 0;
-                finalReport.Attacker.Wood = 0;
-                finalReport.Attacker.Ore = 0;
-
-                //var dfood = defenderArmy.Resources.Food;
-                //var dwood = defenderArmy.Resources.Wood;
-                //var dore = defenderArmy.Resources.Ore;
-                //var minRes = 0;
-                
-                //var wareHouse = defenderArmy.Structures.FirstOrDefault(x => x.StructureType == StructureType.Warehouse).Buildings.FirstOrDefault();
-                //if (wareHouse != null)
-                //{
-                //    var wareHouseData = CacheStructureDataManager.GetFullStructureLevelData(StructureType.Warehouse, wareHouse.Level);
-                //    minRes = wareHouseData.Data.SafeDeposit;
-                //}
-
-                var food = defenderArmy.Resources.Food - perCount;
-                if (food <= 0) finalReport.Attacker.Food = defenderArmy.Resources.Food;
-                else finalReport.Attacker.Food = perCount;
-
-                var wood = defenderArmy.Resources.Wood - perCount;
-                if (wood <= 0) finalReport.Attacker.Wood = defenderArmy.Resources.Food;
-                else finalReport.Attacker.Wood = perCount;
-
-                var ore = defenderArmy.Resources.Ore - perCount;
-                if (ore <= 0) finalReport.Attacker.Ore = defenderArmy.Resources.Food;
-                else finalReport.Attacker.Ore = perCount;
-
-                await resManager.AddMainResource(finalReport.Attacker.PlayerId, finalReport.Attacker.Food, finalReport.Attacker.Wood, finalReport.Attacker.Ore, 0);
-
-                await resManager.UpdateFoodResource(finalReport.Defender.PlayerId, food <= 0 ? 0 : food);
-                await resManager.UpdateWoodResource(finalReport.Defender.PlayerId, wood <= 0 ? 0 : wood);
-                await resManager.UpdateOreResource(finalReport.Defender.PlayerId, ore <= 0 ? 0 : ore);
-
+            try
+            {
+                await resManager.UpdateFoodResource(finalReport.Defender.PlayerId, remainFood);
                 finalReport.Defender.Food = -finalReport.Attacker.Food;
+            }
+            catch { }
+
+            try
+            {
+                await resManager.UpdateWoodResource(finalReport.Defender.PlayerId, remainWood);
                 finalReport.Defender.Wood = -finalReport.Attacker.Wood;
+            }
+            catch { }
+
+            try
+            {
+                await resManager.UpdateOreResource(finalReport.Defender.PlayerId, remainOre);
                 finalReport.Defender.Ore = -finalReport.Attacker.Ore;
             }
-            catch (Exception)
-            {
-
-            }
+            catch { }
         }
 
         private void CaclulateTroopLoss(BattlePower troopBattle, bool healingBuff)
         {
-            try
+            if (troopBattle.TroopsAlive == null) return;
+
+            foreach (var alive in troopBattle.TroopsAlive)
             {
-                foreach (var alive in troopBattle.TroopsAlive)
+                try
                 {
                     troopBattle.TotalLoad += alive.Count * alive.LoadPerUnit;
                     troopBattle.TotalArmy += alive.TotalCount;
@@ -534,7 +627,9 @@ namespace GameOfRevenge.Business.Manager.UserData
                     {
                         var wounded = randm.Next(0, 100) <= 30;
                         if (healingBuff) wounded = randm.Next(0, 100) <= 55;
-                        if (wounded) troopBattle.Wounded += item;
+
+                        if (wounded)
+                            troopBattle.Wounded += item;
                         else
                         {
                             alive.Dead += item;
@@ -542,10 +637,12 @@ namespace GameOfRevenge.Business.Manager.UserData
                         }
                     }
                 }
-            }
-            catch (Exception /*ex*/)
-            {
-                //Config.PrintLog(String.Format("Exception in CaclulateTroopLoss {0} {1} ", ex.StackTrace, ex.Message));
+                catch (Exception ex)
+                {
+                    log.DebugFormat("Exception in CaclulateTroopLoss {0} {1}", ex.StackTrace, ex.Message);
+                    //Config.PrintLog(String.Format("Exception in CaclulateTroopLoss {0} {1} ", ex.StackTrace, ex.Message));
+                }
+
             }
         }
 
@@ -571,8 +668,10 @@ namespace GameOfRevenge.Business.Manager.UserData
             foreach (var troop in defenderPower.TroopsAlive)
             {
                 var hepToRemove = troop.Hp;
-                if (defenderPower.GateHp >= 0) defenderPower.GateHp -= (int)damageToDefender;
-                else troop.Hp -= (int)damageToDefender;
+                if (defenderPower.GateHp >= 0)
+                    defenderPower.GateHp -= (int)damageToDefender;
+                else
+                    troop.Hp -= (int)damageToDefender;
                 damageToDefender -= hepToRemove;
                 if (damageToDefender <= 0) break;
             }
@@ -586,27 +685,23 @@ namespace GameOfRevenge.Business.Manager.UserData
             foreach (var troop in battlePower.Army)
             {
                 if (troop == null) continue;
+
                 foreach (var troopData in troop.TroopData)
                 {
                     if (troopData == null) continue;
 
                     var troopHp = CacheTroopDataManager.GetFullTroopData(troop.TroopType)?.Levels.Where(x => x.Data.Level == troopData.Level).FirstOrDefault()?.Data?.Health;
+                    int finalTroopHp = troopHp.HasValue? (int)troopHp.Value : 0;
+                    if (finalTroopHp < 1) continue;
+
                     var troopLoad = CacheTroopDataManager.GetFullTroopData(troop.TroopType)?.Levels.Where(x => x.Data.Level == troopData.Level).FirstOrDefault()?.Data?.WeightLoad;
-
-                    var finalTroopHp = 0;
-                    var finalTroopLoad = 0;
-
-                    if (troopHp.HasValue) finalTroopHp = (int)troopHp.Value;
-                    if (troopLoad.HasValue) finalTroopLoad = (int)troopLoad.Value;
-                    if (finalTroopHp <= 0) continue;
-
                     battlePower.TroopsAlive.Add(new TroopDetailsPvP()
                     {
                         Level = troopData.Level,
                         Type = troop.TroopType,
                         Hp = troopData.Count * finalTroopHp,
                         TotalCount = troopData.Count,
-                        LoadPerUnit = finalTroopLoad
+                        LoadPerUnit = troopLoad.HasValue? troopLoad.Value : 0
                     });
                 }
             }
@@ -621,16 +716,19 @@ namespace GameOfRevenge.Business.Manager.UserData
                 foreach (var troops in info)
                 {
                     if (troops == null || troops.TroopData == null || troops.TroopData.Count <= 0) continue;
-                    var troopDatas = new List<TroopDetails>();
 
+                    List<TroopDetails> troopDatas = new List<TroopDetails>();
                     foreach (var troopData in troops.TroopData)
                     {
                         if (troopData == null || troopData.Count <= 0) continue;
+
                         troopDatas.Add(new TroopDetails() { Level = troopData.Level, Count = troopData.FinalCount });
                     }
 
                     if (troopDatas.Count > 0)
+                    {
                         finalTroops.Add(new TroopInfos() { TroopType = troops.TroopType, TroopData = troopDatas });
+                    }
                 }
             }
 
@@ -685,11 +783,11 @@ namespace GameOfRevenge.Business.Manager.UserData
                     {
                         var lvlData = troopData.Where(x => x.Level == item.Level).FirstOrDefault();
                         if (lvlData == null) return false;
-                        var lvlCount = lvlData.Count;
-                        var reqCount = item.Count;
 
-                        if (lvlCount - reqCount < 0) return false;
-                        else if (removeArmy) lvlData.Count -= reqCount;
+                        var reqCount = item.Count;
+                        if ((lvlData.Count - reqCount) < 0) return false;
+
+                        if (removeArmy) lvlData.Count -= reqCount;
                     }
                 }
 

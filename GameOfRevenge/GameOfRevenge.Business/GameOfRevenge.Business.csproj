@@ -13,4 +13,14 @@
     <ProjectReference Include="..\GameOfRevenge.Common\GameOfRevenge.Common.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <None Remove="ExitGames.Logging.Log4Net" />
+    <None Remove="log4net" />
+    <None Remove="ExitGamesLibs" />
+  </ItemGroup>
+  <ItemGroup>
+    <Reference Include="ExitGamesLibs">
+      <HintPath>..\..\Lib\ExitGamesLibs.dll</HintPath>
+    </Reference>
+  </ItemGroup>
 </Project>

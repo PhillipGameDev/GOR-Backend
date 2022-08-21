@@ -45,7 +45,14 @@ namespace GameOfRevenge.GameApplication
 
         protected override void OnDisconnect(DisconnectReason reasonCode, string reasonDetail)
         {
-            GameService.NewRealTimeUpdateManager.DeletePlayerData(Actor.PlayerId);
+            if (Actor != null)
+            {
+                try
+                {
+                    GameService.NewRealTimeUpdateManager.DeletePlayerData(Actor.PlayerId);
+                }
+                catch { }
+            }
             Clients.Remove(this);
             log.Debug($"Client disconnected with code: {reasonCode}, reason in details: {reasonDetail}");
             if (Actor != null) Actor.StopOnReal();
@@ -78,7 +85,7 @@ namespace GameOfRevenge.GameApplication
 
             var result = SendOperationResponse(operationResponse, new SendParameters());
 
-            log.Debug($"Send Operation opCode: {opCode}, returnCode: {returnCode}, data: {GlobalHelper.DicToString(data)}, debugMsg: {debuMsg}");
+            log.Debug($"Send Operation response to ply'{this.Actor.PlayerId}' - opCode: {opCode}, returnCode: {returnCode}, data: {GlobalHelper.DicToString(data)}, debugMsg: {debuMsg}");
 
             return result;
         }
@@ -92,14 +99,28 @@ namespace GameOfRevenge.GameApplication
         public SendResult Broadcast(byte opCode, ReturnCode returnCode, Dictionary<byte, object> data) => Broadcast(opCode, returnCode, data, string.Empty);
         public SendResult Broadcast(byte opCode, ReturnCode returnCode, Dictionary<byte, object> data, string debuMsg)
         {
+            log.Debug(">>>>>BROADCAST "+data);
+
             SendResult result = SendResult.Ok;
 
             if (string.IsNullOrWhiteSpace(debuMsg)) debuMsg = string.Empty;
 
+            log.Debug("CLIENTS = " + Clients);
+            log.Debug("CLIENTS coun = " + Clients.Count);
             foreach (var client in Clients)
             {
-                if (client == this || client == null) continue;
-                else result = client.SendOperation(opCode, returnCode, data);
+//                if (client == this || client == null) continue;
+                if (client == null) continue;
+
+                log.Debug("client = " + client+"  oc="+opCode+"  rc="+returnCode);
+                try
+                {
+                    client.SendOperation(opCode, returnCode, data);
+                }
+                catch (Exception ex)
+                {
+                    log.Debug("Exception = " + ex.Message);
+                }
             }
 
             log.Debug($"Send Operation to all clients opCode: {opCode}, returnCode: {returnCode}, data: {GlobalHelper.DicToString(data)}, debugMsg: {debuMsg}");

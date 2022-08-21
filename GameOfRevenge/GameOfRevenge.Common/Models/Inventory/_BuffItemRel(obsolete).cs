@@ -1,6 +1,6 @@
 ﻿namespace GameOfRevenge.Common.Models.Inventory
 {
-    public interface IReadOnlyBuffItemRel
+/*    public interface IReadOnlyBuffItemRel
     {
         InventoryItemType InventoryType { get; }
         BuffType BuffType { get; }
@@ -12,5 +12,5 @@
         public InventoryItemType InventoryType { get; set; }
         public BuffType BuffType { get; set; }
         public string Name { get => BuffType.ToString(); }
-    }
+    }*/
 }

@@ -36,10 +36,13 @@ namespace GameOfRevenge.WebServer.Controllers.Api
         //public async Task<IActionResult> JoinRequests(int clanId) => ReturnResponse(await clanManager.GetClanJoinRequests(Token.PlayerId, clanId));
 
         [HttpGet]
+        public async Task<IActionResult> GetAllClans(string tag, string name, bool clause, int page, int count) => ReturnResponse(await clanManager.GetClans(tag, name, clause, page, count));
+
+        [HttpGet]
         public async Task<IActionResult> GetClansList(string tag, string name, bool clause, int page, int count)
         {
             var response = await clanManager.GetClans(tag, name, clause, page, count);
-            if (response.IsSuccess && response.HasData && response.Data.Any())
+            if (response.IsSuccess && response.HasData)
             {
                 var myClan = await clanManager.GetPlayerClanData(Token.PlayerId);
                 if (myClan.IsSuccess && myClan.HasData)

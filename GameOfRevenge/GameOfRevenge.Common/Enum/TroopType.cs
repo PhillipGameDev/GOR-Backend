@@ -2,10 +2,10 @@
 {
     public enum TroopType
     {
-        Other,
-        Swordsmen,
-        Archer,
-        Knight,
-        Seige
+        Other = 0,
+        Swordman = 1,
+        Archer = 2,
+        Knight = 3,
+        Seige = 4
     }
 }

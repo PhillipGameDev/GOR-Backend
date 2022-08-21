@@ -28,8 +28,8 @@ namespace GameOfRevenge.Common.Models
             int index = 0;
             RequirementId = reader.GetValue(index) == DBNull.Value ? 0 : reader.GetInt32(index); index++;
             DataId = reader.GetValue(index) == DBNull.Value ? 0 : reader.GetInt32(index); index++;
-            DataType = reader.GetValue(index) == DBNull.Value ? DataType.Other : (DataType)reader.GetInt32(index); index++;
-            ValueId = reader.GetValue(index) == DBNull.Value ? 0 : reader.GetInt32(index); index++;
+            DataType = reader.GetValue(index) == DBNull.Value ? DataType.Unknown : (DataType)reader.GetInt32(index); index++;
+            ValueId = reader.GetValue(index) == DBNull.Value ? 0 : reader.GetInt32(index); index++;//IMPLMENT NEW CLASS SPECIAL RESOURCE WITH LEVEL
             Value = reader.GetValue(index) == DBNull.Value ? 0 : reader.GetInt32(index);
         }
 

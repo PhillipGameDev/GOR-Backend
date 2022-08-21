@@ -11,7 +11,8 @@ namespace GameOfRevenge.Common.Interface
         Task<Response<WorldTable>> CreateWorld(string code);
         Task<Response<WorldTable>> GetWorld(int id);
         Task<Response<WorldTable>> GetWorld(string code);
-        Task<Response<List<WorldDataTable>>> GetWorldTileData(int id);
+        Task<Response<WorldDataTable>> GetWorldTileData(int id);
+        Task<Response<List<WorldDataTable>>> GetWorldTilesData(int id);
         Task<Response<WorldDataTable>> UpdateWorldTileData(int id, int x, int y, WorldTileData data);
     }
 }

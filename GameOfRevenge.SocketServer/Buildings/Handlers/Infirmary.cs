@@ -97,6 +97,7 @@ namespace GameOfRevenge.Buildings.Handlers
 
                 foreach (var item in RecoverList)
                     response.TotalHealTime += item.TimeLeft;
+
                 response.SetDictionary<WoundedTroopTimerStatusResponse>(response);
                 Player.SendOperation(OperationCode.WoundedHealTimerRequest, ReturnCode.OK, dictNetwork);
             }

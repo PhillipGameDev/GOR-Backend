@@ -1,12 +1,17 @@
 ﻿using System;
+using System.Runtime.Serialization;
 
 namespace GameOfRevenge.Common.Models
 {
+    [DataContract]
     public class TimerBase
     {
+        [DataMember]
         public DateTime StartTime { get; set; }
+        [DataMember]
         public DateTime EndTime { get; set; }
-        
+
+//        [DataMember]
         public double TimeLeft
         {
             get
@@ -16,6 +21,7 @@ namespace GameOfRevenge.Common.Models
             }
         }
 
+//        [DataMember]
         public double TotalTime
         {
             get

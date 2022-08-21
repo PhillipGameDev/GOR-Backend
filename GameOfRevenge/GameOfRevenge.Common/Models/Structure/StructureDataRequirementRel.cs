@@ -1,4 +1,6 @@
-﻿using System.Linq;
+﻿using GameOfRevenge.Common.Interface.Model;
+using GameOfRevenge.Common.Models;
+using System.Linq;
 using System.Collections.Generic;
 using System.Diagnostics;
 
@@ -9,7 +11,7 @@ namespace GameOfRevenge.Common.Models.Structure
         IReadOnlyStructureTable Info { get; }
         IReadOnlyList<IReadOnlyStructureDataRequirement> Levels { get; }
         IReadOnlyList<int> Locations { get; }
-        IReadOnlyDictionary<int, int> BuildLimit { get; }
+        IReadOnlyDictionary<string, int> BuildLimit { get; }
 
         IReadOnlyStructureDataRequirement GetStructureLevelById(int level);
     }
@@ -25,7 +27,7 @@ namespace GameOfRevenge.Common.Models.Structure
         public StructureTable Info { get; set; }
         public List<StructureDataRequirement> Levels { get; set; }
         public List<int> Locations { get; set; }
-        public Dictionary<int, int> BuildLimit { get; set; }
+        public Dictionary<string, int> BuildLimit { get; set; }
 
         public StructureDataRequirement GetStructureLevelById(int level)
         {
@@ -42,7 +44,7 @@ namespace GameOfRevenge.Common.Models.Structure
         IReadOnlyList<int> IReadOnlyStructureDataRequirementRel.Locations => Locations;
 
         [DebuggerBrowsable(DebuggerBrowsableState.Never)]
-        IReadOnlyDictionary<int, int> IReadOnlyStructureDataRequirementRel.BuildLimit => BuildLimit;
+        IReadOnlyDictionary<string, int> IReadOnlyStructureDataRequirementRel.BuildLimit => BuildLimit;
 
         IReadOnlyStructureDataRequirement IReadOnlyStructureDataRequirementRel.GetStructureLevelById(int level) => GetStructureLevelById(level);
 

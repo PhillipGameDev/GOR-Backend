@@ -17,36 +17,6 @@ namespace GameOfRevenge.WebServer.Controllers.Api
             this.accountManager = accountManager;
         }
 
-        [HttpGet]
-        [AllowAnonymous]
-        public IActionResult GetCurrentServerTimeFormated()
-        {
-            return ReturnResponse(Config.UtcTime.ToString("dd-MM-yyyy HH-mm-ss"));
-        }
-
-        [HttpGet]
-        [AllowAnonymous]
-        public IActionResult GetCurrentServerTime()
-        {
-            return ReturnResponse(Config.UtcTime.ToString());
-        }
-
-        [HttpGet]
-        [AllowAnonymous]
-        public async Task<IActionResult> ResetConnection()
-        {
-            await Startup.ReloadDataBaseDataAsync();
-            var response = new Response(CaseType.Success, "Server database reset succesfully");
-            return ReturnResponse(response);
-        }
-
-        [HttpGet]
-        [AllowAnonymous]
-        public IActionResult TestConnection()
-        {
-            return ReturnResponse("Server is working");
-        }
-
         [HttpPost]
         [AllowAnonymous]
         public async Task<IActionResult> TryLoginOrRegister(string identifier, string name, bool accept)

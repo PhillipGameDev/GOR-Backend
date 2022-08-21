@@ -48,7 +48,7 @@ namespace GameOfRevenge.Business.Manager.UserData
             {
                 case TroopType.Other:
                     break;
-                case TroopType.Swordsmen:
+                case TroopType.Swordman:
                     singleCost += 1;
                     break;
                 case TroopType.Archer:
@@ -87,7 +87,7 @@ namespace GameOfRevenge.Business.Manager.UserData
         {
             try
             {
-                var playerData = await GetPlayerData(playerId);
+                var playerData = await GetFullPlayerData(playerId);
                 if (!playerData.IsSuccess || !playerData.HasData) throw new DataNotExistExecption(playerData.Message);
 
                 foreach (var structure in playerData.Data.Structures)
@@ -116,7 +116,7 @@ namespace GameOfRevenge.Business.Manager.UserData
                 var structureLevelData = CacheStructureDataManager.GetFullStructureLevelData(structType, level);
                 var cost = FinalCost(structureLevelData.Data.TimeToBuild);
 
-                var playerData = await GetPlayerData(playerId);
+                var playerData = await GetFullPlayerData(playerId);
                 if (!playerData.IsSuccess || !playerData.HasData) throw new DataNotExistExecption(playerData.Message);
 
                 if (level > 1)
@@ -151,7 +151,7 @@ namespace GameOfRevenge.Business.Manager.UserData
                     return new Response<UserStructureData>(createBuildResponse.Case, createBuildResponse.Message);
                 }
 
-                playerData = await GetPlayerData(playerId);
+                playerData = await GetFullPlayerData(playerId);
                 if (!playerData.IsSuccess || !playerData.HasData) throw new DataNotExistExecption(playerData.Message);
 
                 foreach (var structure in playerData.Data.Structures)
@@ -181,7 +181,7 @@ namespace GameOfRevenge.Business.Manager.UserData
         {
             try
             {
-                var playerData = await GetPlayerData(playerId);
+                var playerData = await GetFullPlayerData(playerId);
                 if (!playerData.IsSuccess || !playerData.HasData) throw new DataNotExistExecption(playerData.Message);
 
                 foreach (var structure in playerData.Data.Structures)
@@ -224,7 +224,7 @@ namespace GameOfRevenge.Business.Manager.UserData
         {
             try
             {
-                var playerData = await GetPlayerData(playerId);
+                var playerData = await GetFullPlayerData(playerId);
                 if (!playerData.IsSuccess || !playerData.HasData) throw new DataNotExistExecption(playerData.Message);
 
                 var troopData = CacheTroopDataManager.GetFullTroopLevelData(type, troopLevel);

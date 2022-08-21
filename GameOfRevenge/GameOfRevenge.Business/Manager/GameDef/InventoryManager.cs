@@ -13,15 +13,15 @@ namespace GameOfRevenge.Business.Manager.GameDef
 {
     public class InventoryManager : BaseManager
     {
-        public async Task<Response<List<InventoryTable>>> GetAllInventoryItems()
+        public async Task<Response<List<InventoryDataTable>>> GetAllInventoryItems()
         {
             try
             {
-                return await Db.ExecuteSPMultipleRow<InventoryTable>("GetAllInventoryItems");
+                return await Db.ExecuteSPMultipleRow<InventoryDataTable>("GetAllInventoryItems");
             }
             catch (InvalidModelExecption ex)
             {
-                return new Response<List<InventoryTable>>()
+                return new Response<List<InventoryDataTable>>()
                 {
                     Case = 200,
                     Data = null,
@@ -30,7 +30,7 @@ namespace GameOfRevenge.Business.Manager.GameDef
             }
             catch (Exception ex)
             {
-                return new Response<List<InventoryTable>>()
+                return new Response<List<InventoryDataTable>>()
                 {
                     Case = 0,
                     Data = null,
@@ -39,7 +39,7 @@ namespace GameOfRevenge.Business.Manager.GameDef
             }
         }
 
-        public async Task<Response<List<DataRequirement>>> GetAllInventoryRequirements()
+/*        public async Task<Response<List<DataRequirement>>> GetAllInventoryRequirements()
         {
             try
             {
@@ -64,9 +64,9 @@ namespace GameOfRevenge.Business.Manager.GameDef
                 };
             }
 
-        }
+        }*/
 
-        public async Task<Response<List<InventoryDataRequirementRel>>> GetAllInventoryItemDatas()
+/*        public async Task<Response<List<InventoryTable>>> GetAllInventoryItemDatas()
         {
             try
             {
@@ -74,7 +74,7 @@ namespace GameOfRevenge.Business.Manager.GameDef
                 var reqs = await GetAllInventoryRequirements();
                 if (!infos.IsSuccess) throw new InvalidModelExecption(infos.Message);
                 if (!reqs.IsSuccess) throw new InvalidModelExecption(reqs.Message);
-                var resp = new Response<List<InventoryDataRequirementRel>>(new List<InventoryDataRequirementRel>(), infos.Case, infos.Message);
+                var resp = new Response<List<InventoryTable>>(new List<InventoryTable>(), infos.Case, infos.Message);
 
                 foreach (var info in infos.Data)
                 {
@@ -115,6 +115,6 @@ namespace GameOfRevenge.Business.Manager.GameDef
                     Message = ErrorManager.ShowError(ex)
                 };
             }
-        }
+        }*/
     }
 }

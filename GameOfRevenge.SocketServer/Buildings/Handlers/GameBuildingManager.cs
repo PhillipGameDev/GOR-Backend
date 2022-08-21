@@ -136,6 +136,36 @@ namespace GameOfRevenge.Buildings.Handlers
 
             return response;
         }
+
+/*        private Response<UserStructureData> HelpBuildStructure(MmoActor player, int locationId, int helpValue = 1)
+        {
+/*            if (requirments.Count > 0)
+            {
+                var (rsucc, rmsg) = player.PlayerDataManager.CheckRequirmentsAndUpdateValues(requirments);
+                if (!rsucc) new Response<UserStructureData>(rsucc ? 100 : 200, rmsg);
+            }
+* /
+            Response<UserStructureData> response;
+//            response = GameService.BPlayerStructureManager.UpgradeBuilding(Convert.ToInt32(player.UserId), this.StructureType, locationId).Result;
+
+            log.InfoFormat("Response Of Create/Upgrasde Structure Manager DATA {0} ", JsonConvert.SerializeObject(response.Data));
+
+
+            var building = player.PlayerDataManager.GetPlayerBuildingByLocationId(locationId);
+            if ((building != null) && building.IsConstructing)
+            {
+                building.HelpBuild(helpValue);
+            }
+            var obj = new StructureCreateUpgradeResponse
+            {
+                StructureLocationId = request.StructureLocationId,
+                StructureType = request.StructureType,
+                StructureLevel = upgradeLevel
+            };
+
+            return response;
+        }*/
+
         int IGameBuildingManager.BuildTime(int level)
         {
             int buildTime = 0;

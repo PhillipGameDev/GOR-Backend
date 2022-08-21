@@ -3,7 +3,7 @@ using System.Diagnostics;
 
 namespace GameOfRevenge.Common.Models.Boost
 {
-    public interface IReadOnlyBoostTypeRel
+/*    public interface IReadOnlyBoostTypeRel
     {
         IReadOnlyBoostTypeTable Info { get; }
         IReadOnlyList<IReadOnlyBoostTable> Values { get; }
@@ -19,5 +19,5 @@ namespace GameOfRevenge.Common.Models.Boost
 
         [DebuggerBrowsable(DebuggerBrowsableState.Never)]
         IReadOnlyList<IReadOnlyBoostTable> IReadOnlyBoostTypeRel.Values => Values;
-    }
+    }*/
 }

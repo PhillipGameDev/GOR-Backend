@@ -108,7 +108,37 @@ namespace GameOfRevenge.Business.Manager.Kingdom
             }
         }
 
-        public async Task<Response<List<WorldDataTable>>> GetWorldTileData(int id)
+        public async Task<Response<WorldDataTable>> GetWorldTileData(int id)
+        {
+            try
+            {
+                var spParams = new Dictionary<string, object>()
+                {
+                    { "TileId", id },
+                };
+                return await Db.ExecuteSPSingleRow<WorldDataTable>("GetWorldTileData", spParams);
+            }
+            catch (InvalidModelExecption ex)
+            {
+                return new Response<WorldDataTable>()
+                {
+                    Case = 200,
+                    Data = null,
+                    Message = ex.Message
+                };
+            }
+            catch (Exception ex)
+            {
+                return new Response<WorldDataTable>()
+                {
+                    Case = 0,
+                    Data = null,
+                    Message = ErrorManager.ShowError(ex)
+                };
+            }
+        }
+
+        public async Task<Response<List<WorldDataTable>>> GetWorldTilesData(int id)
         {
             try
             {
@@ -116,7 +146,7 @@ namespace GameOfRevenge.Business.Manager.Kingdom
                 {
                     { "WorldId", id },
                 };
-                return await Db.ExecuteSPMultipleRow<WorldDataTable>("GetWorldTileData", spParams);
+                return await Db.ExecuteSPMultipleRow<WorldDataTable>("GetWorldTilesData", spParams);
             }
             catch (InvalidModelExecption ex)
             {

@@ -16,7 +16,7 @@ namespace GameOfRevenge.Troops
         {
             switch (troop.TroopType)
             {
-                case TroopType.Swordsmen:
+                case TroopType.Swordman:
                     return new Swordsmen(troop,building);
                 case TroopType.Archer:
                     return new Archer(troop,building);

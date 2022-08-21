@@ -36,7 +36,7 @@ namespace GameOfRevenge.Business.Manager.UserData
                 var troopDbInfo = CacheTroopDataManager.GetFullTroopData(type);
                 if (troopDbInfo == null) throw new DataNotExistExecption($"Troop type {type} was not found");
 
-                var compPlayerData = await GetPlayerData(playerId);
+                var compPlayerData = await GetFullPlayerData(playerId);
                 if (!compPlayerData.IsSuccess || !compPlayerData.HasData) throw new DataNotExistExecption(compPlayerData.Message);
 
                 var troopDetails = compPlayerData.Data.Troops.Where(x => x.TroopType == type).FirstOrDefault()?.TroopData;
@@ -120,7 +120,7 @@ namespace GameOfRevenge.Business.Manager.UserData
                 var troopData = CacheTroopDataManager.GetFullTroopData(type);
                 if (troopData == null) throw new DataNotExistExecption($"Troop type {type} was not found");
 
-                var compPlayerData = await GetPlayerData(playerId);
+                var compPlayerData = await GetFullPlayerData(playerId);
                 if (!compPlayerData.IsSuccess || !compPlayerData.HasData) throw new DataNotExistExecption(compPlayerData.Message);
 
                 var troopDetails = compPlayerData.Data.Troops.Where(x => x.TroopType == type).FirstOrDefault()?.TroopData;
@@ -202,7 +202,7 @@ namespace GameOfRevenge.Business.Manager.UserData
             try
             {
                 var troopData = CacheTroopDataManager.GetFullTroopLevelData(type, level);
-                var compPlayerData = await GetPlayerData(playerId);
+                var compPlayerData = await GetFullPlayerData(playerId);
                 if (!compPlayerData.IsSuccess || !compPlayerData.HasData) throw new DataNotExistExecption(compPlayerData.Message);
 
                 var structureValid = ValidateStructureInLocAndBuild(fromId, type, compPlayerData.Data.Structures);
@@ -267,7 +267,7 @@ namespace GameOfRevenge.Business.Manager.UserData
             try
             {
                 var troopData = CacheTroopDataManager.GetFullTroopLevelData(type, level);
-                var compPlayerData = await GetPlayerData(playerId);
+                var compPlayerData = await GetFullPlayerData(playerId);
                 if (!compPlayerData.IsSuccess || !compPlayerData.HasData) throw new DataNotExistExecption(compPlayerData.Message);
 
                 var isReduced = await userResourceManager.RemoveResourceByRequirement(playerId, CacheResourceDataManager.GetGemReq(1), count);
@@ -374,7 +374,7 @@ namespace GameOfRevenge.Business.Manager.UserData
         }
 
 
-        public async Task<Response<PopulationData>> GetPopulationData(int playerId) => GetPopulationData((await GetPlayerData(playerId)).Data);
+        public async Task<Response<PopulationData>> GetPopulationData(int playerId) => GetPopulationData((await GetFullPlayerData(playerId)).Data);
         public Response<PopulationData> GetPopulationData(IReadOnlyList<StructureInfos> structures, IReadOnlyList<TroopInfos> troops)
         {
             var current = GetCurrentPopulation(troops);
@@ -425,7 +425,7 @@ namespace GameOfRevenge.Business.Manager.UserData
             {
                 foreach (var troop in army.TroopData)
                 {
-                    currentPopulation += troop.FinalCount;
+                    currentPopulation += troop.Count;//MODIFIED current population including training and other soldiers
                 }
             }
 
@@ -443,21 +443,22 @@ namespace GameOfRevenge.Business.Manager.UserData
             try
             {
                 var troopDataLvl = CacheTroopDataManager.GetFullTroopLevelData(type, level);
-                var compPlayerData = await GetPlayerData(playerId);
+                var compPlayerData = await GetFullPlayerData(playerId);
 
                 if (oldtroopInfos == null)
                 {
                     if (!compPlayerData.IsSuccess && !compPlayerData.HasData) throw new DataNotExistExecption();
                     var troopClassData = compPlayerData.Data.Troops.Where(x => x.TroopType == type).FirstOrDefault();
+                    //TODO: check if this instantiation is required, the class is not used anymore. we just need the TroopData list
                     if (troopClassData == null || troopClassData.TroopData == null) troopClassData = new TroopInfos()
                     {
                         TroopType = type,
-                        TroopData = new List<TroopDetails>() { new TroopDetails() { Count = 0, Level = level } }
+                        TroopData = new List<TroopDetails>()// { new TroopDetails() { Count = 0, Level = level } }
                     };
-                    oldtroopInfos = troopClassData.TroopData;
+                    oldtroopInfos = troopClassData.TroopData;//TODO: Return null and later validate it and create new list
                 }
 
-                if (oldtroopInfos.Count == 0)
+                if (oldtroopInfos.Count == 0)//TODO: validate and create new list here
                 {
                     oldtroopInfos.Add(new TroopDetails() { Count = 0, Level = level });
                 }
@@ -476,7 +477,7 @@ namespace GameOfRevenge.Business.Manager.UserData
                 if (isTraining)
                 {
                     int timeReduced = 0;
-                    int? reducePercentage = compPlayerData.Data.Technologies.Where(x => x.TechnologyType == TechnologyType.TraningSpeed)?.FirstOrDefault()?.Level;
+                    int? reducePercentage = compPlayerData.Data.Technologies.Where(x => x.TechnologyType == TechnologyType.TrainingSpeed)?.FirstOrDefault()?.Level;
                     if (reducePercentage.HasValue) timeReduced = reducePercentage.Value;
                     else timeReduced = 0;
 

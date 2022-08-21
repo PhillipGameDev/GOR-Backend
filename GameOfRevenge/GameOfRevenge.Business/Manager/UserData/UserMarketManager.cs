@@ -16,7 +16,7 @@ namespace GameOfRevenge.Business.Manager.UserData
                 { "PlayerId", playerId },
             };
 
-            return await Db.ExecuteSPMultipleRow<MarketGiftTable>("GetAllGiftResource", (s)=> { }, spParam);
+            return await Db.ExecuteSPMultipleRow<MarketGiftTable>("GetAllGiftResource", spParam);
         }
 
         public async Task<Response> GiftResource(int playerId, int toPlayerId, int food, int wood, int ore)

@@ -47,5 +47,7 @@
         InitialData = 43,
         InstantBuildCost = 44,
         SpeedUpCost = 45,
+        HelpPower = 46,
+        AllianceId = 47
     }
 }

@@ -17,7 +17,7 @@ namespace GameOfRevenge.Business.Manager.UserData
         {
             try
             {
-                if (playerDatas == null || playerDatas.Count <= 0) throw new InvalidModelExecption("Invalid values was provided");
+                if (playerDatas == null || playerDatas.Count <= 0) throw new InvalidModelExecption("Invalid values");
 
                 if (playerDatas != null && playerDatas.Any())
                 {
@@ -93,21 +93,22 @@ namespace GameOfRevenge.Business.Manager.UserData
                 };
             }
         }
-        public async Task<Response<PlayerDataTable>> AddOrUpdatePlayerData(int playerId, DataType type, int valueId, string value)
+ 
+/*        public async Task<Response<PlayerDataTable>> AddOrUpdatePlayerData(int playerId, DataType type, int valueId, string value)
         {
             try
             {
-                if (playerId <= 0) throw new InvalidModelExecption("Invalid id was provided");
-                if (valueId <= 0) throw new InvalidModelExecption("Invalid value id was provided");
+                if (playerId <= 0) throw new InvalidModelExecption("Invalid player id");
+                if (valueId <= 0) throw new InvalidModelExecption("Invalid value id");
 
                 var spParams = new Dictionary<string, object>()
                 {
                     { "PlayerId", playerId },
                     { "DataCode", type.ToString() },
                     { "ValueId", valueId },
-                    { "Value", value },
+                    { "Value", value }
                 };
-                return await Db.ExecuteSPSingleRow<PlayerDataTable>("AddPlayerData", spParams);
+                return await Db.ExecuteSPSingleRow<PlayerDataTable>("AddOrUpdatePlayerData", spParams);
             }
             catch (InvalidModelExecption ex)
             {
@@ -125,17 +126,271 @@ namespace GameOfRevenge.Business.Manager.UserData
                     Message = ErrorManager.ShowError(ex)
                 };
             }
-        }
+        }*/
 
-        public async Task<Response<List<PlayerDataTable>>> GetAllPlayerData(int playerId)
+        public async Task<Response<PlayerDataTableUpdated>> AddOrUpdatePlayerData(int playerId, DataType type, int valueId, string value, bool unique = true)
         {
             try
             {
-                if (playerId <= 0) throw new InvalidModelExecption("Invalid id was provided");
+                if (playerId <= 0) throw new InvalidModelExecption("Invalid player id");
+                if (valueId <= 0) throw new InvalidModelExecption("Invalid value id");
+
+                var spParams = new Dictionary<string, object>()
+                {
+                    { "PlayerId", playerId },
+                    { "DataCode", type.ToString() },
+                    { "ValueId", valueId },
+                    { "Value", value }
+                };
+                if (unique) spParams.Add("Unique", 1);
+                //TODO: Implement a way to only optionally override data (initData true/false)
+
+                return await Db.ExecuteSPSingleRow<PlayerDataTableUpdated>("AddOrUpdatePlayerData", spParams);
+            }
+            catch (InvalidModelExecption ex)
+            {
+                return new Response<PlayerDataTableUpdated>()
+                {
+                    Case = 200,
+                    Message = ex.Message
+                };
+            }
+            catch (Exception ex)
+            {
+                return new Response<PlayerDataTableUpdated>()
+                {
+                    Case = 0,
+                    Message = ErrorManager.ShowError(ex)
+                };
+            }
+        }
+
+/*        public async Task<Response<PlayerDataTableUpdated>> UpdatePlayerData(int playerId, DataType type, int valueId, string value)
+        {
+            try
+            {
+                if (playerId <= 0) throw new InvalidModelExecption("Invalid player id");
+                if (valueId <= 0) throw new InvalidModelExecption("Invalid value id");
+
+                var spParams = new Dictionary<string, object>()
+                {
+                    { "PlayerId", playerId },
+                    { "DataCode", type.ToString() },
+                    { "ValueId", valueId },
+                    { "Value", value }
+                };
+                return await Db.ExecuteSPSingleRow<PlayerDataTableUpdated>("UpdatePlayerData", spParams);
+            }
+            catch (InvalidModelExecption ex)
+            {
+                return new Response<PlayerDataTableUpdated>()
+                {
+                    Case = 200,
+                    Message = ex.Message
+                };
+            }
+            catch (Exception ex)
+            {
+                return new Response<PlayerDataTableUpdated>()
+                {
+                    Case = 0,
+                    Message = ErrorManager.ShowError(ex)
+                };
+            }
+        }*/
+
+        public async Task<Response<PlayerDataTableUpdated>> UpdatePlayerDataID(int playerId, long playerDataId, string value)
+        {
+            try
+            {
+                if (playerId <= 0) throw new InvalidModelExecption("Invalid player id");
+                if (playerDataId <= 0) throw new InvalidModelExecption("Invalid data id");
+
+                var spParams = new Dictionary<string, object>()
+                {
+                    { "PlayerId", playerId },
+                    { "PlayerDataId", playerDataId },
+                    { "Value", value }
+                };
+                return await Db.ExecuteSPSingleRow<PlayerDataTableUpdated>("UpdatePlayerDataID", spParams);
+            }
+            catch (InvalidModelExecption ex)
+            {
+                return new Response<PlayerDataTableUpdated>()
+                {
+                    Case = 200,
+                    Message = ex.Message
+                };
+            }
+            catch (Exception ex)
+            {
+                return new Response<PlayerDataTableUpdated>()
+                {
+                    Case = 0,
+                    Message = ErrorManager.ShowError(ex)
+                };
+            }
+        }
+
+        public async Task<Response<PlayerDataTableUpdated>> IncrementPlayerData(int playerId, DataType type, int valueId, int? value)
+        {
+            try
+            {
+                if (playerId <= 0) throw new InvalidModelExecption("Invalid player id");
+                if (valueId <= 0) throw new InvalidModelExecption("Invalid value id");
+
+                var spParams = new Dictionary<string, object>()
+                {
+                    { "PlayerId", playerId },
+                    { "DataCode", type.ToString() },
+                    { "ValueId", valueId }
+                };
+                if (value != null) spParams.Add("Value", value);
+
+                return await Db.ExecuteSPSingleRow<PlayerDataTableUpdated>("IncrementPlayerData", spParams);
+            }
+            catch (InvalidModelExecption ex)
+            {
+                return new Response<PlayerDataTableUpdated>()
+                {
+                    Case = 200,
+                    Message = ex.Message
+                };
+            }
+            catch (Exception ex)
+            {
+                return new Response<PlayerDataTableUpdated>()
+                {
+                    Case = 0,
+                    Message = ErrorManager.ShowError(ex)
+                };
+            }
+        }
+
+        public async Task<Response<PlayerDataTableUpdated>> IncrementPlayerData(int playerId, long playerDataId, int value)
+        {
+            try
+            {
+                if (playerId <= 0) throw new InvalidModelExecption("Invalid player id");
+                if (playerDataId <= 0) throw new InvalidModelExecption("Invalid data id");
+
+                var spParams = new Dictionary<string, object>()
+                {
+                    { "PlayerId", playerId },
+                    { "PlayerDataId", playerDataId },
+                    { "Value", value }
+                };
+                return await Db.ExecuteSPSingleRow<PlayerDataTableUpdated>("IncrementPlayerData", spParams);
+            }
+            catch (InvalidModelExecption ex)
+            {
+                return new Response<PlayerDataTableUpdated>()
+                {
+                    Case = 200,
+                    Message = ex.Message
+                };
+            }
+            catch (Exception ex)
+            {
+                return new Response<PlayerDataTableUpdated>()
+                {
+                    Case = 0,
+                    Message = ErrorManager.ShowError(ex)
+                };
+            }
+        }
+
+
+        public async Task<Response> RemoveAllPlayerData(int playerId)
+        {
+            try
+            {
+                if (playerId <= 0) throw new InvalidModelExecption("Invalid player id");
+
+                var spParams = new Dictionary<string, object>()
+                {
+                    { "PlayerId", playerId },
+                };
+
+                return await Db.ExecuteSPNoData("RemoveAllPlayerData", spParams);
+            }
+            catch (InvalidModelExecption ex)
+            {
+                return new Response()
+                {
+                    Case = 200,
+                    Message = ex.Message
+                };
+            }
+            catch (Exception ex)
+            {
+                return new Response()
+                {
+                    Case = 0,
+                    Message = ErrorManager.ShowError(ex)
+                };
+            }
+        }
+
+        public async Task<Response<PlayerDataTableUpdated>> RemovePlayerData(int playerId, DataType type, int valueId)
+        {
+            return await AddOrUpdatePlayerData(playerId, type, valueId, null);
+        }
+
+        public async Task<Response<PlayerDataTableUpdated>> RemovePlayerData(int playerId, long playerDataId)
+        {
+            return await UpdatePlayerDataID(playerId, playerDataId, null);
+        }
+
+
+        public async Task<Response<List<PlayerDataTable>>> GetAllPlayerData(int playerId, DataType type = DataType.Unknown)
+        {
+            Console.WriteLine(">>>>>> GetAllPlayerData ");
+//            try
+            {
+                if (playerId <= 0) throw new InvalidModelExecption("Invalid player id");
+
                 var spParams = new Dictionary<string, object>()
                 {
                     { "PlayerId", playerId }
                 };
+                if (type != DataType.Unknown) spParams.Add("DataCode", type.ToString());
+
+                return await Db.ExecuteSPMultipleRow<PlayerDataTable>("GetAllPlayerData", spParams);
+            }
+/*            catch (InvalidModelExecption ex)
+            {
+                return new Response<List<PlayerDataTable>>()
+                {
+                    Case = 200,
+                    Data = null,
+                    Message = ex.Message
+                };
+            }
+            catch (Exception ex)
+            {
+                return new Response<List<PlayerDataTable>>()
+                {
+                    Case = 0,
+                    Data = null,
+                    Message = ErrorManager.ShowError(ex)
+                };
+            }*/
+        }
+
+        public async Task<Response<List<PlayerDataTable>>> GetAllPlayerData(int playerId, DataType type, int valueId)
+        {
+            try
+            {
+                if (playerId <= 0) throw new InvalidModelExecption("Invalid player id");
+                if (valueId <= 0) throw new InvalidModelExecption("Invalid value id");
+
+                var spParams = new Dictionary<string, object>()
+                {
+                    { "PlayerId", playerId },
+                    { "DataCode", type.ToString() }
+                };
+                spParams.Add("ValueId", valueId);
 
                 return await Db.ExecuteSPMultipleRow<PlayerDataTable>("GetAllPlayerData", spParams);
             }
@@ -162,8 +417,8 @@ namespace GameOfRevenge.Business.Manager.UserData
         {
             try
             {
-                if (playerId <= 0) throw new InvalidModelExecption("Invalid id was provided");
-                if (valueId <= 0) throw new InvalidModelExecption("Invalid value id was provided");
+                if (playerId <= 0) throw new InvalidModelExecption("Invalid player id");
+                if (valueId <= 0) throw new InvalidModelExecption("Invalid value id");
 
                 var spParams = new Dictionary<string, object>()
                 {
@@ -191,11 +446,11 @@ namespace GameOfRevenge.Business.Manager.UserData
                 };
             }
         }
-        public async Task<Response<PlayerDataTable>> GetPlayerDataById(int playerDataId)
+        public async Task<Response<PlayerDataTable>> GetPlayerDataById(long playerDataId)
         {
             try
             {
-                if (playerDataId <= 0) throw new InvalidModelExecption("Invalid id was provided");
+                if (playerDataId <= 0) throw new InvalidModelExecption("Invalid player data id");
 
                 var spParams = new Dictionary<string, object>()
                 {
@@ -215,68 +470,6 @@ namespace GameOfRevenge.Business.Manager.UserData
             catch (Exception ex)
             {
                 return new Response<PlayerDataTable>()
-                {
-                    Case = 0,
-                    Message = ErrorManager.ShowError(ex)
-                };
-            }
-        }
-
-        public async Task<Response> RemoveAllPlayerData(int playerId)
-        {
-            try
-            {
-                if (playerId <= 0) throw new InvalidModelExecption("Invalid id was provided");
-
-                var spParams = new Dictionary<string, object>()
-                {
-                    { "PlayerId", playerId },
-                };
-
-                return await Db.ExecuteSPNoData("RemoveAllPlayerData", spParams);
-            }
-            catch (InvalidModelExecption ex)
-            {
-                return new Response()
-                {
-                    Case = 200,
-                    Message = ex.Message
-                };
-            }
-            catch (Exception ex)
-            {
-                return new Response()
-                {
-                    Case = 0,
-                    Message = ErrorManager.ShowError(ex)
-                };
-            }
-        }
-        public async Task<Response> RemovePlayerData(int playerId, DataType type, int valueId)
-        {
-            try
-            {
-                if (playerId <= 0) throw new InvalidModelExecption("Invalid id was provided");
-                if (valueId <= 0) throw new InvalidModelExecption("Invalid value id was provided");
-
-                var resp = await AddOrUpdatePlayerData(playerId, type, valueId, string.Empty);
-                return new Response()
-                {
-                    Case = resp.Case,
-                    Message = resp.Message
-                };
-            }
-            catch (InvalidModelExecption ex)
-            {
-                return new Response()
-                {
-                    Case = 200,
-                    Message = ex.Message
-                };
-            }
-            catch (Exception ex)
-            {
-                return new Response()
                 {
                     Case = 0,
                     Message = ErrorManager.ShowError(ex)
@@ -357,9 +550,77 @@ namespace GameOfRevenge.Business.Manager.UserData
             }
         }
 
+        public async Task<Response<List<StoredDataTable>>> GetAllPlayerStoredData(int playerId, int structureLocationId = -1)
+        {
+            try
+            {
+                if (playerId <= 0) throw new InvalidModelExecption("Invalid player id");
+                var spParams = new Dictionary<string, object>()
+                {
+                    { "PlayerId", playerId }
+                };
+                if (structureLocationId != -1) spParams.Add("StructureLocationId", structureLocationId);
+
+                return await Db.ExecuteSPMultipleRow<StoredDataTable>("GetAllPlayerStoredData", spParams);
+            }
+            catch (InvalidModelExecption ex)
+            {
+                return new Response<List<StoredDataTable>>()
+                {
+                    Case = 200,
+                    Data = null,
+                    Message = ex.Message
+                };
+            }
+            catch (Exception ex)
+            {
+                return new Response<List<StoredDataTable>>()
+                {
+                    Case = 0,
+                    Data = null,
+                    Message = ErrorManager.ShowError(ex)
+                };
+            }
+        }
+
+        public async Task<Response> StoreResource(int playerId, int structureLocationId, int valueId, int value)
+        {
+//            var response = await manager.TransferResource(playerId, structureLocationId, DataType.Resource, resId, value);
+
+            try
+            {
+                var spParams = new Dictionary<string, object>()
+                {
+                    { "PlayerId", playerId },
+                    { "StructureLocationId", structureLocationId },
+                    { "DataTypeId", DataType.Resource },
+                    { "ValueId", valueId },
+                    { "Value", value }
+                };
+
+                return await Db.ExecuteSPNoData("AddOrUpdatePlayerStoredData", spParams);
+            }
+            catch (InvalidModelExecption ex)
+            {
+                return new Response()
+                {
+                    Case = 200,
+                    Message = ex.Message
+                };
+            }
+            catch (Exception ex)
+            {
+                return new Response()
+                {
+                    Case = 0,
+                    Message = ErrorManager.ShowError(ex)
+                };
+            }
+        }
+
         private static Dictionary<string, object> ResourceUpdateSpParams(int playerId, int food, int wood, int ore, int gem, bool showResult = true)
         {
-            if (playerId <= 0) throw new InvalidModelExecption("Invalid id was provided");
+            if (playerId <= 0) throw new InvalidModelExecption("Invalid player id");
 
             var spParams = new Dictionary<string, object>()
             {

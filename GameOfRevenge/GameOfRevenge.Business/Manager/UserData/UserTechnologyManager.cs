@@ -27,7 +27,7 @@ namespace GameOfRevenge.Business.Manager.UserData
             {
                 var timestamp = Config.UtcTime;
                 var tech = CacheTechnologyDataManager.GetFullTechnologyData(type);
-                var compPlayerData = await GetPlayerData(playerId);
+                var compPlayerData = await GetFullPlayerData(playerId);
                 if (!compPlayerData.IsSuccess || !compPlayerData.HasData) throw new DataNotExistExecption(compPlayerData.Message);
 
                 var currentUserTech = compPlayerData.Data.Technologies.FirstOrDefault(x => x.TechnologyType == type);

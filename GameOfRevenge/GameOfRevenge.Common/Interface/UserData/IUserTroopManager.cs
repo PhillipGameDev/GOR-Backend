@@ -1,4 +1,5 @@
 ﻿using GameOfRevenge.Common.Models;
+using GameOfRevenge.Common.Models.Hero;
 using GameOfRevenge.Common.Models.PlayerData;
 using GameOfRevenge.Common.Models.Troop;
 using GameOfRevenge.Common.Net;
@@ -29,11 +30,5 @@ namespace GameOfRevenge.Common.Interface.UserData
         //Task<Response> InstantTrainTroops(int playerId, int buildingLoc);
         //Task<Response> InstantTrainTroops(PlayerCompleteData compPlayerData);
         //Task<Response> InstantTrainTroops(IReadOnlyList<StructureInfos> structures, IReadOnlyList<TroopInfos> troops);
-    }
-
-    public interface IUserHeroManager
-    {
-        Task<Response<UserHeroDetails>> GetHeroPoint(int playerId, int heroId);
-        Task<Response<UserHeroDetails>> SaveHeroPoint(int playerId, int heroId, int warPoints);
     }
 }

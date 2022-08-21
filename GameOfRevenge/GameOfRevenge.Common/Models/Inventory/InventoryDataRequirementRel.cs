@@ -2,18 +2,18 @@
 
 namespace GameOfRevenge.Common.Models.Inventory
 {
-    public interface IReadOnlyInventoryDataRequirementRel
+    public interface IReadOnlyBuffDataRequirementRel
     {
-        IReadOnlyInventoryTable Info { get; }
+        IReadOnlyInventoryDataTable Info { get; }
         IReadOnlyList<IReadOnlyDataRequirement> Requirements { get; }
     }
 
-    public class InventoryDataRequirementRel : IReadOnlyInventoryDataRequirementRel
+    public class BuffDataRequirementRel : IReadOnlyBuffDataRequirementRel
     {
-        public InventoryTable Info { get; set; }
+        public InventoryDataTable Info { get; set; }
         public List<DataRequirement> Requirements { get; set; }
 
-        IReadOnlyInventoryTable IReadOnlyInventoryDataRequirementRel.Info => Info;
-        IReadOnlyList<IReadOnlyDataRequirement> IReadOnlyInventoryDataRequirementRel.Requirements => Requirements;
+        IReadOnlyInventoryDataTable IReadOnlyBuffDataRequirementRel.Info => Info;
+        IReadOnlyList<IReadOnlyDataRequirement> IReadOnlyBuffDataRequirementRel.Requirements => Requirements;
     }
 }

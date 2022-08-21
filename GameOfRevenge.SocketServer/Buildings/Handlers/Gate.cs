@@ -56,7 +56,7 @@ namespace GameOfRevenge.Buildings.Handlers
 
         private Response<PlayerCompleteData> PlayerData()
         {
-            var task = GameService.BPlayerStructureManager.GetPlayerData(Player.PlayerId);
+            var task = GameService.BPlayerStructureManager.GetFullPlayerData(Player.PlayerId);
             task.Wait();
             var result = task.Result;
             return result;
@@ -86,12 +86,12 @@ namespace GameOfRevenge.Buildings.Handlers
                     Hitpoint = currentGateData.HitPoints
                 };
 
-                Player.SendOperation(OperationCode.GateHp, ReturnCode.OK, dict, playerData.Message);
+                Player.SendOperation(OperationCode.RepairGate, ReturnCode.OK, dict, playerData.Message);
                 log.Debug("****************************************RepairGate Success**********************************************");
             }
             catch(DataNotExistExecption ex)
             {
-                Player.SendOperation(OperationCode.GateHp, ReturnCode.Failed, null, ex.Message);
+                Player.SendOperation(OperationCode.RepairGate, ReturnCode.Failed, null, ex.Message);
                 log.Debug("****************************************RepairGate Invalid**********************************************");
             }
             catch (Exception ex)

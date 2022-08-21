@@ -19,7 +19,7 @@ namespace GameOfRevenge.Business.CacheData
             get
             {
                 if (Products == null) LoadCacheMemory();
-                return Products.ToList();
+                return Products?.ToList();
             }
         }
 

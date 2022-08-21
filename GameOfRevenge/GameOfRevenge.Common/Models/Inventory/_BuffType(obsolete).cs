@@ -1,6 +1,6 @@
 ﻿namespace GameOfRevenge.Common.Models.Inventory
 {
-    public enum BuffType
+/*    public enum BuffType
     {
         Other,
         Shield,
@@ -8,5 +8,5 @@
         LifeSaver,
         ProductionBoost,
         SpeedGathering
-    }
+    }*/
 }

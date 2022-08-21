@@ -21,45 +21,35 @@ namespace GameOfRevenge.GameHandlers
         private static readonly ILogger log = LogManager.GetCurrentClassLogger();
         public readonly MmoActor attacker;
         public MmoActor Enemy { get; private set; }
+
         public PlayerAttackHandler(MmoActor attacker)
         {
             this.attacker = attacker;
         }
+
         public void AttackRequest(AttackRequest request)
         {
-            log.InfoFormat("Attack Request {0} ", new object[1] { JsonConvert.SerializeObject((object)request) });
+            DateTime timestart = DateTime.UtcNow;
+            log.InfoFormat("@@@@@@@@!!! Attack Request {0} ", new object[1] { JsonConvert.SerializeObject((object)request) });
             if (GameService.BRealTimeUpdateManager.GetAttackerData(this.attacker.PlayerId) == null)
             {
                 Enemy = attacker.World.PlayersManager.GetPlayer(request.EnemyUserName);
                 if (Enemy != null)
                 {
-                    DateTime utcNow = DateTime.UtcNow;
                     double num = 0.2;
                     double num2 = attacker.World.GetDistanceBw2Points(Enemy.Tile, attacker.Tile) / num;
-                    var socketResponse = new AttackSocketResponse
-                    {
-                        StartTime = utcNow,
-                        AttckerUserName = attacker.UserName,
-                        EnemyUserName = request.EnemyUserName,
-                        ReachedTime = (int)(num2 * 1000.0),
-                        TroopType = request.TroopType,
-                        TroopCount = request.TroopCount,
-                        Heros = request.HeroIds
-                    };
-                    var attackResponse = new AttackResponse(socketResponse);
+                    int reachedTime = (int)(num2 * 1000);
+
+                    MarchingArmy marching = new MarchingArmy();
                     try
                     {
-                        MarchingArmy val = new MarchingArmy
-                        {
-                            StartTime = utcNow,
-                            TaskTime = utcNow.AddMilliseconds(socketResponse.ReachedTime),
-                        };
-                        val.EndTime = val.TaskTime.AddMilliseconds(socketResponse.ReachedTime);
-                        val.Troops = (new List<TroopInfos>());
+//                        val.EndTime = val.TaskTime.AddMilliseconds(socketResponse.ReachedTime);
+                        marching.Troops = (new List<TroopInfos>());
+                        int delay = 0;
                         int i;
                         for (i = 0; i < request.TroopType.Count(); i++)
                         {
-                            TroopInfos val2 = val.Troops.Find((TroopInfos d) => (int)d.TroopType == request.TroopType[i]);
+                            TroopInfos val2 = marching.Troops.Find((TroopInfos d) => (int)d.TroopType == request.TroopType[i]);
                             if (val2 == null)
                             {
                                 val2 = new TroopInfos
@@ -67,7 +57,7 @@ namespace GameOfRevenge.GameHandlers
                                     TroopType = ((TroopType)request.TroopType[i]),
                                     TroopData = (new List<TroopDetails>())
                                 };
-                                val.Troops.Add(val2);
+                                marching.Troops.Add(val2);
                             }
                             List<TroopDetails> troopData = val2.TroopData;
                             TroopDetails val3 = new TroopDetails
@@ -76,39 +66,64 @@ namespace GameOfRevenge.GameHandlers
                                 Level = (request.TroopLevel[i])
                             };
                             troopData.Add(val3);
+//                            delay += val3.Count / ((val3.Level > 0)? val3.Level : 1);
                         }
+//                        delay = 2000;
+
+                        if (request.HeroIds != null) marching.Heroes = request.HeroIds.ToList();
+                        var location = new MapLocation() { X = attacker.Tile.X, Y = attacker.Tile.Y };
+                        IGorMmoPeer mmoPeer = GorMmoPeer.Clients.Find(x => x.Actor.PlayerId == Enemy.PlayerId);
+
+                        DateTime utcNow = DateTime.UtcNow;
+                        marching.StartTime = utcNow;
+                        marching.TaskTime = utcNow.AddMilliseconds(reachedTime);
+                        marching.EndTime = utcNow.AddMilliseconds(reachedTime * 2);
+
+                        log.InfoFormat("Passing Data attackerId {0} Data {1} defenderId {2} ", attacker.PlayerId, JsonConvert.SerializeObject(marching), Enemy.PlayerId);
                         try
                         {
-                            val.Heros = request.HeroIds != null ? request.HeroIds.ToList() : new List<int>();
-                            log.InfoFormat("Passing Data attackerId {0} Data {1} defenderId {2} ", attacker.PlayerId, JsonConvert.SerializeObject(val), Enemy.PlayerId);
-                            var location = new MapLocation() { X = attacker.Tile.X, Y = attacker.Tile.Y };
-                            var attackBattle = GameService.BkingdomePvpManager.AttackOtherPlayer(attacker.PlayerId, Enemy.PlayerId, val, location);
+                            var attackBattle = GameService.BkingdomePvpManager.AttackOtherPlayer(attacker.PlayerId, Enemy.PlayerId, marching, location);
                             attackBattle.Wait();
-                            GorMmoPeer.Clients.FirstOrDefault(x => x.Actor.PlayerId == Enemy.PlayerId)?.Actor.SendEvent(EventCode.UnderAttack, new object());
-                            log.InfoFormat("Attack bAttle response {0} ", JsonConvert.SerializeObject(attackBattle));
-                            if (attackBattle.Result.Case > 99 && attackBattle.Result.Case < 200)
+                            if ((attackBattle.Result.Case < 100) || (attackBattle.Result.Case > 199)) throw new Exception();
+
+                            if (mmoPeer != null) mmoPeer.Actor.SendEvent(EventCode.UnderAttack, new object());
+
+                            log.InfoFormat("Attack battle response {0} ", JsonConvert.SerializeObject(attackBattle));
+                            var socketResponse = new AttackSocketResponse
                             {
-                                attacker.BroadcastWithMe((EventCode)6, attackResponse);
+                                StartTime = marching.StartTime,
+                                AttckerUserName = attacker.UserName,
+                                EnemyUserName = request.EnemyUserName,
+                                ReachedTime = reachedTime,
+                                TroopType = request.TroopType,
+                                TroopCount = request.TroopCount,
+                                Heros = request.HeroIds
+                            };
+                            var attackResponse = new AttackResponse(socketResponse);
+                            if (attackBattle.Result.Case > 99 && attackBattle.Result.Case < 200)//success
+                            {
+                                attacker.BroadcastWithMe(EventCode.AttackResponse, attackResponse);
                                 attackBattle.Result.Data.AttackData = socketResponse;
                                 var defenderId = attackBattle.Result.Data.Report.Defenderid;
                                 GameService.BRealTimeUpdateManager.AddNewAttackOnWorld(attackBattle.Result.Data);
                             }
-                            else
+                            else//fail
                             {
                                 attackResponse.IsSuccess = false; attackResponse.Message = attackBattle.Result.Message;
-                                attacker.SendEvent((EventCode)6, attackResponse);
+                                attacker.SendEvent(EventCode.AttackResponse, attackResponse);
                             }
-
                         }
                         catch (Exception ex)
                         {
                             log.InfoFormat("Excpetion in AttackOtherPlayer {0} {1} ", new object[2] { ex.Message, ex.StackTrace });
+                            attacker.SendOperation(OperationCode.AttackRequest, (ReturnCode.Failed), null, "error generating attack");
                         }
 
                     }
                     catch (Exception ex)
                     {
                         log.InfoFormat("Excpetion in Collect Army and Call War {0} {1} ", new object[2] { ex.Message, ex.StackTrace });
+                        attacker.SendOperation(OperationCode.AttackRequest, (ReturnCode.Failed), null, "error collecting army");
                     }
                 }
                 else
@@ -119,6 +134,8 @@ namespace GameOfRevenge.GameHandlers
             else
                 attacker.SendOperation(OperationCode.AttackRequest, (ReturnCode.Failed), null, "Multiple attack is not supported.");
 
+
+            log.Debug("@@@@@@@@ PROCCESS END =" + (DateTime.UtcNow - timestart).TotalSeconds);
         }
 
     }

@@ -35,7 +35,7 @@ namespace GameOfRevenge.Business.Manager
             questDatas.TryGetValue(playerId, out var playerData);
             if (playerData != null)
             {
-                var response = await userManager.GetPlayerData(playerId);
+                var response = await userManager.GetFullPlayerData(playerId);
                 if (response.IsSuccess)
                 {
                     lock (SyncRoot)
@@ -112,7 +112,7 @@ namespace GameOfRevenge.Business.Manager
         {
             try
             {
-                var userData = await userManager.GetPlayerData(playerId);
+                var userData = await userManager.GetFullPlayerData(playerId);
                 var userQuestData = await questManager.GetAllQuestChapterDataWithName(playerId);
 
                 var playerData = new PlayerData()

@@ -8,7 +8,7 @@ using GameOfRevenge.Business.Manager.GameDef;
 using GameOfRevenge.Common;
 using GameOfRevenge.Common.Interface.UserData;
 using GameOfRevenge.Common.Models;
-using GameOfRevenge.Common.Models.Inventory;
+using GameOfRevenge.Common.Models.Boost;
 using GameOfRevenge.Common.Models.PlayerData;
 using GameOfRevenge.Common.Models.Structure;
 using GameOfRevenge.Common.Net;
@@ -59,7 +59,7 @@ namespace GameOfRevenge.Business.Manager.UserData
             var structure = CacheStructureDataManager.GetFullStructureLevelData(type, 1);
             var dataList = new List<StructureDetails>();
 
-            var playerData = await GetPlayerData(playerId);
+            var playerData = await GetFullPlayerData(playerId);
             int timeReduced = 0;
             int? reducePercentage = playerData.Data.Technologies?.Where(x => x.TechnologyType == TechnologyType.ConstructionSpeed)?.FirstOrDefault()?.Level;
             if (reducePercentage.HasValue) timeReduced = reducePercentage.Value;
@@ -74,7 +74,8 @@ namespace GameOfRevenge.Business.Manager.UserData
                 Location = position,
                 StartTime = timestamp,
                 EndTime = timestamp.AddSeconds(totalSec),
-                HitPoints = structure.Data.HitPoint
+                HitPoints = structure.Data.HitPoint,
+                Helped = 0
             };
 
             if (existing.IsSuccess && existing.HasData)
@@ -113,8 +114,9 @@ namespace GameOfRevenge.Business.Manager.UserData
                         var structure = CacheStructureDataManager.GetFullStructureData(type).GetStructureLevelById(locData.Level);
                         locData.StartTime = DateTime.UtcNow;
                         locData.HitPoints = structure.Data.HitPoint;
+                        locData.Helped = 0;
 
-                        var playerData = await GetPlayerData(playerId);
+                        var playerData = await GetFullPlayerData(playerId);
                         int timeReduced = 0;
                         int? reducePercentage = playerData.Data.Technologies.Where(x => x.TechnologyType == TechnologyType.ConstructionSpeed)?.FirstOrDefault()?.Level;
                         if (reducePercentage.HasValue) timeReduced = reducePercentage.Value;
@@ -129,9 +131,45 @@ namespace GameOfRevenge.Business.Manager.UserData
                             var success = await userResourceManager.RemoveResourceByRequirement(playerId, structure.Requirements);
                             if (!success) return new Response<UserStructureData>(new UserStructureData() { Value = dataList, ValueId = type }, 201, "Insufficient player resources");
                         }
+                        if (type == StructureType.Embassy)
+                        {
+                            var respModel1 = await manager.AddOrUpdatePlayerData(playerId, DataType.Activity, 1, "0");
+                        }
 
                         var respModel = await manager.AddOrUpdatePlayerData(playerId, DataType.Structure, CacheStructureDataManager.GetFullStructureData(type).Info.Id, JsonConvert.SerializeObject(dataList));
                         return new Response<UserStructureData>(new UserStructureData() { Value = dataList, ValueId = type }, 100, "Structure upgraded succesfully");
+                    }
+                }
+            }
+
+            return new Response<UserStructureData>(200, "Structure does not exists");
+        }
+
+        public async Task<Response<UserStructureData>> HelpBuilding(int playerId, int toPlayerId, StructureType type, int position, int helpPower)
+        {
+            var existing = await CheckBuildingStatus(toPlayerId, type);
+            if (existing.IsSuccess && existing.HasData)
+            {
+                var dataList = existing.Data.Value;
+                var locData = dataList.Where(x => x.Location == position).FirstOrDefault();
+                if (locData != null)
+                {
+                    if ((locData.TimeLeft > 0) && (locData.Helped < 10))
+                    {
+                        var playerData = await GetFullPlayerData(playerId);
+                        if (!playerData.IsSuccess || (playerData.Data == null)) return new Response<UserStructureData>(200, "Account does not exist");
+
+                        playerData.Data.HelpedBuild++;
+                        var respModel1 = await manager.AddOrUpdatePlayerData(playerId, DataType.Activity, 1, playerData.Data.HelpedBuild.ToString());
+
+                        locData.Helped++;
+                        locData.EndTime = locData.EndTime.AddMinutes(-helpPower);
+                        var respModel = await manager.AddOrUpdatePlayerData(toPlayerId, DataType.Structure, CacheStructureDataManager.GetFullStructureData(type).Info.Id, JsonConvert.SerializeObject(dataList));
+                        return new Response<UserStructureData>(new UserStructureData() { Value = dataList, ValueId = type }, 100, "Structure helped succesfully");
+                    }
+                    else
+                    {
+                        return new Response<UserStructureData>(200, "Help not required");
                     }
                 }
             }
@@ -164,7 +202,7 @@ namespace GameOfRevenge.Business.Manager.UserData
             try
             {
                 var timestamp = DateTime.UtcNow;
-                var compPlayerData = await GetPlayerData(playerId);
+                var compPlayerData = await GetFullPlayerData(playerId);
                 if (!compPlayerData.IsSuccess || !compPlayerData.HasData) throw new DataNotExistExecption(compPlayerData.Message);
 
                 var structureValid = ValidateStructureInLocAndBuild(locId, compPlayerData.Data.Structures, new List<StructureType>() { StructureType.Mine, StructureType.Farm, StructureType.Sawmill });
@@ -187,8 +225,8 @@ namespace GameOfRevenge.Business.Manager.UserData
                 if (percentage.HasValue) boostValue = percentage.Value;
                 else boostValue = 0;
 
-                if (compPlayerData.Data.Buffs.Exists(x => x.BuffType == BuffType.SpeedGathering && x.TimeLeft > 0)) boostValue += 5;
-                if (compPlayerData.Data.Buffs.Exists(x => x.BuffType == BuffType.ProductionBoost && x.TimeLeft > 0)) boostValue += 5;
+                if (compPlayerData.Data.Boosts.Exists(x => x.BoostType == BoostType.SpeedGathering && x.TimeLeft > 0)) boostValue += 5;
+                if (compPlayerData.Data.Boosts.Exists(x => x.BoostType == BoostType.ProductionBoost && x.TimeLeft > 0)) boostValue += 5;
 
                 switch (structInfo.StructureType)
                 {
@@ -231,7 +269,7 @@ namespace GameOfRevenge.Business.Manager.UserData
             try
             {
                 var timestamp = DateTime.UtcNow;
-                var compPlayerData = await GetPlayerData(playerId);
+                var compPlayerData = await GetFullPlayerData(playerId);
                 if (!compPlayerData.IsSuccess || !compPlayerData.HasData) throw new DataNotExistExecption(compPlayerData.Message);
 
                 if (compPlayerData.Data.Resources.Food < food || compPlayerData.Data.Resources.Wood < wood || compPlayerData.Data.Resources.Ore < ore) 
@@ -260,7 +298,7 @@ namespace GameOfRevenge.Business.Manager.UserData
             if (!existing.IsSuccess || !existing.HasData)
                 return new Response(200, "Structure does not exists");
 
-            var playerData = await GetPlayerData(playerId);
+            var playerData = await GetFullPlayerData(playerId);
             if (!playerData.IsSuccess) return new Response(200, "Account does not exist");
 
             var gateData = playerData.Data?.Structures?.Where(x => x.StructureType == StructureType.Gate)?.FirstOrDefault()?.Buildings;
@@ -281,7 +319,7 @@ namespace GameOfRevenge.Business.Manager.UserData
             var requirements = await RepairGateCost(playerId);
             if (!requirements.IsSuccess) return new Response<int>(requirements.Case, requirements.Message);
 
-            var playerData = await GetPlayerData(playerId);
+            var playerData = await GetFullPlayerData(playerId);
             if (!playerData.IsSuccess) return new Response<int>(200, "Account does not exist");
             var gateData = playerData.Data?.Structures?.Where(x => x.StructureType == StructureType.Gate)?.FirstOrDefault()?.Buildings;
             if (gateData == null || gateData.Count == 0) return new Response<int>(200, "Structure does not exists");
@@ -300,7 +338,7 @@ namespace GameOfRevenge.Business.Manager.UserData
         }
         public async Task<Response<List<DataRequirement>>> RepairGateCost(int playerId)
         {
-            var playerData = await GetPlayerData(playerId);
+            var playerData = await GetFullPlayerData(playerId);
             if (!playerData.IsSuccess) return new Response<List<DataRequirement>>(200, "Account does not exist");
 
             var gateData = playerData.Data?.Structures?.Where(x => x.StructureType == StructureType.Gate)?.FirstOrDefault()?.Buildings;
@@ -323,7 +361,7 @@ namespace GameOfRevenge.Business.Manager.UserData
         }
         public async Task<Response<GateHpData>> GetGateHp(int playerId)
         {
-            var playerData = await GetPlayerData(playerId);
+            var playerData = await GetFullPlayerData(playerId);
             if (!playerData.IsSuccess) return new Response<GateHpData>(200, "Account does not exist");
 
             var gateData = playerData.Data?.Structures?.Where(x => x.StructureType == StructureType.Gate)?.FirstOrDefault()?.Buildings;
