@@ -247,16 +247,13 @@ namespace GameOfRevenge.Business.Manager.UserData
                 ValidationHelper.KeyId(attackerId);
                 ValidationHelper.KeyId(defenderId);
 
-                log.Debug("TIMER1 = " + (DateTime.UtcNow - timestart).TotalSeconds);
                 //TODO: Improve request, use only one request instead of two requests
                 var p2 = await accManager.GetAccountInfo(defenderId);
                 if (!p2.IsSuccess || !p2.HasData) throw new DataNotExistExecption(p2.Message);
 
-                log.Debug("TIMER2 = " + (DateTime.UtcNow - timestart).TotalSeconds);
                 var p1 = await accManager.GetAccountInfo(attackerId);
                 if (!p1.IsSuccess || !p1.HasData) throw new DataNotExistExecption(p1.Message);
 
-                log.Debug("TIMER3 = " + (DateTime.UtcNow - timestart).TotalSeconds);
                 if (attackerArmy == null || attackerArmy.MarchingArmy == null || attackerArmy.MarchingArmy.Troops == null)
                 {
                     var user1Resp = await GetFullPlayerData(attackerId);//TODO: check this request, maybe all player data is not necessary
@@ -264,7 +261,6 @@ namespace GameOfRevenge.Business.Manager.UserData
                     attackerArmy = user1Resp.Data;
                 }
                 var attackerModifier = GetAtkDefModifier(attackerArmy);
-                log.Debug("TIMER4 = " + (DateTime.UtcNow - timestart).TotalSeconds);
 
                 if ((defenderArmy == null) || (defenderArmy.Troops == null))
                 {
@@ -272,9 +268,7 @@ namespace GameOfRevenge.Business.Manager.UserData
                     if (!user2Resp.IsSuccess || !user2Resp.HasData) throw new DataNotExistExecption(user2Resp.Message);
                     defenderArmy = user2Resp.Data;
                 }
-                log.Debug("DEFENDER ARMy =" + (defenderArmy != null));
                 var defenderModifier = GetAtkDefModifier(defenderArmy);
-                log.Debug("TIMER5 = " + (DateTime.UtcNow - timestart).TotalSeconds);
 
                 var attackerPower = new BattlePower();
                 attackerPower.PlayerId = p1.Data.PlayerId;
@@ -286,12 +280,9 @@ namespace GameOfRevenge.Business.Manager.UserData
                 {
                     attackerPower.Heros = attackerArmy.MarchingArmy.Heroes;
                 }
-                log.Debug("TIMER5.5 = " + (DateTime.UtcNow - timestart).TotalSeconds);
 
                 var defenderGate = defenderArmy.Structures.Where(x => x.StructureType == StructureType.Gate)?.FirstOrDefault()?.Buildings.OrderBy(x => x.Level).FirstOrDefault();
-                log.Debug("defenderGate = " + (defenderGate != null));
                 var gateLevelData = CacheStructureDataManager.GetFullStructureData(StructureType.Gate).Levels.Where(x => x.Data.Level == defenderGate.Level).FirstOrDefault().Data;
-                log.Debug("TIMER6 = " + (DateTime.UtcNow - timestart).TotalSeconds);
 
                 var defenderPower = new BattlePower()
                 {
@@ -302,14 +293,11 @@ namespace GameOfRevenge.Business.Manager.UserData
                     DefenceModifier = defenderModifier.Item2,
                     GateHp = gateLevelData.HitPoint
                 };
-                log.Debug("TIMER6.1 = " + (DateTime.UtcNow - timestart).TotalSeconds);
 
                 SetTroopsAlive(attackerPower);
                 SetTroopsAlive(defenderPower);
-                log.Debug("TIMER6.2 = " + (DateTime.UtcNow - timestart).TotalSeconds);
                 RecalculatePower(attackerPower);
                 RecalculatePower(defenderPower);
-                log.Debug("TIMER7 = " + (DateTime.UtcNow - timestart).TotalSeconds);
 
                 while (attackerPower.HitPoint > 0 && defenderPower.HitPoint > 0)
                 {
@@ -317,17 +305,12 @@ namespace GameOfRevenge.Business.Manager.UserData
                     RecalculatePower(attackerPower);
                     RecalculatePower(defenderPower);
                 }
-                log.Debug("TIMER8 = " + (DateTime.UtcNow - timestart).TotalSeconds);
 
                 var atkHealingBoost = attackerArmy.Boosts.Exists(x => (x.BoostType == BoostType.LifeSaver) && (x.TimeLeft > 0));
-                log.Debug("TIMER8.1 = " + (DateTime.UtcNow - timestart).TotalSeconds);
                 var defHealingBoost = defenderArmy.Boosts.Exists(x => (x.BoostType == BoostType.LifeSaver) && (x.TimeLeft > 0));
 
-                log.Debug("TIMER8.2 = " + (DateTime.UtcNow - timestart).TotalSeconds);
                 CaclulateTroopLoss(attackerPower, atkHealingBoost);
-                log.Debug("TIMER8.3 = " + (DateTime.UtcNow - timestart).TotalSeconds);
                 CaclulateTroopLoss(defenderPower, defHealingBoost);
-                log.Debug("TIMER9 = " + (DateTime.UtcNow - timestart).TotalSeconds);
 
                 bool attackerWin = attackerPower.HitPoint > defenderPower.HitPoint;
 
@@ -337,26 +320,19 @@ namespace GameOfRevenge.Business.Manager.UserData
                     Defender = SetClientReport(defenderPower),
                     AttackerWon = attackerWin
                 };
-                log.Debug("TIMER11 = " + (DateTime.UtcNow - timestart).TotalSeconds);
 
                 await RemoveTroops(attackerArmy, attackerPower);
                 await RemoveTroops(defenderArmy, defenderPower);
-                log.Debug("TIMER12 = " + (DateTime.UtcNow - timestart).TotalSeconds);
 
                 if (attackerWin) await GiveLoot(defenderArmy, attackerPower, finalReport);
 
-                log.Debug("TIMER13 = " + (DateTime.UtcNow - timestart).TotalSeconds);
 
                 await manager.AddOrUpdatePlayerData(attackerId, DataType.Marching, 1, string.Empty);
-                log.Debug("TIMER15 = " + (DateTime.UtcNow - timestart).TotalSeconds);
                 await structManager.UpdateGate(defenderId, defenderPower.GateHp);
-                log.Debug("TIMER16 = " + (DateTime.UtcNow - timestart).TotalSeconds);
 
                 string json = JsonConvert.SerializeObject(finalReport);
-                log.Debug("TIMER17 = " + (DateTime.UtcNow - timestart).TotalSeconds);
                 _ = Task.Run(async () =>
                 {
-                    log.Debug("aaaaaaaaa = " + (DateTime.UtcNow - timestart).TotalSeconds);
                     if (attackerWin)
                     {
                         await mailManager.SendMail(attackerId, MailType.BattleReport,
@@ -373,9 +349,7 @@ namespace GameOfRevenge.Business.Manager.UserData
                         await mailManager.SendMail(defenderId, MailType.BattleReport,
                                                     json.Replace("INSERTMESSAGEHERE", "You succesfully defended the against enemy seige"));
                     }
-                    log.Debug("bbbbbbbb = " + (DateTime.UtcNow - timestart).TotalSeconds);
                 });
-                log.Debug("TIMER18 = " + (DateTime.UtcNow - timestart).TotalSeconds);
 
                 return new Response<BattleReport>(finalReport, 100, json.Replace("INSERTMESSAGEHERE", "Attacked succesfully"));
             }

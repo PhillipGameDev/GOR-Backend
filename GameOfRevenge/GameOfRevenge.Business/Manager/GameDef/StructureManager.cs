@@ -43,7 +43,6 @@ namespace GameOfRevenge.Business.Manager.GameDef
 
         public async Task<Response<List<StructureDataRequirementRel>>> GetAllStructDataRequirementRel()
         {
-            System.Console.WriteLine("ENTRO ACA");
             try
             {
                 var respStructs = await GetAllStructures();
