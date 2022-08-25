@@ -47,12 +47,18 @@ namespace GameOfRevenge.Common.Models
     public class AttackSocketResponse
     {
         public DateTime StartTime { get; set; }
+
+        public int AttackerUserId { get; set; }
         public string AttckerUserName { get; set; }
+
+        public int EnemyUserId { get; set; }
         public string EnemyUserName { get; set; }
+
         public int ReachedTime { get; set; }
         public int[] TroopCount { get; set; }
         public int[] TroopType { get; set; }
-        public int[] Heros { get; set; }
+        public int[] Heros { get; set; }//TODO:fix typo
+
         public double CurrentTime
         {
             get
@@ -65,6 +71,7 @@ namespace GameOfRevenge.Common.Models
                     return (returnTime - DateTime.UtcNow).TotalMilliseconds;
             }
         }
+
         public bool IsReturnFromAttack
         {
             get

@@ -295,7 +295,7 @@ namespace GameOfRevenge.Business.Manager.UserData
                         else if (resourceType == ResourceType.Wood) response = await RemoveWoodResource(playerId, req.Value * count);
                         else if (resourceType == ResourceType.Ore) response = await RemoveOreResource(playerId, req.Value * count);
                         else response = await RemoveGemsResource(playerId, req.Value);
-                        if (!response.IsSuccess) return response.IsSuccess;
+                        if (!response.IsSuccess) return false;
                     }
                 }
 
@@ -322,7 +322,7 @@ namespace GameOfRevenge.Business.Manager.UserData
                         else if (resourceType == ResourceType.Wood) response = await AddWoodResource(playerId, req.Value * count);
                         else if (resourceType == ResourceType.Ore) response = await AddOreResource(playerId, req.Value * count);
                         else response = await AddGemsResource(playerId, req.Value);
-                        if (!response.IsSuccess) return response.IsSuccess;
+                        if (!response.IsSuccess) return false;
                     }
                 }
 

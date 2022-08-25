@@ -27,8 +27,9 @@ namespace GameOfRevenge.GameHandlers
             this.attacker = attacker;
         }
 
-        public void AttackRequest(AttackRequest request)
+        public bool AttackRequest(AttackRequest request)
         {
+            bool success = true;
             DateTime timestart = DateTime.UtcNow;
             log.InfoFormat("@@@@@@@@!!! Attack Request {0} ", new object[1] { JsonConvert.SerializeObject((object)request) });
             if (GameService.BRealTimeUpdateManager.GetAttackerData(this.attacker.PlayerId) == null)
@@ -84,58 +85,72 @@ namespace GameOfRevenge.GameHandlers
                         {
                             var attackBattle = GameService.BkingdomePvpManager.AttackOtherPlayer(attacker.PlayerId, Enemy.PlayerId, marching, location);
                             attackBattle.Wait();
-                            if ((attackBattle.Result.Case < 100) || (attackBattle.Result.Case > 199)) throw new Exception();
-
-                            if (mmoPeer != null) mmoPeer.Actor.SendEvent(EventCode.UnderAttack, new object());
-
-                            log.InfoFormat("Attack battle response {0} ", JsonConvert.SerializeObject(attackBattle));
-                            var socketResponse = new AttackSocketResponse
+                            if ((attackBattle.Result.Case >= 100) && (attackBattle.Result.Case < 200))
                             {
-                                StartTime = marching.StartTime,
-                                AttckerUserName = attacker.UserName,
-                                EnemyUserName = request.EnemyUserName,
-                                ReachedTime = reachedTime,
-                                TroopType = request.TroopType,
-                                TroopCount = request.TroopCount,
-                                Heros = request.HeroIds
-                            };
-                            var attackResponse = new AttackResponse(socketResponse);
-                            if (attackBattle.Result.Case > 99 && attackBattle.Result.Case < 200)//success
-                            {
-                                attacker.BroadcastWithMe(EventCode.AttackResponse, attackResponse);
-                                attackBattle.Result.Data.AttackData = socketResponse;
-                                var defenderId = attackBattle.Result.Data.Report.Defenderid;
-                                GameService.BRealTimeUpdateManager.AddNewAttackOnWorld(attackBattle.Result.Data);
+                                if (mmoPeer != null) mmoPeer.Actor.SendEvent(EventCode.UnderAttack, new object());
+
+                                log.InfoFormat("Attack battle response {0} ", JsonConvert.SerializeObject(attackBattle));
+                                var socketResponse = new AttackSocketResponse
+                                {
+                                    StartTime = marching.StartTime,
+                                    AttackerUserId = attacker.PlayerId,
+                                    AttckerUserName = attacker.UserName,
+                                    EnemyUserName = request.EnemyUserName,
+                                    ReachedTime = reachedTime,
+                                    TroopType = request.TroopType,
+                                    TroopCount = request.TroopCount,
+                                    Heros = request.HeroIds
+                                };
+                                var attackResponse = new AttackResponse(socketResponse);
+                                if (attackBattle.Result.Case >= 100 && attackBattle.Result.Case < 200)//success
+                                {
+                                    attacker.BroadcastWithMe(EventCode.AttackResponse, attackResponse);
+                                    attackBattle.Result.Data.AttackData = socketResponse;
+                                    var defenderId = attackBattle.Result.Data.Report.Defenderid;
+                                    GameService.BRealTimeUpdateManager.AddNewAttackOnWorld(attackBattle.Result.Data);
+                                }
+                                else//fail
+                                {
+                                    attackResponse.IsSuccess = false; attackResponse.Message = attackBattle.Result.Message;
+                                    attacker.SendEvent(EventCode.AttackResponse, attackResponse);
+                                }
                             }
-                            else//fail
+                            else
                             {
-                                attackResponse.IsSuccess = false; attackResponse.Message = attackBattle.Result.Message;
-                                attacker.SendEvent(EventCode.AttackResponse, attackResponse);
+                                attacker.SendOperation(OperationCode.AttackRequest, (ReturnCode.Failed), null, attackBattle.Result.Message);
+                                success = false;
                             }
                         }
                         catch (Exception ex)
                         {
                             log.InfoFormat("Excpetion in AttackOtherPlayer {0} {1} ", new object[2] { ex.Message, ex.StackTrace });
-                            attacker.SendOperation(OperationCode.AttackRequest, (ReturnCode.Failed), null, "error generating attack");
+                            attacker.SendOperation(OperationCode.AttackRequest, (ReturnCode.Failed), null, "Error generating attack");
+                            success = false;
                         }
 
                     }
                     catch (Exception ex)
                     {
                         log.InfoFormat("Excpetion in Collect Army and Call War {0} {1} ", new object[2] { ex.Message, ex.StackTrace });
-                        attacker.SendOperation(OperationCode.AttackRequest, (ReturnCode.Failed), null, "error collecting army");
+                        attacker.SendOperation(OperationCode.AttackRequest, (ReturnCode.Failed), null, "Error collecting army");
+                        success = false;
                     }
                 }
                 else
                 {
-                    attacker.SendOperation(OperationCode.AttackRequest, (ReturnCode.Failed), null, "enemy not found.");
+                    attacker.SendOperation(OperationCode.AttackRequest, (ReturnCode.Failed), null, "Enemy not found.");
+                    success = false;
                 }
             }
             else
+            {
                 attacker.SendOperation(OperationCode.AttackRequest, (ReturnCode.Failed), null, "Multiple attack is not supported.");
+                success = false;
+            }
 
 
             log.Debug("@@@@@@@@ PROCCESS END =" + (DateTime.UtcNow - timestart).TotalSeconds);
+            return success;
         }
 
     }

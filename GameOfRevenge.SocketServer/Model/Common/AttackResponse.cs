@@ -12,6 +12,7 @@ namespace GameOfRevenge.Model
             ReachedTime = res.ReachedTime;
             TroopCount = res.TroopCount;
             TroopType = res.TroopType;
+            HeroIds = res.Heros;
             CurrentTime = res.CurrentTime;
             IsReturnFromAttack = res.IsReturnFromAttack;
         }
@@ -30,6 +31,9 @@ namespace GameOfRevenge.Model
 
         [DataMember(Code = (byte)RoomParameterKey.TroopType, IsOptional = true)]
         public int[] TroopType { get; set; }
+
+        [DataMember(Code = (byte)RoomParameterKey.HeroIds, IsOptional = true)]
+        public int[] HeroIds { get; set; }
 
         [DataMember(Code = (byte)RoomParameterKey.CurrentTime, IsOptional = true)]
         public double CurrentTime { get; set; }

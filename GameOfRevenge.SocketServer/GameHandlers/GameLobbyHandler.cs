@@ -448,9 +448,10 @@ namespace GameOfRevenge.GameHandlers
                 return peer.SendOperation(operationRequest.OperationCode, ReturnCode.InvalidOperation, debuMsg: operation.GetErrorMessage());
             }
 
-            peer.Actor.PlayerAttackHandler.AttackRequest(operation);
-            log.Debug("@@@@ ATTACK OK!!");
-            return SendResult.Ok;
+            bool success = peer.Actor.PlayerAttackHandler.AttackRequest(operation);
+            log.Debug(success? "@@@@ ATTACK OK!!" : "@@@@ ATTACK FAIL!");
+
+            return success? SendResult.Ok : SendResult.Failed;
         }
 
         public SendResult HandlPlayerConnectToGameServer(IGorMmoPeer peer, OperationRequest operationRequest)

@@ -5,6 +5,8 @@ namespace GameOfRevenge.Common.Models
     public class PlayerCompleteData
     {
         public int PlayerId { get; set; }
+        public string PlayerName { get; set; }
+
         public int HelpedBuild { get; set; }
         public UserKingDetails King { get; set; }
 

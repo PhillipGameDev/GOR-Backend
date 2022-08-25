@@ -21,6 +21,7 @@ namespace GameOfRevenge.Business.Manager.Base
 {
     public class BaseUserDataManager : IBaseUserManager
     {
+        protected static readonly IAccountManager accountManager = new AccountManager();
         protected static readonly IPlayerDataManager manager = new PlayerDataManager();
 
         protected IReadOnlyDataRequirement GetGemReq(int value)
@@ -34,12 +35,19 @@ namespace GameOfRevenge.Business.Manager.Base
             try
             {
                 var currentTimestamp = DateTime.UtcNow;
+                var playerName = "";
+                var resp = await accountManager.GetAccountInfo(playerId);
+                if (resp.IsSuccess)
+                {
+                    playerName = resp.Data.Name;
+                }
+
                 var response = await manager.GetAllPlayerData(playerId);
 
                 line = "1";
                 if (response.IsSuccess)
                 {
-                    System.Console.WriteLine(Newtonsoft.Json.JsonConvert.SerializeObject(response.Data));
+//                    System.Console.WriteLine(Newtonsoft.Json.JsonConvert.SerializeObject(response.Data));
 
                     var finalData = new Response<PlayerCompleteData>()
                     {
@@ -47,17 +55,20 @@ namespace GameOfRevenge.Business.Manager.Base
                         Message = "Complete player data",
                         Data = new PlayerCompleteData()
                         {
+                            PlayerId = playerId,
+                            PlayerName = playerName,
+                            HelpedBuild = 0,
+
                             Resources = new ResourcesList(),
                             Structures = new List<StructureInfos>(),
                             Troops = new List<TroopInfos>(),
                             Items = new List<UserItemDetails>(),
                             Technologies = new List<TechnologyInfos>(),
                             Boosts = new List<FullUserBoostDetails>(),
-                            PlayerId = playerId,
-                            HelpedBuild = 0,
                             Heroes = new List<UserHeroDetails>()
                         }
                     };
+
                     line = "2";
                     var customs = response.Data.Where(x => x.DataType == DataType.Custom)?.ToList();
                     line = "3";
