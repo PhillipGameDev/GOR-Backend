@@ -65,8 +65,9 @@ namespace GameOfRevenge.Buildings.Handlers
             }
         }
 
-        public void UpgradeStructureForPlayer(UpgradeStructureRequest request, MmoActor actor)
+        public bool UpgradeStructureForPlayer(UpgradeStructureRequest request, MmoActor actor)
         {
+            bool success = true;
             log.InfoFormat("Upgrade Structure Request CurrentBuilding {0} Data {1} ", this.BuildingData.Info.Code.ToString(),
                 JsonConvert.SerializeObject(request));
             if (actor.PlayerDataManager.PlayerBuildings.ContainsKey((this.StructureType)))
@@ -94,19 +95,35 @@ namespace GameOfRevenge.Buildings.Handlers
                                 actor.Peer.SendOperation(OperationCode.UpgradeStructure, ReturnCode.OK, obj.GetDictionary());
                             }
                             else
+                            {
                                 actor.Peer.SendOperation(OperationCode.UpgradeStructure, ReturnCode.Failed, debuMsg: response.Message);
+                                success = false;
+                            }
                         }
                         else
-                            actor.Peer.SendOperation(OperationCode.UpgradeStructure, ReturnCode.Failed, debuMsg: "structure not found in data.");
+                        {
+                            actor.Peer.SendOperation(OperationCode.UpgradeStructure, ReturnCode.Failed, debuMsg: "Structure not found in data.");
+                            success = false;
+                        }
                     }
                     else
-                        actor.Peer.SendOperation(OperationCode.UpgradeStructure, ReturnCode.Failed, debuMsg: "building is already in constructing mode for current level. please try after some time. ");
+                    {
+                        actor.Peer.SendOperation(OperationCode.UpgradeStructure, ReturnCode.Failed, debuMsg: "Building is already in constructing mode for current level. please try after some time. ");
+                        success = false;
+                    }
                 }
                 else
-                    actor.Peer.SendOperation(OperationCode.UpgradeStructure, ReturnCode.Failed, debuMsg: "structure not found.");
+                {
+                    actor.Peer.SendOperation(OperationCode.UpgradeStructure, ReturnCode.Failed, debuMsg: "Structure not found.");
+                    success = false;
+                }
             }
             else
-                actor.Peer.SendOperation(OperationCode.UpgradeStructure, ReturnCode.Failed, debuMsg: "structure not found.");
+            {
+                actor.Peer.SendOperation(OperationCode.UpgradeStructure, ReturnCode.Failed, debuMsg: "Structure not found.");
+                success = false;
+            }
+            return success;
         }
         
         private Response<UserStructureData> CreateAndUpgradeStructure(MmoActor player, IReadOnlyList<IReadOnlyDataRequirement> requirments, int locationId, bool isUpgrade = false)
@@ -118,10 +135,12 @@ namespace GameOfRevenge.Buildings.Handlers
             }
             
             Response<UserStructureData> response;
-            if (!isUpgrade) response = GameService.BPlayerStructureManager.CreateBuilding(Convert.ToInt32(player.UserId), this.StructureType, locationId).Result;
-            else response = GameService.BPlayerStructureManager.UpgradeBuilding(Convert.ToInt32(player.UserId), this.StructureType, locationId).Result;
+            if (!isUpgrade)
+                response = GameService.BPlayerStructureManager.CreateBuilding(Convert.ToInt32(player.UserId), this.StructureType, locationId).Result;
+            else
+                response = GameService.BPlayerStructureManager.UpgradeBuilding(Convert.ToInt32(player.UserId), this.StructureType, locationId).Result;
 
-            if (Enumerable.Range(0, 99).Contains(response.Case)) return new Response<UserStructureData>(200, response.Message);
+            if (response.Case < 100) return new Response<UserStructureData>(200, response.Message);
             
             log.InfoFormat("Response Of Create/Upgrasde Structure Manager DATA {0} ", JsonConvert.SerializeObject(response.Data));
             UserStructureData structure = GameService.BPlayerStructureManager.GetStructureDataAccLoc(response.Data, locationId);

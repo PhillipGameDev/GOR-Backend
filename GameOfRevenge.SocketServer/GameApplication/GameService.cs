@@ -140,7 +140,7 @@ namespace GameOfRevenge.GameApplication
                     case StructureType.InfantryCamp:
                         gtroops = Troops;
                         break;
-                    case StructureType.WorkShop:
+                    case StructureType.Workshop:
                         gtroops = Troops;
                         break;
                     case StructureType.ShootingRange:

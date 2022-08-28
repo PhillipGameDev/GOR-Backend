@@ -33,8 +33,8 @@ namespace GameOfRevenge.ResourcesHandler
         {
             Value += val;
             log.Info($"Update Resources Type {ResourceInfo.Code} UpdateVal {val} totalVal {Value}");
-            var obj = new UpdateResourceResponse(ResourceInfo.Id, Value);
-            actor.SendEvent(EventCode.UpdateResource, obj);
+//            var obj = new UpdateResourceResponse(ResourceInfo.Id, Value);
+//            actor.SendEvent(EventCode.UpdateResource, obj);
         }
     }
 }

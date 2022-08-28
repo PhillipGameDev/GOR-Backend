@@ -14,7 +14,7 @@ namespace GameOfRevenge.Buildings.Interface
 
         int BuildTime(int level);
         void CreateStructureForPlayer(CreateStructureRequest request, MmoActor actor);
-        void UpgradeStructureForPlayer(UpgradeStructureRequest request, MmoActor actor);
+        bool UpgradeStructureForPlayer(UpgradeStructureRequest request, MmoActor actor);
         void RecruitTroops(RecruitTroopRequest request, MmoActor actor);
     }
 }

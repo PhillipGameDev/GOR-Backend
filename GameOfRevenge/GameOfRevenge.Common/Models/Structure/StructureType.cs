@@ -6,12 +6,13 @@
 
         CityCounsel = 1,
         Gate = 4,
+//        SentinelTower = 16,
         WatchTower = 17,
         Blacksmith = 8,
-        WorkShop = 10,
+        Workshop = 10,
         Embassy = 9,
         Warehouse = 12,
-        Acadamy = 14,
+        Academy = 14,
 
         Market = 13,
         TrainingHeroes = 19,
@@ -24,6 +25,6 @@
         Barracks = 2,
         Infirmary = 3,
         ShootingRange = 11,
-        Stable = 18,
+        Stable = 18
     }
 }

@@ -271,7 +271,7 @@ namespace GameOfRevenge.Business.CacheData
                 case StructureType.Blacksmith: return new List<string>() { "Level" };
                 case StructureType.Embassy: return new List<string>() { "Level" };
                 case StructureType.Warehouse: return new List<string>() { "Level", "Food", "Wood", "Ore" };
-                case StructureType.Acadamy: return new List<string>() { "Level", "Technology", "Boost" };
+                case StructureType.Academy: return new List<string>() { "Level", "Technology", "Boost" };
 
                 case StructureType.Farm: return new List<string>() { "Level", "Hourly Yeild", "Capacity", "Total Collect" };
                 case StructureType.Sawmill: return new List<string>() { "Level", "Hourly Yeild", "Capacity", "Total Collect" };
@@ -280,7 +280,7 @@ namespace GameOfRevenge.Business.CacheData
                 case StructureType.InfantryCamp: return new List<string>() { "Level", "Population", "Traning Speed" };
                 case StructureType.Infirmary: return new List<string>() { "Level", "Wounded Capacity" };
 
-                case StructureType.WorkShop: return new List<string>() { "Level", "Troop", "Power" };
+                case StructureType.Workshop: return new List<string>() { "Level", "Troop", "Power" };
                 case StructureType.Barracks: return new List<string>() { "Level", "Troop", "Power" };
                 case StructureType.ShootingRange: return new List<string>() { "Level", "Troop", "Power" };
                 case StructureType.Stable: return new List<string>() { "Level", "Troop", "Power" };
@@ -326,7 +326,7 @@ namespace GameOfRevenge.Business.CacheData
                         break;
                     case StructureType.Blacksmith:
                         break;
-                    case StructureType.WorkShop:
+                    case StructureType.Workshop:
                         item.AddRange(TroopAddRequirementDecriptionInfo(type, level));
                         break;
                     case StructureType.Embassy:
@@ -336,7 +336,7 @@ namespace GameOfRevenge.Business.CacheData
                         item.Add(level.Data.SafeDeposit.ToString());
                         item.Add(level.Data.SafeDeposit.ToString());
                         break;
-                    case StructureType.Acadamy:
+                    case StructureType.Academy:
                         item.AddRange(TechnologyRequirementDecriptionInfo(level));
                         break;
                     case StructureType.Farm:
@@ -381,7 +381,7 @@ namespace GameOfRevenge.Business.CacheData
 
         private static string[] TechnologyRequirementDecriptionInfo(IReadOnlyStructureDataRequirement level)
         {
-            var structureId = GetFullStructureData(StructureType.Acadamy).Info.Id;
+            var structureId = GetFullStructureData(StructureType.Academy).Info.Id;
             var techs = CacheTechnologyDataManager.TechnologyInfos;
             string[] strs = new string[2];
 

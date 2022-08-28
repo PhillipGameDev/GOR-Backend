@@ -152,7 +152,7 @@ namespace GameOfRevenge.GameHandlers
                 case StructureType.Barracks:
                     playerBuilding = new BarracksBuilding(gameBuilding, this.player, structure);
                     break;
-                case StructureType.Acadamy:
+                case StructureType.Academy:
                     playerBuilding = new Academy(gameBuilding, this.player, structure);
                     break;
                 case StructureType.Embassy:
@@ -185,7 +185,7 @@ namespace GameOfRevenge.GameHandlers
                 case StructureType.Warehouse:
                     playerBuilding = new WareHouse(gameBuilding, this.player, structure);
                     break;
-                case StructureType.WorkShop:
+                case StructureType.Workshop:
                     playerBuilding = new Workshop(gameBuilding, this.player, structure);
                     break;
                 case StructureType.Stable:
@@ -221,9 +221,9 @@ namespace GameOfRevenge.GameHandlers
                     if (this.PlayerBuildings.ContainsKey((StructureType)item.ValueId))
                     {
                         bool isSucc = this.PlayerBuildings[(StructureType)item.ValueId].Any(d => d.HasAvailableRequirment(item));
-                        if (!isSucc) return (false, "requirment not found.");
+                        if (!isSucc) return (false, "Requirment not found.");
                     }
-                    else return (false, "player need to create structure.");
+                    else return (false, "Player need to create structure.");
                 }
                 else if (item.DataType == DataType.Resource)
                 {
@@ -231,16 +231,16 @@ namespace GameOfRevenge.GameHandlers
                     {
                         bool isSucc = this.PlayerResources[(ResourceType)item.ValueId].HasAvailableRequirment(item);
                         if (!isSucc)
-                            return (false, "requirment not found.");
+                            return (false, "Requirment not found.");
                     }
                     else
-                        return (false, "player have insufficient resources.");
+                        return (false, "Player have insufficient resources.");
                 }
             }
             foreach (var item in requirments)
                 if (item.DataType == DataType.Resource)
-                    this.PlayerResources[(ResourceType)item.ValueId].UpdateResourceValue(item.Value);
-            return (true, "success");
+                    this.PlayerResources[(ResourceType)item.ValueId].UpdateResourceValue(-item.Value);
+            return (true, "Success");
         }
         public IPlayerBuildingManager GetPlayerBuilding(StructureType structType, int locationId)
         {

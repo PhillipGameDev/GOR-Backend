@@ -579,13 +579,16 @@ namespace GameOfRevenge.GameHandlers
 
         public async Task<SendResult> HandleUpgradeStructure(IGorMmoPeer peer, OperationRequest operationRequest)
         {
+            log.Debug("@@@@@@@ HANDLE UPGRADE STRUCTURE REQUEST FROM " + peer.Actor.PlayerId);
+
             var operation = new UpgradeStructureRequest(peer.Protocol, operationRequest);
             if (!operation.IsValid) return peer.SendOperation(operationRequest.OperationCode, ReturnCode.InvalidOperation, debuMsg: operation.GetErrorMessage());
 
-            GameService.GameBuildingManager[(StructureType)operation.StructureType].UpgradeStructureForPlayer(operation, peer.Actor);
-            await GameService.NewRealTimeUpdateManager.UpdatePlayerData(peer.Actor.PlayerId);
+            var success = GameService.GameBuildingManager[(StructureType)operation.StructureType].UpgradeStructureForPlayer(operation, peer.Actor);
+            log.Debug(success ? "@@@@ UPGRADE OK!!" : "@@@@ UPGRADE FAIL!");
+            if (success) await GameService.NewRealTimeUpdateManager.UpdatePlayerData(peer.Actor.PlayerId);
 
-            return SendResult.Ok;
+            return success ? SendResult.Ok : SendResult.Failed;
         }
 
         public async Task<SendResult> HandlePlayerBuildingStatus(IGorMmoPeer peer, OperationRequest operationRequest)
