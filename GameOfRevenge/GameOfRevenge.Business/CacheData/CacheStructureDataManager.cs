@@ -212,6 +212,11 @@ namespace GameOfRevenge.Business.CacheData
                 structureTypes.Clear();
                 structureTypes = null;
             }
+            if (structureInfof != null)
+            {
+                structureInfof.Clear();
+                structureInfof = null;
+            }
         }
         #endregion
 
@@ -285,6 +290,8 @@ namespace GameOfRevenge.Business.CacheData
                 case StructureType.ShootingRange: return new List<string>() { "Level", "Troop", "Power" };
                 case StructureType.Stable: return new List<string>() { "Level", "Troop", "Power" };
 
+                case StructureType.Market: return new List<string>() { "Level", "Max caravan Load" };
+
                 default: return null;
             }
         }
@@ -314,7 +321,7 @@ namespace GameOfRevenge.Business.CacheData
                         break;
                     case StructureType.WatchTower:
                         if (level.Data.Level == 1) item.Add("Reveals the incoming troops Player name.");
-                        else if (level.Data.Level == 3) item.Add("Reveals the exact loaction of the incoming troops origin.");
+                        else if (level.Data.Level == 3) item.Add("Reveals the exact location of the incoming troops origin.");
                         else if (level.Data.Level == 7) item.Add("Reveals the incoming troops estimated time of arrival.");
                         else if (level.Data.Level == 11) item.Add("Reveals the total size of incoming troops.");
                         else if (level.Data.Level == 17) item.Add("Reveals the exact king level of the incoming troops.");
@@ -369,6 +376,15 @@ namespace GameOfRevenge.Business.CacheData
                         break;
                     case StructureType.Stable:
                         item.AddRange(TroopAddRequirementDecriptionInfo(type, level));
+                        break;
+                    case StructureType.Market:
+                        if (level.Data.Level <= 20) item.Add((level.Data.Level * 20000).ToString());
+                        else if (level.Data.Level <= 25) item.Add((400000 + ((level.Data.Level-20) * 40000)).ToString());
+                        else if (level.Data.Level == 26) item.Add("660000");
+                        else if (level.Data.Level == 27) item.Add("720000");
+                        else if (level.Data.Level == 28) item.Add("800000");
+                        else if (level.Data.Level == 29) item.Add("900000");
+                        else if (level.Data.Level == 30) item.Add("1000000");
                         break;
                 }
 
