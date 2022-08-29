@@ -96,7 +96,7 @@ namespace GameOfRevenge.Business.Manager.Base
                     var userTechnologies = response.Data.Where(x => x.DataType == DataType.Technology)?.ToList();
                     var userItems = response.Data.Where(x => x.DataType == DataType.Inventory)?.ToList();
                     var userBoosts = response.Data.Where(x => x.DataType == DataType.ActiveBoost)?.ToList();
-                    var userHeroes = response.Data.Where(x => x.DataType == DataType.Hero)?.ToList();
+                    var userHeroData = response.Data.Where(x => x.DataType == DataType.Hero)?.ToList();
                     var userActivities = response.Data.Where(x => x.DataType == DataType.Activity)?.ToList();
                     line = "6";
 
@@ -288,9 +288,66 @@ namespace GameOfRevenge.Business.Manager.Base
                     line = "14";
                     int line2 = 0;
                     ////ADD HEROES
-                    if (userHeroes != null)
+                    if (userHeroData != null)
                     {
-                        foreach (var item in userHeroes)
+                        int loops = 0;
+                        foreach (var heroInfo in CacheHeroDataManager.HeroInfos)
+                        {
+                            loops++;
+                            HeroType heroType = heroInfo.Info.Code.ToEnum<HeroType>();
+                            var heroDataRelations = CacheHeroDataManager.GetHeroDataRelations(heroType);
+
+                            //Points        1
+                            //Power         2
+                            //AttackCount   3
+                            //AttackFail    4
+                            //DefenseCount  5
+                            //DefenseFail   6
+                            var valId = heroDataRelations.Find(x => x.StatType == 1).Id;//Points
+                            var entry = userHeroData.Find(x => x.ValueId == valId);
+                            if (entry == null) continue;
+
+                            int.TryParse(entry.Value, out int points);
+
+                            valId = heroDataRelations.Find(x => x.StatType == 2).Id;//Power
+                            entry = userHeroData.Find(x => x.ValueId == valId);
+                            int.TryParse(entry?.Value, out int power);
+
+                            valId = heroDataRelations.Find(x => x.StatType == 3).Id;//AttackCount
+                            entry = userHeroData.Find(x => x.ValueId == valId);
+                            int.TryParse(entry?.Value, out int attkCount);
+
+                            valId = heroDataRelations.Find(x => x.StatType == 4).Id;//AttackFail
+                            entry = userHeroData.Find(x => x.ValueId == valId);
+                            int.TryParse(entry?.Value, out int attkFail);
+
+                            valId = heroDataRelations.Find(x => x.StatType == 5).Id;//DefenseCount
+                            entry = userHeroData.Find(x => x.ValueId == valId);
+                            int.TryParse(entry?.Value, out int defCount);
+
+                            valId = heroDataRelations.Find(x => x.StatType == 6).Id;//DefenseFail
+                            entry = userHeroData.Find(x => x.ValueId == valId);
+                            int.TryParse(entry?.Value, out int defFail);
+
+                            var data = new UserHeroDetails()
+                            {
+                                HeroCode = heroInfo.Info.Code,
+                                Points = points,
+                                Power = power,
+                                AttackCount = attkCount,
+                                AttackFail = attkFail,
+                                DefenseCount = defCount,
+                                DefenseFail = defFail
+                            };
+                            finalData.Data.Heroes.Add(data);
+
+                            if ((finalData.Data.MarchingArmy != null) && (finalData.Data.MarchingArmy.Heroes != null))
+                            {
+                                data.IsMarching = finalData.Data.MarchingArmy.Heroes.Exists(x => x == (int)heroType);
+                            }
+                        }
+
+/*                        foreach (var item in userHeroData)
                         {
                             if (item == null) continue;
 
@@ -308,7 +365,7 @@ namespace GameOfRevenge.Business.Manager.Base
                             {
                                 data.IsMarching = finalData.Data.MarchingArmy.Heroes.Exists(x => x == (int)heroType);
                             }
-                        }
+                        }*/
                     }
 
 
@@ -541,7 +598,7 @@ namespace GameOfRevenge.Business.Manager.Base
             {
                 Id = playerData.Id,
                 DataType = DataType.Hero,
-                ValueId = CacheHeroDataManager.GetFullHeroData(playerData.ValueId).Info.Code, //hero type
+                ValueId = CacheHeroDataManager.GetFullHeroData(playerData.ValueId.ToString()).Info.Code, //hero type
                 Value = val//war points
             };
         }

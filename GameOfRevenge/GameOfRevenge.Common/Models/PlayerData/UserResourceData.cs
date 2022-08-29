@@ -5,6 +5,8 @@ using GameOfRevenge.Common.Models.Structure;
 using GameOfRevenge.Common.Models.Table;
 using System.Collections.Generic;
 using Newtonsoft.Json;
+using GameOfRevenge.Common.Models.Hero;
+using System.Runtime.Serialization;
 
 namespace GameOfRevenge.Common.Models.PlayerData
 {
@@ -46,21 +48,22 @@ namespace GameOfRevenge.Common.Models.PlayerData
 
     public class UserHeroData : BaseUserDataTable<string, int>, IBaseUserDataTable<string, int>, IReadOnlyBaseUserDataTable<string, int>, IBaseDataTypeTable<string, int>, IReadOnlyBaseDataTypeTable<string, int>
     {
-        public UserHeroDetails ToUserHeroDetails()
-        {
-            return new UserHeroDetails()
-            {
-                Id = this.Id,
-                Code = this.ValueId,
-                BattleCount = this.Value,
-//                Unlocked = true,
-                IsMarching = false
-            };
-        }
     }
 
     public class UserKingData : BaseUserDataTable<int, UserKingDetails>, IBaseUserDataTable<int, UserKingDetails>, IReadOnlyBaseUserDataTable<int, UserKingDetails>, IBaseDataTypeTable<int, UserKingDetails>, IReadOnlyBaseDataTypeTable<int, UserKingDetails>
     {
+    }
+
+    public class UserHeroDataList
+    {
+        public HeroType HeroType { get; set; }
+        public List<UserHeroDataValue> Data { get; set; }
+    }
+
+    public class UserHeroDataValue
+    {
+        public int Type { get; set; }
+        public int Value { get; set; }
     }
 
 }

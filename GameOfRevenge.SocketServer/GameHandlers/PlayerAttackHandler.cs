@@ -39,6 +39,13 @@ namespace GameOfRevenge.GameHandlers
                 {
                     double num = 0.2;
                     double num2 = attacker.World.GetDistanceBw2Points(Enemy.Tile, attacker.Tile) / num;
+                    //apply HeroType.AlyamamahEyes - Troop Marching Time
+                    if (request.HeroIds.Contains((int)Common.Models.Hero.HeroType.AlyamamahEyes))
+                    {
+                        attacker.PlayerDataManager.GetPlayerBuilding(Common.Models.Structure.StructureType.Other, 0);
+//                        attacker.World.PlayersManager.GetPlayer("").
+                    }
+
                     int reachedTime = (int)(num2 * 1000);
 
                     MarchingArmy marching = new MarchingArmy();
@@ -46,7 +53,7 @@ namespace GameOfRevenge.GameHandlers
                     {
 //                        val.EndTime = val.TaskTime.AddMilliseconds(socketResponse.ReachedTime);
                         marching.Troops = (new List<TroopInfos>());
-                        int delay = 0;
+//                        int delay = 0;
                         int i;
                         for (i = 0; i < request.TroopType.Count(); i++)
                         {

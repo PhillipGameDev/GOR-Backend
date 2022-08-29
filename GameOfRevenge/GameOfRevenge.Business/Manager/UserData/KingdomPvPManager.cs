@@ -227,7 +227,7 @@ namespace GameOfRevenge.Business.Manager.UserData
                     var heroNames = new List<TroopData>();
                     foreach (var item in attacker.Data.MarchingArmy.Heroes)
                     {
-                        var heroData = CacheHeroDataManager.GetFullHeroData(item);
+                        var heroData = CacheHeroDataManager.GetFullHeroDataID(item);
                         if (heroData != null)
                         {
                             heroNames.Add(new TroopData() { Name = heroData.Info.Name });
@@ -405,7 +405,7 @@ namespace GameOfRevenge.Business.Manager.UserData
 
             if ((completeData.MarchingArmy != null) && (completeData.MarchingArmy.Heroes != null))
             {
-                var heros = completeData.MarchingArmy.Heroes.Select(x => CacheHeroDataManager.GetFullHeroData(x));
+                var heros = completeData.MarchingArmy.Heroes.Select(x => CacheHeroDataManager.GetFullHeroDataID(x));
                 if (heros != null)
                 {
                     foreach (var hero in heros)
@@ -478,7 +478,7 @@ namespace GameOfRevenge.Business.Manager.UserData
             List<string> heroes = null;
             if ((attackerPower.Heros != null) && (attackerPower.Heros.Count > 0))
             {
-                heroes = attackerPower.Heros.Select(x => CacheHeroDataManager.GetFullHeroData(x).Info.Name)?.ToList();
+                heroes = attackerPower.Heros.Select(x => CacheHeroDataManager.GetFullHeroDataID(x).Info.Name)?.ToList();
             }
             return new ClientBattleReport()
             {

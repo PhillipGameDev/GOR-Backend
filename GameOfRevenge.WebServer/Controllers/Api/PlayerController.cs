@@ -354,16 +354,37 @@ namespace GameOfRevenge.WebServer.Controllers.Api
         public async Task<IActionResult> GetHeroList()
         {
             var response = await userManager.GetFullPlayerData(Token.PlayerId);
-            return ReturnResponse(new Response<List<UserHeroDetails>>(response.Data?.Heroes, response.Case, response.Message));
+            if (response.IsSuccess)
+            {
+                return ReturnResponse(new Response<List<UserHeroDetails>>(response.Data?.Heroes, response.Case, "User heroes"));
+            }
+            else
+            {
+                return ReturnResponse(new Response(response.Case, response.Message));
+            }
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> GetHeroDataList(HeroType type)
+        {
+            var response = await userHeroManager.GetHeroDataList(Token.PlayerId, type);
+            if (response.IsSuccess && response.HasData)
+            {
+                return ReturnResponse(new Response<UserHeroDataList>(response.Data, response.Case, response.Message));
+            }
+            else
+            {
+                return ReturnResponse(new Response(response.Case, response.Message));
+            }
         }
 
         [HttpPost]
         public async Task<IActionResult> UnlockHero(HeroType type)
         {
             var response = await userHeroManager.UnlockHero(Token.PlayerId, type);
-            if (response.IsSuccess && response.HasData)
+            if (response.IsSuccess)
             {
-                return ReturnResponse(new Response<UserHeroDetails>(response.Data, response.Case, "Hero unlocked"));
+                return ReturnResponse(new Response(response.Case, "Hero unlocked"));
             }
             else
             {
@@ -377,7 +398,7 @@ namespace GameOfRevenge.WebServer.Controllers.Api
             var response = await userHeroManager.AddHeroWarPoints(Token.PlayerId, heroType, value);
             if (response.IsSuccess && response.HasData)
             {
-                return ReturnResponse(new Response<UserHeroDetails>(response.Data, response.Case, response.Message));
+                return ReturnResponse(new Response<int>(response.Data, response.Case, response.Message));
             }
             else
             {

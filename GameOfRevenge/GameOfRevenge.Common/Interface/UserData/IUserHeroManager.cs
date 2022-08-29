@@ -10,8 +10,9 @@ namespace GameOfRevenge.Common.Interface.UserData
 {
     public interface IUserHeroManager : IBaseUserManager
     {
-        Task<Response<UserHeroDetails>> UnlockHero(int playerId, HeroType heroType);
-        Task<Response<UserHeroDetails>> AddHeroWarPoints(int playerId, HeroType heroType, int? value);
+        Task<Response<UserHeroDataList>> GetHeroDataList(int playerId, HeroType type);
+        Task<Response> UnlockHero(int playerId, HeroType heroType);
+        Task<Response<int>> AddHeroWarPoints(int playerId, HeroType heroType, int? value);
 
         Task<Response<UserHeroDetails>> GetHeroPoint(int playerId, int heroId);
         Task<Response<UserHeroDetails>> SaveHeroPoint(int playerId, int heroId, int warPoints);
