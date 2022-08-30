@@ -14,6 +14,7 @@ namespace GameOfRevenge.Interface
         Dictionary<StructureType, List<IPlayerBuildingManager>> PlayerBuildings { get; }
         Dictionary<ResourceType, IPlayerResources> PlayerResources { get; }
         IPlayerAttackHandler AttackHandler { get; }
+        UserKingDetails King { get; }
 
         void AddStructure(int locationId, UserStructureData structure, IGameBuildingManager gameBuilding);
         (bool succ, string msg) CheckRequirmentsAndUpdateValues(IReadOnlyList<IReadOnlyDataRequirement> requirments);

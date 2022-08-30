@@ -70,7 +70,7 @@ namespace GameOfRevenge.Business.Manager.UserData
             throw new NotImplementedException();
         }
 
-        public async Task<Response<UserHeroDataList>> GetHeroDataList(int playerId, HeroType type)
+/*        public async Task<Response<UserHeroDataList>> GetHeroDataList(int playerId, HeroType type)
         {
             if (type == HeroType.Unknown) throw new DataNotExistExecption("Invalid parameters");
             try
@@ -138,8 +138,72 @@ namespace GameOfRevenge.Business.Manager.UserData
             {
                 return new Response<UserHeroDataList>() { Case = 0, Message = ex.Message };//ErrorManager.ShowError() };
             }
+        }*/
+
+        public async Task<Response<UserHeroDetails>> UnlockHero(int playerId, HeroType type)
+        {
+            try
+            {
+                if (type == HeroType.Unknown) throw new DataNotExistExecption("Invalid parameters");
+
+                var hero = CacheHeroDataManager.GetFullHeroData(type.ToString());
+                if (hero == null) throw new CacheDataNotExistExecption("Hero does not exist");
+
+                int valueId = hero.Info.HeroId;
+                var response = await manager.GetAllPlayerData(playerId, DataType.Hero);
+                if (response.IsSuccess)
+                {
+                    UserHeroDetails heroDetails = null;
+                    PlayerDataTable userHeroTable = response.Data.Find(x => x.ValueId == valueId);
+                    if (userHeroTable != null)
+                    {
+                        heroDetails = JsonConvert.DeserializeObject<UserHeroDetails>(userHeroTable.Value);
+                    }
+                    else
+                    {
+                        heroDetails = new UserHeroDetails { HeroCode = hero.Info.Code };
+
+                        var data = JsonConvert.SerializeObject(heroDetails);
+                        var response2 = await manager.AddOrUpdatePlayerData(playerId, DataType.Hero, valueId, data);
+                        //UpdatePlayerDataID(playerId, userHeroTable.Id, data);
+                        if (!response2.IsSuccess)
+                        {
+                            return new Response<UserHeroDetails>(response.Case, response.Message);
+                        }
+                        return new Response<UserHeroDetails>(heroDetails, 200, "Hero unlocked");
+                    }
+                    return new Response<UserHeroDetails>(heroDetails, 201, "Hero already unlocked");
+                }
+                else
+                {
+                    return new Response<UserHeroDetails>(response.Case, response.Message);
+                }
+            }
+            catch (InvalidModelExecption ex)
+            {
+                return new Response<UserHeroDetails>() { Case = 200, Message = ex.Message };// ErrorManager.ShowError(ex) };
+            }
+            catch (CacheDataNotExistExecption ex)
+            {
+                return new Response<UserHeroDetails>() { Case = 201, Message = ex.Message };// ErrorManager.ShowError(ex) };
+            }
+            catch (DataNotExistExecption ex)
+            {
+                return new Response<UserHeroDetails>() { Case = 202, Message = ex.Message };// ErrorManager.ShowError(ex) };
+            }
+            catch (RequirementExecption ex)
+            {
+                return new Response<UserHeroDetails>() { Case = 203, Message = ex.Message };// ErrorManager.ShowError(ex) };
+            }
+            catch (Exception ex)
+            {
+                return new Response<UserHeroDetails>() { Case = 0, Message = ex.Message };// ErrorManager.ShowError() };
+            }
         }
 
+
+
+/*
         public async Task<Response> UnlockHero(int playerId, HeroType type) => await AddHeroWarPoints(playerId, type, null);
 
         public async Task<Response<int>> AddHeroWarPoints(int playerId, HeroType type, int? value)
@@ -155,8 +219,8 @@ namespace GameOfRevenge.Business.Manager.UserData
                 var response = await manager.IncrementPlayerData(playerId, DataType.Hero, valueId, value);
                 if (response.IsSuccess)
                 {
-//                    var userHeroData = PlayerDataToUserHeroData(response.Data);
-//                    var data = userHeroData.Value;//.ToUserHeroDetails();
+                    //                    var userHeroData = PlayerDataToUserHeroData(response.Data);
+                    //                    var data = userHeroData.Value;//.ToUserHeroDetails();
                     int.TryParse(response.Data.Value, out int val);
                     return new Response<int>(val, response.Case, response.Message);
                 }
@@ -186,5 +250,6 @@ namespace GameOfRevenge.Business.Manager.UserData
                 return new Response<int>() { Case = 0, Message = ex.Message };// ErrorManager.ShowError() };
             }
         }
+*/
     }
 }

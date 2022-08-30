@@ -488,6 +488,16 @@ namespace GameOfRevenge.GameHandlers
             log.InfoFormat("Send profile data to client X {0} Y {1} userName {2} ", profile.X, profile.Y, profile.UserName);
             GameService.NewRealTimeUpdateManager.TryPushPlayerData(actor.PlayerId, peer.OnQuestUpdate);
 
+
+            var attackData = GameService.BRealTimeUpdateManager.GetDefenderData(actor.PlayerId);
+            if (attackData != null)
+            {
+                var attackResponse = new AttackResponse(attackData.AttackData);
+                actor.SendEvent(EventCode.AttackResponse, attackResponse);
+            }
+            else
+                log.InfoFormat("Under attack data not found for this user when join game {0} ", actor.PlayerId);
+
             return peer.SendOperation(operationRequest.OperationCode, ReturnCode.OK);
         }
 

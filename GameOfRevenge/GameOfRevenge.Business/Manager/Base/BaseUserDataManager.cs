@@ -82,11 +82,8 @@ namespace GameOfRevenge.Business.Manager.Base
                         }
                         catch {}
                     }
-                    else
-                    {
-                        finalData.Data.King = new UserKingDetails();
-                        finalData.Data.King.MaxStamina = 20;
-                    }
+                    if (finalData.Data.King == null) finalData.Data.King = new UserKingDetails();
+
                     line = "5";
 
                     var userResources = response.Data.Where(x => x.DataType == DataType.Resource)?.ToList();
@@ -290,12 +287,29 @@ namespace GameOfRevenge.Business.Manager.Base
                     ////ADD HEROES
                     if (userHeroData != null)
                     {
-                        int loops = 0;
                         foreach (var heroInfo in CacheHeroDataManager.HeroInfos)
                         {
-                            loops++;
-                            HeroType heroType = heroInfo.Info.Code.ToEnum<HeroType>();
-                            var heroDataRelations = CacheHeroDataManager.GetHeroDataRelations(heroType);
+//                            HeroType heroType = heroInfo.Info.Code.ToEnum<HeroType>();
+
+                            var userHero = userHeroData.Find(x => x.ValueId == heroInfo.Info.HeroId);
+                            if (userHero == null) continue;
+
+                            var userHeroDetails = JsonConvert.DeserializeObject<UserHeroDetails>(userHero.Value);
+                            if (userHeroDetails == null) continue;
+
+                            var data = new UserHeroDetails()
+                            {
+                                HeroCode = heroInfo.Info.Code,
+                                Points = userHeroDetails.Points,
+                                Power = userHeroDetails.Power,
+                                AttackCount = userHeroDetails.AttackCount,
+                                AttackFail = userHeroDetails.AttackFail,
+                                DefenseCount = userHeroDetails.DefenseCount,
+                                DefenseFail = userHeroDetails.DefenseFail
+                            };
+
+
+/*                            var heroDataRelations = CacheHeroDataManager.GetHeroDataRelations(heroType);
 
                             //Points        1
                             //Power         2
@@ -338,12 +352,12 @@ namespace GameOfRevenge.Business.Manager.Base
                                 AttackFail = attkFail,
                                 DefenseCount = defCount,
                                 DefenseFail = defFail
-                            };
+                            };*/
                             finalData.Data.Heroes.Add(data);
 
                             if ((finalData.Data.MarchingArmy != null) && (finalData.Data.MarchingArmy.Heroes != null))
                             {
-                                data.IsMarching = finalData.Data.MarchingArmy.Heroes.Exists(x => x == (int)heroType);
+                                data.IsMarching = finalData.Data.MarchingArmy.Heroes.Exists(x => x == heroInfo.Info.HeroId);//(int)heroType);
                             }
                         }
 

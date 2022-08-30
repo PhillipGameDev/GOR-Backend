@@ -32,7 +32,7 @@ namespace GameOfRevenge.WebServer.Controllers.Api
         {
 
             Common.Email.MailType mailType = (Common.Email.MailType)System.Enum.Parse(typeof(Common.Email.MailType), type, true);
-            var response = await mailManager.SendMail(id, mailType, content);
+            var response = await mailManager.SaveMail(id, mailType, content);
 //            var response = await mailManager.SendMail(id, Common.Email.MailType.Text, content);
             return ReturnResponse(response);
         }

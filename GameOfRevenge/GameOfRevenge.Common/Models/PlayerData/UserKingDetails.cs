@@ -9,7 +9,7 @@ namespace GameOfRevenge.Common.Models
     public class UserKingDetails : TimerBase
     {
         [DataMember]
-        public int MaxStamina { get; set; }
+        public int MaxStamina { get; set; } = 20;
         //        public long Id { get; set; }//id
         //        public string Code { get; set; }
         //        public int Experience { get; set; }
@@ -24,7 +24,19 @@ namespace GameOfRevenge.Common.Models
         {
             get
             {
-                if (BattleCount >= 600)
+                if (BattleCount >= 10000)
+                    return 10;
+                else if (BattleCount >= 8000)
+                    return 9;
+                else if (BattleCount >= 6000)
+                    return 8;
+                else if (BattleCount >= 4000)
+                    return 7;
+                else if (BattleCount >= 2000)
+                    return 6;
+                else if (BattleCount >= 1000)
+                    return 5;
+                else if (BattleCount >= 600)
                     return 4;
                 else if (BattleCount >= 300)
                     return 3;

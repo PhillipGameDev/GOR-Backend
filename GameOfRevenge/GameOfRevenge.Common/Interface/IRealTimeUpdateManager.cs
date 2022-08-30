@@ -9,6 +9,7 @@ namespace GameOfRevenge.Common.Interface
     public interface IRealTimeUpdateManager
     {
         AttackStatusData GetAttackerData(int attackerId);
+        AttackStatusData GetDefenderData(int defenderId);
         void AddNewAttackOnWorld(AttackStatusData data);
         Task Update(Action<AttackStatusData> CallBackResult);
     }

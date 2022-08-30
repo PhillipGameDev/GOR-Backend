@@ -1,5 +1,6 @@
 ﻿using Photon.SocketServer.Rpc;
 using GameOfRevenge.Common.Models;
+using System;
 
 namespace GameOfRevenge.Model
 {
@@ -9,10 +10,17 @@ namespace GameOfRevenge.Model
         {
             AttckerUserName = res.AttckerUserName;
             EnemyUserName = res.EnemyUserName;
+
             ReachedTime = res.ReachedTime;
+
+            KingLevel = res.KingLevel;
+
             TroopCount = res.TroopCount;
             TroopType = res.TroopType;
-            HeroIds = res.Heros;
+
+            HeroIds = res.HeroIds;
+
+            StartTime = res.StartTime.ToUniversalTime().ToString("yyyy'-'MM'-'dd'T'HH':'mm':'ss'.'fff'Z'");
             CurrentTime = res.CurrentTime;
             IsReturnFromAttack = res.IsReturnFromAttack;
         }
@@ -23,8 +31,14 @@ namespace GameOfRevenge.Model
         [DataMember(Code = (byte)RoomParameterKey.EnemyUserName, IsOptional = true)]
         public string EnemyUserName { get; set; }
 
+        [DataMember(Code = (byte)RoomParameterKey.StartTime, IsOptional = true)]
+        public string StartTime { get; set; }
+
         [DataMember(Code = (byte)RoomParameterKey.ReachedTime, IsOptional = true)]
         public int ReachedTime { get; set; }
+
+        [DataMember(Code = (byte)RoomParameterKey.KingLevel, IsOptional = true)]
+        public int KingLevel { get; set; }
 
         [DataMember(Code = (byte)RoomParameterKey.TroopCount, IsOptional = true)]
         public int[] TroopCount { get; set; }

@@ -48,6 +48,8 @@
         InstantBuildCost = 44,
         SpeedUpCost = 45,
         HelpPower = 46,
-        AllianceId = 47
+        AllianceId = 47,
+        KingLevel = 48,
+        StartTime = 49
     }
 }

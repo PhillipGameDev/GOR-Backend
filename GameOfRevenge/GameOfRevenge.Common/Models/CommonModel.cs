@@ -46,18 +46,22 @@ namespace GameOfRevenge.Common.Models
 */
     public class AttackSocketResponse
     {
-        public DateTime StartTime { get; set; }
-
         public int AttackerUserId { get; set; }
         public string AttckerUserName { get; set; }
 
         public int EnemyUserId { get; set; }
         public string EnemyUserName { get; set; }
 
+        public int LocationX { get; set; }
+        public int LocationY { get; set; }
+
+        public DateTime StartTime { get; set; }
         public int ReachedTime { get; set; }
+
+        public int KingLevel { get; set; }
         public int[] TroopCount { get; set; }
         public int[] TroopType { get; set; }
-        public int[] Heros { get; set; }//TODO:fix typo
+        public int[] HeroIds { get; set; }
 
         public double CurrentTime
         {

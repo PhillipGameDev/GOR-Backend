@@ -23,22 +23,40 @@ namespace GameOfRevenge.Business.Manager
         {
             AttackStatusData attackerData = null;
             lock (SyncRoot)
+            {
                 attackerData = attackPlayerData.Where(d => d.Attacker.PlayerId == attackerId).FirstOrDefault();
+            }
+            return attackerData;
+        }
+
+        public AttackStatusData GetDefenderData(int defenderId)
+        {
+            AttackStatusData attackerData = null;
+            lock (SyncRoot)
+            {
+                attackerData = attackPlayerData.Where(d => d.Defender.PlayerId == defenderId).FirstOrDefault();
+            }
             return attackerData;
         }
 
         public void AddNewAttackOnWorld(AttackStatusData data)
         {
             lock (SyncRoot)
+            {
                 attackPlayerData.Add(data);
+            }
         }
 
         public async Task Update(Action<AttackStatusData> CallBackResult)
         {
             if (attackPlayerData.Count > 0)
             {
-                var attackerList = attackPlayerData.ToList();
-                log.Debug("****** UPDATE BATTLE START ******");
+                List<AttackStatusData> attackerList = null;
+                lock (SyncRoot)
+                {
+                    attackerList = attackPlayerData.ToList();
+                }
+                log.Debug("****** UPDATE BATTLE START ****** x " + attackerList.Count);
                 foreach (AttackStatusData item in attackerList)
                 {
                     try
@@ -46,13 +64,11 @@ namespace GameOfRevenge.Business.Manager
                         switch (item.State)
                         {
                             case 0://marching to target
-                                log.Debug("** MARCHING **");
-                                if (item.Attacker.Data.MarchingArmy.TimeLeftForTask > 0) continue;
-
-                                item.State++;
+//                                log.Debug("** MARCHING **");
+                                if (item.Attacker.Data.MarchingArmy.TimeLeftForTask <= 0) item.State++;
                                 break;
                             case 1://battle simulation
-                                log.Debug("** BATTLE **");
+//                                log.Debug("** BATTLE **");
                                 var response = await pvpManager.BattleSimulation(item.Attacker.PlayerId, item.Attacker.Data, item.Defender.PlayerId, item.Defender.Data);
                                 if (response.Case >= 200)//illegal
                                 {
@@ -67,20 +83,17 @@ namespace GameOfRevenge.Business.Manager
                                 item.State++;
                                 break;
                             case 2:
-                                log.Debug("** WAITING **");
-                                if (!item.Attacker.Data.MarchingArmy.IsTimeForReturn) continue;
-                                item.State++;
+//                                log.Debug("** WAITING **");
+                                if (item.Attacker.Data.MarchingArmy.IsTimeForReturn) item.State++;
                                 break;
                             case 3://marching to castle
-                                log.Debug("** MARCHING BACK **");
-                                if (item.Attacker.Data.MarchingArmy.TimeLeft > 0) continue;
-                                item.State++;
+//                                log.Debug("** MARCHING BACK **");
+                                if (item.Attacker.Data.MarchingArmy.TimeLeft <= 0) item.State++;
                                 break;
                             case 4://end
-                                log.Debug("** END **");
+                                log.Debug("** END ** " + item.Attacker.PlayerId +" vs "+item.Defender.PlayerId);
                                 CallBackResult(item);
-                                lock (attackPlayerData)
-                                    attackPlayerData.Remove(item);
+                                lock (SyncRoot) attackPlayerData.Remove(item);
                                 break;
                         }
                     }

@@ -28,6 +28,7 @@ namespace GameOfRevenge.GameHandlers
         public Dictionary<StructureType, List<IPlayerBuildingManager>> PlayerBuildings { get; private set; }
         public Dictionary<ResourceType, IPlayerResources> PlayerResources { get; private set; }
         public IPlayerAttackHandler AttackHandler { get; set; }
+        public UserKingDetails King { get; set; }
 
         public PlayerSocketDataManager(List<PlayerDataTable> playerData, MmoActor player)
         {
@@ -48,7 +49,13 @@ namespace GameOfRevenge.GameHandlers
                     this.AddResourcesOnPlayer(item);
                 else if (item.DataType == DataType.Troop)
                     this.AddTroopOnPlayerBuilding(item);
+                else if ((item.DataType == DataType.Custom) && (item.ValueId == 1))
+                {
+                    King = JsonConvert.DeserializeObject<UserKingDetails>(item.Value);
+//                    GameService.BPlayerManager.GetAllPlayerData(Int32.Parse(operation.PlayerId)).Result.Data;
+                }
             }
+            if (King == null) King = new UserKingDetails();
         }
         public void AddTroopOnPlayerBuilding(PlayerDataTable data)
         {

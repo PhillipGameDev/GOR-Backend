@@ -9,7 +9,8 @@ namespace GameOfRevenge.Common.Interface.UserData
 {
     public interface IKingdomPvPManager
     {
-        Task<Response<AttackStatusData>> AttackOtherPlayer(int attackerId, int defenderId, MarchingArmy army, MapLocation location);
+        Task<Response<AttackStatusData>> AttackOtherPlayer(int attackerId, int defenderId, int watchLevel, MarchingArmy army, MapLocation location);
+        Task<Response<AttackStatusData>> AttackOtherPlayer(int attackerId, Response<PlayerCompleteData> defender, int watchLevel, MarchingArmy army, MapLocation location);
         Task<Response<BattleReport>> BattleSimulation(int attackerId, PlayerCompleteData attackerData, int defenderId, PlayerCompleteData defenderData);
     }
 }

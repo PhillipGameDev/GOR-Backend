@@ -364,7 +364,7 @@ namespace GameOfRevenge.WebServer.Controllers.Api
             }
         }
 
-        [HttpPost]
+/*        [HttpPost]
         public async Task<IActionResult> GetHeroDataList(HeroType type)
         {
             var response = await userHeroManager.GetHeroDataList(Token.PlayerId, type);
@@ -376,26 +376,28 @@ namespace GameOfRevenge.WebServer.Controllers.Api
             {
                 return ReturnResponse(new Response(response.Case, response.Message));
             }
-        }
+        }*/
 
         [HttpPost]
         public async Task<IActionResult> UnlockHero(HeroType type)
         {
             var response = await userHeroManager.UnlockHero(Token.PlayerId, type);
-            if (response.IsSuccess)
+            return ReturnResponse(new Response<UserHeroDetails>(response.Data, response.Case, response.Message));
+
+/*            if (response.IsSuccess)
             {
                 return ReturnResponse(new Response(response.Case, "Hero unlocked"));
             }
             else
             {
                 return ReturnResponse(new Response(response.Case, response.Message));
-            }
+            }*/
         }
 
         [HttpPost]
         public async Task<IActionResult> AddHeroWarPoints(HeroType heroType, int value)
         {
-            var response = await userHeroManager.AddHeroWarPoints(Token.PlayerId, heroType, value);
+/*            var response = await userHeroManager.AddHeroWarPoints(Token.PlayerId, heroType, value);
             if (response.IsSuccess && response.HasData)
             {
                 return ReturnResponse(new Response<int>(response.Data, response.Case, response.Message));
@@ -403,7 +405,8 @@ namespace GameOfRevenge.WebServer.Controllers.Api
             else
             {
                 return ReturnResponse(new Response(response.Case, response.Message));
-            }
+            }*/
+            return ReturnResponse(null);
         }
         #endregion
 

@@ -48,6 +48,25 @@ namespace GameOfRevenge.Common.Models.PlayerData
 
     public class UserHeroData : BaseUserDataTable<string, int>, IBaseUserDataTable<string, int>, IReadOnlyBaseUserDataTable<string, int>, IBaseDataTypeTable<string, int>, IReadOnlyBaseDataTypeTable<string, int>
     {
+/*        public UserHeroDetails ToUserHeroDetails()
+        {
+            try
+            {
+                JsonConvert.DeserializeObject<UserHeroDetails>(this.Value);
+            }
+            catch { }
+
+            return new UserHeroDetails()
+            {
+//                Id = this.Id,
+                HeroCode = this.ValueId,
+                
+                Code = this.ValueId,
+                BattleCount = this.Value,
+                //                Unlocked = true,
+                IsMarching = false
+            };
+        }*/
     }
 
     public class UserKingData : BaseUserDataTable<int, UserKingDetails>, IBaseUserDataTable<int, UserKingDetails>, IReadOnlyBaseUserDataTable<int, UserKingDetails>, IBaseDataTypeTable<int, UserKingDetails>, IReadOnlyBaseDataTypeTable<int, UserKingDetails>

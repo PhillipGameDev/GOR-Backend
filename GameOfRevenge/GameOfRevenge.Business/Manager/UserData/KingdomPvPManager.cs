@@ -49,19 +49,64 @@ namespace GameOfRevenge.Business.Manager.UserData
         private readonly IUserResourceManager resManager = new UserResourceManager();
         private readonly IUserStructureManager structManager = new UserStructureManager();
 
-        public async Task<Response<AttackStatusData>> AttackOtherPlayer(int attackerId, int defenderId, MarchingArmy army, MapLocation location)
+        public async Task<Response<AttackStatusData>> AttackOtherPlayer(int attackerId, int defenderId, int watchLevel, MarchingArmy army, MapLocation location)
+        {
+            try
+            {
+                ValidationHelper.KeyId(defenderId);
+
+                if (army == null || army.Troops == null || army.Troops.Count == 0) throw new RequirementExecption("Zero marching army was sended to attack");
+
+                var defender = await GetFullPlayerData(defenderId);
+                if (!defender.IsSuccess || !defender.HasData) throw new DataNotExistExecption(defender.Message);
+
+                return await AttackOtherPlayer(attackerId, defender, watchLevel, army, location);
+            }
+            catch (InvalidModelExecption ex)
+            {
+                return new Response<AttackStatusData>()
+                {
+                    Case = 200,
+                    Message = ErrorManager.ShowError(ex)
+                };
+            }
+            catch (DataNotExistExecption ex)
+            {
+                return new Response<AttackStatusData>()
+                {
+                    Case = 201,
+                    Message = ErrorManager.ShowError(ex)
+                };
+            }
+            catch (RequirementExecption ex)
+            {
+                return new Response<AttackStatusData>()
+                {
+                    Case = 202,
+                    Message = ErrorManager.ShowError(ex)
+                };
+            }
+            catch (Exception)
+            {
+                return new Response<AttackStatusData>()
+                {
+                    Case = 0,
+                    Message = ErrorManager.ShowError()
+                };
+            }
+        }
+
+        public async Task<Response<AttackStatusData>> AttackOtherPlayer(int attackerId, Response<PlayerCompleteData> defender, int watchLevel, MarchingArmy army, MapLocation location)
         {
             try
             {
                 ValidationHelper.KeyId(attackerId);
-                ValidationHelper.KeyId(defenderId);
 
                 if (army == null || army.Troops == null || army.Troops.Count == 0) throw new RequirementExecption("Zero marching army was sended to attack");
 
                 var attacker = await GetFullPlayerData(attackerId);
                 if (!attacker.IsSuccess || !attacker.HasData) throw new DataNotExistExecption(attacker.Message);
-                var defender = await GetFullPlayerData(defenderId);
-                if (!defender.IsSuccess || !defender.HasData) throw new DataNotExistExecption(defender.Message);
+                int defenderId = defender.Data.PlayerId;
 
                 var boostShieldData = defender.Data.Boosts.Where(x => x.BoostType == BoostType.Fog).FirstOrDefault();
                 if (boostShieldData != null && boostShieldData.TimeLeft > 0) throw new RequirementExecption("Defender has shield activated");
@@ -76,9 +121,13 @@ namespace GameOfRevenge.Business.Manager.UserData
                 if (!ArmyToMarching(attacker.Data, army, true)) throw new RequirementExecption("User does not have required army");
                 //foreach (var item in attacker.Data.Troops)
                 //await userTroopManager.UpdateTroops(attackerId, item.TroopType, item.TroopData);
+
+
+
+
                 var respone = await manager.AddOrUpdatePlayerData(attackerId, DataType.Marching, 1, JsonConvert.SerializeObject(army));
 
-                var report = await SendAlertMail(attackerId, defenderId, attacker, defender, location);
+                var report = await SaveAlertMail(attackerId, defenderId, watchLevel, attacker, defender, location);
                 var armyResponse = new AttackStatusData()
                 {
                     Attacker = new PlayerPvpData() { Data = attacker.Data, PlayerId = attackerId },
@@ -122,18 +171,8 @@ namespace GameOfRevenge.Business.Manager.UserData
             }
         }
 
-        private async Task<Response<UnderAttackReport>> SendAlertMail(int attackerId, int defenderId, Response<PlayerCompleteData> attacker, Response<PlayerCompleteData> defender, MapLocation loc)
+        private async Task<Response<UnderAttackReport>> SaveAlertMail(int attackerId, int defenderId, int watchLevel, Response<PlayerCompleteData> attacker, Response<PlayerCompleteData> defender, MapLocation loc)
         {
-            int maxWatchLevel = 0;
-            var watchTowers = defender.Data.Structures.Where(x => x.StructureType == StructureType.WatchTower)?.FirstOrDefault()?.Buildings;
-            if (watchTowers != null)
-            {
-                foreach (var bldg in watchTowers)
-                {
-                    if ((bldg.TimeLeft <= 0) && (bldg.Level > maxWatchLevel)) maxWatchLevel = bldg.Level;
-                }
-            }
-            maxWatchLevel = 100;
             var attackerMailInfo = new UnderAttackReport()
             {
                 Id = attackerId,
@@ -142,13 +181,13 @@ namespace GameOfRevenge.Business.Manager.UserData
 
             try
             {
-                await GenerateAlertMailFieldsFields(attackerId, attacker, loc, maxWatchLevel, attackerMailInfo);
+                await GenerateAlertMailFieldsFields(attackerId, attacker, loc, watchLevel, attackerMailInfo);
             }
             catch { }
 
             try
             {
-                await mailManager.SendMail(defenderId, MailType.UnderAttack, JsonConvert.SerializeObject(attackerMailInfo));
+                await mailManager.SaveMail(defenderId, MailType.UnderAttack, JsonConvert.SerializeObject(attackerMailInfo));
             }
             catch (Exception ex)
             {
@@ -314,6 +353,51 @@ namespace GameOfRevenge.Business.Manager.UserData
 
                 bool attackerWin = attackerPower.HitPoint > defenderPower.HitPoint;
 
+                if (attackerArmy.Heroes != null)
+                {
+                    foreach (var hero in attackerArmy.Heroes)
+                    {
+                        hero.Points++;
+                        hero.AttackCount++;
+                        if (!attackerWin) hero.AttackFail++;
+
+                        int valueId = CacheHeroDataManager.GetFullHeroData(hero.HeroCode).Info.HeroId;
+                        var data = JsonConvert.SerializeObject(hero);
+                        var response = await manager.AddOrUpdatePlayerData(attackerId, DataType.Hero, valueId, data);
+                    }
+                }
+                if (defenderArmy.Heroes != null)
+                {
+                    foreach (var hero in defenderArmy.Heroes)
+                    {
+                        if (hero.IsMarching) continue;
+
+                        hero.DefenseCount++;
+                        if (attackerWin) hero.DefenseFail++;
+
+                        int valueId = CacheHeroDataManager.GetFullHeroData(hero.HeroCode).Info.HeroId;
+                        var data = JsonConvert.SerializeObject(hero);
+                        var response = await manager.AddOrUpdatePlayerData(defenderId, DataType.Hero, valueId, data);
+                    }
+                }
+
+                var king = attackerArmy.King;
+                king.BattleCount += 5;
+                if (king.TimeLeft > 0)
+                {
+                    king.EndTime = king.EndTime.AddMinutes(10);
+                }
+                else
+                {
+                    king.StartTime = DateTime.UtcNow;
+                    king.EndTime = king.StartTime.AddMinutes(10);
+                }
+                var kingdata = JsonConvert.SerializeObject(king);
+                await manager.AddOrUpdatePlayerData(attackerId, DataType.Custom, 1, kingdata);
+
+
+
+
                 var finalReport = new BattleReport
                 {
                     Attacker = SetClientReport(attackerPower),
@@ -335,18 +419,18 @@ namespace GameOfRevenge.Business.Manager.UserData
                 {
                     if (attackerWin)
                     {
-                        await mailManager.SendMail(attackerId, MailType.BattleReport,
+                        await mailManager.SaveMail(attackerId, MailType.BattleReport,
                                                     json.Replace("INSERTMESSAGEHERE", "You succesfully raided enemy city"));
 
-                        await mailManager.SendMail(defenderId, MailType.BattleReport,
+                        await mailManager.SaveMail(defenderId, MailType.BattleReport,
                                                     json.Replace("INSERTMESSAGEHERE", "You failed to defend against enemy raid"));
                     }
                     else
                     {
-                        await mailManager.SendMail(attackerId, MailType.BattleReport,
+                        await mailManager.SaveMail(attackerId, MailType.BattleReport,
                                                     json.Replace("INSERTMESSAGEHERE", "You failed to raid the enemy city"));
 
-                        await mailManager.SendMail(defenderId, MailType.BattleReport,
+                        await mailManager.SaveMail(defenderId, MailType.BattleReport,
                                                     json.Replace("INSERTMESSAGEHERE", "You succesfully defended the against enemy seige"));
                     }
                 });
@@ -403,7 +487,7 @@ namespace GameOfRevenge.Business.Manager.UserData
                 defence += 5;
             }
 
-            if ((completeData.MarchingArmy != null) && (completeData.MarchingArmy.Heroes != null))
+/*            if ((completeData.MarchingArmy != null) && (completeData.MarchingArmy.Heroes != null))
             {
                 var heros = completeData.MarchingArmy.Heroes.Select(x => CacheHeroDataManager.GetFullHeroDataID(x));
                 if (heros != null)
@@ -414,7 +498,7 @@ namespace GameOfRevenge.Business.Manager.UserData
                         {
                             try
                             {
-/*                                var boostData = CacheBoostDataManager.GetFullBoostDataByBoostId(boost.BoostId);//throw exceptions
+                                var boostData = CacheBoostDataManager.GetFullBoostDataByBoostId(boost.BoostId);//throw exceptions
                                 if ((boostData.Info.BoostType == BoostType.SpeedGathering_armyAttack) ||
                                     (boostData.Info.BoostType == BoostType.Fog_armyDefence))
                                 {
@@ -426,13 +510,13 @@ namespace GameOfRevenge.Business.Manager.UserData
                                         else
                                             defence += boostDataValue.Percentage;
                                     }
-                                }*/
+                                }
                             }
                             catch { }
                         }
                     }
                 }
-            }
+            }*/
 
             return (attack, defence);
         }
@@ -696,7 +780,7 @@ namespace GameOfRevenge.Business.Manager.UserData
                     {
                         if (troopData == null || troopData.Count <= 0) continue;
 
-                        troopDatas.Add(new TroopDetails() { Level = troopData.Level, Count = troopData.FinalCount });
+                        troopDatas.Add(new TroopDetails() { Level = troopData.Level, Count = troopData.FinalCount });//TODO: count or final count?
                     }
 
                     if (troopDatas.Count > 0)

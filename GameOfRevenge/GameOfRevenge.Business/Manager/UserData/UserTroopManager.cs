@@ -40,6 +40,7 @@ namespace GameOfRevenge.Business.Manager.UserData
                 if (!compPlayerData.IsSuccess || !compPlayerData.HasData) throw new DataNotExistExecption(compPlayerData.Message);
 
                 var troopDetails = compPlayerData.Data.Troops.Where(x => x.TroopType == type).FirstOrDefault()?.TroopData;
+                if (troopDetails == null) throw new DataNotExistExecption($"Troop type {type} was not found");
 
                 foreach (var troop in troops)
                 {

@@ -34,7 +34,7 @@ namespace GameOfRevenge.Business.Manager.UserData
             });
         }
 
-        public async Task<Response> SendMail(int playerId, MailType type, string content)
+        public async Task<Response> SaveMail(int playerId, MailType type, string content)
         {
             return await Db.ExecuteSPNoData("CreateMail", new Dictionary<string, object>()
             {

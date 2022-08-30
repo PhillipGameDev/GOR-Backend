@@ -51,7 +51,7 @@ namespace GameOfRevenge.Common.Models
                     }
                 }
 
-                return Count - minusCount - Wounded;
+                return Count - (minusCount + Wounded);
             }
         }
         [DataMember]
