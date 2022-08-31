@@ -4,27 +4,25 @@
     {
         Other = 0,
 
-        CityCounsel = 1,
-        Gate = 4,
+        CityCounsel = 1,//1,
+        Gate = 2,//4,
+        WatchTower = 3,//17,
+        Embassy = 4,//9,
+        Warehouse = 5,//12,
+        Market = 6,//13,
+        Blacksmith = 7,//8,
+        TrainingHeroes = 8,//19
+        Academy = 9,//14,
+        Farm = 10,//5,
+        Sawmill = 11,//6,
+        Mine = 12,//7,
+        InfantryCamp = 13,//15,
+        Workshop = 14,//10,
+        Barracks = 15,//2,
+        ShootingRange = 16,//11,
+        Stable = 17,//18,
+        Infirmary = 18,//3,
 //        SentinelTower = 16,
-        WatchTower = 17,
-        Blacksmith = 8,
-        Workshop = 10,
-        Embassy = 9,
-        Warehouse = 12,
-        Academy = 14,
 
-        Market = 13,
-        TrainingHeroes = 19,
-
-        Farm = 5,
-        Sawmill = 6,
-        Mine = 7,
-        InfantryCamp = 15,
-
-        Barracks = 2,
-        Infirmary = 3,
-        ShootingRange = 11,
-        Stable = 18
     }
 }
