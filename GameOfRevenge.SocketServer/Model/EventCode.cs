@@ -10,6 +10,7 @@
         AttackResponse = 6,
         AttackResult = 7,
         UpdateQuest = 8,
-        UnderAttack = 9
+        UnderAttack = 9,
+        GlobalChat = OperationCode.GlobalChat
     }
 }

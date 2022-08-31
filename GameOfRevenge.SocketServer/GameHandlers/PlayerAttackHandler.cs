@@ -50,7 +50,7 @@ namespace GameOfRevenge.GameHandlers
                     }
                     }
 
-                    int reachedTime = (int)(num2 * 1000) + (300 * 1000);
+                    int reachedTime = (int)(num2 * 1000);// + (300 * 1000);
 
                     try
                     {
@@ -120,7 +120,7 @@ namespace GameOfRevenge.GameHandlers
                             if ((attackBattle.Result.Case >= 100) && (attackBattle.Result.Case < 200))
                             {
 //                                IGorMmoPeer enemyPeer = GorMmoPeer.Clients.Find(x => x.Actor.PlayerId == Enemy.PlayerId);
-//                                if (enemyPeer != null) enemyPeer.Actor.SendEvent(EventCode.UnderAttack, new object());//UNDERATTACK NOT SUPPORTED ON CLIENT
+//                                if (enemyPeer != null) enemyPeer.Actor.SendEvent(EventCode.UnderAttack, new object());
 
                                 var socketResponse = new AttackSocketResponse
                                 {
@@ -181,18 +181,23 @@ namespace GameOfRevenge.GameHandlers
                                 }
 
                                 var attackResponse = new AttackResponse(socketResponse);
-                                if (attackBattle.Result.Case >= 100 && attackBattle.Result.Case < 200)//success <---not necessary, always true
+//                                if (attackBattle.Result.Case >= 100 && attackBattle.Result.Case < 200)//success <---not necessary, always true
                                 {
-                                    attacker.BroadcastWithMe(EventCode.AttackResponse, attackResponse);
+                                    attacker.SendEvent(EventCode.AttackResponse, attackResponse);
+                                    IGorMmoPeer enemyPeer = GorMmoPeer.Clients.Find(x => x.Actor.PlayerId == Enemy.PlayerId);
+                                    if (enemyPeer != null) enemyPeer.Actor.SendEvent(EventCode.UnderAttack, attackResponse);
+
+//                                    attacker.BroadcastWithMe(EventCode.AttackResponse, attackResponse);
+
                                     attackBattle.Result.Data.AttackData = socketResponse;
                                     var defenderId = attackBattle.Result.Data.Report.Defenderid;
                                     GameService.BRealTimeUpdateManager.AddNewAttackOnWorld(attackBattle.Result.Data);
                                 }
-                                else//fail<--- never reach
+/*                                else//fail<--- never reach
                                 {
                                     attackResponse.IsSuccess = false; attackResponse.Message = attackBattle.Result.Message;
                                     attacker.SendEvent(EventCode.AttackResponse, attackResponse);
-                                }
+                                }*/
                             }
                             else
                             {

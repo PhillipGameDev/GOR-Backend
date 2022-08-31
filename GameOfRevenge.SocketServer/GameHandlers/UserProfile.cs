@@ -72,6 +72,7 @@ namespace GameOfRevenge.GameHandlers
         }
         public void BroadcastWithMe(EventCode evCode, object data)
         {
+            log.Info($"Broadcast Event with me: {PlayerId}; EvCode: {evCode}; Data: {JsonConvert.SerializeObject(data)};");
             var peers = IntrestedPeers;
             var ev = new EventData((byte)evCode, data);
             foreach (var item in peers)
