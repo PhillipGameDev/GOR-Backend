@@ -25,7 +25,7 @@ namespace GameOfRevenge.Common.Models.Kingdom
         public TroopType Type { get; set; }
         public int Hp { get; set; }
         public int UnitHp { get; set; }
-        public int Count => Hp / UnitHp;
+        public int Count => (UnitHp == 0)? 0 : (Hp / UnitHp);
         public int TotalCount { get; set; }
         public int LoadPerUnit { get; set; }
         public int Dead { get; set; }

@@ -675,7 +675,7 @@ namespace GameOfRevenge.Business.Manager.UserData
                 {
                     troopBattle.TotalLoad += alive.Count * alive.LoadPerUnit;
                     troopBattle.TotalArmy += alive.TotalCount;
-                    troopBattle.Survived += alive.Count;
+                    troopBattle.Survived += alive.Count;//throw exception hp / unitHp (div zero)
 
                     var deadWounded = alive.TotalCount - alive.Count;
                     var part = Split2(deadWounded, 10);
