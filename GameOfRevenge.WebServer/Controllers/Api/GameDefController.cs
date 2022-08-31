@@ -90,6 +90,13 @@ namespace GameOfRevenge.WebServer.Controllers.Api
         }
 
         [HttpGet]
+        public IActionResult GetAllSubTechnology()
+        {
+            var response = CacheTechnologyDataManager.SubTechnologyInfos;
+            return ReturnResponse(response);
+        }
+
+        [HttpGet]
         public IActionResult GetAllResources()
         {
             var response = CacheResourceDataManager.ResourceInfos;

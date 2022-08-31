@@ -16,6 +16,7 @@ namespace GameOfRevenge.Common.Models
         public List<StructureInfos> Structures { get; set; }
         public List<TroopInfos> Troops { get; set; }
         public List<TechnologyInfos> Technologies { get; set; }
+        public List<SubTechnologyInfos> SubTechnologies { get; set; }
         public List<UserItemDetails> Items { get; set; }
         public List<FullUserBoostDetails> Boosts { get; set; }
         public List<UserHeroDetails> Heroes { get; set; }

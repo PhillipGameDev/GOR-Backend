@@ -64,6 +64,7 @@ namespace GameOfRevenge.Business.Manager.Base
                             Troops = new List<TroopInfos>(),
                             Items = new List<UserItemDetails>(),
                             Technologies = new List<TechnologyInfos>(),
+                            SubTechnologies = new List<SubTechnologyInfos>(),
                             Boosts = new List<FullUserBoostDetails>(),
                             Heroes = new List<UserHeroDetails>()
                         }
@@ -91,6 +92,7 @@ namespace GameOfRevenge.Business.Manager.Base
                     var userTroops = response.Data.Where(x => x.DataType == DataType.Troop)?.ToList();
                     var userMarching = response.Data.Where(x => x.DataType == DataType.Marching)?.FirstOrDefault();
                     var userTechnologies = response.Data.Where(x => x.DataType == DataType.Technology)?.ToList();
+                    var userSubTechs = response.Data.Where(x => x.DataType == DataType.SubTechnology)?.ToList();
                     var userItems = response.Data.Where(x => x.DataType == DataType.Inventory)?.ToList();
                     var userBoosts = response.Data.Where(x => x.DataType == DataType.ActiveBoost)?.ToList();
                     var userHeroData = response.Data.Where(x => x.DataType == DataType.Hero)?.ToList();
@@ -224,6 +226,17 @@ namespace GameOfRevenge.Business.Manager.Base
                                 }
                             }*/
                             finalData.Data.Technologies.Add(technology.Value);
+                        }
+                    }
+
+                    if (userSubTechs != null)
+                    {
+                        foreach (var tech in userSubTechs)
+                        {
+                            if (tech == null) continue;
+
+                            var subTech = PlayerDataToUserSubTechnologyData(tech);
+                            finalData.Data.SubTechnologies.Add(subTech.Value);
                         }
                     }
 
@@ -561,6 +574,26 @@ namespace GameOfRevenge.Business.Manager.Base
         {
             if (playerDataUpdated == null) return null;
             return PlayerDataToUserTechnologyData(playerDataUpdated.ToPlayerDataTable);
+        }
+
+        public UserSubTechnologyData PlayerDataToUserSubTechnologyData(PlayerDataTable playerData)
+        {
+            if (playerData == null) return null;
+            var details = JsonConvert.DeserializeObject<SubTechnologyInfos>(playerData.Value);
+
+            return new UserSubTechnologyData()
+            {
+                Id = playerData.Id,
+                DataType = DataType.SubTechnology,
+                ValueId = CacheTechnologyDataManager.GetFullSubTechnologyData(playerData.ValueId).Info.Code,
+                Value = details
+            };
+        }
+
+        public UserSubTechnologyData PlayerDataToUserSubTechnologyData(PlayerDataTableUpdated playerDataUpdated)
+        {
+            if (playerDataUpdated == null) return null;
+            return PlayerDataToUserSubTechnologyData(playerDataUpdated.ToPlayerDataTable);
         }
 
         public UserInventoryData PlayerDataToUserInventoryData(PlayerDataTable playerData)

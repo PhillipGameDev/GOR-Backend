@@ -30,6 +30,11 @@ namespace GameOfRevenge.Common.Models.PlayerData
 
     }
 
+    public class UserSubTechnologyData : BaseUserDataTable<SubTechnologyType, SubTechnologyInfos>, IBaseUserDataTable<SubTechnologyType, SubTechnologyInfos>, IReadOnlyBaseUserDataTable<SubTechnologyType, SubTechnologyInfos>, IBaseDataTypeTable<SubTechnologyType, SubTechnologyInfos>, IReadOnlyBaseDataTypeTable<SubTechnologyType, SubTechnologyInfos>
+    {
+
+    }
+
     public class UserInventoryData : BaseUserDataTable<InventoryItemType, int>, IBaseUserDataTable<InventoryItemType, int>, IReadOnlyBaseUserDataTable<InventoryItemType, int>, IBaseDataTypeTable<InventoryItemType, int>, IReadOnlyBaseDataTypeTable<InventoryItemType, int>
     {
 

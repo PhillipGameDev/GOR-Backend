@@ -410,7 +410,7 @@ namespace GameOfRevenge.WebServer.Controllers.Api
         }
         #endregion
 
-        #region Technology
+#region Technology
         [HttpGet]
         public async Task<IActionResult> GetUserTechnologyData()
         {
@@ -432,6 +432,30 @@ namespace GameOfRevenge.WebServer.Controllers.Api
             var response = await userTechnologyManager.UpgradeTechnology(Token.PlayerId, id);
             return ReturnResponse(response);
         }
+
+
+        [HttpGet]
+        public async Task<IActionResult> GetUserSubTechnologyData()
+        {
+            var response = await userManager.GetFullPlayerData(Token.PlayerId);
+
+            return ReturnResponse(new Response<List<SubTechnologyInfos>>(response.Data?.SubTechnologies, response.Case, response.Message));
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> UpgradeSubTechnologyDataByType(SubTechnologyType type)
+        {
+            var response = await userTechnologyManager.UpgradeSubTechnology(Token.PlayerId, type);
+            return ReturnResponse(response);
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> UpgradeSubTechnologyDataById(int id)
+        {
+            var response = await userTechnologyManager.UpgradeSubTechnology(Token.PlayerId, id);
+            return ReturnResponse(response);
+        }
+
 #endregion
 
 #region Troops

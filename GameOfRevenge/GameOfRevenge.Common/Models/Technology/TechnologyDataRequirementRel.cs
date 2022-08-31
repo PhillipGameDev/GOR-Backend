@@ -4,6 +4,46 @@ using GameOfRevenge.Common.Interface.Model;
 
 namespace GameOfRevenge.Common.Models.Technology
 {
+    public interface IReadOnlySubTechnologyDataRequirementRel
+    {
+        IReadOnlySubTechnologyTable Info { get; }
+        IReadOnlyList<IReadOnlySubTechnologyDataRequirement> Levels { get; }
+    }
+
+    public interface IReadOnlySubTechnologyDataRequirement
+    {
+        IReadOnlySubTechnologyDataTable Data { get; }
+        IReadOnlyList<IReadOnlyDataRequirement> Requirements { get; }
+    }
+
+    public class SubTechnologyDataRequirementRel : IReadOnlySubTechnologyDataRequirementRel
+    {
+        public SubTechnologyTable Info { get; set; }
+        public List<SubTechnologyDataRequirements> Levels { get; set; }
+
+        [DebuggerBrowsable(DebuggerBrowsableState.Never)]
+        IReadOnlySubTechnologyTable IReadOnlySubTechnologyDataRequirementRel.Info => Info;
+
+        [DebuggerBrowsable(DebuggerBrowsableState.Never)]
+        IReadOnlyList<IReadOnlySubTechnologyDataRequirement> IReadOnlySubTechnologyDataRequirementRel.Levels => Levels;
+    }
+
+    public class SubTechnologyDataRequirements : IReadOnlySubTechnologyDataRequirement
+    {
+        public SubTechnologyDataTable Data { get; set; }
+        public List<DataRequirement> Requirements { get; set; }
+
+        [DebuggerBrowsable(DebuggerBrowsableState.Never)]
+        IReadOnlySubTechnologyDataTable IReadOnlySubTechnologyDataRequirement.Data => Data;
+
+        [DebuggerBrowsable(DebuggerBrowsableState.Never)]
+        IReadOnlyList<IReadOnlyDataRequirement> IReadOnlySubTechnologyDataRequirement.Requirements => Requirements;
+    }
+
+
+
+
+
     public interface IReadOnlyTechnologyDataRequirementRel
     {
         IReadOnlyTechnologyTable Info { get; }

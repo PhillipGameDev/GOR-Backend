@@ -26,6 +26,7 @@ namespace GameOfRevenge.Common
         IncomingAttack = 17,
         Gift = 1017,
         Product = 1018,
-        Activity = 1019
+        Activity = 1019,
+        SubTechnology = 1020
     }
 }
