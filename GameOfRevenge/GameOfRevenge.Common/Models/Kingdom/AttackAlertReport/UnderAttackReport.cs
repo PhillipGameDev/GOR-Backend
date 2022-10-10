@@ -5,12 +5,14 @@ namespace GameOfRevenge.Common.Models.Kingdom.AttackAlertReport
 {
     public class UnderAttackReport
     {
-        public int Id { get; set; }
-        public int Defenderid { get; set; }
+        public int AttackerId { get; set; }
+        public int DefenderId { get; set; }
 
-        public string Name { get; set; }
+        public string AttackerUsername { get; set; }
         public MapLocation Location { get; set; }
-        public double TimeTaken { get; set; }
+
+        public DateTime StartTime { get; set; }
+        public int ReachedTime { get; set; }
 
         public int KingLevel { get; set; }
 
@@ -18,6 +20,6 @@ namespace GameOfRevenge.Common.Models.Kingdom.AttackAlertReport
         public List<TroopData> Troops { get; set; }
 
         public int TotalHeroSize { get; set; }
-        public List<TroopData> Heros { get; set; }
+        public List<TroopData> Heroes { get; set; }
     }
 }

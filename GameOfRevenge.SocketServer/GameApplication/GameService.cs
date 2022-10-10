@@ -30,10 +30,11 @@ namespace GameOfRevenge.GameApplication
         private static object instance = null;
         private static readonly ILogger log = LogManager.GetCurrentClassLogger();
 
-        public static Dictionary<StructureType, IGameBuildingManager> GameBuildingManager { get; private set; }
+        public static Dictionary<StructureType, IGameBuildingManager> GameBuildingManagerInstances { get; private set; }
         public static Dictionary<TroopType, IGameTroop> Troops { get; private set; }
         public static IStructureManager BStructureManager { get; private set; }
         public static IUserTroopManager BUsertroopManager { get; private set; }
+        public static IUserActiveBoostsManager BUserActiveBoostManager { get; private set; }
         public static IPlayerDataManager BPlayerManager { get; private set; }
         public static IUserStructureManager BPlayerStructureManager { get; private set; }
         public static IUserResourceManager BPlayerResourceManager { get; private set; }
@@ -51,7 +52,7 @@ namespace GameOfRevenge.GameApplication
         {
             if (instance != null) return;
 
-            GameBuildingManager = new Dictionary<StructureType, IGameBuildingManager>();
+            GameBuildingManagerInstances = new Dictionary<StructureType, IGameBuildingManager>();
             Troops = new Dictionary<TroopType, IGameTroop>();
 
             Config.ConnectionString = ConfigurationManager.AppSettings["ConString"];
@@ -82,6 +83,7 @@ namespace GameOfRevenge.GameApplication
             BPlayerManager = new PlayerDataManager();
             BPlayerResourceManager = new UserResourceManager();
             BUsertroopManager = new UserTroopManager();
+            BUserActiveBoostManager = new UserActiveBoostManager();
             BKingdomManager = new KingdomManager();
             BkingdomePvpManager = new KingdomPvPManager();
             BRealTimeUpdateManager = new RealTimeUpdateManager();
@@ -90,7 +92,9 @@ namespace GameOfRevenge.GameApplication
 
             List<WorldDataTable> worldData = null;
 
-            var world = BKingdomManager.GetWorld(Config.DefaultWorldCode).Result;
+            var task = BKingdomManager.GetWorld(Config.DefaultWorldCode);
+            task.Wait();
+            var world = task.Result;
             log.InfoFormat("6 world="+(world != null));
             //if (!world.IsSuccess) world = BKingdomManager.CreateWorld(Config.DefaultWorldCode).Result;
             //else
@@ -102,7 +106,9 @@ namespace GameOfRevenge.GameApplication
             //if (!world.IsSuccess || !world.HasData) throw new Exception(world.Message);
             //else
             //{
-            worldData = BKingdomManager.GetWorldTilesData(world.Data.Id).Result.Data;
+            var task2 = BKingdomManager.GetWorldTilesData(world.Data.Id);
+            task2.Wait();
+            worldData = task2.Result.Data;
             //}
             log.InfoFormat("7 worlddata=" + (worldData != null));
 
@@ -151,7 +157,7 @@ namespace GameOfRevenge.GameApplication
                         break;
                 }
 
-                GameBuildingManager.Add(item.Info.Code, new GameBuildingManager(item, gtroops));
+                GameBuildingManagerInstances.Add(item.Info.Code, new GameBuildingManager(item, gtroops));
             }
         }
     }

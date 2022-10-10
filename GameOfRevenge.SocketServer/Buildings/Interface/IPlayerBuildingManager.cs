@@ -13,16 +13,19 @@ namespace GameOfRevenge.Buildings.Interface
     public interface IPlayerBuildingManager 
     {
         MmoActor Player { get; }
+        UserStructureData PlayerStructureData { get; }
+
         int Location { get; }
-        int StructureId { get; }
+//        int StructureId { get; }
         int CurrentLevel { get; }
         bool IsConstructing { get; }
         StructureType StructureType { get; }
         Dictionary<TroopType, ITroop> Troops {get;}
 
+        void SetStructureData(UserStructureData structureData);
         void AddOrUpdateTroop(ITroop troop);
-        void UpgradeBuilding(UserStructureData data);
-        bool HasAvailableRequirment(IReadOnlyDataRequirement values);
+        void AddBuildingUpgrading(UserStructureData data);
+        bool HasAvailableRequirement(IReadOnlyDataRequirement values);
        // void SendBuildTimerToClient();
         void BoostResourceGenerationTime(ResourceBoostUpRequest request);
         ITroop IsAnyTroopInTraining();

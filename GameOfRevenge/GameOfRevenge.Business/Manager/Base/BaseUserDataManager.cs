@@ -29,6 +29,8 @@ namespace GameOfRevenge.Business.Manager.Base
             return new DataRequirement() { DataType = DataType.Resource, ValueId = CacheResourceDataManager.Gems.Id, Value = value };
         }
 
+        public async Task<Response<List<PlayerDataTable>>> GetAllPlayerData(int playerId) => await manager.GetAllPlayerData(playerId);
+
         public async Task<Response<PlayerCompleteData>> GetFullPlayerData(int playerId)
         {
             string line = "-";
@@ -64,8 +66,8 @@ namespace GameOfRevenge.Business.Manager.Base
                             Troops = new List<TroopInfos>(),
                             Items = new List<UserItemDetails>(),
                             Technologies = new List<TechnologyInfos>(),
-                            SubTechnologies = new List<SubTechnologyInfos>(),
-                            Boosts = new List<FullUserBoostDetails>(),
+//                            SubTechnologies = new List<SubTechnologyInfos>(),
+                            Boosts = new List<UserRecordNewBoost>(),
                             Heroes = new List<UserHeroDetails>()
                         }
                     };
@@ -84,6 +86,40 @@ namespace GameOfRevenge.Business.Manager.Base
                         catch {}
                     }
                     if (finalData.Data.King == null) finalData.Data.King = new UserKingDetails();
+
+                    var builders = new List<UserRecordBuilderDetails>();
+                    if (customs != null)
+                    {
+                        foreach (var customData in customs)
+                        {
+                            if (customData.ValueId != 2) continue;
+
+                            UserRecordBuilderDetails bld = null;
+                            try
+                            {
+                                bld = JsonConvert.DeserializeObject<UserRecordBuilderDetails>(customData.Value);
+                            }
+                            catch { }
+                            if (bld == null) continue;
+
+                            bld.Id = customData.Id;
+                            builders.Add(bld);
+                        }
+                    }
+//                    var builderData = new UserRecordBuilderDetails();
+                    if (builders.Count == 0)
+                    {
+                        var json = JsonConvert.SerializeObject(new UserBuilderDetails());
+                        var builderResp = await manager.AddOrUpdatePlayerData(playerId, DataType.Custom, 2, json);
+                        if (builderResp.IsSuccess)
+                        {
+                            builders.Add(new UserRecordBuilderDetails()
+                            {
+                                Id = builderResp.Data.Id
+                            });
+                        }
+                    }
+                    finalData.Data.Builders = builders;
 
                     line = "5";
 
@@ -122,10 +158,10 @@ namespace GameOfRevenge.Business.Manager.Base
 
                             resourceList.Add(PlayerDataToUserResourceData(item));
                         }
-                        finalData.Data.Resources.Food = (int)resourceList.FirstOrDefault(x => x.ValueId == ResourceType.Food)?.Value;
-                        finalData.Data.Resources.Wood = (int)resourceList.FirstOrDefault(x => x.ValueId == ResourceType.Wood)?.Value;
-                        finalData.Data.Resources.Ore = (int)resourceList.FirstOrDefault(x => x.ValueId == ResourceType.Ore)?.Value;
-                        finalData.Data.Resources.Gems = (int)resourceList.FirstOrDefault(x => x.ValueId == ResourceType.Gems)?.Value;
+                        finalData.Data.Resources.Food = (long)resourceList.FirstOrDefault(x => x.ValueId == ResourceType.Food)?.Value;
+                        finalData.Data.Resources.Wood = (long)resourceList.FirstOrDefault(x => x.ValueId == ResourceType.Wood)?.Value;
+                        finalData.Data.Resources.Ore = (long)resourceList.FirstOrDefault(x => x.ValueId == ResourceType.Ore)?.Value;
+                        finalData.Data.Resources.Gems = (long)resourceList.FirstOrDefault(x => x.ValueId == ResourceType.Gems)?.Value;
                     }
 
                     line = "8";
@@ -143,6 +179,7 @@ namespace GameOfRevenge.Business.Manager.Base
                         {
                             finalData.Data.Structures.Add(new StructureInfos()
                             {
+                                Id = item.Id,
                                 StructureType = item.ValueId,
                                 Buildings = item.Value
                             });
@@ -180,12 +217,7 @@ namespace GameOfRevenge.Business.Manager.Base
                                     }
                                 }
 
-                                finalData.Data.Troops.Add(new TroopInfos()
-                                {
-                                    Id = userTroop.Id,
-                                    TroopType = userTroop.ValueId,
-                                    TroopData = userTroop.Value
-                                });
+                                finalData.Data.Troops.Add(new TroopInfos(userTroop.Id, userTroop.ValueId, userTroop.Value));
                             }
                         }
                     }
@@ -194,6 +226,12 @@ namespace GameOfRevenge.Business.Manager.Base
                     if (userMarching != null)
                     {
                         finalData.Data.MarchingArmy = JsonConvert.DeserializeObject<MarchingArmy>(userMarching.Value);
+                        if (finalData.Data.MarchingArmy?.TimeLeft <= 0)
+                        {
+                            var builderResp = await manager.UpdatePlayerDataID(playerId, userMarching.Id, string.Empty);
+                            //AddOrUpdatePlayerData(playerId, DataType.Custom, 2, json);
+                            finalData.Data.MarchingArmy = null;
+                        }
                     }
 
 
@@ -229,7 +267,7 @@ namespace GameOfRevenge.Business.Manager.Base
                         }
                     }
 
-                    if (userSubTechs != null)
+/*                    if (userSubTechs != null)
                     {
                         foreach (var tech in userSubTechs)
                         {
@@ -238,7 +276,7 @@ namespace GameOfRevenge.Business.Manager.Base
                             var subTech = PlayerDataToUserSubTechnologyData(tech);
                             finalData.Data.SubTechnologies.Add(subTech.Value);
                         }
-                    }
+                    }*/
 
                     //POPULATE ITEMS
 /*                    var items = CacheInventoryDataManager.ItemInfos;
@@ -280,17 +318,11 @@ namespace GameOfRevenge.Business.Manager.Base
                     //ADD BOOST
                     foreach (var item in userBoosts)
                     {
-                        var bufdData = PlayerDataToUserBoostData(item);
-                        if (bufdData != null)
+                        var boostData = PlayerDataToUserNewBoostData(item);
+//                        if (boostData.ValueId == 0)
+                        if ((boostData != null) && (!boostData.Value.HasDuration || (boostData.Value.TimeLeft > 0)))
                         {
-                            FullUserBoostDetails fullUserBoost = new FullUserBoostDetails()
-                            {
-                                Id = bufdData.Id,
-                                BoostType = bufdData.Value.BoostType,
-                                StartTime = bufdData.Value.StartTime,
-                                EndTime = bufdData.Value.EndTime
-                            };
-                            finalData.Data.Boosts.Add(fullUserBoost);
+                            finalData.Data.Boosts.Add(new UserRecordNewBoost(boostData.Id, boostData.Value));
                         }
                     }
 
@@ -510,7 +542,7 @@ namespace GameOfRevenge.Business.Manager.Base
 
         public UserResourceData PlayerDataToUserResourceData(PlayerDataTable playerData)
         {
-            float.TryParse(playerData.Value, out float value);
+            long.TryParse(playerData.Value, out long value);
 
             return new UserResourceData()
             {
@@ -576,7 +608,7 @@ namespace GameOfRevenge.Business.Manager.Base
             return PlayerDataToUserTechnologyData(playerDataUpdated.ToPlayerDataTable);
         }
 
-        public UserSubTechnologyData PlayerDataToUserSubTechnologyData(PlayerDataTable playerData)
+/*        public UserSubTechnologyData PlayerDataToUserSubTechnologyData(PlayerDataTable playerData)
         {
             if (playerData == null) return null;
             var details = JsonConvert.DeserializeObject<SubTechnologyInfos>(playerData.Value);
@@ -594,7 +626,7 @@ namespace GameOfRevenge.Business.Manager.Base
         {
             if (playerDataUpdated == null) return null;
             return PlayerDataToUserSubTechnologyData(playerDataUpdated.ToPlayerDataTable);
-        }
+        }*/
 
         public UserInventoryData PlayerDataToUserInventoryData(PlayerDataTable playerData)
         {
@@ -621,6 +653,58 @@ namespace GameOfRevenge.Business.Manager.Base
                 Value = val,
                 OldValue = playerDataUpdated.OldValue
             };
+        }
+
+        public UserNewBoostData PlayerDataToUserNewBoostData(PlayerDataTable playerData)
+        {
+            UserNewBoostData data;
+
+//            System.Console.WriteLine(playerData.Value);
+            if (playerData.Value.Contains("EndTime"))
+            {
+                var boostDetails = JsonConvert.DeserializeObject<UserBoostDetails>(playerData.Value);
+                var oldBoostType = boostDetails.BoostType;
+                NewBoostType boostType = NewBoostType.Unknown;
+                switch(oldBoostType)
+                {
+                    case NewBoostType.Shield: boostType = NewBoostType.Shield; break;
+                    case NewBoostType.Blessing: boostType = NewBoostType.Blessing; break;
+                    case NewBoostType.LifeSaver: boostType = NewBoostType.LifeSaver; break;
+                    case NewBoostType.ProductionBoost: boostType = NewBoostType.ProductionBoost; break;
+//                    case BoostType.SpeedGathering: boostType = NewBoostType.ResearchSpeed
+                    case NewBoostType.Fog: boostType = NewBoostType.Fog; break;
+                    case NewBoostType.TechBoost: boostType = NewBoostType.TechBoost; break;
+                }
+
+                data = new UserNewBoostData()
+                {
+                    Id = playerData.Id,
+                    DataType = DataType.ActiveBoost,
+                    ValueId = (NewBoostType)playerData.ValueId,
+                    Value = new UserNewBoost
+                    {
+                        Type = boostType,
+                        StartTime = boostDetails.StartTime,
+                        Duration = (int)(boostDetails.EndTime - boostDetails.StartTime).TotalSeconds
+//                        Level = 1
+                    }
+                };
+            }
+            else
+            {
+                var boost = JsonConvert.DeserializeObject<UserNewBoost>(playerData.Value);
+                data = new UserNewBoostData()
+                {
+                    Id = playerData.Id,
+                    DataType = DataType.ActiveBoost,
+                    ValueId = (NewBoostType)playerData.ValueId,//.BoostType,
+                                                               //                ValueId = CacheBoostDataManager.GetFullBoostDataByBoostId(playerData.ValueId).Info.BoostType,
+                    Value = boost// JsonConvert.DeserializeObject<UserNewBoost>(playerData.Value)
+                };
+                data.Value.Type = data.ValueId;
+            }
+
+            return data;
         }
 
         public UserBoostData PlayerDataToUserBoostData(PlayerDataTable playerData)
@@ -717,8 +801,8 @@ namespace GameOfRevenge.Business.Manager.Base
         }
 
 
-        public BoostType GetBoostType(BoostType type) => GetBoostType(type.ToString());
-        public BoostType GetBoostType(string type) => type.ToEnum<BoostType>();
+        public NewBoostType GetBoostType(NewBoostType type) => GetBoostType(type.ToString());
+        public NewBoostType GetBoostType(string type) => type.ToEnum<NewBoostType>();
 
         public Dictionary<int, UserStructureData> GetMultipleBuildings(UserStructureData structure)
         {
@@ -729,116 +813,138 @@ namespace GameOfRevenge.Business.Manager.Base
                 var u = new UserStructureData()
                 {
                     Id = structure.Id,
+                    DataType = structure.DataType,
                     Value = structure.Value.Where(d => d.Location == loc).ToList(),
-                    ValueId = structure.ValueId,
-                    StructureId = structure.StructureId
+                    ValueId = structure.ValueId
+//                    StructureId = structure.StructureId
                 };
                 dict.Add(loc, u);
             }
             return dict;
         }
-        public UserStructureData GetStructureDataAccLoc(UserStructureData structure, int locId)
+
+        public bool HasRequirements(IReadOnlyList<IReadOnlyDataRequirement> requirements, PlayerCompleteData playerData) => HasRequirements(requirements, playerData, 1);
+        public bool HasRequirements(IReadOnlyList<IReadOnlyDataRequirement> requirements, PlayerCompleteData playerData, int count)
         {
-            return new UserStructureData()
-            {
-                Id = structure.Id,
-                Value = structure.Value.Where(d => d.Location == locId).ToList(),
-                ValueId = structure.ValueId,
-                StructureId = structure.StructureId
-            };
+            var hasResReq = HasResourceRequirements(requirements, playerData.Resources, count);
+            var hasStructReq = HasStructureRequirements(requirements, playerData.Structures);
+            var hasBoostReq = HasActiveBoostRequirements(requirements, playerData.Boosts);
+
+            return hasResReq && hasStructReq && hasBoostReq;
         }
 
-        public bool HasRequirements(IReadOnlyList<IReadOnlyDataRequirement> requirements, List<StructureInfos> structures, ResourcesList resourcess) => HasRequirements(requirements, structures, resourcess, 1);
-        public bool HasRequirements(IReadOnlyList<IReadOnlyDataRequirement> requirements, List<StructureInfos> structures, ResourcesList resourcess, int count)
+        public bool HasResourceRequirements(IReadOnlyList<IReadOnlyDataRequirement> requirements, ResourcesList resources, int count)
         {
-            var hasResReq = HasRequirements(requirements.Where(x => x.DataType == DataType.Resource).ToList(), resourcess, count);
-            var hasStructReq = HasRequirements(requirements.Where(x => x.DataType == DataType.Structure).ToList(), structures);
+            if ((requirements == null) || (requirements.Count <= 0)) return true;
+            if (resources == null) return false;
 
-            return hasResReq && hasStructReq;
-        }
-        public bool HasRequirements(IReadOnlyList<IReadOnlyDataRequirement> requirements, ResourcesList resourcess, int count)
-        {
+            bool resp = true;
             try
             {
-                if (requirements == null || requirements.Count <= 0) return true;
-                if (resourcess == null) return false;
-
                 foreach (var requirement in requirements)
                 {
-                    if (requirement.DataType == DataType.Resource)
+                    if (requirement.DataType != DataType.Resource) continue;
+
+                    long val = 0;
+                    var resData = CacheResourceDataManager.GetResourceData(requirement.ValueId);
+                    switch (resData.Code)
                     {
-                        var resData = CacheResourceDataManager.GetResourceData(requirement.ValueId);
-                        var value = false;
-
-                        switch (resData.Code)
-                        {
-                            case ResourceType.Food:
-                                value = resourcess.Food >= requirement.Value * count;
-                                break;
-                            case ResourceType.Wood:
-                                value = resourcess.Wood >= requirement.Value * count;
-                                break;
-                            case ResourceType.Ore:
-                                value = resourcess.Ore >= requirement.Value * count;
-                                break;
-                            case ResourceType.Gems:
-                                value = resourcess.Gems >= requirement.Value * count;
-                                break;
-                        }
-
-                        if (!value) return false;
+                        case ResourceType.Food: val = resources.Food; break;
+                        case ResourceType.Wood: val = resources.Wood; break;
+                        case ResourceType.Ore: val = resources.Ore; break;
+                        case ResourceType.Gems: val = resources.Gems; break;
+                    }
+                    if (val < requirement.Value * count)
+                    {
+                        resp = false;
+                        break;
                     }
                 }
-
-                return true;
             }
             catch (Exception)
             {
-                return false;
+                resp = false;
             }
+
+            return resp;
         }
-        public bool HasRequirements(IReadOnlyList<IReadOnlyDataRequirement> requirements, List<StructureInfos> structures)
+
+        public bool HasStructureRequirements(IReadOnlyList<IReadOnlyDataRequirement> requirements, List<StructureInfos> structures)
         {
+            if ((requirements == null) || (requirements.Count <= 0)) return true;
+            if (structures == null) return false;
+
+            bool resp = true;
             try
             {
-                if (requirements == null || requirements.Count <= 0) return true;
-                if (structures == null) return false;
-
                 foreach (var requirement in requirements)
                 {
-                    if (requirement.DataType == DataType.Structure)
-                    {
-                        var structData = CacheStructureDataManager.GetFullStructureData(requirement.ValueId);
-                        var value = false;
+                    if (requirement.DataType != DataType.Structure) continue;
 
-                        foreach (var structure in structures)
+                    var structData = CacheStructureDataManager.GetFullStructureData(requirement.ValueId);
+                    StructureInfos structure = structures.First(x =>
+                    {
+                        StructureDetails building = null;
+                        if (x.StructureType == structData.Info.Code)
                         {
-                            if (structData.Info.Code == structure.StructureType)
-                            {
-                                var lvlBldg = structure.Buildings.Where(x => x.Level >= requirement.Value).FirstOrDefault();
-                                if (lvlBldg != null)
-                                {
-                                    if (lvlBldg.TimeLeft <= 0)
-                                    {
-                                        value = true;
-                                        break;
-                                    };
-                                }
-                            }
+                            building = x.Buildings.Find(y => (y.Level > requirement.Value) ||
+                                                             ((y.Level == requirement.Value) && (y.TimeLeft <= 0)));
                         }
 
-                        if (!value) return false;
-                    }
-                }
+                        return building != null;
+                    });
+                    if (structure != null) continue;
 
-                return true;
+                    resp = false;
+                    break;
+                }
             }
             catch (Exception)
             {
-                return false;
+                resp = false;
             }
+
+            return resp;
         }
 
+        public bool HasActiveBoostRequirements(IReadOnlyList<IReadOnlyDataRequirement> requirements, List<UserRecordNewBoost> userBoosts)
+        {
+            if ((requirements == null) || (requirements.Count <= 0)) return true;
+            if (userBoosts == null) return false;
+
+            bool resp = true;
+            try
+            {
+                foreach (var requirement in requirements)
+                {
+                    if (requirement.DataType != DataType.ActiveBoost) continue;
+
+                    var boostType = (NewBoostType)requirement.ValueId;
+//                    var boostData = CacheBoostDataManager.GetNewBoostDataByType((NewBoostType)requirement.ValueId);
+                    UserNewBoost boost = userBoosts.Find(x =>
+                    {
+                        bool reqLevel = false;
+                        if (x.Type == boostType)//boostData.Type)
+                        {
+                            reqLevel = (x.Level > requirement.Value) ||
+                                        ((x.Level == requirement.Value) && (x.TimeLeft <= 0));
+                        }
+
+                        return reqLevel;
+                    });
+                    if (boost != null) continue;
+
+                    resp = false;
+                    break;
+                }
+            }
+            catch (Exception)
+            {
+                resp = false;
+            }
+
+            return resp;
+        }
 
         public async Task<bool> ValidateStructureInLocAndBuild(int playerId, int locId)
         {

@@ -66,11 +66,13 @@ namespace GameOfRevenge.WebServer
             //            var resp = response.Data?.Items;
 //            System.Console.WriteLine(Newtonsoft.Json.JsonConvert.SerializeObject(response1));
 
-//   await Startup.ReloadDataBaseDataAsync();
+   await Startup.ReloadDataBaseDataAsync();
 
             var pdm = new PlayerDataManager();
             var urm = new UserResourceManager();
             var response = await urm.GetFullPlayerData(71);// GetPlayerData(71);
+//            var response = await new UserActiveBoostManager().AddBoost(71, Common.Models.Boost.NewBoostType.Shield);
+//            var response = CacheBoostDataManager.SpecNewBoostDataTables;
 //            var response = await pdm.GetAllPlayerData(71);//, DataType.Inventory);
 //            var response = await pdm.GetAllPlayerData(71, DataType.Resource, (int)ResourceType.Gems);//, (int)Common.Models.Inventory.InventoryItemType.Weapon);
 //            if (response.Data == null) return;

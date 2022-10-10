@@ -1,4 +1,5 @@
-﻿using GameOfRevenge.Business.CacheData;
+﻿using ExitGames.Logging;
+using GameOfRevenge.Business.CacheData;
 using GameOfRevenge.Business.Manager.Base;
 using GameOfRevenge.Common;
 using GameOfRevenge.Common.Interface.UserData;
@@ -116,108 +117,173 @@ namespace GameOfRevenge.Business.Manager.UserData
                 var structureLevelData = CacheStructureDataManager.GetFullStructureLevelData(structType, level);
                 var cost = FinalCost(structureLevelData.Data.TimeToBuild);
 
-                var playerData = await GetFullPlayerData(playerId);
-                if (!playerData.IsSuccess || !playerData.HasData) throw new DataNotExistExecption(playerData.Message);
+                var playerDataResp = await GetFullPlayerData(playerId);
+                if (!playerDataResp.IsSuccess || !playerDataResp.HasData) throw new DataNotExistExecption(playerDataResp.Message);
 
+                var playerData = playerDataResp.Data;
                 if (level > 1)
                 {
-                    foreach (var structure in playerData.Data.Structures)
+                    foreach (var structure in playerData.Structures)
                     {
                         var structureInfo = structure.Buildings.FirstOrDefault(x => x.Location == locId);
-                        if (structureInfo != null && structureInfo.TimeLeft > freeCostSeconds)
-                            return await SpeedUpBuildStructure(playerId, locId);
+                        if ((structureInfo != null) && (structureInfo.TimeLeft > freeCostSeconds))
+                        {
+                            return await SpeedUpBuildStructure(playerId, locId, playerData);
+                        }
                     }
                 }
 
                 if (cost > 0)
                 {
-                    var playerGems = playerData.Data.Resources.Gems;
+                    log.Info("TAKE GEMS");
+                    var playerGems = playerData.Resources.Gems;
                     if (playerGems < cost) throw new RequirementExecption("Not enough gems");
 
-                    var resCut = await _userResourceManager.RemoveGemsResource(playerId, cost);
+                    var resCut = await _userResourceManager.SumGemsResource(playerId, -cost);
                     if (!resCut.IsSuccess) throw new RequirementExecption("Not enough gems");
                 }
 
-                Response createBuildResponse = null;
-
-                if (level <= 1) createBuildResponse = await _userStructureManager.CreateBuilding(playerId, structType, locId, false);
-                else createBuildResponse = await _userStructureManager.UpgradeBuilding(playerId, structType, locId, false);
+                Response<UserStructureData> createBuildResponse = null;
+                if (level <= 1)
+                {
+                    log.Info("CREATE BUILDING");
+                    createBuildResponse = await _userStructureManager.CreateBuilding(playerId, structType, locId, false, true);
+                }
+                else
+                {
+                    log.Info("UPGRADE BUILDING");
+                    createBuildResponse = await _userStructureManager.UpgradeBuilding(playerId, structType, locId, false, true);
+                }
 
                 if (createBuildResponse == null) return new Response<UserStructureData>(200, ErrorManager.ShowError());
 
                 if (!createBuildResponse.IsSuccess)
                 {
-                    if (cost > 0) await _userResourceManager.AddGemsResource(playerId, cost);
-                    return new Response<UserStructureData>(createBuildResponse.Case, createBuildResponse.Message);
+                    log.Info("RETURN GEMS");
+                    if (cost > 0) await _userResourceManager.SumGemsResource(playerId, cost);
+                    return createBuildResponse;// new Response<UserStructureData>(createBuildResponse.Case, createBuildResponse.Message);
                 }
 
-                playerData = await GetFullPlayerData(playerId);
-                if (!playerData.IsSuccess || !playerData.HasData) throw new DataNotExistExecption(playerData.Message);
+                var buildings = createBuildResponse.Data.Value;
+                buildings.Find(x => x.Location == locId).Duration = 0;
 
-                foreach (var structure in playerData.Data.Structures)
+                var json = JsonConvert.SerializeObject(buildings);
+                log.Info("UPDATING BUILDING DATA "+ createBuildResponse.Data.Id +"  "+ json);
+                var response = await manager.UpdatePlayerDataID(playerId, createBuildResponse.Data.Id, json);
+                log.Info("RESPONSE "+response.Message);
+
+                    //AddOrUpdatePlayerData(playerId, DataType.Structure, structureData.Info.Id, json);
+                if (response.IsSuccess)
                 {
-                    var structureInfo = structure.Buildings.FirstOrDefault(x => x.Location == locId);
-                    if (structureInfo != null)
+                    log.Info("PULL BUILDERS");
+                    var builderResp = await manager.GetAllPlayerData(playerId, DataType.Custom, 2);
+                    if (builderResp.IsSuccess && builderResp.HasData)
                     {
-                        structureInfo.EndTime = DateTime.UtcNow;
-                        structureInfo.StartTime = DateTime.UtcNow;
+                        log.Info("BUILDERS = "+builderResp.Data.Count);
+                        foreach (var builderData in builderResp.Data)
+                        {
+                            log.Info(">> "+builderData.Value);
+                            var builder = JsonConvert.DeserializeObject<UserBuilderDetails>(builderData.Value);
+                            if (builder.Location != locId) continue;
 
-                        var response = await manager.AddOrUpdatePlayerData(playerId, DataType.Structure, structureData.Info.Id, JsonConvert.SerializeObject(structure.Buildings));
-                        if (response.IsSuccess) return new Response<UserStructureData>(_userStructureManager.PlayerDataToUserStructureData(response.Data), 100, "Structure upgrade completed");
-
-                        break;
+                            builder.Duration = 0;
+                            json = JsonConvert.SerializeObject(builder);
+                            log.Info("UPDATING BUILDER "+builderData.Id+"  "+json);
+                            var respBuilder = await manager.UpdatePlayerDataID(playerId, builderData.Id, json);
+                            break;
+                        }
                     }
+
+                    var userData = _userStructureManager.PlayerDataToUserStructureData(response.Data);
+                    return new Response<UserStructureData>(userData, 100, "Structure upgrade completed");
                 }
 
-                if (cost > 0) await _userResourceManager.AddGemsResource(playerId, cost);
+                if (cost > 0) await _userResourceManager.SumGemsResource(playerId, cost);
                 return new Response<UserStructureData>(200, "Structure upgrade could'nt be completed");
             }
-            catch (CacheDataNotExistExecption ex) { return new Response<UserStructureData>(200, ErrorManager.ShowError(ex)); }
-            catch (RequirementExecption ex) { return new Response<UserStructureData>(202, ErrorManager.ShowError(ex)); }
-            catch (Exception ex) { return new Response<UserStructureData>(0, ErrorManager.ShowError(ex)); }
+            catch (CacheDataNotExistExecption ex)
+            {
+                return new Response<UserStructureData>(200, ErrorManager.ShowError(ex));
+            }
+            catch (RequirementExecption ex)
+            {
+                return new Response<UserStructureData>(202, ErrorManager.ShowError(ex));
+            }
+            catch (Exception ex)
+            {
+                return new Response<UserStructureData>(0, ErrorManager.ShowError(ex));
+            }
         }
+        public static readonly ILogger log = LogManager.GetCurrentClassLogger();
 
-        public async Task<Response<UserStructureData>> SpeedUpBuildStructure(int playerId, int locId)
+        public async Task<Response<UserStructureData>> SpeedUpBuildStructure(int playerId, int locId, PlayerCompleteData playerData = null)
         {
             try
             {
-                var playerData = await GetFullPlayerData(playerId);
-                if (!playerData.IsSuccess || !playerData.HasData) throw new DataNotExistExecption(playerData.Message);
-
-                foreach (var structure in playerData.Data.Structures)
+                if (playerData == null)
                 {
-                    var structureInfo = structure.Buildings.FirstOrDefault(x => x.Location == locId);
-                    if (structureInfo != null)
+                    var fullPlayerData = await GetFullPlayerData(playerId);
+                    if (!fullPlayerData.IsSuccess || !fullPlayerData.HasData) throw new DataNotExistExecption(fullPlayerData.Message);
+
+                    playerData = fullPlayerData.Data;
+                }
+
+                foreach (var structure in playerData.Structures)
+                {
+                    var building = structure.Buildings.Find(x => (x.Location == locId));
+                    if (building == null) continue;
+
+                    if (building.TimeLeft <= 0) return new Response<UserStructureData>(101, "Structure already completed");
+
+                    var cost = FinalCost(building.TimeLeft);
+                    if (cost > 0)
                     {
-                        if (structureInfo.TimeLeft <= 0) return new Response<UserStructureData>(101, "Structure cd already completed");
+                        var playerGems = playerData.Resources.Gems;
+                        if (playerGems < cost) throw new RequirementExecption("Not enough gems");
 
-                        var cost = FinalCost(structureInfo.TimeLeft);
+                        var resCut = await _userResourceManager.SumGemsResource(playerId, -cost);
+                        if (!resCut.IsSuccess) throw new RequirementExecption("Not enough gems");
+                    }
 
-                        if (cost > 0)
-                        {
-                            var playerGems = playerData.Data.Resources.Gems;
-                            if (playerGems < cost) throw new RequirementExecption("Not enough gems");
+//                    var structureData = CacheStructureDataManager.GetFullStructureData(structure.StructureType);
+                    building.Duration = 0;
 
-                            var resCut = await _userResourceManager.RemoveGemsResource(playerId, cost);
-                            if (!resCut.IsSuccess) throw new RequirementExecption("Not enough gems");
-                        }
+                    var json = JsonConvert.SerializeObject(structure.Buildings);
+                    var response = await manager.UpdatePlayerDataID(playerId, structure.Id, json);
+//                    var response = await manager.AddOrUpdatePlayerData(playerId, DataType.Structure, structureData.Info.Id, json);
+                    if (!response.IsSuccess)
+                    {
+                        if (cost > 0) await _userResourceManager.SumGemsResource(playerId, cost);
 
-                        var structureData = CacheStructureDataManager.GetFullStructureData(structure.StructureType);
-                        structureInfo.EndTime = DateTime.UtcNow;
-                        structureInfo.StartTime = DateTime.UtcNow;
-                        var response = await manager.AddOrUpdatePlayerData(playerId, DataType.Structure, structureData.Info.Id, JsonConvert.SerializeObject(structure.Buildings));
-                        if (response.IsSuccess) return new Response<UserStructureData>(_userStructureManager.PlayerDataToUserStructureData(response.Data), 100, "Structure upgrade completed");
-
-                        if (cost > 0) await _userResourceManager.AddGemsResource(playerId, cost);
                         return new Response<UserStructureData>(200, "Structure upgrade could'nt be completed");
                     }
+
+                    var builder = playerData.Builders.Find(x => (x.Location == building.Location));
+                    if (builder != null)
+                    {
+                        builder.Duration = 0;
+                        json = JsonConvert.SerializeObject((UserBuilderDetails)builder);
+                        var builderResp = await manager.UpdatePlayerDataID(playerId, builder.Id, json);
+                    }
+
+                    var userStructure = _userStructureManager.PlayerDataToUserStructureData(response.Data);
+                    return new Response<UserStructureData>(userStructure, 100, "Structure upgrade completed");
                 }
 
                 return new Response<UserStructureData>(200, "Structure not found");
             }
-            catch (CacheDataNotExistExecption ex) { return new Response<UserStructureData>(200, ErrorManager.ShowError(ex)); }
-            catch (RequirementExecption ex) { return new Response<UserStructureData>(202, ErrorManager.ShowError(ex)); }
-            catch (Exception ex) { return new Response<UserStructureData>(0, ErrorManager.ShowError(ex)); }
+            catch (CacheDataNotExistExecption ex)
+            {
+                return new Response<UserStructureData>(200, ErrorManager.ShowError(ex));
+            }
+            catch (RequirementExecption ex)
+            {
+                return new Response<UserStructureData>(202, ErrorManager.ShowError(ex));
+            }
+            catch (Exception ex)
+            {
+                return new Response<UserStructureData>(0, ErrorManager.ShowError(ex));
+            }
         }
 
         public async Task<Response<UserTroopData>> InstantRecruitTroops(int playerId, int locId, TroopType type, int troopLevel, int count)
@@ -235,7 +301,7 @@ namespace GameOfRevenge.Business.Manager.UserData
                 var playerGems = playerData.Data.Resources.Gems;
                 if (playerGems < cost) return new Response<UserTroopData>(200, "Not enough gems");
 
-                var resCut = await _userResourceManager.RemoveGemsResource(playerId, cost);
+                var resCut = await _userResourceManager.SumGemsResource(playerId, -cost);
                 if (!resCut.IsSuccess) return new Response<UserTroopData>(200, "Not enough gems");
 
                 foreach (var troop in playerData.Data.Troops)

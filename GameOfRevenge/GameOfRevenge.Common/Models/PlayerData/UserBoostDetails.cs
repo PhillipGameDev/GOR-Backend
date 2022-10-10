@@ -10,7 +10,7 @@ namespace GameOfRevenge.Common.Models
     public class UserBoostDetails
     {
         [DataMember]
-        public BoostType BoostType { get; set; }
+        public NewBoostType BoostType { get; set; }
 /*#if UNITY_2019_1_OR_NEWER
         [DataMember]
         public string StartTime { get; set; }

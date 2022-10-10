@@ -11,6 +11,7 @@ using GameOfRevenge.Common.Interface.UserData;
 using GameOfRevenge.Common.Models;
 using GameOfRevenge.Common.Models.Structure;
 using System.Linq;
+using Newtonsoft.Json;
 
 namespace GameOfRevenge.Business.Manager
 {
@@ -41,17 +42,35 @@ namespace GameOfRevenge.Business.Manager
                     //todo add in database
                     if (response.IsSuccess && response.HasData && response.Case == 100)
                     {
-                        await resManager.AddMainResource(response.Data.PlayerId, 10000, 10000, 10000, 100);
+                        int playerId = response.Data.PlayerId;
+                        await resManager.SumMainResource(playerId, 10000, 10000, 10000, 100);
 #if DEBUG
-                        await resManager.AddMainResource(response.Data.PlayerId, 100000, 100000, 100000, 10000);
+                        await resManager.SumMainResource(playerId, 100000, 100000, 100000, 10000);
 #endif
-                        var cityCounselLocs = CacheData.CacheStructureDataManager.GetFullStructureData(StructureType.CityCounsel).Locations;
-                        var gateLocs = CacheData.CacheStructureDataManager.GetFullStructureData(StructureType.Gate).Locations;
-                        var wtLocs = CacheData.CacheStructureDataManager.GetFullStructureData(StructureType.WatchTower).Locations;
+                        var cityCounselLoc = CacheData.CacheStructureDataManager.GetFullStructureData(StructureType.CityCounsel).Locations.FirstOrDefault();
+                        var gateLoc = CacheData.CacheStructureDataManager.GetFullStructureData(StructureType.Gate).Locations.FirstOrDefault();
+                        var wtLoc = CacheData.CacheStructureDataManager.GetFullStructureData(StructureType.WatchTower).Locations.FirstOrDefault();
 
-                        await strManager.CreateBuilding(response.Data.PlayerId, StructureType.CityCounsel, cityCounselLocs.FirstOrDefault());
-                        await strManager.CreateBuilding(response.Data.PlayerId, StructureType.Gate, gateLocs.FirstOrDefault());
-                        await strManager.CreateBuilding(response.Data.PlayerId, StructureType.WatchTower, wtLocs.FirstOrDefault());
+                        var dataManager = new PlayerDataManager();
+                        var king = new UserKingDetails
+                        {
+                            MaxStamina = 20
+                        };
+                        var json = JsonConvert.SerializeObject(king);
+                        await dataManager.AddOrUpdatePlayerData(playerId, DataType.Custom, 1, json);
+
+                        var builder = new UserBuilderDetails();
+                        json = JsonConvert.SerializeObject(builder);
+                        await dataManager.AddOrUpdatePlayerData(playerId, DataType.Custom, 2, json);
+
+                        await strManager.CreateBuilding(playerId, StructureType.CityCounsel, cityCounselLoc, false, false);
+                        await strManager.UpgradeBuilding(playerId, StructureType.CityCounsel, cityCounselLoc, false, false);
+
+                        await strManager.CreateBuilding(playerId, StructureType.Gate, gateLoc, false, false);
+                        await strManager.UpgradeBuilding(playerId, StructureType.Gate, gateLoc, false, false);
+
+                        await strManager.CreateBuilding(playerId, StructureType.WatchTower, wtLoc, false, false);
+                        await strManager.UpgradeBuilding(playerId, StructureType.WatchTower, wtLoc, false, false);
                     }
 
                     return response;

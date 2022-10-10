@@ -336,7 +336,7 @@
 					"response": []
 				},
 				{
-					"name": "GetAllHeros",
+					"name": "GetAllHeroes",
 					"protocolProfileBehavior": {
 						"disableBodyPruning": true
 					},
@@ -348,14 +348,14 @@
 							"formdata": []
 						},
 						"url": {
-							"raw": "{{url}}/api/GameDef/GetAllHeros",
+							"raw": "{{url}}/api/GameDef/GetAllHeroes",
 							"host": [
 								"{{url}}"
 							],
 							"path": [
 								"api",
 								"GameDef",
-								"GetAllHeros"
+								"GetAllHeroes"
 							]
 						}
 					},

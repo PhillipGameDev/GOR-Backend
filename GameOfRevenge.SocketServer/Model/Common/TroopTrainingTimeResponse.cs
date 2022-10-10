@@ -13,9 +13,9 @@ namespace GameOfRevenge.Model
         public int LocationId { get; set; }
 
         [DataMember(Code = (byte)RoomParameterKey.TrainingTime, IsOptional = true)]
-        public double TrainingTime { get; set; }
+        public int TrainingTime { get; set; }
 
         [DataMember(Code = (byte)RoomParameterKey.TotalTime, IsOptional = true)]
-        public double TotalTime { get; set; }
+        public int TotalTime { get; set; }
     }
 }

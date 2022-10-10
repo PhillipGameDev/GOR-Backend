@@ -13,7 +13,7 @@ namespace GameOfRevenge.Buildings.Handlers
 {
     public class SawMill : ResourceGenerator, IPlayerBuildingManager
     {
-        public override IPlayerResources Resource => Player.PlayerDataManager.PlayerResources[ResourceType.Wood];
+        public override IPlayerResources Resource => Player.InternalPlayerDataManager.PlayerResources[ResourceType.Wood];
         public override double ProductionInTime { get => BaseStructureData.Data.WoodProduction; }
 
         public SawMill(IGameBuildingManager baseBuildingManager, MmoActor player, UserStructureData structureData) : base(structureData, player, baseBuildingManager)

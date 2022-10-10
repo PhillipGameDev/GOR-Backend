@@ -14,14 +14,14 @@ namespace GameOfRevenge.Business.Manager.GameDef
 {
     public class HeroManager : BaseManager
     {
-        public async Task<Response<List<HeroTable>>> GetAllHeros() => await Db.ExecuteSPMultipleRow<HeroTable>("GetAllHeros");
+        public async Task<Response<List<HeroTable>>> GetAllHeroes() => await Db.ExecuteSPMultipleRow<HeroTable>("GetAllHeroes");
         public async Task<Response<List<HeroRequirementTable>>> GetAllHeroRequirements() => await Db.ExecuteSPMultipleRow<HeroRequirementTable>("GetAllHeroRequirements");
         public async Task<Response<List<HeroBoostTable>>> GetAllHeroBoosts() => await Db.ExecuteSPMultipleRow<HeroBoostTable>("GetAllHeroBoosts");
         public async Task<Response<List<HeroDataRel>>> GetAllHeroDataRelation() => await Db.ExecuteSPMultipleRow<HeroDataRel>("GetAllHeroDataRelation");
 
         public async Task<Response<List<HeroDataRequirementRel>>> GetAllHeroDatas()
         {
-            var heros = await GetAllHeros();
+            var heros = await GetAllHeroes();
             if (!heros.IsSuccess) return new Response<List<HeroDataRequirementRel>>(heros.Case, heros.Message);
 
             var reqs = await GetAllHeroRequirements();

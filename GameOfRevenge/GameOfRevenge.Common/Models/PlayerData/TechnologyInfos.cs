@@ -1,4 +1,6 @@
 ﻿using System.Runtime.Serialization;
+using Newtonsoft.Json;
+using Newtonsoft.Json.Converters;
 
 namespace GameOfRevenge.Common.Models
 {
@@ -6,6 +8,7 @@ namespace GameOfRevenge.Common.Models
     public class TechnologyInfos : TimerBase
     {
         [DataMember]
+        [JsonConverter(typeof(StringEnumConverter))]
         public TechnologyType TechnologyType { get; set; }
         [DataMember]
         public int Level { get; set; }
@@ -13,7 +16,7 @@ namespace GameOfRevenge.Common.Models
         public string Code { get => TechnologyType.ToString(); }
     }
 
-    [DataContract]
+/*    [DataContract]
     public class SubTechnologyInfos : TimerBase
     {
         [DataMember]
@@ -22,5 +25,5 @@ namespace GameOfRevenge.Common.Models
         public int Level { get; set; }
         [DataMember]
         public string Code { get => SubTechnologyType.ToString(); }
-    }
+    }*/
 }

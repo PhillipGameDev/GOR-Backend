@@ -50,6 +50,13 @@ namespace GameOfRevenge.WebServer
             //services.AddDataProtection().PersistKeysToFileSystem(new DirectoryInfo(@"C:\temp-keys\"));
             services.AddRazorPages();
 
+            services.AddControllers().AddNewtonsoftJson();
+
+/*            services.AddMvc().SetCompatibilityVersion(CompatibilityVersion.Version_3_0)
+        .AddNewtonsoftJson(opt => {
+            opt.SerializerSettings.ReferenceLoopHandling = Newtonsoft.Json.ReferenceLoopHandling.Ignore;
+        });*/
+
             var appSettingsSection = Configuration.GetSection("AppSettings");
             services.Configure<IAppSettings>(appSettingsSection);
             var appSettings = appSettingsSection.Get<AppSettings>();

@@ -17,16 +17,30 @@ namespace GameOfRevenge.Buildings.Handlers
     public abstract class PlayerBuildingManager : IPlayerBuildingManager
     {
         protected static readonly ILogger log = LogManager.GetCurrentClassLogger();
-        public UserStructureData PlayerStructureData { get; set; }
+
         public IGameBuildingManager BaseBuilderManager { get; set; }
-        public IReadOnlyStructureDataRequirement BaseStructureData { get { return BaseBuilderManager.BuildingData.GetStructureLevelById(CurrentLevel); } }
+        public IReadOnlyStructureDataRequirement BaseStructureData
+        {
+            get
+            {
+                return BaseBuilderManager.CacheBuildingData.GetStructureLevelById(CurrentLevel);
+            }
+        }
         public MmoActor Player { get; private set; }
+
+
+        public UserStructureData PlayerStructureData { get; set; }
+        public StructureType StructureType => PlayerStructureData.ValueId;
+
         public StructureDetails StructureDetails => PlayerStructureData.Value[0];
-        public int CurrentLevel { get { return StructureDetails.Level; } }
-        public int Location { get { return StructureDetails.Location; } }
-        public StructureType StructureType { get { return PlayerStructureData.ValueId; } }
-        public int StructureId { get { return PlayerStructureData.StructureId; } }
-        public bool IsConstructing => StructureDetails.TimeLeft > 0;
+
+        public int CurrentLevel => StructureDetails.Level;
+        public int Location => StructureDetails.Location;
+
+//        public int StructureId => PlayerStructureData.StructureId;
+
+        public bool IsConstructing => (StructureDetails.TimeLeft > 0);
+
         public Dictionary<TroopType, ITroop> Troops { get; set; }
 
         public PlayerBuildingManager(UserStructureData structureData, MmoActor player, IGameBuildingManager buildingManager)
@@ -39,24 +53,28 @@ namespace GameOfRevenge.Buildings.Handlers
             log.InfoFormat("INIT player Structure info {0}", JsonConvert.SerializeObject(this.PlayerStructureData));
         }
 
+        public void SetStructureData(UserStructureData structureData)
+        {
+            this.PlayerStructureData = structureData;
+        }
+
         public void AddBuildingCallBack()
         {
             Player.Fiber.Schedule(() => { SendBuildingCompleteToBuild(); }, (long)(1000 * StructureDetails.TimeLeft));
         }
 
-        public bool HasAvailableRequirment(IReadOnlyDataRequirement values)
+        public bool HasAvailableRequirement(IReadOnlyDataRequirement values)
         {
             log.InfoFormat("check structure level is available structureData {0} reuirmentLevel {1} ",
                 JsonConvert.SerializeObject(PlayerStructureData.Value), values.Value);
             return PlayerStructureData.Value.Any(d => d.Level >= values.Value) && ((CurrentLevel == values.Value && !IsConstructing) || CurrentLevel != values.Value);
         }
 
-        public void UpgradeBuilding(UserStructureData data)
+        public void AddBuildingUpgrading(UserStructureData data)
         {
             log.InfoFormat("Upgrade Building CurrentBuilding {0} Data {1} ", this.PlayerStructureData.DataType.ToString(), JsonConvert.SerializeObject(data));
             this.PlayerStructureData = data;
-            if (IsConstructing)
-                this.AddBuildingCallBack();
+            if (IsConstructing) this.AddBuildingCallBack();
         }
 
         //public void SendBuildTimerToClient()

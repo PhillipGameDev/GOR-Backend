@@ -9,6 +9,7 @@ namespace GameOfRevenge.Common.Models
 
         public int HelpedBuild { get; set; }
         public UserKingDetails King { get; set; }
+        public List<UserRecordBuilderDetails> Builders { get; set; }
 
         public ResourcesList Resources { get; set; }
         public MarchingArmy MarchingArmy { get; set; }
@@ -16,9 +17,9 @@ namespace GameOfRevenge.Common.Models
         public List<StructureInfos> Structures { get; set; }
         public List<TroopInfos> Troops { get; set; }
         public List<TechnologyInfos> Technologies { get; set; }
-        public List<SubTechnologyInfos> SubTechnologies { get; set; }
+//        public List<SubTechnologyInfos> SubTechnologies { get; set; }
         public List<UserItemDetails> Items { get; set; }
-        public List<FullUserBoostDetails> Boosts { get; set; }
+        public List<UserRecordNewBoost> Boosts { get; set; }
         public List<UserHeroDetails> Heroes { get; set; }
     }
 }

@@ -1,6 +1,6 @@
 USE [GameOfRevenge]
 GO
-/****** Object:  StoredProcedure [dbo].[GetPlayerData]    Script Date: 8/14/2022 2:32:18 PM ******/
+/****** Object:  StoredProcedure [dbo].[GetPlayerData]    Script Date: 10/3/2022 1:35:18 PM ******/
 SET ANSI_NULLS ON
 GO
 SET QUOTED_IDENTIFIER ON
@@ -47,7 +47,7 @@ BEGIN
 
 						IF (@currentDataId IS NULL)
 							BEGIN
-								SET @case = 202;
+								SET @case = 101;
 								SET @message = 'Player game data does not exists';
 							END
 						ELSE

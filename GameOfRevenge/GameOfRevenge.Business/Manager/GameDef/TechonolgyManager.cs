@@ -37,13 +37,8 @@ namespace GameOfRevenge.Business.Manager.GameDef
 
                         foreach (var itemData in techDatas.Where(x => x.Id == item.Id))
                         {
-                            var techDataReq = new TechnologyDataRequirements
-                            {
-                                Data = itemData,
-                                Requirements = techReqs.Where(x => x.DataId == itemData.DataId).ToList()
-                            };
-
-                            lvls.Add(techDataReq);
+                            var requirements = techReqs.Where(x => x.DataId == itemData.DataId).ToList();
+                            lvls.Add(new TechnologyDataRequirements(itemData, requirements));
                         }
 
                         var techDataReqRel = new TechnologyDataRequirementRel
@@ -56,7 +51,7 @@ namespace GameOfRevenge.Business.Manager.GameDef
                     }
 
 
-                    return new Response<List<TechnologyDataRequirementRel>>(100, "Fetched all Technology data")
+                    return new Response<List<TechnologyDataRequirementRel>>(100, "Fetched all technology data")
                     {
                         Data = finalData,
                         PageDetails = null
@@ -64,7 +59,7 @@ namespace GameOfRevenge.Business.Manager.GameDef
                 }
                 else
                 {
-                    return new Response<List<TechnologyDataRequirementRel>>(0, "Server Error");
+                    return new Response<List<TechnologyDataRequirementRel>>(0, "Error fetching technology data");
                 }
             }
             catch (InvalidModelExecption ex)

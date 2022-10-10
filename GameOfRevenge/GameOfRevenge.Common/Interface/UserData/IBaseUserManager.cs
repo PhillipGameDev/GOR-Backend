@@ -40,14 +40,15 @@ namespace GameOfRevenge.Common.Interface.UserData
         PlayerDataTable UserTechnologyDataToPlayerData(UserTechnologyData playerData);
 
         Dictionary<int, UserStructureData> GetMultipleBuildings(UserStructureData structure);
-        UserStructureData GetStructureDataAccLoc(UserStructureData structure, int locId);
 
+        Task<Response<List<PlayerDataTable>>> GetAllPlayerData(int playerId);
         Task<Response<PlayerCompleteData>> GetFullPlayerData(int playerId);
 
-        bool HasRequirements(IReadOnlyList<IReadOnlyDataRequirement> requirements, List<StructureInfos> structures, ResourcesList resourcess);
-        bool HasRequirements(IReadOnlyList<IReadOnlyDataRequirement> requirements, List<StructureInfos> structures, ResourcesList resourcess, int count);
-        bool HasRequirements(IReadOnlyList<IReadOnlyDataRequirement> requirements, ResourcesList resourcess, int count);
-        bool HasRequirements(IReadOnlyList<IReadOnlyDataRequirement> requirements, List<StructureInfos> structures);
+        bool HasRequirements(IReadOnlyList<IReadOnlyDataRequirement> requirements, PlayerCompleteData playerData);
+        bool HasRequirements(IReadOnlyList<IReadOnlyDataRequirement> requirements, PlayerCompleteData playerData, int count);
+        bool HasResourceRequirements(IReadOnlyList<IReadOnlyDataRequirement> requirements, ResourcesList resourcess, int count);
+        bool HasStructureRequirements(IReadOnlyList<IReadOnlyDataRequirement> requirements, List<StructureInfos> structures);
+        bool HasActiveBoostRequirements(IReadOnlyList<IReadOnlyDataRequirement> requirements, List<UserRecordNewBoost> boosts);
 
         PlayerDataTable UserBoostDataToPlayerData(UserBoostData playerData);
 //        UserBuffData PlayerDataToUserBuffData(PlayerDataTable playerData);

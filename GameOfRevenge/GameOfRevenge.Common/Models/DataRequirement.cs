@@ -33,6 +33,16 @@ namespace GameOfRevenge.Common.Models
             Value = reader.GetValue(index) == DBNull.Value ? 0 : reader.GetInt32(index);
         }
 
+        public DataRequirement()
+        {
+        }
+
+        public DataRequirement(DataType dataType, int valueId, int value)
+        {
+            DataType = dataType;
+            ValueId = valueId;
+            Value = value;
+        }
 
         public override string ToString()
         {

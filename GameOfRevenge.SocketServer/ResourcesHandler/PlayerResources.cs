@@ -13,9 +13,9 @@ namespace GameOfRevenge.ResourcesHandler
         private readonly MmoActor actor;
 
         public IReadOnlyResourceTable ResourceInfo { get; private set; }
-        public float Value { get; set; }
+        public long Value { get; set; }
 
-        public PlayerResources(IReadOnlyResourceTable info, float value, MmoActor actor)
+        public PlayerResources(IReadOnlyResourceTable info, long value, MmoActor actor)
         {
             this.actor = actor;
             Value = value;
@@ -23,15 +23,15 @@ namespace GameOfRevenge.ResourcesHandler
             log.Info($"INIT player resource info {JsonConvert.SerializeObject(ResourceInfo)} value {Value}");
         }
 
-        public bool HasAvailableRequirment(IReadOnlyDataRequirement requirment)
+        public bool HasAvailableRequirement(IReadOnlyDataRequirement requirment)
         {
             log.Info($"Check Resource is Avaliable resourceId {ResourceInfo.Code} value {Value} requirment {requirment.Value}");
             return Value >= requirment.Value;
         }
 
-        public void UpdateResourceValue(float val)
+        public void IncrementResourceValue(int val)
         {
-            Value += val;
+            Value += (long)val;
             log.Info($"Update Resources Type {ResourceInfo.Code} UpdateVal {val} totalVal {Value}");
 //            var obj = new UpdateResourceResponse(ResourceInfo.Id, Value);
 //            actor.SendEvent(EventCode.UpdateResource, obj);

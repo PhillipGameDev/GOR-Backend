@@ -4,7 +4,7 @@ using GameOfRevenge.Common.Interface.Model;
 
 namespace GameOfRevenge.Common.Models.Technology
 {
-    public interface IReadOnlySubTechnologyDataRequirementRel
+/*    public interface IReadOnlySubTechnologyDataRequirementRel
     {
         IReadOnlySubTechnologyTable Info { get; }
         IReadOnlyList<IReadOnlySubTechnologyDataRequirement> Levels { get; }
@@ -38,7 +38,7 @@ namespace GameOfRevenge.Common.Models.Technology
 
         [DebuggerBrowsable(DebuggerBrowsableState.Never)]
         IReadOnlyList<IReadOnlyDataRequirement> IReadOnlySubTechnologyDataRequirement.Requirements => Requirements;
-    }
+    }*/
 
 
 
@@ -78,5 +78,15 @@ namespace GameOfRevenge.Common.Models.Technology
 
         [DebuggerBrowsable(DebuggerBrowsableState.Never)]
         IReadOnlyList<IReadOnlyDataRequirement> IReadOnlyTechnologyDataRequirement.Requirements => Requirements;
+
+        public TechnologyDataRequirements()
+        {
+        }
+
+        public TechnologyDataRequirements(TechnologyDataTable data, List<DataRequirement> requirements)
+        {
+            Data = data;
+            Requirements = requirements;
+        }
     }
 }

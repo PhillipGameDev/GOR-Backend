@@ -4,8 +4,8 @@ namespace GameOfRevenge.Model
 {
     public class AttackResultResponse : CommonResponse
     {
-        [DataMember(Code = (byte)RoomParameterKey.WinnerUserName, IsOptional = true)]
-        public string WinnerUserName { get; set; }
+        [DataMember(Code = (byte)RoomParameterKey.WinnerId, IsOptional = true)]
+        public int WinnerId { get; set; }
     }
 
 }

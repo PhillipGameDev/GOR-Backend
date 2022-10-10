@@ -50,56 +50,143 @@ namespace GameOfRevenge.Business.Manager.UserData
                 };
             }
         }
-        
-        public async Task<Response<UserStructureData>> CreateBuilding(int playerId, StructureType type, int position) => await CreateBuilding(playerId, type, position, true);
-        public async Task<Response<UserStructureData>> CreateBuilding(int playerId, StructureType type, int position, bool removeRes)
+
+        private async Task<Response<UserRecordBuilderDetails>> SetBuilderTask(int playerId, bool createBuilder, List<UserRecordBuilderDetails> builders, int duration, int location, DateTime startTime)
+        {
+            UserRecordBuilderDetails currBuilder = null;
+            foreach (var builder in builders)
+            {
+                System.Console.WriteLine("builder = " + builder.TimeLeft);
+                if (builder.TimeLeft > 0) continue;
+
+                currBuilder = builder;
+                break;
+            }
+            if ((currBuilder == null) && (builders.Count < 2) && createBuilder)
+            {
+                currBuilder = new UserRecordBuilderDetails();
+            }
+            if (currBuilder == null) return new Response<UserRecordBuilderDetails>(200, "No builder available");
+
+            currBuilder.Duration = duration;
+
+            currBuilder.Location = location;
+            currBuilder.StartTime = startTime;
+            var json = JsonConvert.SerializeObject((UserBuilderDetails)currBuilder);
+            System.Console.WriteLine("builder " + currBuilder.Id + " data = " + json);
+
+            Response<PlayerDataTableUpdated> respBuilder;
+            if (currBuilder.Id == 0)
+            {
+                respBuilder = await manager.AddOrUpdatePlayerData(playerId, DataType.Custom, 2, json, false);
+                if (respBuilder.IsSuccess)
+                {
+                    currBuilder.Id = respBuilder.Data.Id;
+                    builders.Add(currBuilder);
+                }
+            }
+            else
+            {
+                respBuilder = await manager.UpdatePlayerDataID(playerId, currBuilder.Id, json);
+            }
+            if (!respBuilder.IsSuccess)
+            {
+                return new Response<UserRecordBuilderDetails>(respBuilder.Case, respBuilder.Message);
+            }
+
+            return new Response<UserRecordBuilderDetails>(currBuilder, respBuilder.Case, respBuilder.Message);
+        }
+
+        public async Task<Response<UserStructureData>> CreateBuilding(int playerId, StructureType type, int position) => await CreateBuilding(playerId, type, position, true, false);
+        public async Task<Response<UserStructureData>> CreateBuilding(int playerId, StructureType type, int position, bool removeRes, bool createBuilder)
         {
             var timestamp = DateTime.UtcNow;
             var existing = await CheckBuildingStatus(playerId, type);
-            var structure = CacheStructureDataManager.GetFullStructureLevelData(type, 1);
-            var dataList = new List<StructureDetails>();
+            List<StructureDetails> dataList;
+            if (existing.IsSuccess && existing.HasData)
+            {
+                dataList = existing.Data.Value;
+                var structureExists = dataList.Exists(x => x.Location.Equals(position));
+                if (structureExists)
+                {
+                    return new Response<UserStructureData>(existing.Data, 200, "Structure already exists cannot create in that location");
+                }
+            }
+            else
+            {
+                dataList = new List<StructureDetails>();
+            }
 
+            float timeReduced = 0;
             var playerData = await GetFullPlayerData(playerId);
-            int timeReduced = 0;
-            int? reducePercentage = playerData.Data.Technologies?.Where(x => x.TechnologyType == TechnologyType.ConstructionSpeed)?.FirstOrDefault()?.Level;
-            if (reducePercentage.HasValue) timeReduced = reducePercentage.Value;
-            else timeReduced = 0;
+            var technology = playerData.Data.Boosts.Find(x => (byte)x.Type == (byte)TechnologyType.ConstructionTechnology);
+            if (technology != null)
+            {
+                var specBoostData = CacheBoostDataManager.SpecNewBoostDatas.FirstOrDefault(x => x.Type == technology.Type);
+                if (specBoostData.Table > 0)
+                {
+                    float.TryParse(specBoostData.Levels[technology.Level].ToString(), out float levelVal);
+                    //                            int reducePercentage = technology.Level;
+                    timeReduced = levelVal;// reducePercentage.HasValue ? reducePercentage.Value : 0;
+                }
+            }
 
-            var totalSec = structure.Data.TimeToBuild * (1 - (timeReduced / 100));
+            var structureData = CacheStructureDataManager.GetFullStructureData(type);
+            var firstLevel = structureData.Levels.Min(x => x.Data.Level);
+            if (firstLevel != 1) throw new CacheDataNotExistExecption("Structure level data does not exist");
 
-            var userStructureDetails = new StructureDetails()
+            var structure = structureData.Levels.FirstOrDefault(x => x.Data.Level == 1);
+            int secs = (int)(structure.Data.TimeToBuild * (1 - (timeReduced / 100f)));
+            if (secs < 0) secs = 0;
+
+            dataList.Add(new StructureDetails()
             {
                 Level = 1,
                 LastCollected = timestamp,
                 Location = position,
                 StartTime = timestamp,
-                EndTime = timestamp.AddSeconds(totalSec),
+                Duration = secs,
+//                EndTime = timestamp.AddSeconds(totalSec),
                 HitPoints = structure.Data.HitPoint,
                 Helped = 0
-            };
+            });
 
-            if (existing.IsSuccess && existing.HasData)
+            if (removeRes)
             {
-                dataList = existing.Data.Value;
-                var structureExists = dataList.Exists(x => x.Location.Equals(position));
-                if (structureExists) return new Response<UserStructureData>(existing.Data, 200, "Structure already exists cannot create in that location");
+                var success = userResourceManager.HasResourceRequirements(structure.Requirements, playerData.Data.Resources, 1);
+                if (!success) return new Response<UserStructureData>(201, "Insufficient player resources");
             }
-            dataList.Add(userStructureDetails);
+            System.Console.WriteLine("building time = " + secs);
+
+            if (secs > 0)
+            {
+                var currBuilder = await SetBuilderTask(playerId, createBuilder, playerData.Data.Builders, secs, position, timestamp);
+                if (!currBuilder.IsSuccess) return new Response<UserStructureData>(202, currBuilder.Message);
+            }
 
             if (removeRes)
             {
                 var success = await userResourceManager.RemoveResourceByRequirement(playerId, structure.Requirements);
-                if (!success) return new Response<UserStructureData>( 201, "Insufficient player resources");
+                if (!success) return new Response<UserStructureData>(201, "Insufficient player resources");
             }
 
-            var respModel = await manager.AddOrUpdatePlayerData(playerId, DataType.Structure, CacheStructureDataManager.GetFullStructureData(type).Info.Id, JsonConvert.SerializeObject(dataList));
+            var json = JsonConvert.SerializeObject(dataList);
+            var respModel = await manager.AddOrUpdatePlayerData(playerId, DataType.Structure, structureData.Info.Id, json);
 
-            return new Response<UserStructureData>(PlayerDataToUserStructureData(respModel.Data), 100, "Structure Added succesfully");
+            var userStructure = new UserStructureData()
+            {
+                Id = respModel.Data.Id,
+                DataType = DataType.Structure,
+                ValueId = type,
+                Value = dataList
+            };
+            return new Response<UserStructureData>(userStructure, 100, "Structure Added succesfully");
         }
 
-        public async Task<Response<UserStructureData>> UpgradeBuilding(int playerId, StructureType type, int position) => await UpgradeBuilding(playerId, type, position, true);
-        public async Task<Response<UserStructureData>> UpgradeBuilding(int playerId, StructureType type, int position, bool removeRes)
+        public async Task<Response<UserStructureData>> UpgradeBuilding(int playerId, StructureType type, int position) => await UpgradeBuilding(playerId, type, position, true, false);
+        public async Task<Response<UserStructureData>> UpgradeBuilding(int playerId, StructureType type, int position, bool removeRes, bool createBuilder)
         {
+            var timestamp = DateTime.UtcNow;
             var existing = await CheckBuildingStatus(playerId, type);
             if (existing.IsSuccess && existing.HasData)
             {
@@ -107,37 +194,78 @@ namespace GameOfRevenge.Business.Manager.UserData
                 var locData = dataList.Where(x => x.Location == position).FirstOrDefault();
                 if (locData != null)
                 {
-                    var structLvls = CacheStructureDataManager.GetFullStructureData(type).Levels.Select(x => x.Data.Level).OrderByDescending(x => x).FirstOrDefault();
+                    var structureData = CacheStructureDataManager.GetFullStructureData(type);
+                    var structLvls = structureData.Levels.Select(x => x.Data.Level).OrderByDescending(x => x).FirstOrDefault();
                     if (locData.Level < structLvls)
                     {
+                        var structureSpec = structureData.GetStructureLevelById(locData.Level);
+                        var requirements = structureSpec.Requirements;
+                        var timeToBuild = structureSpec.Data.TimeToBuild;
+                        var hitPoints = structureSpec.Data.HitPoint;
+
                         locData.Level++;
-                        var structure = CacheStructureDataManager.GetFullStructureData(type).GetStructureLevelById(locData.Level);
-                        locData.StartTime = DateTime.UtcNow;
-                        locData.HitPoints = structure.Data.HitPoint;
+                        locData.StartTime = timestamp;
+                        locData.HitPoints = hitPoints;
                         locData.Helped = 0;
 
+                        float timeReduced = 0;
                         var playerData = await GetFullPlayerData(playerId);
-                        int timeReduced = 0;
-                        int? reducePercentage = playerData.Data.Technologies.Where(x => x.TechnologyType == TechnologyType.ConstructionSpeed)?.FirstOrDefault()?.Level;
-                        if (reducePercentage.HasValue) timeReduced = reducePercentage.Value;
-                        else timeReduced = 0;
+                        var technology = playerData.Data.Boosts.Find(x => (byte)x.Type == (byte)TechnologyType.ConstructionTechnology);
+                        if (technology != null)
+                        {
+                            var specBoostData = CacheBoostDataManager.SpecNewBoostDatas.FirstOrDefault(x => x.Type == technology.Type);
+                            if (specBoostData.Table > 0)
+                            {
+                                float.TryParse(specBoostData.Levels[technology.Level].ToString(), out float levelVal);
+                                //                            int reducePercentage = technology.Level;
+                                timeReduced = levelVal;// reducePercentage.HasValue ? reducePercentage.Value : 0;
+                            }
+                        }
 
-                        var totalSec = structure.Data.TimeToBuild * (1 - (timeReduced / 100));
-
-                        locData.EndTime = DateTime.UtcNow.AddSeconds(totalSec);
+                        int secs = (int)(timeToBuild * (1 - (timeReduced / 100f)));
+                        if (secs < 0) secs = 0;
+                        locData.Duration = secs;
 
                         if (removeRes)
                         {
-                            var success = await userResourceManager.RemoveResourceByRequirement(playerId, structure.Requirements);
-                            if (!success) return new Response<UserStructureData>(new UserStructureData() { Value = dataList, ValueId = type }, 201, "Insufficient player resources");
+                            var success = userResourceManager.HasResourceRequirements(requirements, playerData.Data.Resources, 1);
+                            if (!success) return new Response<UserStructureData>(201, "Insufficient player resources");
+                        }
+                        System.Console.WriteLine("building time = " + secs);
+
+                        if (secs > 0)
+                        {
+                            var currBuilder = await SetBuilderTask(playerId, createBuilder, playerData.Data.Builders, secs, position, timestamp);
+                            if (!currBuilder.IsSuccess) return new Response<UserStructureData>(202, currBuilder.Message);
+                        }
+
+                        if (removeRes)
+                        {
+                            var success = await userResourceManager.RemoveResourceByRequirement(playerId, requirements);
+                            if (!success) return new Response<UserStructureData>(201, "Insufficient player resources");
                         }
                         if (type == StructureType.Embassy)
                         {
                             var respModel1 = await manager.AddOrUpdatePlayerData(playerId, DataType.Activity, 1, "0");
                         }
 
-                        var respModel = await manager.AddOrUpdatePlayerData(playerId, DataType.Structure, CacheStructureDataManager.GetFullStructureData(type).Info.Id, JsonConvert.SerializeObject(dataList));
-                        return new Response<UserStructureData>(new UserStructureData() { Value = dataList, ValueId = type }, 100, "Structure upgraded succesfully");
+                        var json = JsonConvert.SerializeObject(dataList);
+                        var respModel = await manager.AddOrUpdatePlayerData(playerId, DataType.Structure, structureData.Info.Id, json);
+                        if (respModel.IsSuccess)
+                        {
+                            var userStructure = new UserStructureData()
+                            {
+                                Id = respModel.Data.Id,
+                                DataType = DataType.Structure,
+                                ValueId = type,
+                                Value = dataList
+                            };
+                            return new Response<UserStructureData>(userStructure, 100, "Structure upgraded succesfully");
+                        }
+                        else
+                        {
+                            //TODO: revert resource
+                        }
                     }
                 }
             }
@@ -145,7 +273,7 @@ namespace GameOfRevenge.Business.Manager.UserData
             return new Response<UserStructureData>(200, "Structure does not exists");
         }
 
-        public async Task<Response<UserStructureData>> HelpBuilding(int playerId, int toPlayerId, StructureType type, int position, int helpPower)
+        public async Task<Response<UserStructureData>> HelpBuilding(int playerId, int toPlayerId, StructureType type, int position, int helpSeconds)
         {
             var existing = await CheckBuildingStatus(toPlayerId, type);
             if (existing.IsSuccess && existing.HasData)
@@ -163,9 +291,20 @@ namespace GameOfRevenge.Business.Manager.UserData
                         var respModel1 = await manager.AddOrUpdatePlayerData(playerId, DataType.Activity, 1, playerData.Data.HelpedBuild.ToString());
 
                         locData.Helped++;
-                        locData.EndTime = locData.EndTime.AddMinutes(-helpPower);
-                        var respModel = await manager.AddOrUpdatePlayerData(toPlayerId, DataType.Structure, CacheStructureDataManager.GetFullStructureData(type).Info.Id, JsonConvert.SerializeObject(dataList));
-                        return new Response<UserStructureData>(new UserStructureData() { Value = dataList, ValueId = type }, 100, "Structure helped succesfully");
+                        locData.Duration -= helpSeconds;
+                        if (locData.Duration < 0) locData.Duration = 0;
+//                        locData.EndTime = locData.EndTime.AddMinutes(-helpPower);
+//                        var respModel = await manager.AddOrUpdatePlayerData(toPlayerId, DataType.Structure, CacheStructureDataManager.GetFullStructureData(type).Info.Id, JsonConvert.SerializeObject(dataList));
+                        var json = JsonConvert.SerializeObject(dataList);
+                        var respModel = await manager.UpdatePlayerDataID(toPlayerId, existing.Data.Id, json);
+                        var userData = new UserStructureData()
+                        {
+                            Id = respModel.Data.Id,
+                            DataType = DataType.Structure,
+                            ValueId = type,
+                            Value = dataList
+                        };
+                        return new Response<UserStructureData>(userData, 100, "Structure helped succesfully");
                     }
                     else
                     {
@@ -188,13 +327,21 @@ namespace GameOfRevenge.Business.Manager.UserData
                 if (locData != null)
                 {
                     dataList.Remove(locData);
-                    var respModel = await manager.AddOrUpdatePlayerData(playerId, DataType.Structure, CacheStructureDataManager.GetFullStructureData(type).Info.Id, JsonConvert.SerializeObject(dataList));
-
-                    return new Response<UserStructureData>(new UserStructureData() { Value = dataList, ValueId = type }, 100, "Structure removed succesfully");
+//                    var respModel = await manager.AddOrUpdatePlayerData(playerId, DataType.Structure, CacheStructureDataManager.GetFullStructureData(type).Info.Id, JsonConvert.SerializeObject(dataList));
+                    var json = JsonConvert.SerializeObject(dataList);
+                    var respModel = await manager.UpdatePlayerDataID(playerId, existing.Data.Id, json);
+                    var userData = new UserStructureData()
+                    {
+                        Id = respModel.Data.Id,
+                        DataType = DataType.Structure,
+                        ValueId = type,
+                        Value = dataList
+                    };
+                    return new Response<UserStructureData>(userData, 100, "Structure removed succesfully");
                 }
             }
 
-            return new Response<UserStructureData>(new UserStructureData() { Value = existing.Data.Value, ValueId = type }, 100, "Structure does not exists");
+            return new Response<UserStructureData>(100, "Structure does not exists");
         }
 
         public async Task<Response<int>> CollectResource(int playerId, int locId)
@@ -217,35 +364,42 @@ namespace GameOfRevenge.Business.Manager.UserData
                 var structDataTable = structData.Levels.Where(x => x.Data.Level == structDetails.Level).FirstOrDefault();
                 if (structDataTable == null) throw new DataNotExistExecption("Invalid structure details");
                 var timeEscaped = timestamp - structDetails.LastCollected;
-                double addValue = 0;
                 Response<UserResourceData> addResponse;
 
-                int boostValue = 0;
-                int? percentage = compPlayerData.Data.Technologies.Where(x => x.TechnologyType == TechnologyType.ResourceProduction)?.FirstOrDefault()?.Level;
-                if (percentage.HasValue) boostValue = percentage.Value;
-                else boostValue = 0;
+                float boostValue = 0;
+                var playerData = await GetFullPlayerData(playerId);
+                var boost = playerData.Data.Boosts.Find(x => (byte)x.Type == (byte)CityBoostType.ProductionBoost);
+                if ((boost != null) && (boost.TimeLeft > 0))
+                {
+                    var specBoostData = CacheBoostDataManager.SpecNewBoostDatas.FirstOrDefault(x => x.Type == boost.Type);
+                    if (specBoostData.Table > 0)
+                    {
+                        float.TryParse(specBoostData.Levels[boost.Level].ToString(), out float levelVal);
+                        boostValue = levelVal;
+                    }
+                }
 
-                if (compPlayerData.Data.Boosts.Exists(x => x.BoostType == BoostType.SpeedGathering && x.TimeLeft > 0)) boostValue += 5;
-                if (compPlayerData.Data.Boosts.Exists(x => x.BoostType == BoostType.ProductionBoost && x.TimeLeft > 0)) boostValue += 5;
-
+                double addValue = 0;
+                ResourceType resId;
                 switch (structInfo.StructureType)
                 {
                     case StructureType.Farm:
                         addValue = timeEscaped.TotalSeconds * structDataTable.Data.FoodProduction;
-                        addResponse = await userResourceManager.AddFoodResource(playerId, (float)addValue * (1 + (boostValue / 100)));
+                        resId = ResourceType.Food;
                         break;
                     case StructureType.Sawmill:
                         addValue = timeEscaped.TotalSeconds * structDataTable.Data.WoodProduction;
-                        addResponse = await userResourceManager.AddWoodResource(playerId, (float)addValue * (1 + (boostValue / 100)));
+                        resId = ResourceType.Wood;
                         break;
                     case StructureType.Mine:
                         addValue = timeEscaped.TotalSeconds * structDataTable.Data.OreProduction;
-                        addResponse = await userResourceManager.AddOreResource(playerId, (float)addValue * (1 + (boostValue / 100)));
+                        resId = ResourceType.Ore;
                         break;
                     default:
-                        throw new DataNotExistExecption("Invalid building type was prtovided");
+                        throw new DataNotExistExecption("Invalid building type was provided");
                 }
-
+                int finalValue = (int)(addValue * (1 + (boostValue / 100f)));
+                addResponse = await userResourceManager.SumResource(playerId, resId, finalValue);
                 if (!addResponse.IsSuccess) throw new DataNotExistExecption("Couldnt add resources");
 
                 structDetails.LastCollected = timestamp;

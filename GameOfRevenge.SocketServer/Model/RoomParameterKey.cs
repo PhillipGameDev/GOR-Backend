@@ -7,7 +7,7 @@
         Y = 3,
         PosPointX = 4,
         PosPointY = 5,
-        UserName = 6,
+        Username = 6,
         CommonMessage = 7,
         IsSuccess = 8,
         LoginType = 9,
@@ -26,10 +26,10 @@
         TrainingTime = 22,
         BoostUpTime = 23,
         Multiplier = 24,
-        EnemyUserName = 25,
-        AttackerUserName = 26,
+        EnemyId = 25,
+        AttackerId = 26,
         ReachedTime = 27,
-        WinnerUserName = 28,
+        WinnerId = 28,
         CurrentTime = 29,
         IsAttacking = 30,
         WoundedCount = 31,
@@ -50,6 +50,10 @@
         HelpPower = 46,
         AllianceId = 47,
         KingLevel = 48,
-        StartTime = 49
+        StartTime = 49,
+        EnemyUsername = 50,
+        ChatId = 51,
+        ChatMessage = 52,
+        BattleDuration = 53
     }
 }

@@ -10,7 +10,7 @@ namespace GameOfRevenge.Buildings.Interface
     public interface IGameBuildingManager
     {
         Dictionary<TroopType, IGameTroop> Troops { get; }
-        IReadOnlyStructureDataRequirementRel BuildingData { get; }
+        IReadOnlyStructureDataRequirementRel CacheBuildingData { get; }
 
         int BuildTime(int level);
         void CreateStructureForPlayer(CreateStructureRequest request, MmoActor actor);

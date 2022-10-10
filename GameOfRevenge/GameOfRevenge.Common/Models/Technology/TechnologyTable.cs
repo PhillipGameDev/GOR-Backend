@@ -15,12 +15,12 @@ namespace GameOfRevenge.Common.Models.Technology
 
 
 
-    public interface IReadOnlySubTechnologyTable : IReadOnlyBaseRefEnumTable<SubTechnologyType>
+/*    public interface IReadOnlySubTechnologyTable : IReadOnlyBaseRefEnumTable<SubTechnologyType>
     {
 
     }
 
     public class SubTechnologyTable : BaseRefEnumTable<SubTechnologyType>, IBaseTable, IBaseRefEnumTable<SubTechnologyType>, IReadOnlyBaseRefEnumTable<SubTechnologyType>, IReadOnlySubTechnologyTable
     {
-    }
+    }*/
 }

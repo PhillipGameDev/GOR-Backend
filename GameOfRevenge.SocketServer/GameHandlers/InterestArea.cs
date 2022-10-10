@@ -58,9 +58,9 @@ namespace GameOfRevenge.GameHandlers
                     if (!this.regions.Contains(r))
                     {
                         this.regions.Add(r);
-                        if (r.IsBooked && r.Owner != null && !this.Owner.InterestUsers.ContainsKey(r.Owner.UserId))
+                        if (r.IsBooked && r.Owner != null && !this.Owner.InterestUsers.ContainsKey(r.Owner.PlayerId))
                         {
-                            this.Owner.InterestUsers.TryAdd(r.Owner.UserId, r.Owner);
+                            this.Owner.InterestUsers.TryAdd(r.Owner.PlayerId, r.Owner);
                             if (isLocatedNewLocation)
                                 r.OnEnterPlayer(this.Owner); // new player instanstiate
                             if (this.Owner.IsInKingdomView)
@@ -79,11 +79,11 @@ namespace GameOfRevenge.GameHandlers
                         if (this.regions.Contains(r))
                         {
                             this.regions.Remove(r);
-                            if (r.IsBooked && r.Owner != null && this.Owner.InterestUsers.ContainsKey(r.Owner.UserId))
+                            if (r.IsBooked && r.Owner != null && this.Owner.InterestUsers.ContainsKey(r.Owner.PlayerId))
                             {
                                 log.InfoFormat("Send Exit Tiles to ");
                                 MmoActor o;
-                                this.Owner.InterestUsers.TryRemove(r.Owner.UserId, out o);
+                                this.Owner.InterestUsers.TryRemove(r.Owner.PlayerId, out o);
                                 if (isLocatedNewLocation)
                                     r.OnExitPlayer(r.Owner);
                                 if (this.Owner.IsInKingdomView)
@@ -107,7 +107,7 @@ namespace GameOfRevenge.GameHandlers
         }
         public void CameraMove(Region r)
         {
-            log.InfoFormat("Camera Move Request {0} ", this.Owner.UserName);
+            log.InfoFormat("Camera Move Request {0} ", this.Owner.PlayerId);
             if (this.CameraRegion == null || this.CameraRegion != r)
             {
                 this.CameraRegion = r;
@@ -160,7 +160,7 @@ namespace GameOfRevenge.GameHandlers
             {
                 var response = new IaExitResponse
                 {
-                    UserName = r.Owner.UserName
+                    playerId = r.Owner.PlayerId
                 };
                 this.Owner.SendEvent(EventCode.IaExit, response);
             }

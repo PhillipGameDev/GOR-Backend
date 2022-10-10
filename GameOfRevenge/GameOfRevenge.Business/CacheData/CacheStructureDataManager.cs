@@ -107,27 +107,27 @@ namespace GameOfRevenge.Business.CacheData
 
         public static IReadOnlyStructureDataRequirementRel GetFullStructureData(int structureId)
         {
-            var data = StructureInfos.FirstOrDefault(x => x.Info.Id == structureId);
+            var data = StructureInfos.First(x => x.Info.Id == structureId);
             if (data == null) throw new CacheDataNotExistExecption(StructureNotExist);
             else return data;
         }
         public static IReadOnlyStructureDataRequirementRel GetFullStructureData(StructureType structureType)
         {
-            var data = StructureInfos.FirstOrDefault(x => x.Info.Code == structureType);
+            var data = StructureInfos.First(x => x.Info.Code == structureType);
             if (data == null) throw new CacheDataNotExistExecption(StructureNotExist);
             else return data;
         }
         public static IReadOnlyStructureDataRequirement GetFullStructureLevelData(int structureId, int level)
         {
             var structure = GetFullStructureData(structureId);
-            var data = structure.Levels.FirstOrDefault(x => x.Data.Level == level);
+            var data = structure.Levels.First(x => x.Data.Level == level);
             if (data == null) throw new CacheDataNotExistExecption(StructureLevelNotExist);
             else return data;
         }
         public static IReadOnlyStructureDataRequirement GetFullStructureLevelData(StructureType structureType, int level)
         {
             var structure = GetFullStructureData(structureType);
-            var data = structure.Levels.FirstOrDefault(x => x.Data.Level == level);
+            var data = structure.Levels.First(x => x.Data.Level == level);
             if (data == null) throw new CacheDataNotExistExecption(StructureLevelNotExist);
             else return data;
         }
@@ -291,6 +291,7 @@ namespace GameOfRevenge.Business.CacheData
                 case StructureType.Stable: return new List<string>() { "Level", "Troop", "Power" };
 
                 case StructureType.Market: return new List<string>() { "Level", "Max caravan Load" };
+                case StructureType.TrainingHeroes: return new List<string>() { "Level" };
 
                 default: return null;
             }

@@ -92,7 +92,9 @@ namespace GameOfRevenge.GameHandlers
             {
                 X = comingActor.Tile.X,
                 Y = comingActor.Tile.Y,
-                UserName = comingActor.UserName
+                PlayerId = comingActor.PlayerId,
+                Username = comingActor.Username,
+                AllianceId = comingActor.AllianceId
             };
             return response;
         }
@@ -103,7 +105,7 @@ namespace GameOfRevenge.GameHandlers
             {
                 var response = new IaExitResponse
                 {
-                    UserName = exitActor.UserName
+                    playerId = exitActor.PlayerId
                 };
                 this.Owner.SendEvent(EventCode.IaExit, response);
             }

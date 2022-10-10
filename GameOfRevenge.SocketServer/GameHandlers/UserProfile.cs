@@ -17,18 +17,20 @@ namespace GameOfRevenge.GameHandlers
 {
     public abstract class UserProfile 
     {
-        public UserProfile(string playerId)
+        public UserProfile(int playerId, string userName, int allianceId)
         {
-            UserName = playerId;
-            UserId = playerId;
+            PlayerId = playerId;
+            Username = userName;
+            AllianceId = allianceId;
         }
 
         private static readonly ILogger log = LogManager.GetCurrentClassLogger();
-        public ConcurrentDictionary<string, MmoActor> InterestUsers { get; protected set; } = new ConcurrentDictionary<string, MmoActor>();
+        public ConcurrentDictionary<int, MmoActor> InterestUsers { get; protected set; } = new ConcurrentDictionary<int, MmoActor>();
         public List<IGorMmoPeer> IntrestedPeers { get { return InterestUsers.Where(d => d.Value.Peer != null && d.Value.IsInKingdomView).Select(f => f.Value.Peer).ToList(); } }
-        public string UserName { get; private set; }
-        public string UserId { get; private set; }
-        public int PlayerId { get { return Convert.ToInt32(this.UserId); } }
+        public int PlayerId { get; private set; }
+        public string Username { get; private set; }
+        public int AllianceId { get; private set; }
+//        public int UserId { get { return Convert.ToInt32(this.UserId); } }
         public string Email { get; set; }
         public string FullName { get; set; }
         public IGorMmoPeer Peer { get; set; }

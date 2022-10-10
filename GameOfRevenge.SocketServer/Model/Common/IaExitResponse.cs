@@ -4,7 +4,7 @@ namespace GameOfRevenge.Model
 {
     public class IaExitResponse : CommonResponse
     {
-        [DataMember(Code = (byte)RoomParameterKey.UserName, IsOptional = false)]
-        public string UserName { get; set; }
+        [DataMember(Code = (byte)RoomParameterKey.PlayerId, IsOptional = false)]
+        public int playerId { get; set; }
     }
 }

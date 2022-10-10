@@ -12,6 +12,8 @@ using GameOfRevenge.GameApplication;
 using GameOfRevenge.Helpers;
 using GameOfRevenge.Interface;
 using GameOfRevenge.Model;
+using GameOfRevenge.Common.Interface;
+using GameOfRevenge.Business.Manager;
 
 namespace GameOfRevenge.GameHandlers
 {
@@ -19,6 +21,8 @@ namespace GameOfRevenge.GameHandlers
     {
         public static readonly ILogger log = LogManager.GetCurrentClassLogger();
         public IWorld GridWorld { get { return GameService.WorldHandler.DefaultWorld; } }
+        private List<ChatMessageRespose> chatBuffer = new List<ChatMessageRespose>();
+        private int chatCounter;
 
         public async Task<SendResult> OnLobbyMessageRecived(IGorMmoPeer peer, OperationRequest operationRequest, SendParameters sendParameters)
         {
@@ -110,56 +114,95 @@ namespace GameOfRevenge.GameHandlers
 
         private async Task<SendResult> HandleInstantBuild(IGorMmoPeer peer, OperationRequest operationRequest)
         {
-
             log.Info("**************** HandleInstantBuild Start************************");
             var operation = new InstantBuildRequest(peer.Protocol, operationRequest);
-            log.Info($"StructureType: {(StructureType)operation.StructureType}");
-            log.Info($"StructureLocationId: {operation.StructureLocationId}");
-            log.Info($"StructureLevel: {operation.StructureLevel}");
+            var structureType = (StructureType)operation.StructureType;
+            var level = operation.StructureLevel;
+            var location = operation.StructureLocationId;
+            log.Info($"StructureType: {structureType}");
+            log.Info($"StructureLocationId: {location}");
+            log.Info($"StructureLevel: {level}");
 
-            var response = await GameService.InstantProgressManager.InstantBuildStructure(peer.Actor.PlayerId, (StructureType)operation.StructureType, operation.StructureLevel, operation.StructureLocationId);
-
-            if (response == null || !response.IsSuccess) return peer.SendOperation(operationRequest.OperationCode, ReturnCode.InvalidOperation, debuMsg: response.Message);
+            var response = await GameService.InstantProgressManager.InstantBuildStructure(peer.Actor.PlayerId, structureType, level, location);
+            if (!response.IsSuccess)
+            {
+                return peer.SendOperation(operationRequest.OperationCode, ReturnCode.InvalidOperation, debuMsg: response.Message);
+            }
 
             await GameService.NewRealTimeUpdateManager.UpdatePlayerData(peer.Actor.PlayerId);
 
-            var structure = response.Data.Value.FirstOrDefault(x => x.Location == operation.StructureLocationId);
-            if (structure == null) return peer.SendOperation(operationRequest.OperationCode, ReturnCode.InvalidOperation, debuMsg: "Structure was null");
+            var building = response.Data.Value.Find(x => x.Location == location);
+            if (building == null)
+            {
+                return peer.SendOperation(operationRequest.OperationCode, ReturnCode.InvalidOperation, debuMsg: "Structure was null");
+            }
+
+            if (peer.Actor.InternalPlayerDataManager.PlayerBuildings.ContainsKey(structureType))
+            {
+                var buildingManager = peer.Actor.InternalPlayerDataManager.PlayerBuildings[structureType].Find(x => x.Location == location);
+                if (buildingManager != null)
+                {
+                    var buildingLoc = buildingManager.PlayerStructureData.Value.Find(x => x.Location == location);
+                    buildingLoc.Duration = 0;
+                }
+                else
+                {
+                    log.Info($"builder manager not exist");
+                }
+            }
 
             log.Info("**************** HandleInstantBuild End************************");
 
-            await GameService.NewRealTimeUpdateManager.UpdatePlayerData(peer.Actor.PlayerId);
+            await GameService.NewRealTimeUpdateManager.UpdatePlayerData(peer.Actor.PlayerId);//TODO: required?
 
             var obj = new StructureCreateUpgradeResponse()
             {
-                StructureLevel = structure.Level,
-                StructureLocationId = structure.Location,
-                StructureType = operation.StructureType,
+                StructureLevel = building.Level,
+                StructureLocationId = building.Location,
+                StructureType = (int)structureType,
             };
             return peer.SendOperation(operationRequest.OperationCode, ReturnCode.OK, obj.GetDictionary());
         }
 
         private async Task<SendResult> HandleSpeedUpBuild(IGorMmoPeer peer, OperationRequest operationRequest)
         {
+            log.Info("**************** HandleSpeedUpBuild Start************************");
             var operation = new InstantBuildRequest(peer.Protocol, operationRequest);
 
-            var response = await GameService.InstantProgressManager.SpeedUpBuildStructure(peer.Actor.PlayerId, operation.StructureLocationId);
-            if (response == null || !response.IsSuccess) return peer.SendOperation(operationRequest.OperationCode, ReturnCode.InvalidOperation, debuMsg: response.Message);
+            var structureType = (StructureType)operation.StructureType;
+            var location = operation.StructureLocationId;
+            var response = await GameService.InstantProgressManager.SpeedUpBuildStructure(peer.Actor.PlayerId, location);
+            if (!response.IsSuccess)
+            {
+                return peer.SendOperation(operationRequest.OperationCode, ReturnCode.InvalidOperation, debuMsg: response.Message);
+            }
 
             await GameService.NewRealTimeUpdateManager.UpdatePlayerData(peer.Actor.PlayerId);
 
-            var structure = response.Data.Value.FirstOrDefault(x => x.Location == operation.StructureLocationId);
-            if (structure == null) return peer.SendOperation(operationRequest.OperationCode, ReturnCode.InvalidOperation, debuMsg: "Structure was null");
+            var structure = response.Data.Value.FirstOrDefault(x => x.Location == location);
+            if (structure == null)
+            {
+                return peer.SendOperation(operationRequest.OperationCode, ReturnCode.InvalidOperation, debuMsg: "Structure was null");
+            }
+
+            if (peer.Actor.InternalPlayerDataManager.PlayerBuildings.ContainsKey(structureType))
+            {
+                var buildingManager = peer.Actor.InternalPlayerDataManager.PlayerBuildings[structureType].Find(x => x.Location == location);
+                var buildingLoc = buildingManager.PlayerStructureData.Value.Find(x => x.Location == location);
+                buildingLoc.Duration = 0;
+            }
+
+            log.Info("**************** HandleSpeedUpBuild End************************");
 
             var obj = new StructureCreateUpgradeResponse()
             {
                 StructureLevel = structure.Level,
-                StructureLocationId = structure.Location,
-                StructureType = (int)operation.StructureType,
+                StructureLocationId = location,
+                StructureType = (int)structureType,
             };
 
             var result = peer.SendOperation(operationRequest.OperationCode, ReturnCode.OK, obj.GetDictionary());
-            SendBuildingCompleteToBuild(peer, (StructureType)operation.StructureType, operation.StructureLevel, operation.StructureLocationId);
+            SendBuildingCompleteToBuild(peer, structureType, structure.Level, location);
             return result;
         }
 
@@ -169,13 +212,21 @@ namespace GameOfRevenge.GameHandlers
             var operation = new ChatMessageRequest(peer.Protocol, operationRequest);
             ChatMessageRespose response = new ChatMessageRespose()
             {
-                ChatMessage = operation.Message,
-                UserName = operation.UserName,
-                AllianceId = 0,
-                CurrentTime = DateTime.UtcNow.ToString("dd/MM/yyyy HH/mm/ss")
+                PlayerId = operation.PlayerId,
+                Username = operation.Username,
+                AllianceId = 0,//global chat alliance is zero. //operation.AllianceId,
+                CurrentTime = DateTime.UtcNow.ToString("dd/MM/yyyy HH/mm/ss"),
+                ChatMessage = operation.ChatMessage
             };
+            lock (chatBuffer)
+            {
+                chatCounter++;
+                response.ChatId = chatCounter;
+                chatBuffer.Add(response);
+                if (chatBuffer.Count > 100) chatBuffer.RemoveAt(0);
+            }
             var data = response.GetDictionary();
-            GameLobbyHandler.log.Info(">>>>>data ="+data);
+            GameLobbyHandler.log.Info(">>>>>data =" + data);
 
             return peer.Broadcast(OperationCode.GlobalChat, ReturnCode.OK, data);
         }
@@ -186,11 +237,19 @@ namespace GameOfRevenge.GameHandlers
             var operation = new ChatMessageRequest(peer.Protocol, operationRequest);
             ChatMessageRespose response = new ChatMessageRespose()
             {
-                ChatMessage = operation.Message,
-                UserName = operation.UserName,
-                AllianceId = 0,
-                CurrentTime = DateTime.UtcNow.ToString("dd/MM/yyyy HH/mm/ss")
+                PlayerId = operation.PlayerId,
+                Username = operation.Username,
+                AllianceId = operation.AllianceId,
+                CurrentTime = DateTime.UtcNow.ToString("dd/MM/yyyy HH/mm/ss"),
+                ChatMessage = operation.ChatMessage,
             };
+            lock (chatBuffer)
+            {
+                chatCounter++;
+                response.ChatId = chatCounter;
+                chatBuffer.Add(response);
+                if (chatBuffer.Count > 100) chatBuffer.RemoveAt(0);
+            }
             var data = response.GetDictionary();
             GameLobbyHandler.log.Info(">>>>>data =" + data);
 
@@ -202,7 +261,7 @@ namespace GameOfRevenge.GameHandlers
             var operation = new GateRequest(peer.Protocol, operationRequest);
             if (!operation.IsValid) return peer.SendOperation(operationRequest.OperationCode, ReturnCode.InvalidOperation, debuMsg: operation.GetErrorMessage());
 
-            var building = peer.Actor.PlayerDataManager.GetPlayerBuildingByLocationId(operation.BuildingLocationId);
+            var building = peer.Actor.InternalPlayerDataManager.GetPlayerBuildingByLocationId(operation.BuildingLocationId);
             if (building == null || building.StructureType != StructureType.Gate)
                 return peer.SendOperation(operationRequest.OperationCode, ReturnCode.InvalidOperation, debuMsg: "Building not found in server.");
 
@@ -215,7 +274,7 @@ namespace GameOfRevenge.GameHandlers
             var operation = new GateRequest(peer.Protocol, operationRequest);
             if (!operation.IsValid) return peer.SendOperation(operationRequest.OperationCode, ReturnCode.InvalidOperation, debuMsg: operation.GetErrorMessage());
 
-            var building = peer.Actor.PlayerDataManager.GetPlayerBuildingByLocationId(operation.BuildingLocationId);
+            var building = peer.Actor.InternalPlayerDataManager.GetPlayerBuildingByLocationId(operation.BuildingLocationId);
             if (building == null || building.StructureType != StructureType.Gate) return peer.SendOperation(operationRequest.OperationCode, ReturnCode.InvalidOperation, debuMsg: "Building not found in server.");
 
             building.RepairGate(operation);
@@ -239,7 +298,7 @@ namespace GameOfRevenge.GameHandlers
             var operation = new WoundedTroopHealRequest(peer.Protocol, operationRequest);
             if (!operation.IsValid) return peer.SendOperation(operationRequest.OperationCode, ReturnCode.InvalidOperation, debuMsg: operation.GetErrorMessage());
 
-            var building = peer.Actor.PlayerDataManager.GetPlayerBuildingByLocationId(operation.BuildingLocationId);
+            var building = peer.Actor.InternalPlayerDataManager.GetPlayerBuildingByLocationId(operation.BuildingLocationId);
             if (building == null)
                 return peer.SendOperation(operationRequest.OperationCode, ReturnCode.InvalidOperation, debuMsg: "building not found in server.");
 
@@ -252,7 +311,7 @@ namespace GameOfRevenge.GameHandlers
             var operation = new WoundedTroopTimerStatusRequest(peer.Protocol, operationRequest);
             if (!operation.IsValid) return peer.SendOperation(operationRequest.OperationCode, ReturnCode.InvalidOperation, debuMsg: operation.GetErrorMessage());
 
-            var building = peer.Actor.PlayerDataManager.GetPlayerBuildingByLocationId(operation.BuildingLocationId);
+            var building = peer.Actor.InternalPlayerDataManager.GetPlayerBuildingByLocationId(operation.BuildingLocationId);
             if (building == null) return peer.SendOperation(operationRequest.OperationCode, ReturnCode.InvalidOperation, debuMsg: "building not found in server.");
 
             building.WoundedTroopTimerStatusRequest(operation);
@@ -357,8 +416,8 @@ namespace GameOfRevenge.GameHandlers
                                 {
                                     LocationId = locationId,
                                     StructureType = structureType,
-                                    TotalTime = troopInfo.TotalTime,
-                                    TrainingTime = troopInfo.TimeLeft
+                                    TotalTime = troopInfo.Duration,
+                                    TrainingTime = (int)troopInfo.TimeLeft
                                 };
 
                                 data = traningTroopResp.GetDictionary();
@@ -392,7 +451,7 @@ namespace GameOfRevenge.GameHandlers
             var operation = new TroopTrainingStatusRequest(peer.Protocol, operationRequest);
             if (!operation.IsValid) return peer.SendOperation(operationRequest.OperationCode, ReturnCode.InvalidOperation, debuMsg: operation.GetErrorMessage());
 
-            var building = peer.Actor.PlayerDataManager.GetPlayerBuilding((StructureType)operation.StructureType, operation.LocationId);
+            var building = peer.Actor.InternalPlayerDataManager.GetPlayerBuilding((StructureType)operation.StructureType, operation.LocationId);
             if (building == null) return peer.SendOperation(operationRequest.OperationCode, ReturnCode.InvalidOperation, debuMsg: "building not found in server.");
 
             if (!building.Troops.ContainsKey((TroopType)operation.TroopType)) return peer.SendOperation(operationRequest.OperationCode, ReturnCode.InvalidOperation, debuMsg: "troop not found in building.");
@@ -431,7 +490,7 @@ namespace GameOfRevenge.GameHandlers
             var operation = new ResourceBoostUpRequest(peer.Protocol, operationRequest);
             if (!operation.IsValid) return peer.SendOperation(operationRequest.OperationCode, ReturnCode.InvalidOperation, debuMsg: operation.GetErrorMessage());
 
-            var building = peer.Actor.PlayerDataManager.GetPlayerBuilding((StructureType)operation.StructureType, operation.LocationId);
+            var building = peer.Actor.InternalPlayerDataManager.GetPlayerBuilding((StructureType)operation.StructureType, operation.LocationId);
             if (building == null) return peer.SendOperation(operationRequest.OperationCode, ReturnCode.InvalidOperation, debuMsg: "building not found in server.");
 
             building.BoostResourceGenerationTime(operation);
@@ -442,17 +501,18 @@ namespace GameOfRevenge.GameHandlers
         {
             log.Debug("@@@@@@@ HANDLE ATTACK REQUEST FROM "+peer.Actor.PlayerId);
             var operation = new AttackRequest(peer.Protocol, operationRequest);
-            if (!operation.IsValid)
+            if (!operation.IsValid ||
+                (operation.TroopLevel.Length != operation.TroopType.Length) ||
+                (operation.TroopCount.Length != operation.TroopType.Length))
             {
                 log.Debug("@@@@ ATTACK INVALID");
                 return peer.SendOperation(operationRequest.OperationCode, ReturnCode.InvalidOperation, debuMsg: operation.GetErrorMessage());
             }
 
-            bool success = peer.Actor.PlayerAttackHandler.AttackRequest(operation);
-            log.Debug(success? "@@@@ ATTACK OK!!" : "@@@@ ATTACK FAIL!");
-
-            return success? SendResult.Ok : SendResult.Failed;
+            return peer.Actor.PlayerAttackHandler.AttackRequest(operation)? SendResult.Ok : SendResult.Failed;
         }
+
+        private static readonly IAccountManager accountManager = new AccountManager();
 
         public SendResult HandlPlayerConnectToGameServer(IGorMmoPeer peer, OperationRequest operationRequest)
         {
@@ -463,24 +523,33 @@ namespace GameOfRevenge.GameHandlers
             Region city = null;
             IInterestArea iA = null;
 
-            var playerData = GameService.BPlayerManager.GetAllPlayerData(Int32.Parse(operation.PlayerId)).Result.Data;
+            var playerData = GameService.BPlayerManager.GetAllPlayerData(operation.PlayerId).Result.Data;
+            if (playerData == null)
+            {
+                var dbgMsg = "Player data not found from db.";
+                return peer.SendOperation(operationRequest.OperationCode, ReturnCode.InvalidOperation, debuMsg: dbgMsg);
+            }
 
-            if (playerData == null) return peer.SendOperation(operationRequest.OperationCode, ReturnCode.InvalidOperation, debuMsg: "Player data not found from db.");
+            var playerId = operation.PlayerId;
+            var player = accountManager.GetAccountInfo(playerId).Result.Data;
+            var username = player.Name;
+            var allianceId = 0;//TODO: pull alliance, it should be included in account info
 
             log.InfoFormat("get Player Data from db {0} ", JsonConvert.SerializeObject(playerData));
-            var playerPosData = this.GridWorld.GetPlayerPosition(Convert.ToInt32(operation.PlayerId));
+            var playerPosData = this.GridWorld.GetPlayerPosition(playerId, username, allianceId);
             city = playerPosData.region;
             actor = playerPosData.actor;
             iA = playerPosData.iA;
             actor.StartOnReal();
-            IPlayerSocketDataManager plADataManager = new PlayerSocketDataManager(playerData, actor);
             log.InfoFormat("player is added in manager with playerid.");
             log.InfoFormat("player enter in world X {0} Y {1} ", city.X, city.Y);
-            actor.PlayerSpawn(iA, peer, plADataManager);
+            actor.PlayerSpawn(iA, peer, new PlayerSocketDataManager(playerData, actor));
             actor.Peer.Actor = actor;  //vice versa mmoactor into the peer and reverse
             var profile = new UserProfileResponse
             {
-                UserName = actor.UserName,
+                AllianceId = allianceId,
+                PlayerId = playerId,
+                UserName = username,
                 X = actor.Tile.X,
                 Y = actor.Tile.Y
             };
@@ -492,6 +561,7 @@ namespace GameOfRevenge.GameHandlers
             var attackData = GameService.BRealTimeUpdateManager.GetDefenderData(actor.PlayerId);
             if (attackData != null)
             {
+                //TODO: attack response or under attack event?
                 var attackResponse = new AttackResponse(attackData.AttackData);
                 actor.SendEvent(EventCode.AttackResponse, attackResponse);
             }
@@ -561,7 +631,7 @@ namespace GameOfRevenge.GameHandlers
             var operation = new HelpStructureRequest(peer.Protocol, operationRequest);
             if (!operation.IsValid) return peer.SendOperation(operationRequest.OperationCode, ReturnCode.InvalidOperation, debuMsg: operation.GetErrorMessage());
 
-            HelpStructureRespose response = new HelpStructureRespose()
+            var response = new HelpStructureRespose()
             {
                 PlayerId = operation.PlayerId,
                 StructureType = operation.StructureType,
@@ -576,11 +646,18 @@ namespace GameOfRevenge.GameHandlers
         public async Task<SendResult> HandleCreateStructure(IGorMmoPeer peer, OperationRequest operationRequest)
         {
             var operation = new CreateStructureRequest(peer.Protocol, operationRequest);
-            if (!operation.IsValid) return peer.SendOperation(operationRequest.OperationCode, ReturnCode.InvalidOperation, debuMsg: operation.GetErrorMessage());
+            if (!operation.IsValid)
+            {
+                return peer.SendOperation(operationRequest.OperationCode, ReturnCode.InvalidOperation, debuMsg: operation.GetErrorMessage());
+            }
 
-            if (!GameService.GameBuildingManager.ContainsKey((StructureType)operation.StructureType)) return peer.SendOperation(operationRequest.OperationCode, ReturnCode.Failed, debuMsg: "structure not found in the game.");
+            var structureType = (StructureType)operation.StructureType;
+            if (!GameService.GameBuildingManagerInstances.ContainsKey(structureType))
+            {
+                return peer.SendOperation(operationRequest.OperationCode, ReturnCode.Failed, debuMsg: "structure not found in the game.");
+            }
 
-            GameService.GameBuildingManager[(StructureType)operation.StructureType].CreateStructureForPlayer(operation, peer.Actor);
+            GameService.GameBuildingManagerInstances[structureType].CreateStructureForPlayer(operation, peer.Actor);
 
             await GameService.NewRealTimeUpdateManager.UpdatePlayerData(peer.Actor.PlayerId);
 
@@ -594,8 +671,9 @@ namespace GameOfRevenge.GameHandlers
             var operation = new UpgradeStructureRequest(peer.Protocol, operationRequest);
             if (!operation.IsValid) return peer.SendOperation(operationRequest.OperationCode, ReturnCode.InvalidOperation, debuMsg: operation.GetErrorMessage());
 
-            var success = GameService.GameBuildingManager[(StructureType)operation.StructureType].UpgradeStructureForPlayer(operation, peer.Actor);
+            var success = GameService.GameBuildingManagerInstances[(StructureType)operation.StructureType].UpgradeStructureForPlayer(operation, peer.Actor);
             log.Debug(success ? "@@@@ UPGRADE OK!!" : "@@@@ UPGRADE FAIL!");
+
             if (success) await GameService.NewRealTimeUpdateManager.UpdatePlayerData(peer.Actor.PlayerId);
 
             return success ? SendResult.Ok : SendResult.Failed;
@@ -622,8 +700,8 @@ namespace GameOfRevenge.GameHandlers
                     var response = new PlayerBuildingBuildingStatuResponse()
                     {
                         LocationId = building.Location,
-                        BuildTime = (int)building.TotalTime,
-                        TotalTime = (int)building.TimeLeft
+                        TimeLeft = (int)building.TimeLeft,
+                        TotalTime = building.Duration
                     };
                     log.InfoFormat("Send Building status to Client location {0} buildType {1} Time {2} ",
                        response.LocationId, playerStructData.Data.ValueId, building.TimeLeft);

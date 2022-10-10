@@ -31,7 +31,7 @@ namespace GameOfRevenge.Troops
 
         public void TroopTraining(RecruitTroopRequest request, MmoActor actor)
         {
-            var building = actor.PlayerDataManager.GetPlayerBuilding(request.StructureType, request.LocationId);
+            var building = actor.InternalPlayerDataManager.GetPlayerBuilding(request.StructureType, request.LocationId);
             if (building == null) actor.Peer.SendOperation(OperationCode.RecruitTroopRequest, ReturnCode.Failed, null, "Player building not found.");
             else
             {
@@ -39,7 +39,7 @@ namespace GameOfRevenge.Troops
                 if (troopLevel == null) actor.Peer.SendOperation(OperationCode.RecruitTroopRequest, ReturnCode.Failed, null, "Troop data not found of current level.");
                 else
                 {
-                    var (succ, msg) = actor.PlayerDataManager.CheckRequirmentsAndUpdateValues(troopLevel.Requirements);
+                    var (succ, msg) = actor.InternalPlayerDataManager.CheckRequirementsAndUpdateValues(troopLevel.Requirements);
                     if (!succ) actor.Peer.SendOperation(OperationCode.RecruitTroopRequest, ReturnCode.Failed, null, msg);
                     else
                     {

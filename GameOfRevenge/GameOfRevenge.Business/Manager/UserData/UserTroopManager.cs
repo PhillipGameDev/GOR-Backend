@@ -27,75 +27,84 @@ namespace GameOfRevenge.Business.Manager.UserData
 
         public async Task<Response<UserTroopData>> RecoverWounded(int playerId, TroopType type, List<WoundeAndDeadTroopsUpdate> troops)
         {
-            if (troops == null || troops.Count <= 0 || playerId <= 0 || type == TroopType.Other) return new Response<UserTroopData>(203, "Invalid data was provided");
+            if ((troops == null) || (troops.Count <= 0) || (playerId <= 0) || (type == TroopType.Other))
+            {
+                return new Response<UserTroopData>(204, "Invalid data was provided");
+            }
 
             var timeStamp = DateTime.UtcNow;
-
             try
             {
                 var troopDbInfo = CacheTroopDataManager.GetFullTroopData(type);
-                if (troopDbInfo == null) throw new DataNotExistExecption($"Troop type {type} was not found");
+                if (troopDbInfo == null) throw new CacheDataNotExistExecption($"Troop type {type} was not found");
 
                 var compPlayerData = await GetFullPlayerData(playerId);
                 if (!compPlayerData.IsSuccess || !compPlayerData.HasData) throw new DataNotExistExecption(compPlayerData.Message);
 
-                var troopDetails = compPlayerData.Data.Troops.Where(x => x.TroopType == type).FirstOrDefault()?.TroopData;
+                List<TroopDetails> troopDetails = compPlayerData.Data.Troops.Find(x => x.TroopType == type)?.TroopData;
                 if (troopDetails == null) throw new DataNotExistExecption($"Troop type {type} was not found");
 
                 foreach (var troop in troops)
                 {
-                    if (troop == null || troop.Level <= 0 || troop.WoundedCount <= 0) continue;
-                    var troopDataList = troopDetails?.Where(x => x.Level == troop.Level).FirstOrDefault();
+                    if ((troop == null) || (troop.Level <= 0) || (troop.WoundedCount <= 0)) continue;
 
-                    if (troopDataList == null) throw new DataNotExistExecption($"Troop type {type} was not found");
-                    if (troopDataList.Wounded <= 0 || troopDataList.Wounded < troop.WoundedCount) throw new DataNotExistExecption($"Invalid data was provided");
-                    troopDataList.Wounded -= troop.WoundedCount;
-
-                    var troopDbData = troopDbInfo.Levels.Where(x => x.Data.Level == troop.Level).FirstOrDefault();
+                    var troopDbData = troopDbInfo.Levels.First(x => x.Data.Level == troop.Level);
                     if (troopDbData == null) throw new DataNotExistExecption($"Troop type {type} was not found");
-                    if (troopDataList.InRecovery == null) troopDataList.InRecovery = new List<UnavaliableTroopInfo>();
 
-                    int timeReduced = 0;
-                    int? reducePercentage = compPlayerData.Data.Technologies.Where(x => x.TechnologyType == TechnologyType.RecoverySpeed)?.FirstOrDefault()?.Level;
-                    if (reducePercentage.HasValue) timeReduced = reducePercentage.Value;
-                    else timeReduced = 0;
+                    var troopDataList = troopDetails.Find(x => x.Level == troop.Level);
+                    if (troopDataList == null) continue;//throw new DataNotExistExecption($"Troop type {type} was not found");
 
-                    var totalSec = troopDbData.Data.WoundedThreshold * troop.WoundedCount * (1 - (timeReduced / 100));
+//                        if (troopDataList.Wounded <= 0 || troopDataList.Wounded < troop.WoundedCount) throw new DataNotExistExecption($"Invalid data was provided");
+                    troopDataList.Wounded -= troop.WoundedCount;
+                    if (troopDataList.Wounded < 0) troopDataList.Wounded = 0;
 
-                    troopDataList.InRecovery.Add(new UnavaliableTroopInfo()
+                    float timeReduced = 0;
+                    var technology = compPlayerData.Data.Boosts.Find(x => (byte)x.Type == (byte)TechnologyType.HealSpeedTechnology);
+                    if (technology != null)
                     {
-                        BuildingLocId = troop.BuildingLocation,
-                        Count = troop.WoundedCount,
-                        StartTime = timeStamp,
-                        EndTime = timeStamp.AddSeconds(totalSec)
-                    });
+                        var specBoostData = CacheBoostDataManager.SpecNewBoostDatas.First(x => x.Type == technology.Type);
+                        if (specBoostData.Table > 0)// .Levels.ContainsKey(technology.Level))
+                        {
+                            float.TryParse(specBoostData.Levels[technology.Level].ToString(), out float levelVal);
+//                            int reducePercentage = levelVal;// technology.Level;
+                            timeReduced = levelVal;//reducePercentage.HasValue ? reducePercentage.Value : 0;
+                        }
+                    }
+
+                    float multiplier = (1 - (timeReduced / 100f));
+                    int secs = (int)(troopDbData.Data.WoundedThreshold * troop.WoundedCount * multiplier);
+                    if (secs > (5 * 60))
+                    {
+                        if (troopDataList.InRecovery == null) troopDataList.InRecovery = new List<UnavaliableTroopInfo>();
+                        troopDataList.InRecovery.Add(new UnavaliableTroopInfo()
+                        {
+                            BuildingLocId = troop.BuildingLocation,
+                            Count = troop.WoundedCount,
+                            StartTime = timeStamp,
+                            Duration = secs
+                        });
+                    }
                 }
 
-                var response = await UpdateTroops(playerId, type, troopDetails);
-                if (response.IsSuccess && response.HasData) return response;
-                throw new RequirementExecption("Requirements is not meet");
+                return await UpdateTroops(playerId, type, troopDetails);
             }
             catch (InvalidModelExecption ex)
             {
-                return new Response<UserTroopData>()
-                {
-                    Case = 200,
-                    Message = ErrorManager.ShowError(ex)
-                };
+                return new Response<UserTroopData>() { Case = 200, Message = ErrorManager.ShowError(ex) };
+            }
+            catch (CacheDataNotExistExecption ex)
+            {
+                return new Response<UserTroopData>() { Case = 201, Message = ErrorManager.ShowError(ex) };
             }
             catch (DataNotExistExecption ex)
             {
-                return new Response<UserTroopData>()
-                {
-                    Case = 201,
-                    Message = ErrorManager.ShowError(ex)
-                };
+                return new Response<UserTroopData>() { Case = 202, Message = ErrorManager.ShowError(ex) };
             }
             catch (RequirementExecption ex)
             {
                 return new Response<UserTroopData>()
                 {
-                    Case = 202,
+                    Case = 203,
                     Message = ErrorManager.ShowError(ex)
                 };
             }
@@ -108,8 +117,6 @@ namespace GameOfRevenge.Business.Manager.UserData
                 };
                 //Config.PrintLog(String.Format("Exception RecoverWounded {0} {1} ", ex.Message, ex.StackTrace));
             }
-
-
         }
 
         public async Task<Response<UserTroopData>> AddWoundedAndDeadTroops(int playerId, TroopType type, List<WoundeAndDeadTroopsUpdate> troops)
@@ -210,7 +217,7 @@ namespace GameOfRevenge.Business.Manager.UserData
                 if (!structureValid) throw new RequirementExecption($"Structure to train troops was not found or its not a training building for troop type {type}");
 
                 var requirements = troopData.Requirements;
-                var hasRequirements = HasRequirements(requirements, compPlayerData.Data.Structures, compPlayerData.Data.Resources, count);
+                var hasRequirements = HasRequirements(requirements, compPlayerData.Data, count);
                 if (!hasRequirements) throw new RequirementExecption("Requirements is not meet");
 
                 var isReduced = await userResourceManager.RemoveResourceByRequirement(playerId, requirements, count);
@@ -444,25 +451,22 @@ namespace GameOfRevenge.Business.Manager.UserData
             try
             {
                 var troopDataLvl = CacheTroopDataManager.GetFullTroopLevelData(type, level);
-                var compPlayerData = await GetFullPlayerData(playerId);
+                PlayerCompleteData compPlayerData = null;
 
                 if (oldtroopInfos == null)
                 {
-                    if (!compPlayerData.IsSuccess && !compPlayerData.HasData) throw new DataNotExistExecption();
-                    var troopClassData = compPlayerData.Data.Troops.Where(x => x.TroopType == type).FirstOrDefault();
-                    //TODO: check if this instantiation is required, the class is not used anymore. we just need the TroopData list
-                    if (troopClassData == null || troopClassData.TroopData == null) troopClassData = new TroopInfos()
-                    {
-                        TroopType = type,
-                        TroopData = new List<TroopDetails>()// { new TroopDetails() { Count = 0, Level = level } }
-                    };
-                    oldtroopInfos = troopClassData.TroopData;//TODO: Return null and later validate it and create new list
+                    var resp = await GetFullPlayerData(playerId);
+                    if (!resp.IsSuccess && !resp.HasData) throw new DataNotExistExecption();
+
+                    compPlayerData = resp.Data;
+                    var userTroops = compPlayerData.Troops.Find(x => x.TroopType == type)?.TroopData;
+                    oldtroopInfos = (userTroops == null) ? new List<TroopDetails>() : userTroops;
                 }
 
-                if (oldtroopInfos.Count == 0)//TODO: validate and create new list here
+/*                if (oldtroopInfos.Count == 0)//TODO: validate and create new list here
                 {
                     oldtroopInfos.Add(new TroopDetails() { Count = 0, Level = level });
-                }
+                }*/
 
                 var toUpdateObj = oldtroopInfos.Where(x => x.Level == level).FirstOrDefault();
                 if (toUpdateObj == null)
@@ -472,38 +476,55 @@ namespace GameOfRevenge.Business.Manager.UserData
                 }
 
                 toUpdateObj.Count += count;
-                if (toUpdateObj.InTraning == null) toUpdateObj.InTraning = new List<UnavaliableTroopInfo>();
-                toUpdateObj.InTraning = toUpdateObj.InTraning.Where(x => x != null && x.TimeLeft > 0).ToList();
+                toUpdateObj.InTraning = toUpdateObj.InTraning?.Where(x => x?.TimeLeft > 0).ToList();
 
                 if (isTraining)
                 {
-                    int timeReduced = 0;
-                    int? reducePercentage = compPlayerData.Data.Technologies.Where(x => x.TechnologyType == TechnologyType.TrainingSpeed)?.FirstOrDefault()?.Level;
-                    if (reducePercentage.HasValue) timeReduced = reducePercentage.Value;
-                    else timeReduced = 0;
+                    if (compPlayerData == null)
+                    {
+                        var resp = await GetFullPlayerData(playerId);
+                        if (!resp.IsSuccess && !resp.HasData) throw new DataNotExistExecption();
 
-                    var existingTraning = toUpdateObj.InTraning.Where(x => x.BuildingLocId == fromId).FirstOrDefault();
-                    if (existingTraning == null)
-                    {
-                        var timestamp = DateTime.UtcNow;
-                        int totalTime = troopDataLvl.Data.TraningTime * count * (1 - (timeReduced / 100));
-                        toUpdateObj.InTraning.Add(new UnavaliableTroopInfo()
-                        {
-                            BuildingLocId = fromId,
-                            Count = count,
-                            StartTime = timestamp,
-                            EndTime = timestamp.AddSeconds(totalTime)
-                        });
+                        compPlayerData = resp.Data;
                     }
-                    else
+
+                    float timeReduced = 0;
+                    var technology = compPlayerData.Boosts.Find(x => (byte)x.Type == (byte)TechnologyType.TrainSpeedTechnology);
+                    if (technology != null)
                     {
-                        int totalTime = troopDataLvl.Data.TraningTime * count * (1 - (timeReduced / 100));
+                        var specBoostData = CacheBoostDataManager.SpecNewBoostDatas.First(x => x.Type == technology.Type);
+                        if (specBoostData.Table > 0)
+                        {
+                            float.TryParse(specBoostData.Levels[technology.Level].ToString(), out float levelVal);
+//                            int reducePercentage = technology.Level;
+                            timeReduced = levelVal;// reducePercentage.HasValue ? reducePercentage.Value : 0;
+                        }
+                    }
+
+                    float multiplier = (1 - (timeReduced / 100f));
+                    int secs = (int)(troopDataLvl.Data.TraningTime * count * multiplier);// * 1000;
+                    if (secs > (5 * 60))
+                    {
+                        if (toUpdateObj.InTraning == null) toUpdateObj.InTraning = new List<UnavaliableTroopInfo>();
+
+                        //TODO: Improve behaviour, only one group of troops are allowed, we need to support multiple groups,
+                        //so the first group is released and we don't need to wait until the sum of groups finish the training
+                        var existingTraning = toUpdateObj.InTraning.Find(x => x.BuildingLocId == fromId);
+                        if (existingTraning == null)
+                        {
+                            existingTraning = new UnavaliableTroopInfo()
+                            {
+                                BuildingLocId = fromId,
+                                StartTime = DateTime.UtcNow,
+                            };
+                            toUpdateObj.InTraning.Add(existingTraning);
+                        }
                         existingTraning.Count += count;
-                        existingTraning.EndTime = existingTraning.EndTime.AddSeconds(totalTime);
+                        existingTraning.Duration += secs;
                     }
                 }
 
-                if (toUpdateObj.InTraning.Count == 0) toUpdateObj.InTraning = null;
+                if (toUpdateObj.InTraning?.Count == 0) toUpdateObj.InTraning = null;
 
                 return await UpdateTroops(playerId, type, oldtroopInfos);
             }

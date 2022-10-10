@@ -2,9 +2,9 @@
 {
     public class ResourcesList
     {
-        public int Food { get; set; }
-        public int Wood { get; set; }
-        public int Ore { get; set; }
-        public int Gems { get; set; }
+        public long Food { get; set; }
+        public long Wood { get; set; }
+        public long Ore { get; set; }
+        public long Gems { get; set; }
     }
 }

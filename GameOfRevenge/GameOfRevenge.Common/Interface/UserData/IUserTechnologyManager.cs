@@ -9,7 +9,7 @@ namespace GameOfRevenge.Common.Interface.UserData
         Task<Response<TechnologyInfos>> UpgradeTechnology(int playerId, TechnologyType type);
         Task<Response<TechnologyInfos>> UpgradeTechnology(int playerId, int id);
 
-        Task<Response<SubTechnologyInfos>> UpgradeSubTechnology(int playerId, SubTechnologyType type);
-        Task<Response<SubTechnologyInfos>> UpgradeSubTechnology(int playerId, int id);
+/*        Task<Response<SubTechnologyInfos>> UpgradeSubTechnology(int playerId, SubTechnologyType type);
+        Task<Response<SubTechnologyInfos>> UpgradeSubTechnology(int playerId, int id);*/
     }
 }

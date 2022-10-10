@@ -9,7 +9,7 @@ namespace GameOfRevenge.Common.Models.Boost
     {
         int BoostTypeId { get; }
         string Name { get; }
-        BoostType BoostType { get; }
+        NewBoostType BoostType { get; }
 //        string Description { get; }
     }
 
@@ -18,7 +18,7 @@ namespace GameOfRevenge.Common.Models.Boost
     {
         public int BoostTypeId { get; set; }
         public string Name { get; set; }
-        public BoostType BoostType { get; set; }
+        public NewBoostType BoostType { get; set; }
 //        public string Description { get; set; }
 
         public void LoadFromDataReader(IDataReader reader)
@@ -28,12 +28,12 @@ namespace GameOfRevenge.Common.Models.Boost
             Name = reader.GetValue(index) == DBNull.Value ? string.Empty : reader.GetString(index); index++;
             if (reader.GetValue(index) == DBNull.Value)
             {
-                BoostType = BoostType.Unknown;
+                BoostType = NewBoostType.Unknown;
             }
             else
             {
                 string code = reader.GetString(index);// index++;
-                BoostType = code.ToEnum<BoostType>();
+                BoostType = code.ToEnum<NewBoostType>();
             }
 //            Description = reader.GetValue(index) == DBNull.Value ? string.Empty : reader.GetString(index);
         }

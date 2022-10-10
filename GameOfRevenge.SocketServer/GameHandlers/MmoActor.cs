@@ -24,10 +24,10 @@ namespace GameOfRevenge.GameHandlers
         public IWorld World { get; private set; }
         public Region Tile { get; private set; }
         public IInterestArea InterestArea { get; private set; }
-        public IPlayerSocketDataManager PlayerDataManager { get; private set; }
-        public IPlayerAttackHandler PlayerAttackHandler { get { return this.PlayerDataManager.AttackHandler; } }
+        public IPlayerSocketDataManager InternalPlayerDataManager { get; private set; }
+        public IPlayerAttackHandler PlayerAttackHandler { get { return this.InternalPlayerDataManager.AttackHandler; } }
         
-        public MmoActor(string playerId, IWorld world, Region tile) : base(playerId)
+        public MmoActor(int playerId, string userName, int allianceId, IWorld world, Region tile) : base(playerId, userName, allianceId)
         {
             World = world;
             Tile = tile;
@@ -37,7 +37,7 @@ namespace GameOfRevenge.GameHandlers
         {
             Peer = peer;
             InterestArea = interestArea;
-            PlayerDataManager = playerDataManager;
+            InternalPlayerDataManager = playerDataManager;
         }
         public void PlayerTeleport(Region tile)
         {
@@ -66,10 +66,10 @@ namespace GameOfRevenge.GameHandlers
         {
             try
             {
-                if (PlayerDataManager != null)
+                if (InternalPlayerDataManager != null)
                 {
-                    PlayerDataManager.Dispose();
-                    PlayerDataManager = null;
+                    InternalPlayerDataManager.Dispose();
+                    InternalPlayerDataManager = null;
                 }
 
                 if (Fiber != null) Fiber.Dispose();

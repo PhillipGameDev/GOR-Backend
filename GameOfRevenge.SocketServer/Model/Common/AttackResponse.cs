@@ -1,6 +1,5 @@
 ﻿using Photon.SocketServer.Rpc;
 using GameOfRevenge.Common.Models;
-using System;
 
 namespace GameOfRevenge.Model
 {
@@ -8,12 +7,15 @@ namespace GameOfRevenge.Model
     {
         public AttackResponse(AttackSocketResponse res)
         {
-            AttckerUserName = res.AttckerUserName;
-            EnemyUserName = res.EnemyUserName;
+            AttackerId = res.AttackerId;
+            AttackerUsername = res.AttackerUsername;
+
+            EnemyId = res.EnemyId;
+            EnemyUsername = res.EnemyUsername;
 
             ReachedTime = res.ReachedTime;
 
-            KingLevel = res.KingLevel;
+            if (res.KingLevel >= 0) KingLevel = res.KingLevel;
 
             TroopCount = res.TroopCount;
             TroopType = res.TroopType;
@@ -21,15 +23,22 @@ namespace GameOfRevenge.Model
             HeroIds = res.HeroIds;
 
             StartTime = res.StartTime.ToUniversalTime().ToString("yyyy'-'MM'-'dd'T'HH':'mm':'ss'.'fff'Z'");
-            CurrentTime = res.CurrentTime;
-            IsReturnFromAttack = res.IsReturnFromAttack;
+            BattleDuration = res.BattleDuration;
+//            CurrentTime = res.CurrentTime;
+//            IsReturnFromAttack = res.IsReturnFromAttack;
         }
 
-        [DataMember(Code = (byte)RoomParameterKey.AttackerUserName, IsOptional = true)]
-        public string AttckerUserName { get; set; }
+        [DataMember(Code = (byte)RoomParameterKey.AttackerId, IsOptional = true)]
+        public int AttackerId { get; set; }
 
-        [DataMember(Code = (byte)RoomParameterKey.EnemyUserName, IsOptional = true)]
-        public string EnemyUserName { get; set; }
+        [DataMember(Code = (byte)RoomParameterKey.Username, IsOptional = true)]
+        public string AttackerUsername { get; set; }
+
+        [DataMember(Code = (byte)RoomParameterKey.EnemyId, IsOptional = true)]
+        public int EnemyId { get; set; }
+
+        [DataMember(Code = (byte)RoomParameterKey.EnemyUsername, IsOptional = true)]
+        public string EnemyUsername { get; set; }
 
         [DataMember(Code = (byte)RoomParameterKey.StartTime, IsOptional = true)]
         public string StartTime { get; set; }
@@ -49,11 +58,11 @@ namespace GameOfRevenge.Model
         [DataMember(Code = (byte)RoomParameterKey.HeroIds, IsOptional = true)]
         public int[] HeroIds { get; set; }
 
-        [DataMember(Code = (byte)RoomParameterKey.CurrentTime, IsOptional = true)]
-        public double CurrentTime { get; set; }
+        [DataMember(Code = (byte)RoomParameterKey.BattleDuration, IsOptional = true)]
+        public int BattleDuration { get; set; }
 
-        [DataMember(Code = (byte)RoomParameterKey.IsReturnFromAttack, IsOptional = true)]
-        public bool IsReturnFromAttack { get; set; }
+//        [DataMember(Code = (byte)RoomParameterKey.IsReturnFromAttack, IsOptional = true)]
+//        public bool IsReturnFromAttack { get; set; }
 
     }
 }

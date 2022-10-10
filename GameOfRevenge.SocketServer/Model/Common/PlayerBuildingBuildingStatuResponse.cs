@@ -10,7 +10,7 @@ namespace GameOfRevenge.Model
         public int LocationId { get; set; }
 
         [DataMember(Code = (byte)RoomParameterKey.BuildingBuildTime, IsOptional = true)]
-        public int BuildTime { get; set; }
+        public int TimeLeft { get; set; }
 
         [DataMember(Code = (byte)RoomParameterKey.TotalTime, IsOptional = true)]
         public int TotalTime { get; set; }

@@ -25,11 +25,11 @@ namespace GameOfRevenge.WebServer.Controllers.Api
         }
 
         [HttpGet]
-        public IActionResult GetCityBoosts()
+        public IActionResult GetAllBoosts()
         {
 //            var response = new Response<IReadOnlyList<IReadOnlyBoostTypeTable>>(CacheBoostDataManager.BoostInfos, 100, "City boost list");
 //            CacheBoostDataManager.boostTypes;
-            var response = CacheBoostDataManager.BoostInfos;
+            var response = CacheBoostDataManager.SpecNewBoostDataTables;
             return ReturnResponse(response);
         }
 
@@ -40,12 +40,12 @@ namespace GameOfRevenge.WebServer.Controllers.Api
             return ReturnResponse(response);
         }
 
-        [HttpGet]
+/*        [HttpGet]
         public IActionResult GetAllBoost()
         {
 //            var response = CacheBoostDataManager.BoostInfos;
             return ReturnResponse();
-        }
+        }*/
 
         [HttpGet]
         public IActionResult GetAllItems()
@@ -82,19 +82,19 @@ namespace GameOfRevenge.WebServer.Controllers.Api
         }
 
         [HttpGet]
-        public IActionResult GetAllTechnology()
+        public IActionResult GetAllTechnologies()
         {
 //            var response = new Response<IReadOnlyList<Common.Models.Technology.IReadOnlyTechnologyDataRequirementRel>>(CacheTechnologyDataManager.TechnologyInfos, 100, "Technology list");
             var response = CacheTechnologyDataManager.TechnologyInfos;
             return ReturnResponse(response);
         }
 
-        [HttpGet]
+/*        [HttpGet]
         public IActionResult GetAllSubTechnology()
         {
             var response = CacheTechnologyDataManager.SubTechnologyInfos;
             return ReturnResponse(response);
-        }
+        }*/
 
         [HttpGet]
         public IActionResult GetAllResources()

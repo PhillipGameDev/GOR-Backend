@@ -38,7 +38,7 @@ namespace GameOfRevenge.Business.CacheData
         {
             if (id <= 0) throw new InvalidModelExecption("Invalid id was provided");
             if (resourceInfos == null) LoadCacheMemory();
-            var res = resourceInfos.Where(x => x.Id == id).FirstOrDefault();
+            var res = resourceInfos.Find(x => x.Id == id);
             if (res == null) throw new DataNotExistExecption($"Resource of id:{id} was not found");
             else return res;
         }

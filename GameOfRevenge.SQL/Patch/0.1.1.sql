@@ -36,7 +36,7 @@ CREATE TABLE [dbo].[HeroBoost]
 )
 GO
 
-CREATE OR ALTER PROCEDURE [dbo].[GetAllHeros]
+CREATE OR ALTER PROCEDURE [dbo].[GetAllHeroes]
 AS
 BEGIN
 	DECLARE @case INT = 1, @error INT = 0;

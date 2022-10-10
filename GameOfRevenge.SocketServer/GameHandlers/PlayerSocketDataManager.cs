@@ -29,6 +29,7 @@ namespace GameOfRevenge.GameHandlers
         public Dictionary<ResourceType, IPlayerResources> PlayerResources { get; private set; }
         public IPlayerAttackHandler AttackHandler { get; set; }
         public UserKingDetails King { get; set; }
+//        public List<UserRecordBuilderDetails> Builders { get; set; }
 
         public PlayerSocketDataManager(List<PlayerDataTable> playerData, MmoActor player)
         {
@@ -37,6 +38,7 @@ namespace GameOfRevenge.GameHandlers
             this.PlayerResources = new Dictionary<ResourceType, IPlayerResources>();
             this.playerData = playerData;
             this.player = player;
+//            this.Builders = new List<UserRecordBuilderDetails>();
             this.DataContributeAccType();
         }
         public void DataContributeAccType()
@@ -49,10 +51,19 @@ namespace GameOfRevenge.GameHandlers
                     this.AddResourcesOnPlayer(item);
                 else if (item.DataType == DataType.Troop)
                     this.AddTroopOnPlayerBuilding(item);
-                else if ((item.DataType == DataType.Custom) && (item.ValueId == 1))
+                else if (item.DataType == DataType.Custom)
                 {
-                    King = JsonConvert.DeserializeObject<UserKingDetails>(item.Value);
-//                    GameService.BPlayerManager.GetAllPlayerData(Int32.Parse(operation.PlayerId)).Result.Data;
+                    if (item.ValueId == 1)
+                    {
+                        King = JsonConvert.DeserializeObject<UserKingDetails>(item.Value);
+    //                    GameService.BPlayerManager.GetAllPlayerData(Int32.Parse(operation.PlayerId)).Result.Data;
+                    }
+                    else if (item.ValueId == 2)
+                    {
+//                        var builder = JsonConvert.DeserializeObject<UserRecordBuilderDetails>(item.Value);
+//                        builder.Id = item.Id;
+//                        Builders.Add(builder);
+                    }
                 }
             }
             if (King == null) King = new UserKingDetails();
@@ -73,7 +84,7 @@ namespace GameOfRevenge.GameHandlers
                             var building = GetPlayerBuildingByLocationId(trainer.BuildingLocId);
                             if (building != null)
                             {
-                                var troop1 = GameService.GameBuildingManager[building.StructureType]
+                                var troop1 = GameService.GameBuildingManagerInstances[building.StructureType]
                                     .Troops[troops.ValueId].AddTroopOnPlayerBuilding(troops.ValueId, building, this.player);
                                 troop1.Init(troops);
                             }
@@ -117,7 +128,7 @@ namespace GameOfRevenge.GameHandlers
                 }
             }
             else
-                log.InfoFormat("Reource not founf when convert player data to resouse info {0} ", JsonConvert.SerializeObject(playerData));
+                log.InfoFormat("Reource not found when convert player data to resouse info {0} ", JsonConvert.SerializeObject(playerData));
             return;
         }
         public void AddStructureOnPlayer(PlayerDataTable data)
@@ -132,7 +143,7 @@ namespace GameOfRevenge.GameHandlers
                 {
                     foreach (var build in multipleBuildings)
                     {
-                        IGameBuildingManager gameBuilding = GameService.GameBuildingManager[structure.ValueId];
+                        IGameBuildingManager gameBuilding = GameService.GameBuildingManagerInstances[structure.ValueId];
                         this.AddStructure(build.Key, build.Value, gameBuilding);
                     }
                 }
@@ -140,10 +151,22 @@ namespace GameOfRevenge.GameHandlers
                     log.InfoFormat("that structure is already defined in player structureType {0} ", structure.ValueId.ToString());
             }
             else
-                log.InfoFormat("structure is null when convert to user structure line 97");
+                log.InfoFormat("structure is null when convert to user structure");
         }
+
         public void AddStructure(int locationId, UserStructureData structure, IGameBuildingManager gameBuilding)
         {
+            if (!this.PlayerBuildings.ContainsKey(structure.ValueId))
+            {
+                this.PlayerBuildings.Add(structure.ValueId, new List<IPlayerBuildingManager>());
+            }
+            var building = this.PlayerBuildings[structure.ValueId].Find(x => (x.Location == locationId));
+            if (building != null)
+            {
+                building.SetStructureData(structure);
+                return;
+            }
+
             IPlayerBuildingManager playerBuilding = null;
             switch (structure.ValueId)
             {
@@ -208,27 +231,19 @@ namespace GameOfRevenge.GameHandlers
             if (playerBuilding != null)
             {
                 log.InfoFormat("Add New Structure On Player Account {0} ", structure.ValueId.ToString());
-                List<IPlayerBuildingManager> list = null;
-                if (!this.PlayerBuildings.ContainsKey(structure.ValueId))
-                {
-                    list = new List<IPlayerBuildingManager>();
-                    this.PlayerBuildings.Add(structure.ValueId, list);
-                }
-                else
-                    list = this.PlayerBuildings[structure.ValueId];
-                list.Add(playerBuilding);
+                this.PlayerBuildings[structure.ValueId].Add(playerBuilding);
             }
         }
-        public (bool succ, string msg) CheckRequirmentsAndUpdateValues(IReadOnlyList<IReadOnlyDataRequirement> requirments)
+        public (bool succ, string msg) CheckRequirementsAndUpdateValues(IReadOnlyList<IReadOnlyDataRequirement> requirements)
         {
-            foreach (var item in requirments)
+            foreach (var item in requirements)
             {
                 if (item.DataType == DataType.Structure)
                 {
                     if (this.PlayerBuildings.ContainsKey((StructureType)item.ValueId))
                     {
-                        bool isSucc = this.PlayerBuildings[(StructureType)item.ValueId].Any(d => d.HasAvailableRequirment(item));
-                        if (!isSucc) return (false, "Requirment not found.");
+                        bool isSucc = this.PlayerBuildings[(StructureType)item.ValueId].Any(d => d.HasAvailableRequirement(item));
+                        if (!isSucc) return (false, "Requirement not found.");
                     }
                     else return (false, "Player need to create structure.");
                 }
@@ -236,23 +251,23 @@ namespace GameOfRevenge.GameHandlers
                 {
                     if (this.PlayerResources.ContainsKey((ResourceType)item.ValueId))
                     {
-                        bool isSucc = this.PlayerResources[(ResourceType)item.ValueId].HasAvailableRequirment(item);
+                        bool isSucc = this.PlayerResources[(ResourceType)item.ValueId].HasAvailableRequirement(item);
                         if (!isSucc)
-                            return (false, "Requirment not found.");
+                            return (false, "Requirement not found.");
                     }
                     else
                         return (false, "Player have insufficient resources.");
                 }
             }
-            foreach (var item in requirments)
+            foreach (var item in requirements)
                 if (item.DataType == DataType.Resource)
-                    this.PlayerResources[(ResourceType)item.ValueId].UpdateResourceValue(-item.Value);
+                    this.PlayerResources[(ResourceType)item.ValueId].IncrementResourceValue(-item.Value);
             return (true, "Success");
         }
         public IPlayerBuildingManager GetPlayerBuilding(StructureType structType, int locationId)
         {
             if (this.PlayerBuildings.ContainsKey(structType))
-                return player.PlayerDataManager.PlayerBuildings[structType].Where(d => d.Location == locationId).FirstOrDefault();
+                return player.InternalPlayerDataManager.PlayerBuildings[structType].Where(d => d.Location == locationId).FirstOrDefault();
             return null;
         }
         public IPlayerBuildingManager GetPlayerBuilding(int structType, int locationId)

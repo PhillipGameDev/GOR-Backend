@@ -8,9 +8,9 @@ namespace GameOfRevenge.Common.Interface
 {
     public interface ITechnologyManager
     {
-        Task<Response<List<TechnologyDataRequirementRel>>> GetAllTechnologyDataRequirementRel();
+/*        Task<Response<List<TechnologyDataRequirementRel>>> GetAllTechnologyDataRequirementRel();
         Task<Response<List<DataRequirement>>> GetAllTechnologyDataRequirements();
         Task<Response<List<TechnologyDataTable>>> GetAllTechnologyDatas();
-        Task<Response<List<TechnologyTable>>> GetAllTechnologys();
+        Task<Response<List<TechnologyTable>>> GetAllTechnologys();*/
     }
 }

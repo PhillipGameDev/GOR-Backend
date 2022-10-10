@@ -2,7 +2,7 @@
 
 namespace GameOfRevenge.Interface
 {
-   public interface IPlayerAttackHandler
+    public interface IPlayerAttackHandler
     {
         bool AttackRequest(AttackRequest request);
     }

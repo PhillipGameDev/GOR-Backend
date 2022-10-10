@@ -14,29 +14,32 @@ namespace GameOfRevenge.Business.Manager
     public class RealTimeUpdateManager : IRealTimeUpdateManager
     {
         public static readonly ILogger log = LogManager.GetCurrentClassLogger();
+
         private static readonly List<AttackStatusData> attackPlayerData = new List<AttackStatusData>();
+
         private readonly IKingdomPvPManager pvpManager = new KingdomPvPManager();
-        public DelayedAction Disposable;
         protected readonly object SyncRoot = new object(); // that is for world user access
+
+        public DelayedAction Disposable;
 
         public AttackStatusData GetAttackerData(int attackerId)
         {
-            AttackStatusData attackerData = null;
+            AttackStatusData data = null;
             lock (SyncRoot)
             {
-                attackerData = attackPlayerData.Where(d => d.Attacker.PlayerId == attackerId).FirstOrDefault();
+                data = attackPlayerData.Where(d => d.Attacker.PlayerId == attackerId).FirstOrDefault();
             }
-            return attackerData;
+            return data;
         }
 
         public AttackStatusData GetDefenderData(int defenderId)
         {
-            AttackStatusData attackerData = null;
+            AttackStatusData data = null;
             lock (SyncRoot)
             {
-                attackerData = attackPlayerData.Where(d => d.Defender.PlayerId == defenderId).FirstOrDefault();
+                data = attackPlayerData.Where(d => d.Defender.PlayerId == defenderId).FirstOrDefault();
             }
-            return attackerData;
+            return data;
         }
 
         public void AddNewAttackOnWorld(AttackStatusData data)
@@ -59,17 +62,27 @@ namespace GameOfRevenge.Business.Manager
                 log.Debug("****** UPDATE BATTLE START ****** x " + attackerList.Count);
                 foreach (AttackStatusData item in attackerList)
                 {
+                    string debugMsg = "";
                     try
                     {
+                        debugMsg = item.State+"";
                         switch (item.State)
                         {
                             case 0://marching to target
 //                                log.Debug("** MARCHING **");
-                                if (item.Attacker.Data.MarchingArmy.TimeLeftForTask <= 0) item.State++;
+                                if (item.Attacker.MarchingArmy.TimeLeftForTask <= 0)
+                                {
+                                    var resp = await new UserResourceManager().GetFullPlayerData(item.Report.DefenderId);
+                                    if (!resp.IsSuccess) throw new Exception("defender data not found");
+
+                                    item.Defender = resp.Data;
+                                    item.State++;
+                                }
                                 break;
                             case 1://battle simulation
 //                                log.Debug("** BATTLE **");
-                                var response = await pvpManager.BattleSimulation(item.Attacker.PlayerId, item.Attacker.Data, item.Defender.PlayerId, item.Defender.Data);
+                                //TODO: split battle simulation
+                                var response = await pvpManager.BattleSimulation(item.Attacker, item.Defender);
                                 if (response.Case >= 200)//illegal
                                 {
                                 }
@@ -83,12 +96,12 @@ namespace GameOfRevenge.Business.Manager
                                 item.State++;
                                 break;
                             case 2:
-//                                log.Debug("** WAITING **");
-                                if (item.Attacker.Data.MarchingArmy.IsTimeForReturn) item.State++;
+//                                log.Debug("** WAITING ** "+item.Attacker.MarchingArmy.StartTime+"  "+item.Attacker.MarchingArmy.ReachedTime+"  "+ item.Attacker.MarchingArmy.BattleDuration+"    "+item.Attacker.MarchingArmy.IsTimeForReturn);
+                                if (item.Attacker.MarchingArmy.IsTimeForReturn) item.State++;
                                 break;
                             case 3://marching to castle
-//                                log.Debug("** MARCHING BACK **");
-                                if (item.Attacker.Data.MarchingArmy.TimeLeft <= 0) item.State++;
+//                                log.Debug("** MARCHING BACK **  "+item.Attacker.MarchingArmy.TimeLeft);
+                                if (item.Attacker.MarchingArmy.TimeLeft <= 0) item.State++;
                                 break;
                             case 4://end
                                 log.Debug("** END ** " + item.Attacker.PlayerId +" vs "+item.Defender.PlayerId);
@@ -99,7 +112,8 @@ namespace GameOfRevenge.Business.Manager
                     }
                     catch (Exception exx)
                     {
-                        log.Debug("EXCEPTION " + exx.Message);
+                        log.Debug("EXCEPTION " + debugMsg+"  "+ exx.Message);
+                        lock (SyncRoot) attackPlayerData.Remove(item);
                     }
                 }
 

@@ -13,40 +13,41 @@ namespace GameOfRevenge.GameHandlers
     {
         // Locking the sync root guarantees thread safe access.
         protected readonly object SyncRoot = new object(); // that is for world user access
-        private readonly Dictionary<string, MmoActor> players;
+        private readonly Dictionary<int, MmoActor> players;
         public PlayersManager()
         {
-            this.players = new Dictionary<string, MmoActor>();
+            players = new Dictionary<int, MmoActor>();
         }
-        public void AddPlayer(string userName, MmoActor player)
+        public void AddPlayer(int userId, MmoActor player)
         {
-            lock (this.SyncRoot)
-                if (!this.players.ContainsKey(userName))
-                    this.players.Add(userName, player);
+            lock (SyncRoot)
+            {
+                if (!players.ContainsKey(userId)) players.Add(userId, player);
+            }
         }
-        public void RemovePlayer(string userName)
+        public void RemovePlayer(int userId)
         {
-            lock (this.SyncRoot) if (this.players.ContainsKey(userName)) this.players.Remove(userName);
+            lock (SyncRoot)
+            {
+                if (players.ContainsKey(userId)) players.Remove(userId);
+            }
         }
-        public MmoActor GetPlayer(string userName)
+        public MmoActor GetPlayer(int userId)
         {
-            if (this.players.ContainsKey(userName))
-                return this.players[userName];
-            return null;
+            return players.ContainsKey(userId) ? players[userId] : null;
         }
         public void BroadCastToWorld(byte evCode, object data)
         {
-            foreach (var p in this.players)
+            foreach (var p in players)
                 p.Value.SendEvent(evCode, data);
         }
         public void ClearAll()
         {
-            this.players.Clear();
+            players.Clear();
         }
         public void Dispose()
         {
-            if (this.players != null)
-                this.players.Clear();
+            players?.Clear();
             GC.SuppressFinalize(this);
         }
     }

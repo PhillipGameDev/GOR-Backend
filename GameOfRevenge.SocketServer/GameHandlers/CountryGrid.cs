@@ -27,6 +27,9 @@ namespace GameOfRevenge.GameHandlers
     using GameOfRevenge.Common.Services;
     using GameOfRevenge.Common.Models;
     using GameOfRevenge.GameApplication;
+    using GameOfRevenge.Common.Interface;
+    using GameOfRevenge.Business.Manager;
+    using System.Threading.Tasks;
 
     /// <summary>
     /// Grid used to divide the world.
@@ -42,6 +45,9 @@ namespace GameOfRevenge.GameHandlers
     public class CountryGrid : IDisposable, IWorld
     {
         private static readonly ILogger log = LogManager.GetCurrentClassLogger();
+
+        private static readonly IAccountManager accountManager = new AccountManager();
+
         public int WorldId { get; set; }
         public string Name { get; set; }
         public Region[][] WorldRegions { get; set; }
@@ -81,9 +87,19 @@ namespace GameOfRevenge.GameHandlers
                                 var worldPlayer = worldData.Where(d => d.X == x && d.Y == y).FirstOrDefault();
                                 if (worldPlayer != null)
                                 {
-                                    var actor = new MmoActor(worldPlayer.TileData.PlayerId.ToString(), this, this.WorldRegions[x][y]);
+                                    int plyId = worldPlayer.TileData.PlayerId;
+                                    string userName = string.Empty;
+                                    int allianceId = 0;//TODO: basic account info should include alliance id
+                                    var task = accountManager.GetAccountInfo(plyId);
+                                    task.Wait();
+                                    if (task.Result.IsSuccess)
+                                    {
+                                        userName = task.Result.Data.Name;
+                                    }
+
+                                    var actor = new MmoActor(plyId, userName, allianceId, this, this.WorldRegions[x][y]);
                                     this.WorldRegions[x][y].SpawnCityInTile(actor);
-                                    this.PlayersManager.AddPlayer(worldPlayer.TileData.PlayerId.ToString(), actor);
+                                    this.PlayersManager.AddPlayer(plyId, actor);
                                 }
                             }
                             catch (Exception ex)
@@ -109,15 +125,13 @@ namespace GameOfRevenge.GameHandlers
         }
         public void InvokeAttackComplete(AttackStatusData data)
         {
-            var attacker = this.PlayersManager.GetPlayer(data.Attacker.PlayerId.ToString());
-            var defender = this.PlayersManager.GetPlayer(data.Defender.PlayerId.ToString());
+            var attacker = PlayersManager.GetPlayer(data.Attacker.PlayerId);
+            var defender = PlayersManager.GetPlayer(data.Defender.PlayerId);
             if (attacker != null && defender != null)
             {
+                var winnerPly = (data.WinnerPlayerId == attacker.PlayerId) ? attacker : defender;
                 var result = new AttackResultResponse();
-                if (data.WinnerPlayerId == attacker.PlayerId)
-                    result.WinnerUserName = attacker.UserName;
-                else
-                    result.WinnerUserName = defender.UserName;
+                result.WinnerId = winnerPly.PlayerId;
                 attacker.SendEvent(EventCode.AttackResult, result);
                 defender.SendEvent(EventCode.AttackResult, result);
             }
@@ -138,10 +152,10 @@ namespace GameOfRevenge.GameHandlers
             while (!isSpawn);
             return null;
         }
-        public (Region region, MmoActor actor, IInterestArea iA) GetPlayerPosition(int playerId)
+        public (Region region, MmoActor actor, IInterestArea iA) GetPlayerPosition(int playerId, string userName, int allianceId)
         {
             IInterestArea iA = null;
-            var actor = this.PlayersManager.GetPlayer(playerId.ToString());
+            var actor = this.PlayersManager.GetPlayer(playerId);
             var data = this.WorldData.Where(d => d.TileData.PlayerId == playerId).FirstOrDefault();
             if (data == null && actor == null)
             {
@@ -155,7 +169,7 @@ namespace GameOfRevenge.GameHandlers
                     PlayerId = playerId
                 };
                 this.WorldData.Add(data);
-                actor = new MmoActor(playerId.ToString(), this, this.WorldRegions[data.X][data.Y]);
+                actor = new MmoActor(playerId, userName, allianceId, this, this.WorldRegions[data.X][data.Y]);
                 iA = new InterestArea(this.WorldRegions[data.X][data.Y], actor, true);
                 this.WorldRegions[data.X][data.Y].SpawnCityInTile(actor);
                 new DelayedAction().WaitForCallBack(() =>
@@ -163,10 +177,12 @@ namespace GameOfRevenge.GameHandlers
                     GameService.BKingdomManager.UpdateWorldTileData(this.WorldId, data.X, data.Y, data.TileData);
                 }
                 , 0);
-                this.PlayersManager.AddPlayer(playerId.ToString(), actor);
+                this.PlayersManager.AddPlayer(playerId, actor);
             }
             else
+            {
                 iA = new InterestArea(this.WorldRegions[data.X][data.Y], actor, false);
+            }
             return (this.WorldRegions[data.X][data.Y], actor, iA);
         }
         public double GetDistanceBw2Points(Region p1, Region p2)

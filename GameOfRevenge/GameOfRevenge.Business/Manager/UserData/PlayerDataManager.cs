@@ -267,7 +267,7 @@ namespace GameOfRevenge.Business.Manager.UserData
             }
         }
 
-        public async Task<Response<PlayerDataTableUpdated>> IncrementPlayerData(int playerId, long playerDataId, int value)
+        public async Task<Response<PlayerDataTableUpdated>> SumPlayerData(int playerId, long playerDataId, int value)
         {
             try
             {
@@ -345,8 +345,7 @@ namespace GameOfRevenge.Business.Manager.UserData
 
         public async Task<Response<List<PlayerDataTable>>> GetAllPlayerData(int playerId, DataType type = DataType.Unknown)
         {
-            Console.WriteLine(">>>>>> GetAllPlayerData ");
-//            try
+            try
             {
                 if (playerId <= 0) throw new InvalidModelExecption("Invalid player id");
 
@@ -358,7 +357,7 @@ namespace GameOfRevenge.Business.Manager.UserData
 
                 return await Db.ExecuteSPMultipleRow<PlayerDataTable>("GetAllPlayerData", spParams);
             }
-/*            catch (InvalidModelExecption ex)
+            catch (InvalidModelExecption ex)
             {
                 return new Response<List<PlayerDataTable>>()
                 {
@@ -375,7 +374,7 @@ namespace GameOfRevenge.Business.Manager.UserData
                     Data = null,
                     Message = ErrorManager.ShowError(ex)
                 };
-            }*/
+            }
         }
 
         public async Task<Response<List<PlayerDataTable>>> GetAllPlayerData(int playerId, DataType type, int valueId)
@@ -417,8 +416,8 @@ namespace GameOfRevenge.Business.Manager.UserData
         {
             try
             {
-                if (playerId <= 0) throw new InvalidModelExecption("Invalid player id");
-                if (valueId <= 0) throw new InvalidModelExecption("Invalid value id");
+                if (playerId < 1) throw new InvalidModelExecption("Invalid player id");
+                if (valueId < 1) throw new InvalidModelExecption("Invalid value id");
 
                 var spParams = new Dictionary<string, object>()
                 {
@@ -587,17 +586,17 @@ namespace GameOfRevenge.Business.Manager.UserData
         {
 //            var response = await manager.TransferResource(playerId, structureLocationId, DataType.Resource, resId, value);
 
+            var spParams = new Dictionary<string, object>()
+            {
+                { "PlayerId", playerId },
+                { "StructureLocationId", structureLocationId },
+                { "DataTypeId", DataType.Resource },
+                { "ValueId", valueId },
+                { "Value", value }
+            };
+
             try
             {
-                var spParams = new Dictionary<string, object>()
-                {
-                    { "PlayerId", playerId },
-                    { "StructureLocationId", structureLocationId },
-                    { "DataTypeId", DataType.Resource },
-                    { "ValueId", valueId },
-                    { "Value", value }
-                };
-
                 return await Db.ExecuteSPNoData("AddOrUpdatePlayerStoredData", spParams);
             }
             catch (InvalidModelExecption ex)

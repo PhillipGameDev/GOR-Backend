@@ -6,9 +6,9 @@ namespace GameOfRevenge.ResourcesHandler
     public interface IPlayerResources
     {
         IReadOnlyResourceTable ResourceInfo { get; }
-        float Value { get; }
+        long Value { get; }
 
-        void UpdateResourceValue(float val);
-        bool HasAvailableRequirment(IReadOnlyDataRequirement requirment);
+        void IncrementResourceValue(int val);
+        bool HasAvailableRequirement(IReadOnlyDataRequirement requirment);
     }
 }

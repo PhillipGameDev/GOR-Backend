@@ -68,7 +68,7 @@ namespace GameOfRevenge.WebServer.Controllers.Api
             ore = ore <= 0 ? 0 : ore;
             gems = gems <= 0 ? 0 : gems;
 
-            return ReturnResponse(await userResourceManager.AddMainResource(Token.PlayerId, food, wood, ore, gems));
+            return ReturnResponse(await userResourceManager.SumMainResource(Token.PlayerId, food, wood, ore, gems));
         }
 
         [HttpPost]
@@ -84,9 +84,9 @@ namespace GameOfRevenge.WebServer.Controllers.Api
         }
 
         [HttpPost]
-        public async Task<IActionResult> StoreResource(int structureLocationId, int valueId, int value)
+        public async Task<IActionResult> StoreResource(int structureLocationId, ResourceType type, int value)
         {
-            return ReturnResponse(await userResourceManager.StoreResource(Token.PlayerId, structureLocationId, valueId, value));
+            return ReturnResponse(await userResourceManager.StoreResource(Token.PlayerId, structureLocationId, type, value));
         }
 #endregion
 
@@ -183,7 +183,7 @@ namespace GameOfRevenge.WebServer.Controllers.Api
 
 
         [HttpPost]
-        public async Task<IActionResult> IncrementItemType(InventoryItemType type, int? amount)
+        public async Task<IActionResult> SumItemType(InventoryItemType type, int? amount)
         {
             if ((type == InventoryItemType.Unknown) || (amount == null))
             {
@@ -195,13 +195,13 @@ namespace GameOfRevenge.WebServer.Controllers.Api
             }
             else
             {
-                var response = await userInventoryManager.IncrementItem(Token.PlayerId, type, -1, (int)amount);
+                var response = await userInventoryManager.SumItem(Token.PlayerId, type, -1, (int)amount);
                 return ReturnResponse(response);
             }
         }
 
         [HttpPost]
-        public async Task<IActionResult> IncrementItemID(long id, int? amount)
+        public async Task<IActionResult> SumItemID(long id, int? amount)
         {
             if ((id <= 0) || (amount == null))
             {
@@ -213,7 +213,7 @@ namespace GameOfRevenge.WebServer.Controllers.Api
             }
             else
             {
-                var response = await userInventoryManager.IncrementItem(Token.PlayerId, InventoryItemType.Unknown, id, (int)amount);
+                var response = await userInventoryManager.SumItem(Token.PlayerId, InventoryItemType.Unknown, id, (int)amount);
                 return ReturnResponse(response);
             }
         }
@@ -328,24 +328,24 @@ namespace GameOfRevenge.WebServer.Controllers.Api
 
 #region Boost
         [HttpPost]
-        public async Task<IActionResult> AddBoost(BoostType itemId, int count)
+        public async Task<IActionResult> AddBoost(NewBoostType type)
         {
 //            if (!Token.IsAdmin) return StatusCode(401);
-            return ReturnResponse(await userActiveBuffsManager.AddBoost(Token.PlayerId, itemId, count));
+            return ReturnResponse(await userActiveBuffsManager.AddBoost(Token.PlayerId, type));
         }
 
         [HttpPost]
-        public async Task<IActionResult> RemoveBoost(BoostType itemId, int count)
+        public async Task<IActionResult> RemoveBoost(NewBoostType itemId, int count)
         {
 //            if (!Token.IsAdmin) return StatusCode(401);
             return ReturnResponse(await userActiveBuffsManager.RemoveBoost(Token.PlayerId, itemId, count));
         }
 
         [HttpGet]
-        public async Task<IActionResult> GetBoostList()
+        public async Task<IActionResult> GetActiveBoostList()
         {
             var response = await userInventoryManager.GetFullPlayerData(Token.PlayerId);
-            return ReturnResponse(new Response<List<FullUserBoostDetails>>(response.Data?.Boosts, response.Case, response.Message));
+            return ReturnResponse(new Response<List<UserRecordNewBoost>>(response.Data?.Boosts, response.Case, response.Message));
         }
 #endregion
 
@@ -434,7 +434,7 @@ namespace GameOfRevenge.WebServer.Controllers.Api
         }
 
 
-        [HttpGet]
+/*        [HttpGet]
         public async Task<IActionResult> GetUserSubTechnologyData()
         {
             var response = await userManager.GetFullPlayerData(Token.PlayerId);
@@ -454,7 +454,7 @@ namespace GameOfRevenge.WebServer.Controllers.Api
         {
             var response = await userTechnologyManager.UpgradeSubTechnology(Token.PlayerId, id);
             return ReturnResponse(response);
-        }
+        }*/
 
 #endregion
 
@@ -505,9 +505,9 @@ namespace GameOfRevenge.WebServer.Controllers.Api
 
 #endregion
         [HttpPost]
-        public async Task<IActionResult> HelpBuilding(int toPlayerId, StructureType type, int locId, int helpPower)
+        public async Task<IActionResult> HelpBuilding(int toPlayerId, StructureType type, int locId, int helpSeconds)
         {
-            return ReturnResponse(await userStructureManager.HelpBuilding(Token.PlayerId, toPlayerId, type, locId, helpPower));
+            return ReturnResponse(await userStructureManager.HelpBuilding(Token.PlayerId, toPlayerId, type, locId, helpSeconds));
         }
 
 

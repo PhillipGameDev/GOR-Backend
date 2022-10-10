@@ -20,12 +20,12 @@ namespace GameOfRevenge.Business.Manager.UserData
             else return info.Id;
         }
 
-        private async Task<float> GetPlayerDataValue(int playerId, int resId)
+        private async Task<long> GetPlayerDataResourceValue(int playerId, int resId)
         {
             var response = await manager.GetPlayerData(playerId, DataType.Resource, resId);
             if (response.IsSuccess && response.HasData && response.Data != null)
             {
-                float.TryParse(response.Data.Value, out float retResp);
+                long.TryParse(response.Data.Value, out long retResp);
                 return retResp;
             }
 
@@ -37,31 +37,34 @@ namespace GameOfRevenge.Business.Manager.UserData
             if (valueId <= 0) throw new InvalidModelExecption("Invalid value id");
         }
 
-        public async Task<Response<List<UserResourceData>>> AddMainResource(int playerId, float food, float wood, float ore, float gems)
+        public async Task<Response<List<UserResourceData>>> SumMainResource(int playerId, int food, int wood, int ore, int gems)
         {
-            var foodData = await AddFoodResource(playerId, food);
-            var woodData = await AddWoodResource(playerId, wood);
-            var oreData = await AddOreResource(playerId, ore);
-            var gemData = await AddGemsResource(playerId, gems);
+            var foodData = await SumFoodResource(playerId, food);
+            var woodData = await SumWoodResource(playerId, wood);
+            var oreData = await SumOreResource(playerId, ore);
+            var gemData = await SumGemsResource(playerId, gems);
 
             return new Response<List<UserResourceData>>()
             {
                 Case = 100,
-                Message = "Update Main Resource",
+                Message = "Updated Main Resource",
                 Data = new List<UserResourceData>() { foodData.Data, woodData.Data, oreData.Data, gemData.Data }
             };
         }
-        public async Task<Response<UserResourceData>> AddResource(int playerId, int resId, float value)
+        public async Task<Response<UserResourceData>> SumResource(int playerId, int resId, int value)
         {
             Validate(playerId, resId);
-            var existingValue = await GetPlayerDataValue(playerId, resId);
-            return await UpdateResource(playerId, resId, existingValue + value);
+            //TODO: improve this call, use increment call instead of get and update
+            long existingValue = await GetPlayerDataResourceValue(playerId, resId);
+            long val = existingValue + (long)value;
+            if (val < 0) val = 0;
+            return await UpdateResource(playerId, resId, val);
         }
-        public async Task<Response<UserResourceData>> AddResource(int playerId, ResourceType type, float value) => await AddResource(playerId, GetResourceId(type), value);
-        public async Task<Response<UserResourceData>> AddFoodResource(int playerId, float value) => await AddResource(playerId, CacheResourceDataManager.Food.Id, value);
-        public async Task<Response<UserResourceData>> AddWoodResource(int playerId, float value) => await AddResource(playerId, CacheResourceDataManager.Wood.Id, value);
-        public async Task<Response<UserResourceData>> AddOreResource(int playerId, float value) => await AddResource(playerId, CacheResourceDataManager.Ore.Id, value);
-        public async Task<Response<UserResourceData>> AddGemsResource(int playerId, float value) => await AddResource(playerId, CacheResourceDataManager.Gems.Id, value);
+        public async Task<Response<UserResourceData>> SumResource(int playerId, ResourceType type, int value) => await SumResource(playerId, GetResourceId(type), value);
+        public async Task<Response<UserResourceData>> SumFoodResource(int playerId, int value) => await SumResource(playerId, CacheResourceDataManager.Food.Id, value);
+        public async Task<Response<UserResourceData>> SumWoodResource(int playerId, int value) => await SumResource(playerId, CacheResourceDataManager.Wood.Id, value);
+        public async Task<Response<UserResourceData>> SumOreResource(int playerId, int value) => await SumResource(playerId, CacheResourceDataManager.Ore.Id, value);
+        public async Task<Response<UserResourceData>> SumGemsResource(int playerId, int value) => await SumResource(playerId, CacheResourceDataManager.Gems.Id, value);
 
         public async Task<Response<List<UserResourceData>>> GetMainResource(int playerId)
         {
@@ -127,34 +130,7 @@ namespace GameOfRevenge.Business.Manager.UserData
         public async Task<Response<UserResourceData>> GetOreResource(int playerId) => await GetResource(playerId, CacheResourceDataManager.Ore.Id);
         public async Task<Response<UserResourceData>> GetWoodResource(int playerId) => await GetResource(playerId, CacheResourceDataManager.Wood.Id);
 
-        public async Task<Response<List<UserResourceData>>> RemoveMainResource(int playerId, float food, float wood, float ore, float gems)
-        {
-            var foodData = await RemoveFoodResource(playerId, food);
-            var woodData = await RemoveWoodResource(playerId, wood);
-            var oreData = await RemoveOreResource(playerId, ore);
-            var gemData = await RemoveGemsResource(playerId, gems);
-
-            return new Response<List<UserResourceData>>()
-            {
-                Case = 100,
-                Message = "Update Main Resource",
-                Data = new List<UserResourceData>() { foodData.Data, woodData.Data, oreData.Data, gemData.Data }
-            };
-        }
-        public async Task<Response<UserResourceData>> RemoveResource(int playerId, int resId, float value)
-        {
-            Validate(playerId, resId);
-            var existingValue = await GetPlayerDataValue(playerId, resId);
-            return await UpdateResource(playerId, resId, existingValue - value);
-        }
-        public async Task<Response<UserResourceData>> RemoveResource(int playerId, ResourceType type, float value) => await RemoveResource(playerId, GetResourceId(type), value);
-        public async Task<Response<UserResourceData>> RemoveFoodResource(int playerId, float value) => await RemoveResource(playerId, CacheResourceDataManager.Food.Id, value);
-        public async Task<Response<UserResourceData>> RemoveWoodResource(int playerId, float value) => await RemoveResource(playerId, CacheResourceDataManager.Wood.Id, value);
-        public async Task<Response<UserResourceData>> RemoveOreResource(int playerId, float value) => await RemoveResource(playerId, CacheResourceDataManager.Ore.Id, value);
-        public async Task<Response<UserResourceData>> RemoveGemsResource(int playerId, float value) => await RemoveResource(playerId, CacheResourceDataManager.Gems.Id, value);
-
-
-        public async Task<Response<List<UserResourceData>>> UpdateMainResource(int playerId, float food, float wood, float ore, float gems)
+        public async Task<Response<List<UserResourceData>>> UpdateMainResource(int playerId, long food, long wood, long ore, long gems)
         {
             var foodData = await UpdateFoodResource(playerId, food);
             var woodData = await UpdateWoodResource(playerId, wood);
@@ -192,9 +168,9 @@ namespace GameOfRevenge.Business.Manager.UserData
             }*/
         }
 
-        public async Task<Response> StoreResource(int playerId, int structureLocationId, int valueId, int value)
+        public async Task<Response> StoreResource(int playerId, int structureLocationId, ResourceType type, int value)
         {
-            return await manager.StoreResource(playerId, structureLocationId, valueId, value);
+            return await manager.StoreResource(playerId, structureLocationId, GetResourceId(type), value);
 /*            var response = await manager.StoreResource(playerId, structureLocationId, resId, value);
             if (response.IsSuccess)
             {
@@ -251,7 +227,7 @@ namespace GameOfRevenge.Business.Manager.UserData
             }
         }*/
 
-        public async Task<Response<UserResourceData>> UpdateResource(int playerId, int resId, float value)
+        public async Task<Response<UserResourceData>> UpdateResource(int playerId, int resId, long value)
         {
             Validate(playerId, resId);
             var response = await manager.AddOrUpdatePlayerData(playerId, DataType.Resource, resId, value.ToString());
@@ -273,11 +249,11 @@ namespace GameOfRevenge.Business.Manager.UserData
                 Message = response.Message
             };
         }
-        public async Task<Response<UserResourceData>> UpdateResource(int playerId, ResourceType type, float value) => await UpdateResource(playerId, GetResourceId(type), value);
-        public async Task<Response<UserResourceData>> UpdateFoodResource(int playerId, float value) => await UpdateResource(playerId, CacheResourceDataManager.Food.Id, value);
-        public async Task<Response<UserResourceData>> UpdateGemsResource(int playerId, float value) => await UpdateResource(playerId, CacheResourceDataManager.Gems.Id, value);
-        public async Task<Response<UserResourceData>> UpdateOreResource(int playerId, float value) => await UpdateResource(playerId, CacheResourceDataManager.Ore.Id, value);
-        public async Task<Response<UserResourceData>> UpdateWoodResource(int playerId, float value) => await UpdateResource(playerId, CacheResourceDataManager.Wood.Id, value);
+        public async Task<Response<UserResourceData>> UpdateResource(int playerId, ResourceType type, long value) => await UpdateResource(playerId, GetResourceId(type), value);
+        public async Task<Response<UserResourceData>> UpdateFoodResource(int playerId, long value) => await UpdateResource(playerId, CacheResourceDataManager.Food.Id, value);
+        public async Task<Response<UserResourceData>> UpdateGemsResource(int playerId, long value) => await UpdateResource(playerId, CacheResourceDataManager.Gems.Id, value);
+        public async Task<Response<UserResourceData>> UpdateOreResource(int playerId, long value) => await UpdateResource(playerId, CacheResourceDataManager.Ore.Id, value);
+        public async Task<Response<UserResourceData>> UpdateWoodResource(int playerId, long value) => await UpdateResource(playerId, CacheResourceDataManager.Wood.Id, value);
 
         public async Task<bool> RemoveResourceByRequirement(int playerId, IReadOnlyList<IReadOnlyDataRequirement> requirements, int count)
         {
@@ -291,10 +267,10 @@ namespace GameOfRevenge.Business.Manager.UserData
                     {
                         Response<UserResourceData> response;
                         ResourceType resourceType = CacheResourceDataManager.GetResourceData(req.ValueId).Code;
-                        if (resourceType == ResourceType.Food) response = await RemoveFoodResource(playerId, req.Value * count);
-                        else if (resourceType == ResourceType.Wood) response = await RemoveWoodResource(playerId, req.Value * count);
-                        else if (resourceType == ResourceType.Ore) response = await RemoveOreResource(playerId, req.Value * count);
-                        else response = await RemoveGemsResource(playerId, req.Value);
+                        if (resourceType == ResourceType.Food) response = await SumFoodResource(playerId, -req.Value * count);
+                        else if (resourceType == ResourceType.Wood) response = await SumWoodResource(playerId, -req.Value * count);
+                        else if (resourceType == ResourceType.Ore) response = await SumOreResource(playerId, -req.Value * count);
+                        else response = await SumGemsResource(playerId, -req.Value * count);
                         if (!response.IsSuccess) return false;
                     }
                 }
@@ -318,10 +294,10 @@ namespace GameOfRevenge.Business.Manager.UserData
                     {
                         Response<UserResourceData> response;
                         ResourceType resourceType = CacheResourceDataManager.GetResourceData(req.ValueId).Code;
-                        if (resourceType == ResourceType.Food) response = await AddFoodResource(playerId, req.Value * count);
-                        else if (resourceType == ResourceType.Wood) response = await AddWoodResource(playerId, req.Value * count);
-                        else if (resourceType == ResourceType.Ore) response = await AddOreResource(playerId, req.Value * count);
-                        else response = await AddGemsResource(playerId, req.Value);
+                        if (resourceType == ResourceType.Food) response = await SumFoodResource(playerId, req.Value * count);
+                        else if (resourceType == ResourceType.Wood) response = await SumWoodResource(playerId, req.Value * count);
+                        else if (resourceType == ResourceType.Ore) response = await SumOreResource(playerId, req.Value * count);
+                        else response = await SumGemsResource(playerId, req.Value);
                         if (!response.IsSuccess) return false;
                     }
                 }

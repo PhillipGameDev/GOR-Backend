@@ -12,7 +12,7 @@ namespace GameOfRevenge.Common.Models.Troop
         float AttackDamage { get; }
         float AttackRange { get; }
         float AttackSpeed { get; }
-        float Defence { get; }
+        float Defense { get; }
         float MovementSpeed { get; }
         int WeightLoad { get; }
         int TraningTime { get; }
@@ -27,7 +27,7 @@ namespace GameOfRevenge.Common.Models.Troop
         public float AttackDamage { get; set; }
         public float AttackRange { get; set; }
         public float AttackSpeed { get; set; }
-        public float Defence { get; set; }
+        public float Defense { get; set; }
         public float MovementSpeed { get; set; }
         public int WeightLoad { get; set; }
         public int TraningTime { get; set; }
@@ -46,7 +46,7 @@ namespace GameOfRevenge.Common.Models.Troop
             AttackDamage = reader.GetValue(index) == DBNull.Value ? 0 : (float)reader.GetDouble(index); index++;
             AttackRange = reader.GetValue(index) == DBNull.Value ? 0 : (float)reader.GetDouble(index); index++;
             AttackSpeed = reader.GetValue(index) == DBNull.Value ? 0 : (float)reader.GetDouble(index); index++;
-            Defence = reader.GetValue(index) == DBNull.Value ? 0 : (float)reader.GetDouble(index); index++;
+            Defense = reader.GetValue(index) == DBNull.Value ? 0 : (float)reader.GetDouble(index); index++;
             MovementSpeed = reader.GetValue(index) == DBNull.Value ? 0 : (float)reader.GetDouble(index); index++;
 
             WeightLoad = reader.GetValue(index) == DBNull.Value ? 0 : reader.GetInt32(index); index++;

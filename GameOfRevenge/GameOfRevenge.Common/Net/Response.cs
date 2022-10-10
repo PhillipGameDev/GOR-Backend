@@ -13,10 +13,10 @@ namespace GameOfRevenge.Common.Net
             Case = 0;
         }
 
-        public Response(int casee, string message)
+        public Response(int caseNum, string message)
         {
             Message = message;
-            Case = casee;
+            Case = caseNum;
         }
 
         public Response(CaseType caseType, string message)

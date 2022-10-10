@@ -20,13 +20,17 @@ namespace GameOfRevenge.Buildings.Handlers
     public class GameBuildingManager : IGameBuildingManager
     {
         private static readonly ILogger log = LogManager.GetCurrentClassLogger();
-        public IReadOnlyStructureDataRequirementRel BuildingData { get; set; }
+
+        public IReadOnlyStructureDataRequirementRel CacheBuildingData { get; set; }
+
         public Dictionary<TroopType, IGameTroop> Troops { get; private set; }
-        public StructureType StructureType { get { return BuildingData.Info.Code; } }
+
+        public StructureType StructureType => CacheBuildingData.Info.Code;
+
 
         public GameBuildingManager(IReadOnlyStructureDataRequirementRel data, Dictionary<TroopType, IGameTroop> troops)
         {
-            BuildingData = data;
+            CacheBuildingData = data;
             Troops = troops;
         }
 
@@ -38,51 +42,62 @@ namespace GameOfRevenge.Buildings.Handlers
 
         public void CreateStructureForPlayer(CreateStructureRequest request, MmoActor actor)
         {
-            log.InfoFormat("Create Structure Request CurrentBuilding {0} Data {1} ", this.BuildingData.Info.Code.ToString(), JsonConvert.SerializeObject(request));
-            var structureData = BuildingData.GetStructureLevelById(1);
-            if (structureData == null) actor.Peer.SendOperation(OperationCode.CreateStructure, ReturnCode.Failed, null, "Structure not found.");
+            log.InfoFormat("Create Structure Request CurrentBuilding {0} Data {1} ", this.CacheBuildingData.Info.Code.ToString(), JsonConvert.SerializeObject(request));
+            var structureData = CacheBuildingData.GetStructureLevelById(1);
+            if (structureData == null)
+            {
+                var str = "Structure not found.";
+                actor.Peer.SendOperation(OperationCode.CreateStructure, ReturnCode.Failed, null, str);
+                return;
+            }
+
+            bool isAlreadyLocated = actor.InternalPlayerDataManager.PlayerBuildings.Values.Any(d => d.Any(f => f.Location == request.StructureLocationId));
+            if (isAlreadyLocated)
+            {
+                var str = "LocationId is invalid, structure is already located in this location.";
+                actor.Peer.SendOperation(OperationCode.CreateStructure, ReturnCode.Failed, null, str);
+            }
             else
             {
-                bool isAlreadyLocated = actor.PlayerDataManager.PlayerBuildings.Values.Any(d => d.Any(f => f.Location == request.StructureLocationId));
-                if (isAlreadyLocated) actor.Peer.SendOperation(OperationCode.CreateStructure, ReturnCode.Failed, null, "LocationId is invalid, structure is already located in this locationId.");
+                log.InfoFormat("Get Structure Data for level 1 CurrentBuilding {0} ", JsonConvert.SerializeObject(structureData));
+                var response = CreateOrUpgradeStructure(actor, structureData.Requirements, request.StructureLocationId);
+                if (!response.IsSuccess)
+                {
+                    actor.Peer.SendOperation(OperationCode.CreateStructure, ReturnCode.Failed, null, response.Message);
+                }
                 else
                 {
-                    log.InfoFormat("Get Structure Data for level 1 CurrentBuilding {0} ", JsonConvert.SerializeObject(structureData));
-                    var response = CreateAndUpgradeStructure(actor, structureData.Requirements, request.StructureLocationId);
-                    if (!response.IsSuccess) actor.Peer.SendOperation(OperationCode.CreateStructure, ReturnCode.Failed, null, response.Message);
-                    else
+                    var obj = new StructureCreateUpgradeResponse()
                     {
-                        var obj = new StructureCreateUpgradeResponse()
-                        {
-                            StructureLocationId = request.StructureLocationId,
-                            StructureType = request.StructureType,
-                            StructureLevel = 1
-                        };
+                        StructureLocationId = request.StructureLocationId,
+                        StructureType = request.StructureType,
+                        StructureLevel = 1
+                    };
 
-                        actor.Peer.SendOperation(OperationCode.CreateStructure, ReturnCode.OK, obj.GetDictionary());
-                    }
+                    actor.Peer.SendOperation(OperationCode.CreateStructure, ReturnCode.OK, obj.GetDictionary());
                 }
             }
         }
 
         public bool UpgradeStructureForPlayer(UpgradeStructureRequest request, MmoActor actor)
         {
-            bool success = true;
-            log.InfoFormat("Upgrade Structure Request CurrentBuilding {0} Data {1} ", this.BuildingData.Info.Code.ToString(),
+            log.InfoFormat("Upgrade Structure Request CurrentBuilding {0} Data {1} ", this.CacheBuildingData.Info.Code.ToString(),
                 JsonConvert.SerializeObject(request));
-            if (actor.PlayerDataManager.PlayerBuildings.ContainsKey((this.StructureType)))
+
+            bool success = true;
+            if (actor.InternalPlayerDataManager.PlayerBuildings.ContainsKey((this.StructureType)))
             {
-                var building = actor.PlayerDataManager.PlayerBuildings[this.StructureType].Where(d => d.Location == request.StructureLocationId).FirstOrDefault();
+                var building = actor.InternalPlayerDataManager.PlayerBuildings[this.StructureType].Where(d => d.Location == request.StructureLocationId).FirstOrDefault();
                 if (building != null)
                 {
                     if (!building.IsConstructing)
                     {
                         int upgradeLevel = building.CurrentLevel + 1;
                         log.InfoFormat("Upgrade Structure Request Upgrade Level {0} ", upgradeLevel);
-                        var structureData = BuildingData.GetStructureLevelById(upgradeLevel);
+                        var structureData = CacheBuildingData.GetStructureLevelById(upgradeLevel);
                         if (structureData != null)
                         {
-                            var response = CreateAndUpgradeStructure(actor, structureData.Requirements, request.StructureLocationId, true);
+                            var response = CreateOrUpgradeStructure(actor, structureData.Requirements, request.StructureLocationId, true);
                             if (response.IsSuccess)
                             {
                                 var obj = new StructureCreateUpgradeResponse
@@ -102,7 +117,7 @@ namespace GameOfRevenge.Buildings.Handlers
                         }
                         else
                         {
-                            actor.Peer.SendOperation(OperationCode.UpgradeStructure, ReturnCode.Failed, debuMsg: "Structure not found in data.");
+                            actor.Peer.SendOperation(OperationCode.UpgradeStructure, ReturnCode.Failed, debuMsg: "Structure data not found.");
                             success = false;
                         }
                     }
@@ -126,31 +141,43 @@ namespace GameOfRevenge.Buildings.Handlers
             return success;
         }
         
-        private Response<UserStructureData> CreateAndUpgradeStructure(MmoActor player, IReadOnlyList<IReadOnlyDataRequirement> requirments, int locationId, bool isUpgrade = false)
+        private Response<UserStructureData> CreateOrUpgradeStructure(MmoActor player, IReadOnlyList<IReadOnlyDataRequirement> requirments, int locationId, bool isUpgrade = false)
         {
             if (requirments.Count > 0)
             {
-                var (rsucc, rmsg) = player.PlayerDataManager.CheckRequirmentsAndUpdateValues(requirments);
+                var (rsucc, rmsg) = player.InternalPlayerDataManager.CheckRequirementsAndUpdateValues(requirments);
                 if (!rsucc) new Response<UserStructureData>(rsucc ? 100 : 200, rmsg);
             }
             
             Response<UserStructureData> response;
-            if (!isUpgrade)
-                response = GameService.BPlayerStructureManager.CreateBuilding(Convert.ToInt32(player.UserId), this.StructureType, locationId).Result;
-            else
-                response = GameService.BPlayerStructureManager.UpgradeBuilding(Convert.ToInt32(player.UserId), this.StructureType, locationId).Result;
-
-            if (response.Case < 100) return new Response<UserStructureData>(200, response.Message);
-            
-            log.InfoFormat("Response Of Create/Upgrasde Structure Manager DATA {0} ", JsonConvert.SerializeObject(response.Data));
-            UserStructureData structure = GameService.BPlayerStructureManager.GetStructureDataAccLoc(response.Data, locationId);
-            if (!isUpgrade)
-                player.PlayerDataManager.AddStructure(locationId, structure, this);
+            if (isUpgrade)
+            {
+                response = GameService.BPlayerStructureManager.UpgradeBuilding(player.PlayerId, this.StructureType, locationId).Result;
+            }
             else
             {
-                var building = player.PlayerDataManager.GetPlayerBuilding(structure.ValueId, locationId);
-                if (building != null)
-                    building.UpgradeBuilding(structure);
+                response = GameService.BPlayerStructureManager.CreateBuilding(player.PlayerId, this.StructureType, locationId).Result;
+            }
+            if ((response.Case < 100) || (response.Data == null)) return new Response<UserStructureData>(200, response.Message);
+            
+            log.InfoFormat("Response Of Create/Upgrade Structure Manager DATA {0} ", JsonConvert.SerializeObject(response.Data));
+            var structure = new UserStructureData()
+            {
+                Id = response.Data.Id,
+                DataType = response.Data.DataType,
+//                StructureId = response.Data.StructureId,
+                ValueId = response.Data.ValueId,
+                Value = response.Data.Value.Where(d => d.Location == locationId).ToList()
+            };
+
+            if (isUpgrade)
+            {
+                var building = player.InternalPlayerDataManager.GetPlayerBuilding(structure.ValueId, locationId);
+                if (building != null) building.AddBuildingUpgrading(structure);
+            }
+            else
+            {
+                player.InternalPlayerDataManager.AddStructure(locationId, structure, this);
             }
 
             return response;
@@ -188,7 +215,7 @@ namespace GameOfRevenge.Buildings.Handlers
         int IGameBuildingManager.BuildTime(int level)
         {
             int buildTime = 0;
-            var structure = this.BuildingData.GetStructureLevelById(level);
+            var structure = this.CacheBuildingData.GetStructureLevelById(level);
             if (structure != null) buildTime = structure.Data.TimeToBuild;
             return buildTime;
         }

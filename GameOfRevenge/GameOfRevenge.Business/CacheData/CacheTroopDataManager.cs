@@ -84,13 +84,13 @@ namespace GameOfRevenge.Business.CacheData
 
         public static IReadOnlyTroopDataRequirementRel GetFullTroopData(int troopId)
         {
-            var data = TroopInfos.FirstOrDefault(x => x.Info.Id == troopId);
+            var data = TroopInfos.First(x => x.Info.Id == troopId);
             if (data == null) throw new CacheDataNotExistExecption(TroopNotExist);
             else return data;
         }
         public static IReadOnlyTroopDataRequirementRel GetFullTroopData(TroopType troopType)
         {
-            var data = TroopInfos.FirstOrDefault(x => x.Info.Code == troopType);
+            var data = TroopInfos.First(x => x.Info.Code == troopType);
             if (data == null) throw new CacheDataNotExistExecption(TroopNotExist);
             else return data;
 
@@ -98,14 +98,14 @@ namespace GameOfRevenge.Business.CacheData
         public static IReadOnlyTroopDataRequirements GetFullTroopLevelData(int troopId, int level)
         {
             var Troop = GetFullTroopData(troopId);
-            var data = Troop.Levels.FirstOrDefault(x => x.Data.Level == level);
+            var data = Troop.Levels.First(x => x.Data.Level == level);
             if (data == null) throw new CacheDataNotExistExecption(TroopLevelNotExist);
             else return data;
         }
         public static IReadOnlyTroopDataRequirements GetFullTroopLevelData(TroopType troopType, int level)
         {
             var Troop = GetFullTroopData(troopType);
-            var data = Troop.Levels.FirstOrDefault(x => x.Data.Level == level);
+            var data = Troop.Levels.First(x => x.Data.Level == level);
             if (data == null) throw new CacheDataNotExistExecption(TroopLevelNotExist);
             else return data;
         }

@@ -5,11 +5,34 @@ using System.Runtime.Serialization;
 
 namespace GameOfRevenge.Common.Models
 {
+    public class EnlistedTroop
+    {
+        public TroopType TroopType { get; set; }
+        public List<EnlistedTroopDetails> TroopData { get; set; }
+    }
+
+    public class EnlistedTroopDetails
+    {
+        public int Level { get; set; }
+        public int Count { get; set; }
+    }
+
     public class TroopInfos
     {
         public long Id { get; set; }
         public TroopType TroopType { get; set; }
         public List<TroopDetails> TroopData { get; set; }
+
+        public TroopInfos()
+        {
+        }
+
+        public TroopInfos(long id, TroopType troopType, List<TroopDetails> troopData)
+        {
+            Id = id;
+            TroopType = troopType;
+            TroopData = troopData;
+        }
     }
 
     [DataContract]
@@ -19,44 +42,39 @@ namespace GameOfRevenge.Common.Models
         public int Level { get; set; }
         [DataMember]
         public int Count { get; set; } // total count of troop in training and ready for war// training + trained
-        [DataMember]
+
+        [DataMember(EmitDefaultValue = false)]
         public int Wounded { get; set; }
 
 //        [JsonIgnore]
-        public int FinalCount
+        public int FinalCount//AVAILABLE
         {
             get
             {
-                var minusCount = 0;
-
+                var unavailable = 0;
                 if (InTraning != null)
                 {
                     foreach (var trainingData in InTraning)
                     {
-                        if (trainingData != null && trainingData.TimeLeft > 0)
-                        {
-                            minusCount += trainingData.Count;
-                        }
+                        if (trainingData?.TimeLeft > 0) unavailable += trainingData.Count;
                     }
                 }
-
                 if (InRecovery != null)
                 {
                     foreach (var recoveryData in InRecovery)
                     {
-                        if (recoveryData != null && recoveryData.TimeLeft > 0)
-                        {
-                            minusCount += recoveryData.Count;
-                        }
+                        if (recoveryData?.TimeLeft > 0) unavailable += recoveryData.Count;
                     }
                 }
 
-                return Count - (minusCount + Wounded);
+                return Count - (unavailable + Wounded);
             }
         }
-        [DataMember]
+
+        [DataMember(EmitDefaultValue = false)]
         public List<UnavaliableTroopInfo> InTraning { get; set; }
-        [DataMember]
+
+        [DataMember(EmitDefaultValue = false)]
         public List<UnavaliableTroopInfo> InRecovery { get; set; }
     }
 
@@ -69,31 +87,42 @@ namespace GameOfRevenge.Common.Models
         public int BuildingLocId { get; set; }
     }
 
+    [DataContract]
     public class MarchingArmy
     {
+        [DataMember]
         public List<TroopInfos> Troops { get; set; }
+        [DataMember]
         public int TargetPlayer { get; set; }
+        [DataMember]
         public DateTime StartTime { get; set; }
-        public DateTime TaskTime { get; set; }  //reach to destination time from start point
-        public DateTime EndTime { get; set; }
+        [DataMember]
+        public int ReachedTime { get; set; }  //reach to destination time from start point
+        [DataMember]
+        public int BattleDuration { get; set; }
+
         public double TimeLeftForTask
         {
             get
             {
-                double totalSeconds = (TaskTime - DateTime.UtcNow).TotalSeconds;
+                DateTime taskTime = StartTime.AddSeconds(ReachedTime);
+                double totalSeconds = (taskTime - DateTime.Now).TotalSeconds;
                 return totalSeconds <= 0 ? 0 : totalSeconds;
             }
         }
 
+        [DataMember(EmitDefaultValue = false)]
         public List<int> Heroes { get; set; }
 
         public bool IsTimeForReturn
         {
             get
             {
-                double marchingTime = (TaskTime - StartTime).TotalMilliseconds;
-                DateTime returnTime = EndTime.AddMilliseconds(-marchingTime);
-                return returnTime < DateTime.UtcNow;
+                DateTime returnTime = StartTime.AddSeconds(ReachedTime + BattleDuration);
+                return DateTime.Now > returnTime;
+//                double marchingTime = (TaskTime - StartTime).TotalMilliseconds;
+//                DateTime returnTime = EndTime.AddMilliseconds(-marchingTime);
+//                return returnTime < DateTime.UtcNow;
             }
         }
 
@@ -111,8 +140,11 @@ namespace GameOfRevenge.Common.Models
         {
             get
             {
-                double totalSeconds = (EndTime - DateTime.UtcNow).TotalSeconds;
-                return totalSeconds <= 0 ? 0 : totalSeconds;
+                DateTime endTime = StartTime.AddSeconds((ReachedTime * 2) + BattleDuration);
+                double totalSecs = (endTime - DateTime.Now).TotalSeconds;
+                if (totalSecs < 0) totalSecs = 0;
+//                double totalSecs = (EndTime - DateTime.UtcNow).TotalSeconds;
+                return totalSecs;
             }
         }
     }

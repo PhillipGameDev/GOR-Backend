@@ -216,7 +216,7 @@ namespace GameOfRevenge.Business.Manager.UserData
             }
         }
 
-        public async Task<Response<UserInventoryDataUpdated>> IncrementItem(int playerId, InventoryItemType itemType, long playerDataId, int value)
+        public async Task<Response<UserInventoryDataUpdated>> SumItem(int playerId, InventoryItemType itemType, long playerDataId, int value)
         {
             try
             {
@@ -235,7 +235,7 @@ namespace GameOfRevenge.Business.Manager.UserData
                 }
                 else
                 {
-                    response = await manager.IncrementPlayerData(playerId, playerDataId, value);
+                    response = await manager.SumPlayerData(playerId, playerDataId, value);
                 }
 
                 if (response.IsSuccess)
