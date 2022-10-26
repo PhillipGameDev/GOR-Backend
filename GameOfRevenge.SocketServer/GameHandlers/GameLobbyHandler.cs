@@ -14,6 +14,7 @@ using GameOfRevenge.Interface;
 using GameOfRevenge.Model;
 using GameOfRevenge.Common.Interface;
 using GameOfRevenge.Business.Manager;
+using GameOfRevenge.Business.CacheData;
 
 namespace GameOfRevenge.GameHandlers
 {
@@ -351,9 +352,10 @@ namespace GameOfRevenge.GameHandlers
 
                 if (response2.IsSuccess)
                 {
-                    data = GetTroopTrainingData(operation.LocationId, operation.StructureType, (TroopType)operation.TroopType, response2);
+                    data = GetTroopTrainingData(operation.LocationId, operation.StructureType, (TroopType)operation.TroopType, response2.Data.Troops);
                 }
-                else
+
+                if (data == null)
                 {
                     response.Case = 0;
                     response.Message = "Invalid troop data";
@@ -383,9 +385,10 @@ namespace GameOfRevenge.GameHandlers
 
             if (response.IsSuccess)
             {
-                data = GetTroopTrainingData(operation.LocationId, operation.StructureType, (TroopType)operation.TroopType, response);
+                data = GetTroopTrainingData(operation.LocationId, operation.StructureType, (TroopType)operation.TroopType, response.Data.Troops);
             }
-            else
+
+            if (data == null)
             {
                 response.Case = 0;
                 response.Message = "Invalid troop data";
@@ -395,52 +398,46 @@ namespace GameOfRevenge.GameHandlers
             return SendOperationResponse(peer, operationRequest, response, data);
         }
 
-        private Dictionary<byte, object> GetTroopTrainingData(int locationId, int structureType, TroopType troopType, Response<Common.Models.PlayerCompleteData> response)
+        private Dictionary<byte, object> GetTroopTrainingData(int locationId, int structureType, TroopType troopType, List<Common.Models.TroopInfos> troops)
         {
-            Dictionary<byte, object> data = null;
+            if (!CacheTroopDataManager.TroopTypes.Contains(troopType)) return null;
 
-            var troopData = response.Data.Troops.FirstOrDefault(x => x.TroopType == troopType)?.TroopData;
-            if (troopData != null && troopData.Count > 0)
+            Dictionary<byte, object> data = null;
+            List<List<Common.Models.UnavaliableTroopInfo>> troopTraining = null;
+            var troopData = troops.FirstOrDefault(x => x.TroopType == troopType)?.TroopData;
+            if (troopData?.Count > 0)
+            {
+                troopTraining = troopData.Select(x => x.InTraning).Where(x => x != null)?.ToList();
+            }
+            if (troopTraining?.Count > 0)
             {
                 var breakAll = false;
-                var troopTraning = troopData.Select(x => x.InTraning).Where(x => x != null)?.ToList();
-                if (troopTraning != null && troopTraning.Count > 0)
+                foreach (var traning in troopTraining)
                 {
-                    foreach (var traning in troopTraning)
+                    foreach (var troopInfo in traning)
                     {
-                        foreach (var troopInfo in traning)
+                        if (troopInfo.BuildingLocId != locationId) continue;
+
+                        var traningTroopResp = new TroopTrainingTimeResponse()
                         {
-                            if (troopInfo.BuildingLocId == locationId)
-                            {
-                                var traningTroopResp = new TroopTrainingTimeResponse()
-                                {
-                                    LocationId = locationId,
-                                    StructureType = structureType,
-                                    TotalTime = troopInfo.Duration,
-                                    TrainingTime = (int)troopInfo.TimeLeft
-                                };
+                            LocationId = locationId,
+                            StructureType = structureType,
+                            TotalTime = troopInfo.Duration,
+                            TrainingTime = (int)troopInfo.TimeLeft
+                        };
 
-                                data = traningTroopResp.GetDictionary();
-                                //                                    return peer.SendOperation(operationRequest.OperationCode, ReturnCode.OK, data, debuMsg: response.Message);
+                        data = traningTroopResp.GetDictionary();
+                        //                                    return peer.SendOperation(operationRequest.OperationCode, ReturnCode.OK, data, debuMsg: response.Message);
 
-                                breakAll = true;
-                            }
-
-                            if (breakAll) break;
-                        }
-                        if (breakAll) break;
+                        breakAll = true;
+                        break;
                     }
-                }
-                else
-                {
-                    response.Case = 0;
-                    response.Message = "Troop not training";
+                    if (breakAll) break;
                 }
             }
             else
             {
-                response.Case = 0;
-                response.Message = "Troop not found";
+                data = new Dictionary<byte, object>();
             }
 
             return data;

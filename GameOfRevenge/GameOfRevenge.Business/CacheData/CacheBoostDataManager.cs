@@ -35,21 +35,21 @@ namespace GameOfRevenge.Business.CacheData
 
         public static IReadOnlyBoostTypeTable GetFullBoostDataByTypeId(int boostId)
         {
-            var data = BoostInfos.First(x => x.BoostTypeId == boostId);
+            var data = BoostInfos.FirstOrDefault(x => x.BoostTypeId == boostId);
             if (data == null) throw new CacheDataNotExistExecption(BoostNotExist);
             else return data;
         }
 
         /*        public static IReadOnlyBoostTypeTable GetFullBoostDataByBoostId(int boostId)
                 {
-                    var data = BoostInfos.First(x => x.Values.Where(y => y.BoostId == boostId) != null);
+                    var data = BoostInfos.FirstOrDefault(x => x.Values.Where(y => y.BoostId == boostId) != null);
                     if (data == null) throw new CacheDataNotExistExecption(StructureNotExist);
                     else return data;
                 }*/
 
         public static IReadOnlyBoostTypeTable GetFullBoostDataByType(NewBoostType boostType)
         {
-            var data = BoostInfos.First(x => x.BoostType == boostType);
+            var data = BoostInfos.FirstOrDefault(x => x.BoostType == boostType);
             if (data == null) throw new CacheDataNotExistExecption(BoostNotExist);
             else return data;
         }

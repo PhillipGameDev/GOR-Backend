@@ -677,7 +677,7 @@ namespace GameOfRevenge.Business.Manager.UserData
                             break;
                         case TroopType.Knight:
                             break;
-                        case TroopType.Seige:
+                        case TroopType.Slingshot:
                             break;
                     }
                 }

@@ -58,7 +58,7 @@ namespace GameOfRevenge.Business.Manager.UserData
                 case TroopType.Knight:
                     singleCost += 2f;
                     break;
-                case TroopType.Seige:
+                case TroopType.Slingshot:
                     singleCost += 5f;
                     break;
                 default:

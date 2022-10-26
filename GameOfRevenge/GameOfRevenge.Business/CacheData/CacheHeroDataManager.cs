@@ -46,7 +46,7 @@ namespace GameOfRevenge.Business.CacheData
 
         public static IReadOnlyHeroDataRequirementRel GetFullHeroData(string heroType)
         {
-            var item = HeroInfos.First(x => x.Info.Code == heroType);
+            var item = HeroInfos.FirstOrDefault(x => x.Info.Code == heroType);
             if (item == null)
                 throw new CacheDataNotExistExecption(HeroNotExist+" "+heroType);
             else

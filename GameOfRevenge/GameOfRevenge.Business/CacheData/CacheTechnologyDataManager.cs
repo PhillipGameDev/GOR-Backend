@@ -32,13 +32,13 @@ namespace GameOfRevenge.Business.CacheData
 
         public static IReadOnlyTechnologyTable GetTechnologyTable(int technologyId)
         {
-            var data = TechnologyInfos.First(x => x.Info.Id == technologyId)?.Info;
+            var data = TechnologyInfos.FirstOrDefault(x => x.Info.Id == technologyId)?.Info;
             if (data == null) throw new CacheDataNotExistExecption(TechnologyNotExist);
             else return data;
         }
         public static IReadOnlyTechnologyTable GetTechnologyTable(TechnologyType technologyType)
         {
-            var data = TechnologyInfos.First(x => x.Info.Code == technologyType)?.Info;
+            var data = TechnologyInfos.FirstOrDefault(x => x.Info.Code == technologyType)?.Info;
             if (data == null) throw new CacheDataNotExistExecption(TechnologyNotExist);
             else return data;
         }
@@ -121,13 +121,13 @@ namespace GameOfRevenge.Business.CacheData
 
         public static IReadOnlyTechnologyDataRequirementRel GetFullTechnologyData(int technologyId)
         {
-            var data = TechnologyInfos.First(x => x.Info.Id == technologyId);
+            var data = TechnologyInfos.FirstOrDefault(x => x.Info.Id == technologyId);
             if (data == null) throw new CacheDataNotExistExecption(TechnologyNotExist);
             else return data;
         }
         public static IReadOnlyTechnologyDataRequirementRel GetFullTechnologyData(TechnologyType technologyType)
         {
-            var data = TechnologyInfos.First(x => x.Info.Code == technologyType);
+            var data = TechnologyInfos.FirstOrDefault(x => x.Info.Code == technologyType);
             if (data == null) throw new CacheDataNotExistExecption(TechnologyNotExist);
             else return data;
 
@@ -135,14 +135,14 @@ namespace GameOfRevenge.Business.CacheData
         public static IReadOnlyTechnologyDataRequirement GetFullTechnologyLevelData(int technologyId, int level)
         {
             var technology = GetFullTechnologyData(technologyId);
-            var data = technology.Levels.First(x => x.Data.Level == level);
+            var data = technology.Levels.FirstOrDefault(x => x.Data.Level == level);
             if (data == null) throw new CacheDataNotExistExecption(TechnologyLevelNotExist);
             else return data;
         }
         public static IReadOnlyTechnologyDataRequirement GetFullTechnologyLevelData(TechnologyType technologyType, int level)
         {
             var technology = GetFullTechnologyData(technologyType);
-            var data = technology.Levels.First(x => x.Data.Level == level);
+            var data = technology.Levels.FirstOrDefault(x => x.Data.Level == level);
             if (data == null) throw new CacheDataNotExistExecption(TechnologyLevelNotExist);
             else return data;
         }

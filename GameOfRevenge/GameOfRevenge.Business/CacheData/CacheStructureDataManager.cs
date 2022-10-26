@@ -107,27 +107,27 @@ namespace GameOfRevenge.Business.CacheData
 
         public static IReadOnlyStructureDataRequirementRel GetFullStructureData(int structureId)
         {
-            var data = StructureInfos.First(x => x.Info.Id == structureId);
+            var data = StructureInfos.FirstOrDefault(x => x.Info.Id == structureId);
             if (data == null) throw new CacheDataNotExistExecption(StructureNotExist);
             else return data;
         }
         public static IReadOnlyStructureDataRequirementRel GetFullStructureData(StructureType structureType)
         {
-            var data = StructureInfos.First(x => x.Info.Code == structureType);
+            var data = StructureInfos.FirstOrDefault(x => x.Info.Code == structureType);
             if (data == null) throw new CacheDataNotExistExecption(StructureNotExist);
             else return data;
         }
         public static IReadOnlyStructureDataRequirement GetFullStructureLevelData(int structureId, int level)
         {
             var structure = GetFullStructureData(structureId);
-            var data = structure.Levels.First(x => x.Data.Level == level);
+            var data = structure.Levels.FirstOrDefault(x => x.Data.Level == level);
             if (data == null) throw new CacheDataNotExistExecption(StructureLevelNotExist);
             else return data;
         }
         public static IReadOnlyStructureDataRequirement GetFullStructureLevelData(StructureType structureType, int level)
         {
             var structure = GetFullStructureData(structureType);
-            var data = structure.Levels.First(x => x.Data.Level == level);
+            var data = structure.Levels.FirstOrDefault(x => x.Data.Level == level);
             if (data == null) throw new CacheDataNotExistExecption(StructureLevelNotExist);
             else return data;
         }
@@ -223,48 +223,38 @@ namespace GameOfRevenge.Business.CacheData
 
         private static List<BuildingInfoData> LoadInfoOnly()
         {
-            if (structureInfof == null || structureInfof.Count <= 0)
+            if ((structureInfof == null) || (structureInfof.Count < 1))
             {
                 structureInfof = new List<BuildingInfoData>();
 
                 foreach (var structure in StructureInfos)
                 {
-                    var table = GetInfoTable(structure);
+                    List<string> columns = LoadDescriptionInfoHeaders(structure.Info.Code);
+                    if ((columns == null) || (columns.Count < 1)) continue;
 
-                    if (table != null)
+                    var table = new InfoDataTable()
                     {
-                        var structureInfo = new BuildingInfoData()
-                        {
-                            StructureId = structure.Info.Id,
-                            Code = structure.Info.Code.ToString(),
-                            StructureType = structure.Info.Code,
-                            Name = structure.Info.Name,
-                            Table = table,
-                            Description = structure.Info.Description,
-                        };
+                        Columns = columns,
+                        Rows = LoadDescriptionInfoRows(structure.Info.Code, structure.Levels)
+                    };
 
-                        structureInfof.Add(structureInfo);
-                    }
+                    var structureInfo = new BuildingInfoData()
+                    {
+                        StructureId = structure.Info.Id,
+                        Code = structure.Info.Code.ToString(),
+                        StructureType = structure.Info.Code,
+                        Name = structure.Info.Name,
+                        Table = table,
+                        Description = structure.Info.Description,
+                    };
+
+                    structureInfof.Add(structureInfo);
                 }
             }
 
 
             return structureInfof;
         }
-
-        private static InfoDataTable GetInfoTable(IReadOnlyStructureDataRequirementRel structure)
-        {
-            List<string> columns = LoadDescriptionInfoHeaders(structure.Info.Code);
-            if (columns == null || columns.Count <= 0) return null;
-
-            return new InfoDataTable()
-            {
-                Columns = columns,
-                Rows = LoadDescriptionInfoRows(structure.Info.Code, structure.Levels)
-            };
-        }
-
-
 
         private static List<string> LoadDescriptionInfoHeaders(StructureType type)
         {
@@ -285,10 +275,10 @@ namespace GameOfRevenge.Business.CacheData
                 case StructureType.InfantryCamp: return new List<string>() { "Level", "Population", "Traning Speed" };
                 case StructureType.Infirmary: return new List<string>() { "Level", "Wounded Capacity" };
 
-                case StructureType.Workshop: return new List<string>() { "Level", "Troop", "Power" };
-                case StructureType.Barracks: return new List<string>() { "Level", "Troop", "Power" };
-                case StructureType.ShootingRange: return new List<string>() { "Level", "Troop", "Power" };
-                case StructureType.Stable: return new List<string>() { "Level", "Troop", "Power" };
+                case StructureType.Barracks:
+                case StructureType.ShootingRange:
+                case StructureType.Stable:
+                case StructureType.Workshop: return new List<string>() { "Level", "Troop", "Health", "Attack" };
 
                 case StructureType.Market: return new List<string>() { "Level", "Max caravan Load" };
                 case StructureType.TrainingHeroes: return new List<string>() { "Level" };
@@ -299,7 +289,7 @@ namespace GameOfRevenge.Business.CacheData
 
         private static List<List<string>> LoadDescriptionInfoRows(StructureType type, IReadOnlyList<IReadOnlyStructureDataRequirement> levels)
         {
-            List<List<string>> lst = new List<List<string>>();
+            var lst = new List<List<string>>();
 
             foreach (var level in levels)
             {
@@ -334,9 +324,6 @@ namespace GameOfRevenge.Business.CacheData
                         break;
                     case StructureType.Blacksmith:
                         break;
-                    case StructureType.Workshop:
-                        item.AddRange(TroopAddRequirementDecriptionInfo(type, level));
-                        break;
                     case StructureType.Embassy:
                         break;
                     case StructureType.Warehouse:
@@ -367,16 +354,13 @@ namespace GameOfRevenge.Business.CacheData
                         item.Add(level.Data.Level.ToString() + "%");
                         break;
                     case StructureType.Barracks:
+                    case StructureType.ShootingRange:
+                    case StructureType.Stable:
+                    case StructureType.Workshop:
                         item.AddRange(TroopAddRequirementDecriptionInfo(type, level));
                         break;
                     case StructureType.Infirmary:
                         item.Add(level.Data.WoundedCapacity.ToString());
-                        break;
-                    case StructureType.ShootingRange:
-                        item.AddRange(TroopAddRequirementDecriptionInfo(type, level));
-                        break;
-                    case StructureType.Stable:
-                        item.AddRange(TroopAddRequirementDecriptionInfo(type, level));
                         break;
                     case StructureType.Market:
                         if (level.Data.Level <= 20) item.Add((level.Data.Level * 20000).ToString());
@@ -425,24 +409,27 @@ namespace GameOfRevenge.Business.CacheData
 
         private static string[] TroopAddRequirementDecriptionInfo(StructureType type, IReadOnlyStructureDataRequirement level)
         {
-            var troopBuildingRelation = CacheTroopDataManager.TroopBuildingRelation.Where(x => x.Structure == type).FirstOrDefault();
+            var troopBuildingRelation = CacheTroopDataManager.TroopBuildingRelation.FirstOrDefault(x => x.Structure == type);
             var troopType = troopBuildingRelation.Troops.FirstOrDefault();
 
-            var structureId = GetFullStructureData(troopBuildingRelation.Structure).Info.Id;
+            string[] strs = new string[3];
+
             var troop = CacheTroopDataManager.GetFullTroopData(troopType);
-
-            string[] strs = new string[2];
-
-            foreach (var data in troop.Levels)
+            if (troop != null)
             {
-                foreach (var req in data.Requirements)
+                var structureId = GetFullStructureData(troopBuildingRelation.Structure).Info.Id;
+                foreach (var data in troop.Levels)
                 {
-                    if (req.DataType == DataType.Structure && req.ValueId == structureId && req.Value == level.Data.Level)
+                    foreach (var req in data.Requirements)
                     {
-                        strs[0] += troop.Info.Name + " " + data.Data.Level;
-                        strs[1] += data.Data.Power;
+                        if ((req.DataType == DataType.Structure) && (req.ValueId == structureId) && (req.Value == level.Data.Level))
+                        {
+                            strs[0] += troop.Info.Name + " Lvl." + data.Data.Level;
+                            strs[1] += data.Data.Health;// Power;
+                            strs[2] += data.Data.AttackDamage;
 
-                        return strs;
+                            return strs;
+                        }
                     }
                 }
             }

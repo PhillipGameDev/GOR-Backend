@@ -23,7 +23,8 @@ namespace GameOfRevenge.WebServer
         {
 
             //            Config.ConnectionString = ConfigurationManager.AppSettings["ConString"];
-            Config.ConnectionString = "Data Source=52.194.60.233,1433;Initial Catalog=GameOfRevenge;Persist Security Info=True;User ID=developer;Password=developer";
+//            Config.ConnectionString = "Data Source=52.194.60.233,1433;Initial Catalog=GameOfRevenge;Persist Security Info=True;User ID=developer;Password=developer";
+            Config.ConnectionString = "Data Source=162.19.19.108,1433;Initial Catalog=GameOfRevenge;Persist Security Info=True;User ID=developer;Password=developer";
 
             Config.DefaultWorldCode = ConfigurationManager.AppSettings["DefaultWorldCode"];
 

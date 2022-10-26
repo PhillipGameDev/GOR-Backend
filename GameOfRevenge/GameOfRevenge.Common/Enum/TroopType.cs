@@ -6,6 +6,6 @@
         Swordman = 1,
         Archer = 2,
         Knight = 3,
-        Seige = 4
+        Slingshot = 4
     }
 }

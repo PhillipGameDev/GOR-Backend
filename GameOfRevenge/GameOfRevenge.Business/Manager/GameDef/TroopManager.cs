@@ -18,15 +18,15 @@ namespace GameOfRevenge.Business.Manager.GameDef
         {
             try
             {
-                var respStructs = await GetAllTroops();
-                var respStructDatas = await GetAllTroopDatas();
-                var respStructReqs = await GetAllTroopDataRequirements();
+                var respTroops = await GetAllTroops();
+                var respTroopDatas = await GetAllTroopDatas();
+                var respTroopReqs = await GetAllTroopDataRequirements();
 
-                if (respStructs.IsSuccess && respStructDatas.IsSuccess && respStructReqs.IsSuccess)
+                if (respTroops.IsSuccess && respTroopDatas.IsSuccess && respTroopReqs.IsSuccess)
                 {
-                    var troops = respStructs.Data;
-                    var structDatas = respStructDatas.Data;
-                    var structReqs = respStructReqs.Data;
+                    var troops = respTroops.Data;
+                    var troopDatas = respTroopDatas.Data;
+                    var troopReqs = respTroopReqs.Data;
                     var finalData = new List<TroopDataRequirementRel>();
 
                     foreach (var item in troops)
@@ -37,12 +37,12 @@ namespace GameOfRevenge.Business.Manager.GameDef
                             Levels = new List<TroopDataRequirements>()
                         };
 
-                        foreach (var itemData in structDatas.Where(x => x.Id == item.Id))
+                        foreach (var itemData in troopDatas.Where(x => x.Id == item.Id))
                         {
                             var structDataReq = new TroopDataRequirements
                             {
                                 Data = itemData,
-                                Requirements = structReqs.Where(x => x.DataId == itemData.DataId).ToList()
+                                Requirements = troopReqs.Where(x => x.DataId == itemData.DataId).ToList()
                             };
 
                             structDataReqRel.Levels.Add(structDataReq);

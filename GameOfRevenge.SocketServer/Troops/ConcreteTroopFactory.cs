@@ -22,7 +22,7 @@ namespace GameOfRevenge.Troops
                     return new Archer(troop,building);
                 case TroopType.Knight:
                     return new Knight(troop,building);
-                case TroopType.Seige:
+                case TroopType.Slingshot:
                     return new SeigeTroop(troop,building);
                 default:
                     throw new ApplicationException($"Troop is no created {troop.TroopData.Info.Code}");
