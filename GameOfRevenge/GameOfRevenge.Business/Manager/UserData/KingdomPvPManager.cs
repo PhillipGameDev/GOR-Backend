@@ -457,13 +457,10 @@ namespace GameOfRevenge.Business.Manager.UserData
                     GateHp = gateHitPoints
                 };
 
-                log.Debug("-----------11111");
-
                 SetTroopsAlive(attackerPower);
                 SetTroopsAlive(defenderPower);
                 attackerPower.Recalculate();
                 defenderPower.Recalculate();
-                log.Debug("-----------22222");
 
                 while ((defenderPower.HitPoint > 0) && (attackerPower.HitPoint > 0))
                 {
@@ -471,16 +468,13 @@ namespace GameOfRevenge.Business.Manager.UserData
                     log.Debug("atk pwr= " + attackerPower.HitPoint + "  def pwr=" + defenderPower.HitPoint);
                 }
 
-                log.Debug("-----------333333");
                 //TODO: implement percentage based on level (maybe we need to add level to item)
                 var atkHealingBoost = attackerArmy.Boosts.Exists(x => (x.Type == NewBoostType.LifeSaver) && (x.TimeLeft > 0));
                 var defHealingBoost = defenderArmy.Boosts.Exists(x => (x.Type == NewBoostType.LifeSaver) && (x.TimeLeft > 0));
 
-                log.Debug("-----------44444");
                 CalculateTroopLoss(attackerPower, atkHealingBoost);
                 CalculateTroopLoss(defenderPower, defHealingBoost);
 
-                log.Debug("-----------555555");
                 bool attackerWin = attackerPower.HitPoint > defenderPower.HitPoint;
 
                 if (attackerArmy.MarchingArmy.Heroes != null)
@@ -514,10 +508,9 @@ namespace GameOfRevenge.Business.Manager.UserData
                         var response = await manager.AddOrUpdatePlayerData(defenderArmy.PlayerId, DataType.Hero, valueId, data);
                     }
                 }
-                log.Debug("----------666666");
 
                 var king = attackerArmy.King;
-                king.BattleCount += 5;
+                king.Experience += 5;
                 if (king.TimeLeft <= 0) king.StartTime = DateTime.UtcNow;
                 king.Duration += 10 * 60;
 /*                if (king.TimeLeft > 0)
@@ -533,9 +526,6 @@ namespace GameOfRevenge.Business.Manager.UserData
                 await manager.AddOrUpdatePlayerData(attackerArmy.PlayerId, DataType.Custom, 1, kingdata);
 
 
-                log.Debug("----------77777");
-
-
                 var finalReport = new BattleReport
                 {
                     Attacker = SetClientReport(attackerPower),
@@ -543,18 +533,14 @@ namespace GameOfRevenge.Business.Manager.UserData
                     AttackerWon = attackerWin
                 };
 
-                log.Debug("----------888888");
                 await RemoveTroops(attackerArmy, attackerPower);
                 await RemoveTroops(defenderArmy, defenderPower);
 
                 if (attackerWin) await GiveLoot(defenderArmy, attackerPower, finalReport);
 
-                log.Debug("---------999999");
-
                 await manager.AddOrUpdatePlayerData(attackerArmy.PlayerId, DataType.Marching, 1, string.Empty);
                 await structManager.UpdateGate(defenderArmy.PlayerId, defenderPower.GateHp);
 
-                log.Debug("---------aaaaaaa");
                 string json = JsonConvert.SerializeObject(finalReport);
                 _ = Task.Run(async () =>
                 {

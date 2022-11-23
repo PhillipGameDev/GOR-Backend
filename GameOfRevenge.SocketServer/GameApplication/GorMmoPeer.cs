@@ -27,18 +27,23 @@ namespace GameOfRevenge.GameApplication
 
         public void OnQuestUpdate(UserQuestProgressData obj)
         {
-            var objResp = new QuestUpdateResponse()
+            QuestUpdateResponse objResp = null;
+
+            if (obj != null)
             {
-                Completed = obj.Completed,
-                InitialData = obj.InitialData,
-                IsSuccess = true,
-                Message = "Update quest data",
-                MilestoneId = obj.MilestoneId,
-                Name = obj.Name,
-                ProgressData = obj.ProgressData,
-                QuestId = obj.QuestId,
-                QuestType = obj.QuestType
-            };
+                objResp = new QuestUpdateResponse()
+                {
+                    Completed = obj.Completed,
+                    InitialData = obj.InitialData,
+                    IsSuccess = true,
+                    Message = "Update quest data",
+                    MilestoneId = obj.MilestoneId,
+                    //                Name = obj.Name,
+                    ProgressData = obj.ProgressData,
+                    QuestId = obj.QuestId,
+                    QuestType = obj.QuestType
+                };
+            }
 
             Actor.SendEvent(EventCode.UpdateQuest, objResp);
         }
@@ -49,7 +54,7 @@ namespace GameOfRevenge.GameApplication
             {
                 try
                 {
-                    GameService.NewRealTimeUpdateManager.DeletePlayerData(Actor.PlayerId);
+                    GameService.NewRealTimeUpdateManager.DeletePlayerQuestData(Actor.PlayerId);
                 }
                 catch { }
             }
@@ -105,14 +110,14 @@ namespace GameOfRevenge.GameApplication
 
             if (string.IsNullOrWhiteSpace(debuMsg)) debuMsg = string.Empty;
 
-            log.Debug("CLIENTS = " + Clients);
-            log.Debug("CLIENTS coun = " + Clients.Count);
+//            log.Debug("CLIENTS = " + Clients);
+//            log.Debug("CLIENTS count = " + Clients.Count);
             foreach (var client in Clients)
             {
 //                if (client == this || client == null) continue;
                 if (client == null) continue;
 
-                log.Debug("client = " + client+"  oc="+opCode+"  rc="+returnCode);
+//                log.Debug("client = " + client+"  oc="+opCode+"  rc="+returnCode);
                 try
                 {
                     client.SendOperation(opCode, returnCode, data);

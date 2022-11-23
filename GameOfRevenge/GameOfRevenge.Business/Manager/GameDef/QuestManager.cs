@@ -14,52 +14,56 @@ namespace GameOfRevenge.Business.Manager.GameDef
     public class QuestManager : BaseManager
     {
         public async Task<Response<List<QuestTable>>> GetAllQuests() => await Db.ExecuteSPMultipleRow<QuestTable>("GetAllQuests");
+        public async Task<Response<List<ChapterQuestTable>>> GetAllChapterQuests() => await Db.ExecuteSPMultipleRow<ChapterQuestTable>("GetAllChapterQuests");
         public async Task<Response<List<ChapterTable>>> GetAllChapters() => await Db.ExecuteSPMultipleRow<ChapterTable>("GetAllChapters");
-        public async Task<Response<List<DataRequirement>>> GetAllChapterRewards() => await Db.ExecuteSPMultipleRow<DataRequirement>("GetAllChapterRewards");
-        public async Task<Response<List<DataRequirement>>> GetAllQuestRewards() => await Db.ExecuteSPMultipleRow<DataRequirement>("GetAllQuestRewards");
+        public async Task<Response<List<DataReward>>> GetAllChapterRewards() => await Db.ExecuteSPMultipleRow<DataReward>("GetAllChapterRewards");
+        public async Task<Response<List<DataReward>>> GetAllQuestRewards() => await Db.ExecuteSPMultipleRow<DataReward>("GetAllQuestRewards");
 
         public async Task<Response<List<ChapterQuestRelData>>> GetAllChapterQuestRelData()
         {
             try
             {
-                var allChapter = await GetAllChapters();
-                if (!allChapter.IsSuccess) return new Response<List<ChapterQuestRelData>>(allChapter.Case, allChapter.Message);
+                var allChapters = await GetAllChapters();
+                if (!allChapters.IsSuccess) return new Response<List<ChapterQuestRelData>>(allChapters.Case, allChapters.Message);
+
+                var allChapterQuests = await GetAllChapterQuests();
+                if (!allChapterQuests.IsSuccess) return new Response<List<ChapterQuestRelData>>(allChapterQuests.Case, allChapterQuests.Message);
 
                 var allChapterRewards = await GetAllChapterRewards();
-                if (!allChapterRewards.IsSuccess) return new Response<List<ChapterQuestRelData>>(allChapter.Case, allChapter.Message);
+                if (!allChapterRewards.IsSuccess) return new Response<List<ChapterQuestRelData>>(allChapterRewards.Case, allChapterRewards.Message);
 
-                var allQuest = await GetAllQuests();
-                if (!allQuest.IsSuccess) return new Response<List<ChapterQuestRelData>>(allQuest.Case, allQuest.Message);
+                var allQuests = await GetAllQuests();
+                if (!allQuests.IsSuccess) return new Response<List<ChapterQuestRelData>>(allQuests.Case, allQuests.Message);
 
                 var allQuestRewards = await GetAllQuestRewards();
-                if (!allQuestRewards.IsSuccess) return new Response<List<ChapterQuestRelData>>(allQuest.Case, allQuest.Message);
+                if (!allQuestRewards.IsSuccess) return new Response<List<ChapterQuestRelData>>(allQuestRewards.Case, allQuestRewards.Message);
 
-                var response = new Response<List<ChapterQuestRelData>>(new List<ChapterQuestRelData>(), 100, allQuest.Message);
+                var response = new Response<List<ChapterQuestRelData>>(new List<ChapterQuestRelData>(), 100, allChapters.Message);
 
-                foreach (var chapter in allChapter.Data)
+                foreach (var chapter in allChapters.Data)
                 {
-                    var chapData = new ChapterQuestRelData()
+                    var chapterId = chapter.ChapterId;
+                    var quests = new List<QuestRewardRelData>();
+                    var chapterQuests = allChapterQuests.Data.Where(x => x.ChapterId == chapterId).ToList();
+                    foreach (var quest in chapterQuests)
                     {
-                        Chapter = chapter,
-                        Quests = new List<QuestRewardRelData>(),
-                        Rewards = allChapterRewards.Data.Where(x=>x.DataId == chapter.ChapterId).ToList()
-                    };
+                        var questId = quest.QuestId;
+                        var questData = allQuests.Data.Find(x => x.QuestId == questId);
+                        if (questData == null) continue;
 
-                    foreach (var quest in allQuest.Data)
-                    {
-                        if (quest.ChapterId == chapter.ChapterId)
+                        quests.Add(new QuestRewardRelData()
                         {
-                            var questRewardRel = new QuestRewardRelData()
-                            {
-                                Quest = quest,
-                                Rewards = allQuestRewards.Data.Where(x => x.DataId == quest.QuestId).ToList()
-                            };
-
-                            chapData.Quests.Add(questRewardRel);
-                        }
+                            Quest = questData,
+                            Rewards = allQuestRewards.Data.Where(x => x.DataId == questId).ToList()
+                        });
                     }
 
-                    response.Data.Add(chapData);
+                    response.Data.Add(new ChapterQuestRelData()
+                    {
+                        Chapter = chapter,
+                        Quests = quests,
+                        Rewards = allChapterRewards.Data.Where(x => x.DataId == chapterId).ToList()
+                    });
                 }
 
                 return response;
@@ -76,6 +80,102 @@ namespace GameOfRevenge.Business.Manager.GameDef
             catch (Exception ex)
             {
                 return new Response<List<ChapterQuestRelData>>()
+                {
+                    Case = 0,
+                    Data = null,
+                    Message = ErrorManager.ShowError(ex)
+                };
+            }
+        }
+
+        public async Task<Response<List<QuestRewardRelData>>> GetAllSideQuestRelData()
+        {
+            try
+            {
+                var allQuests = await GetAllQuests();
+                if (!allQuests.IsSuccess) return new Response<List<QuestRewardRelData>>(allQuests.Case, allQuests.Message);
+
+                var allQuestRewards = await GetAllQuestRewards();
+                if (!allQuestRewards.IsSuccess) return new Response<List<QuestRewardRelData>>(allQuestRewards.Case, allQuestRewards.Message);
+
+                var response = new Response<List<QuestRewardRelData>>(new List<QuestRewardRelData>(), 100, "All Side Quests");
+
+                var sideQuests = allQuests.Data.Where(x => x.MilestoneId == 99).ToList();
+                foreach (var questData in sideQuests)
+                {
+                    var questId = questData.QuestId;
+//                    var questData = allQuests.Data.Find(x => x.QuestId == questId);
+                    if (questData == null) continue;
+
+                    response.Data.Add(new QuestRewardRelData()
+                    {
+                        Quest = questData,
+                        Rewards = allQuestRewards.Data.Where(x => x.DataId == questId).ToList()
+                    });
+                }
+
+                return response;
+            }
+            catch (InvalidModelExecption ex)
+            {
+                return new Response<List<QuestRewardRelData>>()
+                {
+                    Case = 200,
+                    Data = null,
+                    Message = ex.Message
+                };
+            }
+            catch (Exception ex)
+            {
+                return new Response<List<QuestRewardRelData>>()
+                {
+                    Case = 0,
+                    Data = null,
+                    Message = ErrorManager.ShowError(ex)
+                };
+            }
+        }
+
+        public async Task<Response<List<QuestRewardRelData>>> GetAllDailyQuestRelData()
+        {
+            try
+            {
+                var allQuests = await GetAllQuests();
+                if (!allQuests.IsSuccess) return new Response<List<QuestRewardRelData>>(allQuests.Case, allQuests.Message);
+
+                var allQuestRewards = await GetAllQuestRewards();
+                if (!allQuestRewards.IsSuccess) return new Response<List<QuestRewardRelData>>(allQuestRewards.Case, allQuestRewards.Message);
+
+                var response = new Response<List<QuestRewardRelData>>(new List<QuestRewardRelData>(), 100, "All Daily Quests");
+
+                var dailyQuests = allQuests.Data.Where(x => x.MilestoneId == 0).ToList();
+                foreach (var questData in dailyQuests)
+                {
+                    var questId = questData.QuestId;
+//                    var questData = allQuests.Data.Find(x => x.QuestId == questId);
+                    if (questData == null) continue;
+
+                    response.Data.Add(new QuestRewardRelData()
+                    {
+                        Quest = questData,
+                        Rewards = allQuestRewards.Data.Where(x => x.DataId == questId).ToList()
+                    });
+                }
+
+                return response;
+            }
+            catch (InvalidModelExecption ex)
+            {
+                return new Response<List<QuestRewardRelData>>()
+                {
+                    Case = 200,
+                    Data = null,
+                    Message = ex.Message
+                };
+            }
+            catch (Exception ex)
+            {
+                return new Response<List<QuestRewardRelData>>()
                 {
                     Case = 0,
                     Data = null,

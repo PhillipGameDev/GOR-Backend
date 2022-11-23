@@ -282,23 +282,46 @@ namespace GameOfRevenge.Business.Manager.UserData
                 return false;
             }
         }
-        public async Task<bool> RefundResourceByRequirement(int playerId, IReadOnlyList<IReadOnlyDataRequirement> requirements, int count)
-        {
-            if (count <= 0) return true;
 
+        public async Task<bool> SumResourceByRequirement(int playerId, IReadOnlyList<IReadOnlyDataRequirement> requirements, int count)
+        {
+            if (count < 1) return true;
+
+            var list = new List<DataReward>();
+            foreach (var requirement in requirements)
+            {
+                list.Add(new DataReward()
+                {
+                    RewardId = requirement.RequirementId,
+                    DataId = requirement.DataId,
+                    DataType = requirement.DataType,
+                    ValueId = requirement.ValueId,
+                    Value = requirement.Value,
+                    Count = count
+                });
+            };
+
+            return await SumResourceByReward(playerId, list);
+        }
+
+        public async Task<bool> SumResourceByReward(int playerId, IReadOnlyList<IReadOnlyDataReward> rewards)
+        {
             try
             {
-                foreach (var req in requirements)
+                foreach (var reward in rewards)
                 {
-                    if (req.DataType == DataType.Resource)
+                    if (reward.DataType == DataType.Resource)
                     {
-                        Response<UserResourceData> response;
-                        ResourceType resourceType = CacheResourceDataManager.GetResourceData(req.ValueId).Code;
-                        if (resourceType == ResourceType.Food) response = await SumFoodResource(playerId, req.Value * count);
-                        else if (resourceType == ResourceType.Wood) response = await SumWoodResource(playerId, req.Value * count);
-                        else if (resourceType == ResourceType.Ore) response = await SumOreResource(playerId, req.Value * count);
-                        else response = await SumGemsResource(playerId, req.Value);
-                        if (!response.IsSuccess) return false;
+                        Response<UserResourceData> response = null;
+                        ResourceType resourceType = CacheResourceDataManager.GetResourceData(reward.ValueId).Code;
+                        switch (resourceType)
+                        {
+                            case ResourceType.Food: response = await SumFoodResource(playerId, reward.Value * reward.Count); break;
+                            case ResourceType.Wood: response = await SumWoodResource(playerId, reward.Value * reward.Count); break;
+                            case ResourceType.Ore: response = await SumOreResource(playerId, reward.Value * reward.Count); break;
+                            case ResourceType.Gems: response = await SumGemsResource(playerId, reward.Value * reward.Count); break;
+                        }
+                        if ((response != null) && !response.IsSuccess) return false;
                     }
                 }
 
@@ -310,9 +333,9 @@ namespace GameOfRevenge.Business.Manager.UserData
             }
         }
         public async Task<bool> RemoveResourceByRequirement(int playerId, IReadOnlyList<IReadOnlyDataRequirement> requirements) => await RemoveResourceByRequirement(playerId, requirements, 1);
-        public async Task<bool> RefundResourceByRequirement(int playerId, IReadOnlyList<IReadOnlyDataRequirement> requirements) => await RefundResourceByRequirement(playerId, requirements, 1);
+        public async Task<bool> RefundResourceByRequirement(int playerId, IReadOnlyList<IReadOnlyDataRequirement> requirements) => await SumResourceByRequirement(playerId, requirements, 1);
 
         public async Task<bool> RemoveResourceByRequirement(int playerId, IReadOnlyDataRequirement gems, int count) => await RemoveResourceByRequirement(playerId, new List<IReadOnlyDataRequirement>() { gems }, 1);
-        public async Task<bool> RefundResourceByRequirement(int playerId, IReadOnlyDataRequirement gems, int count) => await RefundResourceByRequirement(playerId, new List<IReadOnlyDataRequirement>() { gems }, 1);
+        public async Task<bool> RefundResourceByRequirement(int playerId, IReadOnlyDataRequirement gems, int count) => await SumResourceByRequirement(playerId, new List<IReadOnlyDataRequirement>() { gems }, 1);
     }
 }

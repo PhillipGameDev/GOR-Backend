@@ -22,8 +22,15 @@ namespace GameOfRevenge.WebServer.Controllers.Api
         public async Task<IActionResult> TryLoginOrRegister(string identifier, string name, bool accept)
         {
             var response = await accountManager.TryLoginOrRegister(identifier, name, accept);
-            if (response.IsSuccess && response.HasData)
-                response.Data.GenerateToken();
+            if (response.IsSuccess && response.HasData) response.Data.GenerateToken();
+
+            return ReturnResponse(response);
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> ChangeName(string name)
+        {
+            var response = await accountManager.ChangeName(Token.PlayerId, name);
             return ReturnResponse(response);
         }
 

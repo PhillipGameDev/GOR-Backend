@@ -103,7 +103,7 @@ namespace GameOfRevenge.Business.Manager.UserData
                     }
                 }
 
-                throw new DataNotExistExecption("Building not found in that location");
+                throw new DataNotExistExecption("Is not under construction");
             }
             catch (DataNotExistExecption ex) { return new Response<int>(201, ErrorManager.ShowError(ex)); }
             catch (Exception ex) { return new Response<int>(0, ErrorManager.ShowError(ex)); }
@@ -147,7 +147,7 @@ namespace GameOfRevenge.Business.Manager.UserData
                 if (level <= 1)
                 {
                     log.Info("CREATE BUILDING");
-                    createBuildResponse = await _userStructureManager.CreateBuilding(playerId, structType, locId, false, true);
+                    createBuildResponse = await _userStructureManager.CreateBuilding(playerId, structType, locId, false, true, false);
                 }
                 else
                 {

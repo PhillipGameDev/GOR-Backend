@@ -32,6 +32,7 @@
         GetInstantBuildCost = 26,
 
         InstantRecruit = 27,
-        HelpStructure = 28
+        HelpStructure = 28,
+        UpdateQuest = 30
     }
 }

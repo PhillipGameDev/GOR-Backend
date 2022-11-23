@@ -14,73 +14,35 @@ namespace GameOfRevenge.Business.CacheData
         public const string QuestNotExist = "Quest item does not exist";
 
         private static bool isLoaded = false;
-        private static List<ChapterQuestRelData> QuestInfo = null;
+        private static List<ChapterQuestRelData> chapterQuests = null;
+        private static List<QuestRewardRelData> sideQuests = null;
+        private static List<QuestRewardRelData> dailyQuests = null;
+        private static List<QuestRewardRelData> allQuestRewards = null;
 
-        public static List<UserChapterQuestData> UserChapterData
-        {
-            get
-            {
-                var lst = new List<UserChapterQuestData>();
-                foreach (var questChapter in QuestInfos)
-                {
-                    var item = new UserChapterQuestData()
-                    {
-                        ChapterId = questChapter.Chapter.ChapterId,
-                        Code = questChapter.Chapter.Code,
-                        Description = questChapter.Chapter.Description,
-                        Name = questChapter.Chapter.Name,
-                        Order = questChapter.Chapter.Order,
-                        Quests = new List<UserQuestProgressData>()
-                    };
-
-                    foreach (var quest in questChapter.Quests)
-                    {
-                        item.Quests.Add(new UserQuestProgressData()
-                        {
-                            InitialData = quest.Quest.DataString,
-                            MilestoneId = quest.Quest.MilestoneId,
-                            QuestType = quest.Quest.QuestType,
-                            QuestId = quest.Quest.QuestId,
-                            Completed = false,
-                            ProgressData = "{}"
-                        });
-                    }
-
-                    lst.Add(item);
-                }
-
-                return lst;
-            }
-        }
-        public static bool IsLoaded { get => isLoaded && QuestInfo != null; }
-        public static IReadOnlyList<IReadOnlyChapterQuestRelData> QuestInfos { get { CheckLoadCacheMemory(); return QuestInfo.ToList(); } }
+        public static bool IsLoaded { get => isLoaded && (allQuestRewards != null); }
+        public static IReadOnlyList<IReadOnlyChapterQuestRelData> ChapterQuests { get { CheckLoadCacheMemory(); return chapterQuests.ToList(); } }
+        public static IReadOnlyList<IReadOnlyQuestRewardRelData> SideQuests { get { CheckLoadCacheMemory(); return sideQuests.ToList(); } }
+        public static IReadOnlyList<IReadOnlyQuestRewardRelData> DailyQuests { get { CheckLoadCacheMemory(); return dailyQuests.ToList(); } }
+        public static IReadOnlyList<IReadOnlyQuestRewardRelData> AllQuestRewards { get { CheckLoadCacheMemory(); return allQuestRewards.ToList(); } }
 
         public static IReadOnlyChapterQuestRelData GetFullChapterData(int id)
         {
-            var item = QuestInfos.FirstOrDefault(x => x.Chapter.ChapterId == id);
+            var item = ChapterQuests.FirstOrDefault(x => (x.Chapter.ChapterId == id));
             if (item == null) throw new CacheDataNotExistExecption(QuestNotExist);
             else return item;
         }
 
         public static IReadOnlyChapterQuestRelData GetFullChapterData(string code)
         {
-            var item = QuestInfos.FirstOrDefault(x => x.Chapter.Code == code);
+            var item = ChapterQuests.FirstOrDefault(x => (x.Chapter.Code == code));
             if (item == null) throw new CacheDataNotExistExecption(QuestNotExist);
             else return item;
         }
 
         public static IReadOnlyQuestRewardRelData GetQuestData(int questId)
         {
-            foreach (var chapter in QuestInfos)
-            {
-                foreach (var quest in chapter.Quests)
-                {
-                    if (quest.Quest.QuestId == questId)
-                    {
-                        return quest;
-                    }
-                }
-            }
+            var questData = AllQuestRewards.FirstOrDefault(x => x.Quest.QuestId == questId);
+            if (questData != null) return questData;
 
             throw new CacheDataNotExistExecption(QuestNotExist);
         }
@@ -91,15 +53,38 @@ namespace GameOfRevenge.Business.CacheData
         {
             ClearCache();
 
-            var resManager = new QuestManager();
-            var response = await resManager.GetAllChapterQuestRelData();
+            var questManager = new QuestManager();
+            var response = await questManager.GetAllChapterQuestRelData();
 
             if (response.IsSuccess)
             {
-                QuestInfo = response.Data;
-                isLoaded = true;
+                chapterQuests = response.Data;
+
+                var response2 = await questManager.GetAllSideQuestRelData();
+                if (response2.IsSuccess)
+                {
+                    sideQuests = response2.Data;
+
+                    var response3 = await questManager.GetAllDailyQuestRelData();
+                    if (response3.IsSuccess)
+                    {
+                        dailyQuests = response3.Data;
+
+                        var all = new List<QuestRewardRelData>();
+                        foreach (var chapterQuest in chapterQuests)
+                        {
+                            all.AddRange(chapterQuest.Quests);
+                        }
+                        all.AddRange(sideQuests);
+                        all.AddRange(dailyQuests);
+                        allQuestRewards = all;
+
+                        isLoaded = true;
+                    }
+                }
             }
-            else
+
+            if (!isLoaded)
             {
                 ClearCache();
                 throw new CacheDataNotExistExecption(response.Message);
@@ -124,10 +109,20 @@ namespace GameOfRevenge.Business.CacheData
         {
             isLoaded = false;
 
-            if (QuestInfo != null)
+            if (chapterQuests != null)
             {
-                QuestInfo.Clear();
-                QuestInfo = null;
+                chapterQuests.Clear();
+                chapterQuests = null;
+            }
+            if (sideQuests != null)
+            {
+                sideQuests.Clear();
+                sideQuests = null;
+            }
+            if (dailyQuests != null)
+            {
+                dailyQuests.Clear();
+                dailyQuests = null;
             }
         }
         #endregion

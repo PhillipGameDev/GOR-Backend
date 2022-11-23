@@ -13,7 +13,8 @@ namespace GameOfRevenge.Common.Models.Boost
         ProductionBoost = NewBoostType.ProductionBoost,//ProductionBoost_recoverySpeed
 //        SpeedGathering = 5,//SpeedGathering_armyAttack
         Fog = NewBoostType.Fog,//Fog_armyDefence
-        TechBoost = NewBoostType.TechBoost
+        TechBoost = NewBoostType.TechBoost,
+        ConstructionBoost = NewBoostType.Construction
     }
 
     public enum NewBoostType : byte

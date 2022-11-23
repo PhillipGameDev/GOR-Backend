@@ -10,7 +10,7 @@ namespace GameOfRevenge.Common.Models.Quest
         string Code { get; }
         string Name { get; }
         string Description { get; }
-        float Order { get; }
+        int Order { get; }
     }
 
     public class ChapterTable : IBaseTable, IReadOnlyChapterTable
@@ -19,7 +19,7 @@ namespace GameOfRevenge.Common.Models.Quest
         public string Code { get; set; }
         public string Name { get; set; }
         public string Description { get; set; }
-        public float Order { get; set; }
+        public int Order { get; set; }
 
         public void LoadFromDataReader(IDataReader reader)
         {
@@ -28,7 +28,7 @@ namespace GameOfRevenge.Common.Models.Quest
             Name = reader.GetString(index) ?? string.Empty; index++;
             Description = reader.GetString(index) ?? string.Empty; index++;
             Code = reader.GetString(index) ?? string.Empty; index++;
-            Order = (float) (reader.GetValue(index) == DBNull.Value ? 0 : reader.GetDouble(index));
+            Order = (int) (reader.GetValue(index) == DBNull.Value ? 0 : reader.GetInt32(index));
         }
     }
 }

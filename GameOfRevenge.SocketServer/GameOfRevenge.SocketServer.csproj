@@ -191,6 +191,7 @@
     <Compile Include="Troops\Troop.cs" />
     <Compile Include="Troops\TroopFactory.cs" />
     <Compile Include="Model\Operation\HelpStructureRequest.cs" />
+    <Compile Include="Model\Operation\UpdateQuestRequest.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="GameOfRevenge.dll.config">

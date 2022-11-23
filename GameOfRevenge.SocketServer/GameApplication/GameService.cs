@@ -76,7 +76,6 @@ namespace GameOfRevenge.GameApplication
             //Business Interfaces
             InstantProgressManager = new InstantProgressManager();
             BStructureManager = new StructureManager();
-            NewRealTimeUpdateManager = new NewRealTimeUpdateManager();
             BUserTechnologyManager = new UserTechnologyManager();
             BTechnologyManager = new TechnologyManager();
             BPlayerStructureManager = new UserStructureManager();
@@ -87,6 +86,7 @@ namespace GameOfRevenge.GameApplication
             BKingdomManager = new KingdomManager();
             BkingdomePvpManager = new KingdomPvPManager();
             BRealTimeUpdateManager = new RealTimeUpdateManager();
+            NewRealTimeUpdateManager = new NewRealTimeUpdateManager();
 
             instance = new object();
 
@@ -95,7 +95,7 @@ namespace GameOfRevenge.GameApplication
             var task = BKingdomManager.GetWorld(Config.DefaultWorldCode);
             task.Wait();
             var world = task.Result;
-            log.InfoFormat("6 world="+(world != null));
+//            log.InfoFormat("6 world="+(world != null));
             //if (!world.IsSuccess) world = BKingdomManager.CreateWorld(Config.DefaultWorldCode).Result;
             //else
             //{
@@ -110,7 +110,7 @@ namespace GameOfRevenge.GameApplication
             task2.Wait();
             worldData = task2.Result.Data;
             //}
-            log.InfoFormat("7 worlddata=" + (worldData != null));
+//            log.InfoFormat("7 worlddata=" + (worldData != null));
 
             WorldHandler.SetupPvpWorld(world.Data.Id, worldData);
 

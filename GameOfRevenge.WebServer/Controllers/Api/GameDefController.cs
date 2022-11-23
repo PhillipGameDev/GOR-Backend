@@ -120,7 +120,21 @@ namespace GameOfRevenge.WebServer.Controllers.Api
         [HttpGet]
         public IActionResult GetAllChapters()
         {
-            var response = CacheQuestDataManager.QuestInfos;
+            var response = CacheQuestDataManager.ChapterQuests;
+            return ReturnResponse(response);
+        }
+
+        [HttpGet]
+        public IActionResult GetAllSideQuests()
+        {
+            var response = CacheQuestDataManager.SideQuests;
+            return ReturnResponse(response);
+        }
+
+        [HttpGet]
+        public IActionResult GetAllDailyQuests()
+        {
+            var response = CacheQuestDataManager.DailyQuests;
             return ReturnResponse(response);
         }
 
@@ -144,7 +158,7 @@ namespace GameOfRevenge.WebServer.Controllers.Api
         }
 
         [HttpGet]
-        public IActionResult GetInstantBuildCost(int timeLeft)
+        public IActionResult GetInstantBuildCost(int timeLeft)//obsolete -> playercontroller.instantbuild
         {
             var response = baseUserManager.GetInstantBuildCost(timeLeft);
             return ReturnResponse(new Response<int>(response, 100, "Instant build cost"));

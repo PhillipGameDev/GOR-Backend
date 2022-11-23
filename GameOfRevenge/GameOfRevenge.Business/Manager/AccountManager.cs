@@ -12,6 +12,8 @@ using GameOfRevenge.Common.Models;
 using GameOfRevenge.Common.Models.Structure;
 using System.Linq;
 using Newtonsoft.Json;
+using GameOfRevenge.Common.Models.Quest.Template;
+using GameOfRevenge.Common.Models.Quest;
 
 namespace GameOfRevenge.Business.Manager
 {
@@ -19,6 +21,7 @@ namespace GameOfRevenge.Business.Manager
     {
         private readonly IUserResourceManager resManager = new UserResourceManager();
         private readonly IUserStructureManager strManager = new UserStructureManager();
+        private readonly IUserQuestManager questManager = new UserQuestManager();
 
         public async Task<Response<Player>> TryLoginOrRegister(string identifier, string name, bool accepted)
         {
@@ -40,42 +43,86 @@ namespace GameOfRevenge.Business.Manager
                     var response = await Db.ExecuteSPSingleRow<Player>("TryLoginOrRegister", spParams);
 
                     //todo add in database
-                    if (response.IsSuccess && response.HasData && response.Case == 100)
+                    if (response.IsSuccess && response.HasData)
                     {
                         int playerId = response.Data.PlayerId;
-                        await resManager.SumMainResource(playerId, 10000, 10000, 10000, 100);
-#if DEBUG
-                        await resManager.SumMainResource(playerId, 100000, 100000, 100000, 10000);
-#endif
-                        var cityCounselLoc = CacheData.CacheStructureDataManager.GetFullStructureData(StructureType.CityCounsel).Locations.FirstOrDefault();
-                        var gateLoc = CacheData.CacheStructureDataManager.GetFullStructureData(StructureType.Gate).Locations.FirstOrDefault();
-                        var wtLoc = CacheData.CacheStructureDataManager.GetFullStructureData(StructureType.WatchTower).Locations.FirstOrDefault();
-
-                        var dataManager = new PlayerDataManager();
-                        var king = new UserKingDetails
+                        if (response.Case == 100)// new account
                         {
-                            MaxStamina = 20
-                        };
-                        var json = JsonConvert.SerializeObject(king);
-                        await dataManager.AddOrUpdatePlayerData(playerId, DataType.Custom, 1, json);
+#if DEBUG
+                            await resManager.SumMainResource(playerId, 100000, 100000, 100000, 10000);
+#else
+                            await resManager.SumMainResource(playerId, 10000, 10000, 10000, 100);
+#endif
+                            var cityCounselLoc = CacheData.CacheStructureDataManager.GetFullStructureData(StructureType.CityCounsel).Locations.FirstOrDefault();
+                            var gateLoc = CacheData.CacheStructureDataManager.GetFullStructureData(StructureType.Gate).Locations.FirstOrDefault();
+                            var wtLoc = CacheData.CacheStructureDataManager.GetFullStructureData(StructureType.WatchTower).Locations.FirstOrDefault();
 
-                        var builder = new UserBuilderDetails();
-                        json = JsonConvert.SerializeObject(builder);
-                        await dataManager.AddOrUpdatePlayerData(playerId, DataType.Custom, 2, json);
+                            var dataManager = new PlayerDataManager();
+                            var king = new UserKingDetails
+                            {
+                                MaxStamina = 20//TODO: not required
+                            };
+                            var json = JsonConvert.SerializeObject(king);
+                            await dataManager.AddOrUpdatePlayerData(playerId, DataType.Custom, 1, json);
 
-                        await strManager.CreateBuilding(playerId, StructureType.CityCounsel, cityCounselLoc, false, false);
-                        await strManager.UpgradeBuilding(playerId, StructureType.CityCounsel, cityCounselLoc, false, false);
+                            var builder = new UserBuilderDetails();
+                            json = JsonConvert.SerializeObject(builder);
+                            await dataManager.AddOrUpdatePlayerData(playerId, DataType.Custom, 2, json);
 
-                        await strManager.CreateBuilding(playerId, StructureType.Gate, gateLoc, false, false);
-                        await strManager.UpgradeBuilding(playerId, StructureType.Gate, gateLoc, false, false);
+                            await strManager.CreateBuilding(playerId, StructureType.CityCounsel, cityCounselLoc, false, false, true);
 
-                        await strManager.CreateBuilding(playerId, StructureType.WatchTower, wtLoc, false, false);
-                        await strManager.UpgradeBuilding(playerId, StructureType.WatchTower, wtLoc, false, false);
+                            await strManager.CreateBuilding(playerId, StructureType.Gate, gateLoc, false, false, true);
+
+                            await strManager.CreateBuilding(playerId, StructureType.WatchTower, wtLoc, false, false, true);
+                        }
+                        await CompleteAccountQuest(playerId, AccountTaskType.SignIn);
                     }
 
                     return response;
                 }
                 else throw new InvalidModelExecption("Kindly accept terms and condition");
+            }
+            catch (InvalidModelExecption ex)
+            {
+                return new Response<Player>()
+                {
+                    Case = 200,
+                    Data = null,
+                    Message = ex.Message
+                };
+            }
+            catch (Exception ex)
+            {
+                return new Response<Player>()
+                {
+                    Case = 0,
+                    Data = null,
+                    Message = ErrorManager.ShowError(ex)
+                };
+            }
+        }
+
+        public async Task<Response<Player>> ChangeName(int playerId, string name)
+        {
+            try
+            {
+                if (playerId <= 0) throw new InvalidModelExecption("Invalid player id was provided");
+                if (string.IsNullOrWhiteSpace(name) || (name.Length < 3)) throw new InvalidModelExecption("Invalid name was provided");
+
+                var spParams = new Dictionary<string, object>()
+                {
+                    { "PlayerId", playerId },
+                    { "Name", name }
+                };
+
+                var response = await Db.ExecuteSPSingleRow<Player>("UpdatePlayerProperties", spParams);
+                if (response.IsSuccess)
+                {
+                    var resp = await CompleteAccountQuest(playerId, AccountTaskType.ChangeName);
+                    if (resp) response.Case = 101;
+                }
+
+                return response;
             }
             catch (InvalidModelExecption ex)
             {
@@ -131,13 +178,13 @@ namespace GameOfRevenge.Business.Manager
             }
         }
 
-        public async Task<Response<Player>> GetAccountInfo(int userId)
+        public async Task<Response<Player>> GetAccountInfo(int playerId)
         {
             try
             {
                 var spParams = new Dictionary<string, object>()
                 {
-                    { "PlayerId", userId },
+                    { "PlayerId", playerId },
                 };
 
                 return await Db.ExecuteSPSingleRow<Player>("GetPlayerDetailsById", spParams);
@@ -226,6 +273,44 @@ namespace GameOfRevenge.Business.Manager
                     Message = ErrorManager.ShowError(ex)
                 };
             }
+        }
+
+        private async Task<List<PlayerQuestDataTable>> AllUserQuests(int playerId)
+        {
+            var response = await questManager.GetAllQuestProgress(playerId);
+            if (response.IsSuccess && response.HasData) return response.Data;
+
+            throw new Exception();
+        }
+
+        private async Task<bool> CompleteAccountQuest(int playerId, AccountTaskType taskType)
+        {
+            var quests = CacheData.CacheQuestDataManager.AllQuestRewards
+                                .Where(x => (x.Quest.QuestType == QuestType.Account))?.ToList();
+            if (quests == null) return false;
+
+            var questUpdated = false;
+            List<PlayerQuestDataTable> allUserQuests = null;
+            try
+            {
+                foreach (var quest in quests)
+                {
+                    QuestAccountData questData = JsonConvert.DeserializeObject<QuestAccountData>(quest.Quest.DataString);
+                    if ((questData == null) || (questData.AccountTaskType != taskType)) continue;
+
+                    if (allUserQuests == null) allUserQuests = await AllUserQuests(playerId);
+                    var userQuest = allUserQuests.Find(x => (x.QuestId == quest.Quest.QuestId));
+                    string initialString = (userQuest == null) ? quest.Quest.DataString : null;
+                    if ((userQuest == null) || !userQuest.Completed)
+                    {
+                        var resp = await questManager.UpdateQuestData(playerId, quest.Quest.QuestId, true, initialString);
+                        if (resp.IsSuccess) questUpdated = true;
+                    }
+                }
+            }
+            catch { }
+
+            return questUpdated;
         }
     }
 }

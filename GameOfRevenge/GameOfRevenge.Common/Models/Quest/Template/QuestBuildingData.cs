@@ -1,26 +1,22 @@
-﻿using Newtonsoft.Json;
+﻿using GameOfRevenge.Common.Models.Structure;
+using Newtonsoft.Json;
+using Newtonsoft.Json.Converters;
 using System;
+using System.Runtime.Serialization;
 
 namespace GameOfRevenge.Common.Models.Quest.Template
 {
-    public class QuestBuildingData : IBaseQuestTemplateData, IEquatable<QuestBuildingData>
+    [DataContract]
+    public class QuestBuildingData
     {
-        public string StructureType { get; set; }
+        [DataMember]
+        [JsonConverter(typeof(StringEnumConverter))]
+        public StructureType StructureType { get; set; }
+
+        [DataMember(EmitDefaultValue = false)]
         public int Level { get; set; }
-        public QuestType QuestType { get => QuestType.BuildingUpgrade; }
-        public string Name { get => Level == 1 ? $"Create building {StructureType}" : $"Upgrade {StructureType} to level {Level}"; }
 
-        public bool Equals(QuestBuildingData other)
-        {
-            return Level >= other.Level;
-        }
-
-        public void SetData(string template)
-        {
-            var data = JsonConvert.DeserializeObject<QuestBuildingData>(template);
-
-            StructureType = data.StructureType;
-            Level = data.Level;
-        }
+        [DataMember(EmitDefaultValue = false)]
+        public int Count { get; set; }
     }
 }

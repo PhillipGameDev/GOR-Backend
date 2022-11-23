@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Runtime.Serialization;
 //using GameOfRevenge.Common.Models.Hero;
 //using Newtonsoft.Json;
@@ -8,47 +9,35 @@ namespace GameOfRevenge.Common.Models
     [DataContract]
     public class UserKingDetails : TimerBase
     {
+        private static readonly List<int> levels = new List<int>() { 0, 30, 120, 300, 600, 1000, 2000, 4000, 6000, 8000, 10000 };
+
         [DataMember]
         public int MaxStamina { get; set; } = 20;
         //        public long Id { get; set; }//id
         //        public string Code { get; set; }
         //        public int Experience { get; set; }
         [DataMember]
-        public int BattleCount { get; set; }//value
+        public int Experience { get; set; }//value
 
 #if UNITY_2019_4_OR_NEWER
+        [DataMember]
+        public int NextLevelXP { get; set; }
+        [DataMember]
         public int Level { get; set; }
 #else
         [DataMember]
+        public int NextLevelXP
+        {
+            get => ((Level + 1) >= levels.Count) ? levels[Level] : levels[Level + 1];
+        }
+
+        [DataMember]
         public int Level
         {
-            get
-            {
-                if (BattleCount >= 10000)
-                    return 10;
-                else if (BattleCount >= 8000)
-                    return 9;
-                else if (BattleCount >= 6000)
-                    return 8;
-                else if (BattleCount >= 4000)
-                    return 7;
-                else if (BattleCount >= 2000)
-                    return 6;
-                else if (BattleCount >= 1000)
-                    return 5;
-                else if (BattleCount >= 600)
-                    return 4;
-                else if (BattleCount >= 300)
-                    return 3;
-                else if (BattleCount >= 120)
-                    return 2;
-                else if (BattleCount >= 30)
-                    return 1;
-                else
-                    return 0;
-            }
+            get => levels.FindIndex(x => (x > Experience)) - 1;
         }
 #endif
+
         public int Stamina
         {
             get
@@ -57,7 +46,7 @@ namespace GameOfRevenge.Common.Models
                 double timeLeft = TimeLeft;
                 if (timeLeft > 0)
                 {
-                    
+
                     stamina -= (int)Math.Ceiling(timeLeft / (60 * 10));
                     if (stamina < 0) stamina = 0;
                 }
