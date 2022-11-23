@@ -1,12 +1,23 @@
 ﻿namespace GameOfRevenge.Common.Models.Quest
 {
-    public enum QuestType
+    public enum QuestType : int
     {
-        Other,
-        BuildingUpgrade,
-        XBuildingCount,
-        ResourceCollection,
-        TrainTroops,
-        XTroopCount
+        Other = 0,
+
+        BuildingUpgrade = 1,
+        XBuildingCount = 2,
+
+        ResourceCollection = 3,
+
+        TrainTroops = 4,
+        XTroopCount = 5,
+
+        TrainHero = 6,
+        XHeroCount = 7,
+
+        MarketQuest = 8,
+
+        Account = 9,
+        Custom = 11
     }
 }

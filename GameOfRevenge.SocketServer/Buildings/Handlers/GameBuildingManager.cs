@@ -81,9 +81,10 @@ namespace GameOfRevenge.Buildings.Handlers
 
         public bool UpgradeStructureForPlayer(UpgradeStructureRequest request, MmoActor actor)
         {
+#if DEBUG
             log.InfoFormat("Upgrade Structure Request CurrentBuilding {0} Data {1} ", this.CacheBuildingData.Info.Code.ToString(),
                 JsonConvert.SerializeObject(request));
-
+#endif
             bool success = true;
             if (actor.InternalPlayerDataManager.PlayerBuildings.ContainsKey((this.StructureType)))
             {
@@ -93,7 +94,9 @@ namespace GameOfRevenge.Buildings.Handlers
                     if (!building.IsConstructing)
                     {
                         int upgradeLevel = building.CurrentLevel + 1;
+#if DEBUG
                         log.InfoFormat("Upgrade Structure Request Upgrade Level {0} ", upgradeLevel);
+#endif
                         var structureData = CacheBuildingData.GetStructureLevelById(upgradeLevel);
                         if (structureData != null)
                         {
@@ -159,8 +162,10 @@ namespace GameOfRevenge.Buildings.Handlers
                 response = GameService.BPlayerStructureManager.CreateBuilding(player.PlayerId, this.StructureType, locationId).Result;
             }
             if ((response.Case < 100) || (response.Data == null)) return new Response<UserStructureData>(200, response.Message);
-            
+
+#if DEBUG
             log.InfoFormat("Response Of Create/Upgrade Structure Manager DATA {0} ", JsonConvert.SerializeObject(response.Data));
+#endif
             var structure = new UserStructureData()
             {
                 Id = response.Data.Id,

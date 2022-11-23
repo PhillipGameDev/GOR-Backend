@@ -97,8 +97,8 @@ namespace GameOfRevenge.Business.Manager.UserData
             return new Response<UserRecordBuilderDetails>(currBuilder, respBuilder.Case, respBuilder.Message);
         }
 
-        public async Task<Response<UserStructureData>> CreateBuilding(int playerId, StructureType type, int position) => await CreateBuilding(playerId, type, position, true, false);
-        public async Task<Response<UserStructureData>> CreateBuilding(int playerId, StructureType type, int position, bool removeRes, bool createBuilder)
+        public async Task<Response<UserStructureData>> CreateBuilding(int playerId, StructureType type, int position) => await CreateBuilding(playerId, type, position, true, false, false);
+        public async Task<Response<UserStructureData>> CreateBuilding(int playerId, StructureType type, int position, bool removeRes, bool createBuilder, bool instantBuild)
         {
             var timestamp = DateTime.UtcNow;
             var existing = await CheckBuildingStatus(playerId, type);
@@ -119,15 +119,18 @@ namespace GameOfRevenge.Business.Manager.UserData
 
             float timeReduced = 0;
             var playerData = await GetFullPlayerData(playerId);
-            var technology = playerData.Data.Boosts.Find(x => (byte)x.Type == (byte)TechnologyType.ConstructionTechnology);
-            if (technology != null)
+            if (!instantBuild)
             {
-                var specBoostData = CacheBoostDataManager.SpecNewBoostDatas.FirstOrDefault(x => x.Type == technology.Type);
-                if (specBoostData.Table > 0)
+                var technology = playerData.Data.Boosts.Find(x => (byte)x.Type == (byte)TechnologyType.ConstructionTechnology);
+                if (technology != null)
                 {
-                    float.TryParse(specBoostData.Levels[technology.Level].ToString(), out float levelVal);
-                    //                            int reducePercentage = technology.Level;
-                    timeReduced = levelVal;// reducePercentage.HasValue ? reducePercentage.Value : 0;
+                    var specBoostData = CacheBoostDataManager.SpecNewBoostDatas.FirstOrDefault(x => x.Type == technology.Type);
+                    if (specBoostData.Table > 0)
+                    {
+                        float.TryParse(specBoostData.Levels[technology.Level].ToString(), out float levelVal);
+                        //                            int reducePercentage = technology.Level;
+                        timeReduced = levelVal;// reducePercentage.HasValue ? reducePercentage.Value : 0;
+                    }
                 }
             }
 
@@ -136,8 +139,12 @@ namespace GameOfRevenge.Business.Manager.UserData
             if (firstLevel != 1) throw new CacheDataNotExistExecption("Structure level data does not exist");
 
             var structure = structureData.Levels.FirstOrDefault(x => x.Data.Level == 1);
-            int secs = (int)(structure.Data.TimeToBuild * (1 - (timeReduced / 100f)));
-            if (secs < 0) secs = 0;
+            int secs = 0;
+            if (!instantBuild)
+            {
+                secs = (int)(structure.Data.TimeToBuild * (1 - (timeReduced / 100f)));
+                if (secs < 0) secs = 0;
+            }
 
             dataList.Add(new StructureDetails()
             {

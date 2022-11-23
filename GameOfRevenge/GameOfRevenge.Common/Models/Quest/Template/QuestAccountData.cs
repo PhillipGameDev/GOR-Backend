@@ -7,16 +7,16 @@ using System.Runtime.Serialization;
 namespace GameOfRevenge.Common.Models.Quest.Template
 {
     [DataContract]
-    public class QuestBuildingData
+    public class QuestAccountData
     {
         [DataMember]
         [JsonConverter(typeof(StringEnumConverter))]
-        public StructureType StructureType { get; set; }
+        public AccountTaskType AccountTaskType { get; set; }
+    }
 
-        [DataMember(EmitDefaultValue = false)]
-        public int Level { get; set; }
-
-        [DataMember(EmitDefaultValue = false)]
-        public int Count { get; set; }
+    public enum AccountTaskType
+    {
+        SignIn = 1,
+        ChangeName = 2
     }
 }

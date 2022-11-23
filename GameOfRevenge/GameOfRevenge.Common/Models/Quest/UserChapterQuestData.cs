@@ -1,72 +1,51 @@
 ﻿using GameOfRevenge.Common.Models.Quest.Template;
+using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
 
 namespace GameOfRevenge.Common.Models.Quest
 {
+    public class UserChapterAllQuestProgress
+    {
+        public List<UserChapterQuestData> ChapterQuests;
+        public List<UserQuestProgressData> SideQuests;
+        public List<UserQuestProgressData> DailyQuests;
+    }
+
     public class UserChapterQuestData : ChapterTable
     {
         public int ChapterUserDataId { get; set; }
-        public bool IsRedeemed { get; set; }
-        public bool Completed
+        public bool Redeemed { get; set; }
+
+        public bool Completed()
         {
-            get
+            var completed = true;
+            if (Quests != null)
             {
-                if (Quests == null || Quests.Count == 0) return true;
-                else
+                foreach (var quest in Quests)
                 {
-                    foreach (var quest in Quests) if (!quest.Completed) return false;
-                    return true;
+                    if (quest.Completed) continue;
+
+                    completed = false;
+                    break;
                 }
             }
+
+            return completed;
         }
 
         public List<UserQuestProgressData> Quests { get; set; }
     }
 
-    public class UserQuestProgressData
+    public class UserQuestProgressData : PlayerQuestDataTable
     {
-        public int QuestUserDataId { get; set; }
-        public int QuestId { get; set; }
         public int MilestoneId { get; set; }
-        public string Name { get => GetName(); }
         public QuestType QuestType { get; set; }
-        public bool Completed { get; set; }
         public string InitialData { get; set; }
-        public string ProgressData { get; set; }
-        public bool IsRedeemed { get; set; }
 
-
-        private string GetName()
+        public string GetName()
         {
-            IBaseQuestTemplateData template;
-
-            switch (QuestType)
-            {
-                case QuestType.BuildingUpgrade:
-                    template = new QuestBuildingData();
-                    break;
-                case QuestType.XBuildingCount:
-                    template = new QuestHaveXBuildingData();
-                    break;
-                case QuestType.ResourceCollection:
-                    template = new QuestCollectXResourceData();
-                    break;
-                case QuestType.TrainTroops:
-                    template = new QuestTrainXTroopData();
-                    break;
-                case QuestType.XTroopCount:
-                    template = new QuestHaveXTroopData();
-                    break;
-                default: return string.Empty;
-            }
-
-            if (template == null) return string.Empty;
-
-            template.SetData(InitialData);
-            return template.Name;
+            return PlayerQuestDataTable.GetName(QuestType, Completed, InitialData, ProgressData);
         }
     }
 }
-
-

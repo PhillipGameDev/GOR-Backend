@@ -1,5 +1,4 @@
-﻿using GameOfRevenge.Common.Models.Structure;
-using Newtonsoft.Json;
+﻿using Newtonsoft.Json;
 using Newtonsoft.Json.Converters;
 using System;
 using System.Runtime.Serialization;
@@ -7,16 +6,16 @@ using System.Runtime.Serialization;
 namespace GameOfRevenge.Common.Models.Quest.Template
 {
     [DataContract]
-    public class QuestBuildingData
+    public class QuestResourceData
     {
         [DataMember]
         [JsonConverter(typeof(StringEnumConverter))]
-        public StructureType StructureType { get; set; }
-
-        [DataMember(EmitDefaultValue = false)]
-        public int Level { get; set; }
+        public ResourceType ResourceType { get; set; }
 
         [DataMember(EmitDefaultValue = false)]
         public int Count { get; set; }
+
+        [DataMember(EmitDefaultValue = false)]
+        public int Iteration { get; set; }
     }
 }

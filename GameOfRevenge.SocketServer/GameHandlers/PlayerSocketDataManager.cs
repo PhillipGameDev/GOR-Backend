@@ -41,6 +41,7 @@ namespace GameOfRevenge.GameHandlers
 //            this.Builders = new List<UserRecordBuilderDetails>();
             this.DataContributeAccType();
         }
+
         public void DataContributeAccType()
         {
             foreach (var item in playerData)
@@ -73,8 +74,10 @@ namespace GameOfRevenge.GameHandlers
             var troops = GameService.BPlayerResourceManager.PlayerDataToUserTroopData(data);
             if (troops != null)
             {
+#if DEBUG
                 log.InfoFormat("Player Data Convert to Troop {0} playerData {1} ",
                   JsonConvert.SerializeObject(troops), JsonConvert.SerializeObject(data));
+#endif
                 foreach (var troop in troops.Value)
                 {
                     if (troop.InTraning != null)
@@ -100,8 +103,10 @@ namespace GameOfRevenge.GameHandlers
             var resource = GameService.BPlayerResourceManager.PlayerDataToUserResourceData(data);
             if (resource != null)
             {
+#if DEBUG
                 log.InfoFormat("Player Data Convert to resource {0} playerData {1} ",
                     JsonConvert.SerializeObject(resource), JsonConvert.SerializeObject(data));
+#endif
                 IPlayerResources r = null;
                 switch (resource.ValueId)
                 {
@@ -122,13 +127,18 @@ namespace GameOfRevenge.GameHandlers
                 }
                 if (r != null)
                 {
+#if DEBUG
                     log.InfoFormat("Add nerw resources on player account Resource {0} ", resource.ValueId.ToString());
+#endif
                     PlayerResources.Add(resource.ValueId, r);
                     return;
                 }
             }
+#if DEBUG
             else
                 log.InfoFormat("Reource not found when convert player data to resouse info {0} ", JsonConvert.SerializeObject(playerData));
+#endif
+
             return;
         }
         public void AddStructureOnPlayer(PlayerDataTable data)
@@ -136,7 +146,9 @@ namespace GameOfRevenge.GameHandlers
             var structure = GameService.BPlayerStructureManager.PlayerDataToUserStructureData(data);
             if (structure != null)
             {
+#if DEBUG
                 log.InfoFormat("Player Data Convert to structure {0} playerData {1} ",
+#endif
                     JsonConvert.SerializeObject(structure), JsonConvert.SerializeObject(data));
                 var multipleBuildings = GameService.BPlayerStructureManager.GetMultipleBuildings(structure);
                 if (!this.PlayerBuildings.ContainsKey(structure.ValueId))
@@ -147,11 +159,15 @@ namespace GameOfRevenge.GameHandlers
                         this.AddStructure(build.Key, build.Value, gameBuilding);
                     }
                 }
+#if DEBUG
                 else
                     log.InfoFormat("that structure is already defined in player structureType {0} ", structure.ValueId.ToString());
+#endif
             }
+#if DEBUG
             else
                 log.InfoFormat("structure is null when convert to user structure");
+#endif
         }
 
         public void AddStructure(int locationId, UserStructureData structure, IGameBuildingManager gameBuilding)
@@ -230,7 +246,9 @@ namespace GameOfRevenge.GameHandlers
             }
             if (playerBuilding != null)
             {
+#if DEBUG
                 log.InfoFormat("Add New Structure On Player Account {0} ", structure.ValueId.ToString());
+#endif
                 this.PlayerBuildings[structure.ValueId].Add(playerBuilding);
             }
         }

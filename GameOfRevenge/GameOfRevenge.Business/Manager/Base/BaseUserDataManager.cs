@@ -1003,6 +1003,7 @@ namespace GameOfRevenge.Business.Manager.Base
             }
         }
 
+        [Obsolete]
         public int GetInstantBuildCost(int timeLeft)
         {
             if (timeLeft <= 240) return 0;

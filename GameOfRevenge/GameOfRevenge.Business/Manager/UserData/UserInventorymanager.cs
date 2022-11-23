@@ -216,7 +216,7 @@ namespace GameOfRevenge.Business.Manager.UserData
             }
         }
 
-        public async Task<Response<UserInventoryDataUpdated>> SumItem(int playerId, InventoryItemType itemType, long playerDataId, int value)
+        public async Task<Response<UserInventoryDataUpdated>> AddItem(int playerId, InventoryItemType itemType, long playerDataId, int value)
         {
             try
             {

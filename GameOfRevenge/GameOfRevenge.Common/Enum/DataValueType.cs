@@ -7,8 +7,6 @@
         Wood = 2,
         Ore = 3,
         Gems = 4,
-        PhoenixAsh = 5,
-
-        Level = 15
+        PhoenixAsh = 5
     }
 }

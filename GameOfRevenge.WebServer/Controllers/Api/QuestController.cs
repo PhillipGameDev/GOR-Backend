@@ -30,7 +30,14 @@ namespace GameOfRevenge.WebServer.Controllers.Api
         [HttpGet]
         public async Task<IActionResult> GetAllQuestProgress()
         {
-            var response = await questManager.GetAllQuestChapterDataWithName(Token.PlayerId);
+            var response = await questManager.GetUserAllQuestProgress(Token.PlayerId);//GetAllQuestChapterDataWithName(Token.PlayerId);
+            return ReturnResponse(response);
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> GetQuestProgress(int questId)
+        {
+            var response = await questManager.GetQuestProgress(Token.PlayerId, questId);
             return ReturnResponse(response);
         }
 

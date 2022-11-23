@@ -11,8 +11,8 @@ namespace GameOfRevenge.Model
         [DataMember(Code = (byte)RoomParameterKey.MilestoneId, IsOptional = false)]
         public int MilestoneId { get; set; }
 
-        [DataMember(Code = (byte)RoomParameterKey.Name, IsOptional = false)]
-        public string Name { get; set; }
+//        [DataMember(Code = (byte)RoomParameterKey.Name, IsOptional = false)]
+//        public string Name { get; set; }
 
         [DataMember(Code = (byte)RoomParameterKey.QuestType, IsOptional = false)]
         public QuestType QuestType { get; set; }

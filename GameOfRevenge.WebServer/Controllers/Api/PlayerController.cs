@@ -71,6 +71,17 @@ namespace GameOfRevenge.WebServer.Controllers.Api
             return ReturnResponse(await userResourceManager.SumMainResource(Token.PlayerId, food, wood, ore, gems));
         }
 
+        [HttpPost]//temporal api
+        public async Task<IActionResult> RemoveResources(int food, int wood, int ore, int gems)
+        {
+            food = food <= 0 ? 0 : food;
+            wood = wood <= 0 ? 0 : wood;
+            ore = ore <= 0 ? 0 : ore;
+            gems = gems <= 0 ? 0 : gems;
+
+            return ReturnResponse(await userResourceManager.SumMainResource(Token.PlayerId, -food, -wood, -ore, -gems));
+        }
+
         [HttpPost]
         public async Task<IActionResult> CollectResources(int locId)
         {
@@ -98,7 +109,7 @@ namespace GameOfRevenge.WebServer.Controllers.Api
             return ReturnResponse(await userInventoryManager.UpdateItem(Token.PlayerId, playerDataId, value));
         }*/
 
-        [HttpPost]
+        [HttpPost]//used to buy king items
         public async Task<IActionResult> UpdateItemType(InventoryItemType type, int? value)
         {
             if ((type == InventoryItemType.Unknown) || (value == null))
@@ -183,7 +194,7 @@ namespace GameOfRevenge.WebServer.Controllers.Api
 
 
         [HttpPost]
-        public async Task<IActionResult> SumItemType(InventoryItemType type, int? amount)
+        public async Task<IActionResult> AddItemType(InventoryItemType type, int? amount)
         {
             if ((type == InventoryItemType.Unknown) || (amount == null))
             {
@@ -195,13 +206,13 @@ namespace GameOfRevenge.WebServer.Controllers.Api
             }
             else
             {
-                var response = await userInventoryManager.SumItem(Token.PlayerId, type, -1, (int)amount);
+                var response = await userInventoryManager.AddItem(Token.PlayerId, type, -1, (int)amount);
                 return ReturnResponse(response);
             }
         }
 
         [HttpPost]
-        public async Task<IActionResult> SumItemID(long id, int? amount)
+        public async Task<IActionResult> AddItemID(long id, int? amount)
         {
             if ((id <= 0) || (amount == null))
             {
@@ -213,7 +224,7 @@ namespace GameOfRevenge.WebServer.Controllers.Api
             }
             else
             {
-                var response = await userInventoryManager.SumItem(Token.PlayerId, InventoryItemType.Unknown, id, (int)amount);
+                var response = await userInventoryManager.AddItem(Token.PlayerId, InventoryItemType.Unknown, id, (int)amount);
                 return ReturnResponse(response);
             }
         }
@@ -512,10 +523,10 @@ namespace GameOfRevenge.WebServer.Controllers.Api
 
 
 #region Instant Build
-        [HttpGet]
+        [HttpPost]
         public IActionResult GetInstantBuildCost(StructureType type, int level) => ReturnResponse(instantProgressManager.GetInstantBuildCost(Token.PlayerId, type, level));
 
-        [HttpGet]
+        [HttpPost]
         public async Task<IActionResult> GetBuildingSpeedUpCost(int locId) => ReturnResponse(await instantProgressManager.GetBuildingSpeedUpCost(Token.PlayerId, locId));
 
         [HttpPost]
@@ -524,12 +535,12 @@ namespace GameOfRevenge.WebServer.Controllers.Api
         [HttpPost]
         public async Task<IActionResult> SpeedUpBuildStructure(int locId) =>
             ReturnResponse(await instantProgressManager.SpeedUpBuildStructure(Token.PlayerId, locId));
-#endregion
 
-        [HttpGet]
+        [HttpPost]
         public IActionResult GetInstantRecruitCost(TroopType type, int level, int count) => ReturnResponse(instantProgressManager.GetInstantRecruitCost(type, level, count));
 
         [HttpPost]
         public async Task<IActionResult> InstantRecruitTroops(int locId, TroopType type, int level, int count) => ReturnResponse(await instantProgressManager.InstantRecruitTroops(Token.PlayerId, locId, type, level, count));
+        #endregion
     }
 }

@@ -12,7 +12,7 @@ namespace GameOfRevenge.Common.Interface.UserData
         Task<Response<UserInventoryData>> AddUniqueItem(int playerId, InventoryItemType itemType, int value = 1);
         Task<Response<UserInventoryData>> AddItem(int playerId, InventoryItemType itemType, int value = 1, bool unique = false);
 
-        Task<Response<UserInventoryDataUpdated>> SumItem(int playerId, InventoryItemType itemType, long playerDataId, int value);
+        Task<Response<UserInventoryDataUpdated>> AddItem(int playerId, InventoryItemType itemType, long playerDataId, int value);
 
         Task<Response<UserInventoryData>> RemoveItem(int playerId, InventoryItemType itemType, long playerDataId);
 

@@ -36,7 +36,7 @@ namespace GameOfRevenge.Common.Interface.UserData
         Task<bool> RemoveResourceByRequirement(int playerId, IReadOnlyList<IReadOnlyDataRequirement> requirements);
         Task<bool> RefundResourceByRequirement(int playerId, IReadOnlyList<IReadOnlyDataRequirement> requirements);
         Task<bool> RemoveResourceByRequirement(int playerId, IReadOnlyList<IReadOnlyDataRequirement> requirements, int count);
-        Task<bool> RefundResourceByRequirement(int playerId, IReadOnlyList<IReadOnlyDataRequirement> requirements, int count);
+        Task<bool> SumResourceByRequirement(int playerId, IReadOnlyList<IReadOnlyDataRequirement> requirements, int count);
         Task<bool> RemoveResourceByRequirement(int playerId, IReadOnlyDataRequirement gems, int count);
         Task<bool> RefundResourceByRequirement(int playerId, IReadOnlyDataRequirement gems, int count);
 
