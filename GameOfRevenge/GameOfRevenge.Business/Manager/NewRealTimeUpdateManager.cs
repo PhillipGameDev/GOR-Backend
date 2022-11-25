@@ -68,7 +68,7 @@ namespace GameOfRevenge.Business.Manager
         }
 
 
-        public void CheckQuestProgress(PlayerUserQuestData data, QuestType questType, System.Action<UserQuestProgressData> callback)
+        public void CheckAllQuestProgress(PlayerUserQuestData data, QuestType questType, System.Action<UserQuestProgressData> callback)
         {
             //check current milestone quest
             var currChapterQuest = data.QuestData.ChapterQuests.Find(x => !x.Completed());
@@ -98,7 +98,7 @@ namespace GameOfRevenge.Business.Manager
             allPlayerDatas.TryGetValue(playerId, out var data);
             if (data == null) return;
 
-            CheckQuestProgress(data, QuestType.ResourceCollection, (currentQuest) =>
+            CheckAllQuestProgress(data, QuestType.ResourceCollection, (currentQuest) =>
             {
                 var initialData = JsonConvert.DeserializeObject<QuestResourceData>(currentQuest.InitialData);
                 if ((initialData == null) || (initialData.ResourceType != resourceType)) return;
@@ -114,8 +114,14 @@ namespace GameOfRevenge.Business.Manager
                     progressData.Count = 0;
                 }
                 progressData.Count += count;
-                currentQuest.ProgressData = JsonConvert.SerializeObject(progressData);
+                if (progressData.Count >= initialData.Count)
+                {
+                    progressData.Count = initialData.Count;
+//                    currentQuest.Completed = true;
+                }
 
+                currentQuest.ProgressData = JsonConvert.SerializeObject(progressData);
+//                    CheckQuestProgress(data , currentQuest);
                 UpdateQuestData(data, currentQuest);
             });
         }
@@ -128,7 +134,7 @@ namespace GameOfRevenge.Business.Manager
             allPlayerDatas.TryGetValue(playerId, out var data);
             if (data == null) return;
 
-            CheckQuestProgress(data, QuestType.TrainTroops, (currentQuest) =>
+            CheckAllQuestProgress(data, QuestType.TrainTroops, (currentQuest) =>
             {
                 var initialData = JsonConvert.DeserializeObject<QuestTroopData>(currentQuest.InitialData);
                 if ((initialData == null) || (initialData.TroopType != troopType)) return;
@@ -146,8 +152,14 @@ namespace GameOfRevenge.Business.Manager
                         progressData.Count = 0;
                     }
                     progressData.Count += count;
-                    currentQuest.ProgressData = JsonConvert.SerializeObject(progressData);
+                    if (progressData.Count >= initialData.Count)
+                    {
+                        progressData.Count = initialData.Count;
+//                        currentQuest.Completed = true;
+                    }
 
+                    currentQuest.ProgressData = JsonConvert.SerializeObject(progressData);
+//                    CheckQuestProgress(data , currentQuest);
                     UpdateQuestData(data, currentQuest);
                 }
             });
