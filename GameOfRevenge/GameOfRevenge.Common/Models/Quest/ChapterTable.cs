@@ -28,7 +28,7 @@ namespace GameOfRevenge.Common.Models.Quest
             Name = reader.GetString(index) ?? string.Empty; index++;
             Description = reader.GetString(index) ?? string.Empty; index++;
             Code = reader.GetString(index) ?? string.Empty; index++;
-            Order = (int) (reader.GetValue(index) == DBNull.Value ? 0 : reader.GetInt32(index));
+            Order = (int) (reader.GetValue(index) == DBNull.Value ? 0 : reader.GetDouble(index));
         }
     }
 }

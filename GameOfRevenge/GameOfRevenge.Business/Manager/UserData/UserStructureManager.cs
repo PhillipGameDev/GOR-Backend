@@ -179,15 +179,25 @@ namespace GameOfRevenge.Business.Manager.UserData
 
             var json = JsonConvert.SerializeObject(dataList);
             var respModel = await manager.AddOrUpdatePlayerData(playerId, DataType.Structure, structureData.Info.Id, json);
-
-            var userStructure = new UserStructureData()
+            if (respModel.IsSuccess)
             {
-                Id = respModel.Data.Id,
-                DataType = DataType.Structure,
-                ValueId = type,
-                Value = dataList
-            };
-            return new Response<UserStructureData>(userStructure, 100, "Structure Added succesfully");
+                var userStructure = new UserStructureData()
+                {
+                    Id = respModel.Data.Id,
+                    DataType = DataType.Structure,
+                    ValueId = type,
+                    Value = dataList
+                };
+                return new Response<UserStructureData>(userStructure, 100, "Structure Added succesfully");
+            }
+            else
+            {
+                if (removeRes)
+                {
+                    var success = await userResourceManager.RefundResourceByRequirement(playerId, structure.Requirements);
+                }
+                return new Response<UserStructureData>(203, "Error creating structure");
+            }
         }
 
         public async Task<Response<UserStructureData>> UpgradeBuilding(int playerId, StructureType type, int position) => await UpgradeBuilding(playerId, type, position, true, false);
@@ -207,12 +217,10 @@ namespace GameOfRevenge.Business.Manager.UserData
                     {
                         var structureSpec = structureData.GetStructureLevelById(locData.Level);
                         var requirements = structureSpec.Requirements;
-                        var timeToBuild = structureSpec.Data.TimeToBuild;
-                        var hitPoints = structureSpec.Data.HitPoint;
 
                         locData.Level++;
                         locData.StartTime = timestamp;
-                        locData.HitPoints = hitPoints;
+                        locData.HitPoints = structureSpec.Data.HitPoint;
                         locData.Helped = 0;
 
                         float timeReduced = 0;
@@ -229,7 +237,7 @@ namespace GameOfRevenge.Business.Manager.UserData
                             }
                         }
 
-                        int secs = (int)(timeToBuild * (1 - (timeReduced / 100f)));
+                        int secs = (int)(structureSpec.Data.TimeToBuild * (1 - (timeReduced / 100f)));
                         if (secs < 0) secs = 0;
                         locData.Duration = secs;
 
@@ -271,7 +279,11 @@ namespace GameOfRevenge.Business.Manager.UserData
                         }
                         else
                         {
-                            //TODO: revert resource
+                            if (removeRes)
+                            {
+                                var success = await userResourceManager.RefundResourceByRequirement(playerId, requirements);
+                            }
+                            return new Response<UserStructureData>(203, "Error upgrading structure");
                         }
                     }
                 }

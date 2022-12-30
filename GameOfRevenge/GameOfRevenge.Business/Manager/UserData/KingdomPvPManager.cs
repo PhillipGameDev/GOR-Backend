@@ -652,7 +652,7 @@ namespace GameOfRevenge.Business.Manager.UserData
                 {
                     switch (troop.TroopType)
                     {
-                        case TroopType.Swordman:
+                        case TroopType.Swordsman:
                             var tech = data.Boosts.Find(x => (byte)x.Type == (byte)TechnologyType.BarracksAttackTechnology);
                             if ((tech != null) && (!tech.HasDuration || (tech.TimeLeft > 0)))
                             {

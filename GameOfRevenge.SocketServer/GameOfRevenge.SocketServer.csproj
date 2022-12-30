@@ -79,6 +79,9 @@
     <Reference Include="System.Net.Http" />
     <Reference Include="System.Xml" />
     <Reference Include="WindowsBase" />
+    <Reference Include="System.Data.SqlClient">
+      <HintPath>..\packages\System.Data.SqlClient.4.8.2\runtimes\win\lib\netcoreapp2.1\System.Data.SqlClient.dll</HintPath>
+    </Reference>
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Buildings\Handlers\Academy.cs" />
@@ -185,13 +188,13 @@
     <Compile Include="Troops\IGameTroop.cs" />
     <Compile Include="Troops\ITroop.cs" />
     <Compile Include="Troops\Knight.cs" />
-    <Compile Include="Troops\Swordsmen.cs" />
+    <Compile Include="Troops\Swordsman.cs" />
     <Compile Include="Troops\Archer.cs" />
-    <Compile Include="Troops\SeigeTroop.cs" />
     <Compile Include="Troops\Troop.cs" />
     <Compile Include="Troops\TroopFactory.cs" />
     <Compile Include="Model\Operation\HelpStructureRequest.cs" />
     <Compile Include="Model\Operation\UpdateQuestRequest.cs" />
+    <Compile Include="Troops\Slingshot.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="GameOfRevenge.dll.config">

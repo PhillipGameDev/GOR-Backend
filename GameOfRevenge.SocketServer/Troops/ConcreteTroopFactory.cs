@@ -16,14 +16,14 @@ namespace GameOfRevenge.Troops
         {
             switch (troop.TroopType)
             {
-                case TroopType.Swordman:
-                    return new Swordsmen(troop,building);
+                case TroopType.Swordsman:
+                    return new Swordsman(troop,building);
                 case TroopType.Archer:
                     return new Archer(troop,building);
                 case TroopType.Knight:
                     return new Knight(troop,building);
                 case TroopType.Slingshot:
-                    return new SeigeTroop(troop,building);
+                    return new Slingshot(troop,building);
                 default:
                     throw new ApplicationException($"Troop is no created {troop.TroopData.Info.Code}");
             }

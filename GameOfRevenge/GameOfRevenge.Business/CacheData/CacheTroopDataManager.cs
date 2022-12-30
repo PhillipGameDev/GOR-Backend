@@ -132,7 +132,7 @@ namespace GameOfRevenge.Business.CacheData
 
                 troopBuildingRel = new List<TroopBuildingRelation>()
                 {
-                    new TroopBuildingRelation(StructureType.Barracks, new List<TroopType>() { TroopType.Swordman } ),
+                    new TroopBuildingRelation(StructureType.Barracks, new List<TroopType>() { TroopType.Swordsman } ),
                     new TroopBuildingRelation(StructureType.ShootingRange, new List<TroopType>() { TroopType.Archer } ),
                     new TroopBuildingRelation(StructureType.Stable, new List<TroopType>() { TroopType.Knight } ),
                     new TroopBuildingRelation(StructureType.Workshop, new List<TroopType>() { TroopType.Slingshot } )

@@ -21,8 +21,8 @@ namespace GameOfRevenge.Business.Manager.GameDef
 
         public async Task<Response<List<HeroDataRequirementRel>>> GetAllHeroDatas()
         {
-            var heros = await GetAllHeroes();
-            if (!heros.IsSuccess) return new Response<List<HeroDataRequirementRel>>(heros.Case, heros.Message);
+            var heroes = await GetAllHeroes();
+            if (!heroes.IsSuccess) return new Response<List<HeroDataRequirementRel>>(heroes.Case, heroes.Message);
 
             var reqs = await GetAllHeroRequirements();
             if (!reqs.IsSuccess) return new Response<List<HeroDataRequirementRel>>(reqs.Case, reqs.Message);
@@ -30,10 +30,10 @@ namespace GameOfRevenge.Business.Manager.GameDef
             var boosts = await GetAllHeroBoosts();
             if (!boosts.IsSuccess) return new Response<List<HeroDataRequirementRel>>(boosts.Case, boosts.Message);
 
-            var resp = new Response<List<HeroDataRequirementRel>>(new List<HeroDataRequirementRel>(), heros.Case, heros.Message);
+            var resp = new Response<List<HeroDataRequirementRel>>(new List<HeroDataRequirementRel>(), heroes.Case, heroes.Message);
             var structures = CacheStructureDataManager.StructureInfos;
 
-            foreach (var hero in heros.Data)
+            foreach (var hero in heroes.Data)
             {
                 var data = new HeroDataRequirementRel
                 {

@@ -13,6 +13,9 @@ namespace GameOfRevenge.Business.Manager.GameDef
 {
     public class QuestManager : BaseManager
     {
+        public const int SIDE_QUEST = 99;
+        public const int DAILY_QUEST = -1;
+
         public async Task<Response<List<QuestTable>>> GetAllQuests() => await Db.ExecuteSPMultipleRow<QuestTable>("GetAllQuests");
         public async Task<Response<List<ChapterQuestTable>>> GetAllChapterQuests() => await Db.ExecuteSPMultipleRow<ChapterQuestTable>("GetAllChapterQuests");
         public async Task<Response<List<ChapterTable>>> GetAllChapters() => await Db.ExecuteSPMultipleRow<ChapterTable>("GetAllChapters");
@@ -100,7 +103,7 @@ namespace GameOfRevenge.Business.Manager.GameDef
 
                 var response = new Response<List<QuestRewardRelData>>(new List<QuestRewardRelData>(), 100, "All Side Quests");
 
-                var sideQuests = allQuests.Data.Where(x => x.MilestoneId == 99).ToList();
+                var sideQuests = allQuests.Data.Where(x => x.MilestoneId == SIDE_QUEST).ToList();
                 foreach (var questData in sideQuests)
                 {
                     var questId = questData.QuestId;
@@ -148,7 +151,7 @@ namespace GameOfRevenge.Business.Manager.GameDef
 
                 var response = new Response<List<QuestRewardRelData>>(new List<QuestRewardRelData>(), 100, "All Daily Quests");
 
-                var dailyQuests = allQuests.Data.Where(x => x.MilestoneId == 0).ToList();
+                var dailyQuests = allQuests.Data.Where(x => x.MilestoneId == DAILY_QUEST).ToList();
                 foreach (var questData in dailyQuests)
                 {
                     var questId = questData.QuestId;

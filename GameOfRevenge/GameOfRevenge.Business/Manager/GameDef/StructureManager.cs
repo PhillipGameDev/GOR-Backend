@@ -51,7 +51,9 @@ namespace GameOfRevenge.Business.Manager.GameDef
                 var respStructLocs = await GetAllStructureLocation();
                 var respStructBuildLimit = await GetAllStructureBuildLimit();
 
-                if (respStructs.IsSuccess && respStructDatas.IsSuccess && respStructReqs.IsSuccess && respStructLocs.IsSuccess && respStructBuildLimit.IsSuccess)
+                if (respStructs.IsSuccess && respStructDatas.IsSuccess &&
+                    respStructReqs.IsSuccess && respStructLocs.IsSuccess &&
+                    respStructBuildLimit.IsSuccess)
                 {
                     var structs = respStructs.Data;
                     var structDatas = respStructDatas.Data;

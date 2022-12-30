@@ -22,10 +22,10 @@ namespace GameOfRevenge.Business.Manager.UserData
         private readonly IUserStructureManager _userStructureManager = new UserStructureManager();
         private readonly IUserTroopManager _userTroopManager = new UserTroopManager();
 
-        private readonly float costPerSecond = 0.08f;
-        private readonly int freeCostSeconds = 60;
+//        private readonly float costPerSecond = 0.08f;
+//        private readonly int freeCostSeconds = 60;
 
-        public bool IsFreeCost(int timeLeft) => FinalCost(timeLeft) <= 0;
+/*        public bool IsFreeCost(int timeLeft) => FinalCost(timeLeft) <= 0;
         public int FinalCost(float timeLeft)
         {
             var intTime = (int)timeLeft;
@@ -41,7 +41,7 @@ namespace GameOfRevenge.Business.Manager.UserData
             var newTime = timeLeft - freeCostSeconds;
             if (newTime <= freeCostSeconds) return 0;
             else return (int)(newTime * costPerSecond);
-        }
+        }*/
         private int RecruitCost(TroopType type, int troopLevel, int count)
         {
             float singleCost = 1;
@@ -49,7 +49,7 @@ namespace GameOfRevenge.Business.Manager.UserData
             {
                 case TroopType.Other:
                     break;
-                case TroopType.Swordman:
+                case TroopType.Swordsman:
                     singleCost += 1;
                     break;
                 case TroopType.Archer:
@@ -75,7 +75,8 @@ namespace GameOfRevenge.Business.Manager.UserData
             try
             {
                 var structureData = CacheStructureDataManager.GetFullStructureLevelData(structType, level);
-                var respones = new Response<int>(FinalCost(structureData.Data.TimeToBuild), 100, "Instant build cost");
+//                var respones = new Response<int>(FinalCost(structureData.Data.TimeToBuild), 100, "Instant build cost");
+                var respones = new Response<int>(structureData.Data.InstantBuildCost, 100, "Instant build cost");
                 return respones;
             }
             catch (CacheDataNotExistExecption ex) { return new Response<int>(200, ErrorManager.ShowError(ex)); }
@@ -97,8 +98,8 @@ namespace GameOfRevenge.Business.Manager.UserData
                     if (structureInfo != null)
                     {
                         if (structureInfo.TimeLeft <= 0) break;
-                        var timeLeft = (int)structureInfo.TimeLeft;
-                        var cost = FinalCost(timeLeft);
+                        var structureData = CacheStructureDataManager.GetFullStructureLevelData(structure.StructureType, structureInfo.Level);
+                        int cost = (int)Math.Ceiling(structureData.Data.InstantBuildCost * ((Math.Ceiling(structureInfo.TimeLeft / 30) * 30) / structureData.Data.TimeToBuild));
                         return new Response<int>(cost, 100, "Speedup building cost");
                     }
                 }
@@ -115,13 +116,12 @@ namespace GameOfRevenge.Business.Manager.UserData
             {
                 var structureData = CacheStructureDataManager.GetFullStructureData(structType);
                 var structureLevelData = CacheStructureDataManager.GetFullStructureLevelData(structType, level);
-                var cost = FinalCost(structureLevelData.Data.TimeToBuild);
 
                 var playerDataResp = await GetFullPlayerData(playerId);
                 if (!playerDataResp.IsSuccess || !playerDataResp.HasData) throw new DataNotExistExecption(playerDataResp.Message);
 
                 var playerData = playerDataResp.Data;
-                if (level > 1)
+/*                if (level > 1)
                 {
                     foreach (var structure in playerData.Structures)
                     {
@@ -131,8 +131,26 @@ namespace GameOfRevenge.Business.Manager.UserData
                             return await SpeedUpBuildStructure(playerId, locId, playerData);
                         }
                     }
-                }
+                }*/
 
+                var cost = structureLevelData.Data.InstantBuildCost;
+                if (cost == 0)
+                {
+                    UserRecordBuilderDetails availableBuilder = null;
+                    foreach (var builder in playerData.Builders)
+                    {
+                        if (builder.TimeLeft > 0) continue;
+
+                        availableBuilder = builder;
+                        break;
+                    }
+
+                    if (availableBuilder == null)
+                    {
+                        cost = 1;
+                        if (playerData.Builders.Count >= 2) return new Response<UserStructureData>(200, "No builder available");
+                    }
+                }
                 if (cost > 0)
                 {
                     log.Info("TAKE GEMS");
@@ -144,15 +162,17 @@ namespace GameOfRevenge.Business.Manager.UserData
                 }
 
                 Response<UserStructureData> createBuildResponse = null;
+                bool removeResources = true;
+                bool createBuilder = true;
                 if (level <= 1)
                 {
                     log.Info("CREATE BUILDING");
-                    createBuildResponse = await _userStructureManager.CreateBuilding(playerId, structType, locId, false, true, false);
+                    createBuildResponse = await _userStructureManager.CreateBuilding(playerId, structType, locId, removeResources, createBuilder, false);
                 }
                 else
                 {
                     log.Info("UPGRADE BUILDING");
-                    createBuildResponse = await _userStructureManager.UpgradeBuilding(playerId, structType, locId, false, true);
+                    createBuildResponse = await _userStructureManager.UpgradeBuilding(playerId, structType, locId, removeResources, createBuilder);
                 }
 
                 if (createBuildResponse == null) return new Response<UserStructureData>(200, ErrorManager.ShowError());
@@ -228,6 +248,8 @@ namespace GameOfRevenge.Business.Manager.UserData
                     playerData = fullPlayerData.Data;
                 }
 
+                StructureInfos structureGroup = null;
+                StructureDetails selectedBuilding = null;
                 foreach (var structure in playerData.Structures)
                 {
                     var building = structure.Buildings.Find(x => (x.Location == locId));
@@ -235,42 +257,47 @@ namespace GameOfRevenge.Business.Manager.UserData
 
                     if (building.TimeLeft <= 0) return new Response<UserStructureData>(101, "Structure already completed");
 
-                    var cost = FinalCost(building.TimeLeft);
-                    if (cost > 0)
-                    {
-                        var playerGems = playerData.Resources.Gems;
-                        if (playerGems < cost) throw new RequirementExecption("Not enough gems");
+                    structureGroup = structure;
+                    selectedBuilding = building;
+                    break;
+                }
+                if (selectedBuilding == null) return new Response<UserStructureData>(200, "Structure not found");
 
-                        var resCut = await _userResourceManager.SumGemsResource(playerId, -cost);
-                        if (!resCut.IsSuccess) throw new RequirementExecption("Not enough gems");
-                    }
+                var structureData = CacheStructureDataManager.GetFullStructureLevelData(structureGroup.StructureType, selectedBuilding.Level);
+                double multiplier = (Math.Ceiling(selectedBuilding.TimeLeft / 30) * 30) / structureData.Data.TimeToBuild;
+                int cost = (int)Math.Ceiling(structureData.Data.InstantBuildCost * multiplier);
+                if (cost > 0)
+                {
+                    var playerGems = playerData.Resources.Gems;
+                    if (playerGems < cost) throw new RequirementExecption("Not enough gems");
 
-//                    var structureData = CacheStructureDataManager.GetFullStructureData(structure.StructureType);
-                    building.Duration = 0;
-
-                    var json = JsonConvert.SerializeObject(structure.Buildings);
-                    var response = await manager.UpdatePlayerDataID(playerId, structure.Id, json);
-//                    var response = await manager.AddOrUpdatePlayerData(playerId, DataType.Structure, structureData.Info.Id, json);
-                    if (!response.IsSuccess)
-                    {
-                        if (cost > 0) await _userResourceManager.SumGemsResource(playerId, cost);
-
-                        return new Response<UserStructureData>(200, "Structure upgrade could'nt be completed");
-                    }
-
-                    var builder = playerData.Builders.Find(x => (x.Location == building.Location));
-                    if (builder != null)
-                    {
-                        builder.Duration = 0;
-                        json = JsonConvert.SerializeObject((UserBuilderDetails)builder);
-                        var builderResp = await manager.UpdatePlayerDataID(playerId, builder.Id, json);
-                    }
-
-                    var userStructure = _userStructureManager.PlayerDataToUserStructureData(response.Data);
-                    return new Response<UserStructureData>(userStructure, 100, "Structure upgrade completed");
+                    var resCut = await _userResourceManager.SumGemsResource(playerId, -cost);
+                    if (!resCut.IsSuccess) throw new RequirementExecption("Not enough gems");
                 }
 
-                return new Response<UserStructureData>(200, "Structure not found");
+//                    var structureData = CacheStructureDataManager.GetFullStructureData(structure.StructureType);
+                selectedBuilding.Duration = 0;
+
+                var json = JsonConvert.SerializeObject(structureGroup.Buildings);
+                var response = await manager.UpdatePlayerDataID(playerId, structureGroup.Id, json);
+//                    var response = await manager.AddOrUpdatePlayerData(playerId, DataType.Structure, structureData.Info.Id, json);
+                if (!response.IsSuccess)
+                {
+                    if (cost > 0) await _userResourceManager.SumGemsResource(playerId, cost);
+
+                    return new Response<UserStructureData>(200, "Structure upgrade could'nt be completed");
+                }
+
+                var builder = playerData.Builders.Find(x => (x.Location == selectedBuilding.Location));
+                if (builder != null)
+                {
+                    builder.Duration = 0;
+                    json = JsonConvert.SerializeObject((UserBuilderDetails)builder);
+                    var builderResp = await manager.UpdatePlayerDataID(playerId, builder.Id, json);
+                }
+
+                var userStructure = _userStructureManager.PlayerDataToUserStructureData(response.Data);
+                return new Response<UserStructureData>(userStructure, 100, "Structure upgrade completed");
             }
             catch (CacheDataNotExistExecption ex)
             {

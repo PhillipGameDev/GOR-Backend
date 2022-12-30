@@ -1,6 +1,6 @@
 USE [GameOfRevenge]
 GO
-/****** Object:  StoredProcedure [dbo].[GetAllPlayerData]    Script Date: 8/14/2022 2:42:20 PM ******/
+/****** Object:  StoredProcedure [dbo].[GetAllPlayerData]    Script Date: 12/17/2022 7:03:08 PM ******/
 SET ANSI_NULLS ON
 GO
 SET QUOTED_IDENTIFIER ON
@@ -29,7 +29,6 @@ BEGIN
 
 		IF (@currentId IS NULL)
 			BEGIN
-				SET @currentId = NULL;
 				SET @case = 200;
 				SET @message = 'Player does not exists';
 			END
@@ -47,7 +46,7 @@ BEGIN
 				ELSE IF (@ValueId IS NOT NULL AND (@tempValueId <= 0))
 					BEGIN
 						SET @currentId = NULL;
-						SET @case = 201;
+						SET @case = 202;
 						SET @message = 'Invalid value id';
 					END
 			END
@@ -84,6 +83,9 @@ BEGIN
 					SET @message = 'Fetched player game data';
 				END
 		END
+	ELSE
+		SELECT p.[PlayerDataId], p.[DataTypeId] AS 'DataType', p.[ValueId], p.[Value] FROM [dbo].[PlayerData] AS p 
+		WHERE p.[PlayerId] = NULL;
 
 	EXEC [dbo].[GetMessage] @userId, @message, @case, @error, @time, 1, 1;
 END

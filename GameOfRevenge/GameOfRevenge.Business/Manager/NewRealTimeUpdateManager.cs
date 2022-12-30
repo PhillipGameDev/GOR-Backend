@@ -268,7 +268,7 @@ namespace GameOfRevenge.Business.Manager
                 }
                 TryToResetQuests(count);
             }, 1000);
-         }
+        }
 
         public void CheckPlayerQuestData(PlayerUserQuestData data)
         {

@@ -105,7 +105,7 @@ namespace GameOfRevenge.Business.Manager.UserData
             await GiveRewards(playerId, questRewards.Rewards); //TODO:implement response error
 
             QuestResourceData quest = null;
-            if (questRewards.Quest.MilestoneId == 0)
+            if (questRewards.Quest.MilestoneId == GameDef.QuestManager.DAILY_QUEST)
             {
                 if (questRewards.Quest.QuestType == QuestType.ResourceCollection)
                 {

@@ -17,6 +17,7 @@ namespace GameOfRevenge.Common.Models.Structure
         int ResourceCapacity { get; }
         int SafeDeposit { get; }
         int WoundedCapacity { get; }
+        int InstantBuildCost { get; }
     }
 
     public class StructureDataTable : BaseRefEnumLevelDataTable, IBaseTable, IBaseRefEnumLevelDataTable, IReadOnlyBaseRefEnumLevelDataTable, IReadOnlyStructureDataTable
@@ -31,6 +32,7 @@ namespace GameOfRevenge.Common.Models.Structure
         public int SafeDeposit { get; set; }
         public int ResourceCapacity { get; set; }
         public int WoundedCapacity { get; set; }
+        public int InstantBuildCost { get; set; }
 
         public override void LoadFromDataReader(IDataReader reader)
         {
@@ -47,7 +49,8 @@ namespace GameOfRevenge.Common.Models.Structure
             TimeToBuild = reader.GetValue(index) == DBNull.Value ? 0 : reader.GetInt32(index); index++;
             SafeDeposit = reader.GetValue(index) == DBNull.Value ? 0 : reader.GetInt32(index); index++;
             ResourceCapacity = reader.GetValue(index) == DBNull.Value ? 0 : reader.GetInt32(index); index++;
-            WoundedCapacity = reader.GetValue(index) == DBNull.Value ? 0 : reader.GetInt32(index);
+            WoundedCapacity = reader.GetValue(index) == DBNull.Value ? 0 : reader.GetInt32(index); index++;
+            InstantBuildCost = reader.GetValue(index) == DBNull.Value ? 0 : reader.GetInt32(index);
         }
     }
 }

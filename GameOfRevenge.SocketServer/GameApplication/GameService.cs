@@ -61,6 +61,7 @@ namespace GameOfRevenge.GameApplication
 //            Config.ConnectionString = "Data Source=135.125.204.124,1433;Initial Catalog=GameOfRevenge;Persist Security Info=True;User ID=developer;Password=developer";
 //            Config.ConnectionString = "Data Source=localhost;Initial Catalog=GameOfRevenge;Persist Security Info=True;User ID=developer;Password=developer";
 //            Config.DefaultWorldCode = "AADSPX";
+            log.InfoFormat("----------------------------------");
             log.InfoFormat("ConString = {0} ", Config.ConnectionString);
             log.InfoFormat("DefaultWorldCode... = {0} ", Config.DefaultWorldCode);
 
@@ -95,7 +96,7 @@ namespace GameOfRevenge.GameApplication
             var task = BKingdomManager.GetWorld(Config.DefaultWorldCode);
             task.Wait();
             var world = task.Result;
-//            log.InfoFormat("6 world="+(world != null));
+            log.InfoFormat("6 world="+(world != null));
             //if (!world.IsSuccess) world = BKingdomManager.CreateWorld(Config.DefaultWorldCode).Result;
             //else
             //{
@@ -110,7 +111,7 @@ namespace GameOfRevenge.GameApplication
             task2.Wait();
             worldData = task2.Result.Data;
             //}
-//            log.InfoFormat("7 worlddata=" + (worldData != null));
+            log.InfoFormat("7 worlddata=" + (worldData != null));
 
             WorldHandler.SetupPvpWorld(world.Data.Id, worldData);
 
@@ -141,7 +142,7 @@ namespace GameOfRevenge.GameApplication
                 switch (item.Info.Code)
                 {
                     case StructureType.Barracks:
-                        gtroops = Troops.Where(d => d.Value.TroopType == TroopType.Swordman).ToDictionary(f => f.Key, s => s.Value);
+                        gtroops = Troops.Where(d => d.Value.TroopType == TroopType.Swordsman).ToDictionary(f => f.Key, s => s.Value);
                         break;
                     case StructureType.InfantryCamp:
                         gtroops = Troops;

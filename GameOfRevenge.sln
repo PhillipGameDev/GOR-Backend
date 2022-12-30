@@ -17,6 +17,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "GameOfRevenge.WebServer", "
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "GameOfRevenge.WebServerTest", "GameOfRevenge.WebServerTest\GameOfRevenge.WebServerTest.csproj", "{07CB4892-BBA8-48C4-AFEB-B3FC4E1F3B0D}"
 EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Unity", "Unity", "{0B0C4FAA-EF34-42FD-8F58-476EDEC80413}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU

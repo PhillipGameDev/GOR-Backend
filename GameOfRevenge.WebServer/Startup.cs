@@ -16,7 +16,7 @@ using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.DataProtection;
 using Microsoft.AspNetCore.HttpsPolicy;
 using Microsoft.IdentityModel.Tokens;
-using Microsoft.OpenApi.Models;
+//using Microsoft.OpenApi.Models;
 using Newtonsoft.Json;
 using GameOfRevenge.Common.Interface;
 using GameOfRevenge.Common.Interface.UserData;
@@ -107,7 +107,7 @@ namespace GameOfRevenge.WebServer
             services.AddControllersWithViews();
             services.AddRazorPages();
 
-            services.AddSwaggerGen(setup =>
+/*            services.AddSwaggerGen(setup =>
             {
                 // Include 'SecurityScheme' to use JWT Authentication
                 var jwtSecurityScheme = new OpenApiSecurityScheme
@@ -132,7 +132,7 @@ namespace GameOfRevenge.WebServer
                 {
                     { jwtSecurityScheme, Array.Empty<string>() }
                 });
-            });
+            });*/
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
@@ -146,8 +146,8 @@ namespace GameOfRevenge.WebServer
             if (env.IsDevelopment())
             {
                 app.UseDeveloperExceptionPage();
-                app.UseSwagger();
-                app.UseSwaggerUI(c => c.SwaggerEndpoint("/swagger/v1/swagger.json", "GameOfRevenge.WebApi v1"));
+//                app.UseSwagger();
+//                app.UseSwaggerUI(c => c.SwaggerEndpoint("/swagger/v1/swagger.json", "GameOfRevenge.WebApi v1"));
             }
             else
             {
