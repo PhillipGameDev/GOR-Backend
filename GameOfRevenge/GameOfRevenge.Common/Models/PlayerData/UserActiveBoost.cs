@@ -84,10 +84,18 @@ namespace GameOfRevenge.Common.Models
 
 
 
+    [Serializable]
+    [DataContract]
     public class SpecNewBoostDataTable
     {
+        [DataMember]
         public List<SpecNewBoostData> Boosts { get; set; } = new List<SpecNewBoostData>();
+        [DataMember]
         public Dictionary<byte, Dictionary<byte, object>> Tables { get; set; } = new Dictionary<byte, Dictionary<byte, object>>();
+
+        public SpecNewBoostDataTable()
+        {
+        }
     }
 
     //    [Serializable]

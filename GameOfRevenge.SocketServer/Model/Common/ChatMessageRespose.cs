@@ -18,8 +18,8 @@ namespace GameOfRevenge.Model
         [DataMember(Code = (byte)RoomParameterKey.AllianceId, IsOptional = true)]
         public int AllianceId { get; set; }
 
-        [DataMember(Code = (byte)RoomParameterKey.CurrentTime, IsOptional = true)]
-        public string CurrentTime { get; set; }
+        [DataMember(Code = (byte)RoomParameterKey.Timestamp, IsOptional = true)]
+        public long Timestamp { get; set; }
 
         [DataMember(Code = (byte)RoomParameterKey.ChatMessage, IsOptional = true)]
         public string ChatMessage { get; set; }

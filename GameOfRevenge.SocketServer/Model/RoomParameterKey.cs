@@ -30,7 +30,7 @@
         AttackerId = 26,
         ReachedTime = 27,
         WinnerId = 28,
-        CurrentTime = 29,
+        Timestamp = 29,
         IsAttacking = 30,
         WoundedCount = 31,
         IsReturnFromAttack = 32,

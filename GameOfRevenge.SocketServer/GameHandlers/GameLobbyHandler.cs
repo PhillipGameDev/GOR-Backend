@@ -225,7 +225,7 @@ namespace GameOfRevenge.GameHandlers
                 PlayerId = operation.PlayerId,
                 Username = operation.Username,
                 AllianceId = 0,//global chat alliance is zero. //operation.AllianceId,
-                CurrentTime = DateTime.UtcNow.ToString("dd/MM/yyyy HH/mm/ss"),
+                Timestamp = DateTimeOffset.Now.ToUnixTimeSeconds(), //ToString("dd/MM/yyyy HH:mm:ss"),
                 ChatMessage = operation.ChatMessage
             };
             lock (chatBuffer)
@@ -250,7 +250,7 @@ namespace GameOfRevenge.GameHandlers
                 PlayerId = operation.PlayerId,
                 Username = operation.Username,
                 AllianceId = operation.AllianceId,
-                CurrentTime = DateTime.UtcNow.ToString("dd/MM/yyyy HH/mm/ss"),
+                Timestamp = DateTimeOffset.Now.ToUnixTimeSeconds(),//ToString("dd/MM/yyyy HH:mm:ss"),
                 ChatMessage = operation.ChatMessage,
             };
             lock (chatBuffer)
