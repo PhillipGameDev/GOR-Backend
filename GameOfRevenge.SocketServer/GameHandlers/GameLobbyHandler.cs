@@ -693,30 +693,31 @@ namespace GameOfRevenge.GameHandlers
 
             var playerStructData = await GameService.BPlayerStructureManager.CheckBuildingStatus(peer.Actor.PlayerId, (StructureType)operation.StructureType);
 
-            if (playerStructData == null)
-                return peer.SendOperation(operationRequest.OperationCode, ReturnCode.InvalidOperation, debuMsg: "player not found");
-            if (!playerStructData.IsSuccess)
-                return peer.SendOperation(operationRequest.OperationCode, ReturnCode.InvalidOperation, debuMsg: playerStructData.Message);
-            if (!playerStructData.HasData)
-                return peer.SendOperation(operationRequest.OperationCode, ReturnCode.InvalidOperation, debuMsg: "player data not found");
+            string msg = null;
+            if (playerStructData == null) msg = "player not found";
+            else if (!playerStructData.IsSuccess) msg = playerStructData.Message;
+            else if (!playerStructData.HasData) msg = "player data not found";
+            if (msg != null)
+            {
+                return peer.SendOperation(operationRequest.OperationCode, ReturnCode.InvalidOperation, debuMsg: msg);
+            }
 
             foreach (var building in playerStructData.Data.Value)
             {
-                if (building.Location == operation.StructureLocationId)
-                {
-                    var response = new PlayerBuildingBuildingStatuResponse()
-                    {
-                        LocationId = building.Location,
-                        TimeLeft = (int)building.TimeLeft,
-                        TotalTime = building.Duration
-                    };
-                    log.InfoFormat("Send Building status to Client location {0} buildType {1} Time {2} ",
-                       response.LocationId, playerStructData.Data.ValueId, building.TimeLeft);
+                if (building.Location != operation.StructureLocationId) continue;
 
-                    var dic = response.GetDictionary();
-                    //this.Player.SendOperation((byte)OperationCode.PlayerBuildingStatus, ReturnCode.OK, dict);
-                    return peer.SendOperation(operationRequest.OperationCode, ReturnCode.OK, dic, debuMsg: playerStructData.Message);
-                }
+                var response = new PlayerBuildingBuildingStatuResponse()
+                {
+                    LocationId = building.Location,
+                    TimeLeft = (int)building.TimeLeft,
+                    TotalTime = building.Duration
+                };
+                log.InfoFormat("Send Building status to Client location {0} buildType {1} Time {2} ",
+                    response.LocationId, playerStructData.Data.ValueId, building.TimeLeft);
+
+                var dic = response.GetDictionary();
+                //this.Player.SendOperation((byte)OperationCode.PlayerBuildingStatus, ReturnCode.OK, dict);
+                return peer.SendOperation(operationRequest.OperationCode, ReturnCode.OK, dic, debuMsg: playerStructData.Message);
             }
 
             return peer.SendOperation(operationRequest.OperationCode, ReturnCode.InvalidOperation, debuMsg: "structure not found");

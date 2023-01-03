@@ -16,13 +16,8 @@ namespace GameOfRevenge.Common.Models
         public bool HasDuration => Duration > 0;
         public bool Started => (DateTime.UtcNow - StartTime.ToUniversalTime()).TotalMilliseconds > 0;
 
-        public DateTime EndTime
-        {
-            get
-            {
-                return StartTime.AddSeconds(Duration);
-            }
-        }
+        public DateTime EndTime => StartTime.AddSeconds(Duration);
+
 //        [DataMember]
         public double TimeLeft
         {

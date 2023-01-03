@@ -136,19 +136,19 @@ namespace GameOfRevenge.Business.Manager.UserData
                 var cost = structureLevelData.Data.InstantBuildCost;
                 if (cost == 0)
                 {
-                    UserRecordBuilderDetails availableBuilder = null;
+                    UserRecordBuilderDetails currBuilder = null;
                     foreach (var builder in playerData.Builders)
                     {
                         if (builder.TimeLeft > 0) continue;
 
-                        availableBuilder = builder;
+                        currBuilder = builder;
                         break;
                     }
 
-                    if (availableBuilder == null)
+                    if (currBuilder == null)
                     {
-                        cost = 1;
                         if (playerData.Builders.Count >= 2) return new Response<UserStructureData>(200, "No builder available");
+                        cost = 1;
                     }
                 }
                 if (cost > 0)
@@ -161,21 +161,23 @@ namespace GameOfRevenge.Business.Manager.UserData
                     if (!resCut.IsSuccess) throw new RequirementExecption("Not enough gems");
                 }
 
-                Response<UserStructureData> createBuildResponse = null;
                 bool removeResources = true;
                 bool createBuilder = true;
-                if (level <= 1)
-                {
-                    log.Info("CREATE BUILDING");
-                    createBuildResponse = await _userStructureManager.CreateBuilding(playerId, structType, locId, removeResources, createBuilder, false);
-                }
-                else
+                Response<UserStructureData> createBuildResponse = null;
+                if (level > 1)
                 {
                     log.Info("UPGRADE BUILDING");
                     createBuildResponse = await _userStructureManager.UpgradeBuilding(playerId, structType, locId, removeResources, createBuilder);
                 }
-
-                if (createBuildResponse == null) return new Response<UserStructureData>(200, ErrorManager.ShowError());
+                else
+                {
+                    log.Info("CREATE BUILDING");
+                    createBuildResponse = await _userStructureManager.CreateBuilding(playerId, structType, locId, removeResources, createBuilder, false);
+                }
+                if (createBuildResponse == null)
+                {
+                    createBuildResponse = new Response<UserStructureData>(200, ErrorManager.ShowError());
+                }
 
                 if (!createBuildResponse.IsSuccess)
                 {

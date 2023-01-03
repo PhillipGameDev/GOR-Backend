@@ -145,16 +145,18 @@ namespace GameOfRevenge.Business.CacheData
             if (response.IsSuccess && response.HasData)
             {
 
-                structureTypes = new List<StructureType>();
                 structureInfos = response.Data;
+                structureTypes = new List<StructureType>();
                 foreach (var structure in response.Data)
                 {
-                    if (structure.Info == null) continue;
-                    if (structureTypes.Contains(structure.Info.Code)) continue;
-                    if (structure.Info.Code == StructureType.Other) continue;
-                    structureTypes.Add(structure.Info.Code);
+                    if ((structure.Info != null) &&
+                        !structureTypes.Contains(structure.Info.Code) &&
+                        (structure.Info.Code != StructureType.Other))
+                    {
+                        structureTypes.Add(structure.Info.Code);
+                    }
                 }
-                foreach (var structures in structureInfos)
+/*                foreach (var structures in structureInfos)
                 {
                     foreach (var structure in structures.Levels)
                     {
@@ -170,7 +172,7 @@ namespace GameOfRevenge.Business.CacheData
                         //                        else structure.Data.TimeToBuild = 60;
                         //#endif
                     }
-                }
+                }*/
 
                 isLoaded = true;
             }

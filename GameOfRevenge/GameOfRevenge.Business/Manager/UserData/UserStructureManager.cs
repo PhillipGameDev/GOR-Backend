@@ -106,15 +106,38 @@ namespace GameOfRevenge.Business.Manager.UserData
             if (existing.IsSuccess && existing.HasData)
             {
                 dataList = existing.Data.Value;
-                var structureExists = dataList.Exists(x => x.Location.Equals(position));
-                if (structureExists)
+                var structureExists = dataList.Find(x => (x.Location == position));
+                if (structureExists != null)
                 {
-                    return new Response<UserStructureData>(existing.Data, 200, "Structure already exists cannot create in that location");
+                    return new Response<UserStructureData>(existing.Data, 200, "Structure already exists at location");
                 }
             }
             else
             {
                 dataList = new List<StructureDetails>();
+            }
+
+            int limit = 0;
+            var structureInfo = CacheStructureDataManager.StructureInfos.FirstOrDefault(x => (x.Info.Code == type));
+            if (structureInfo != null)
+            {
+                int castleLvl = 0;
+                var userCastle = await CheckBuildingStatus(playerId, StructureType.CityCounsel);
+                if (userCastle.Data.Value.Count > 0) castleLvl = userCastle.Data.Value[0].Level;
+
+                for (int num = castleLvl; num > 0; num--)
+                {
+                    var lvl = num.ToString();
+                    if (!structureInfo.BuildLimit.ContainsKey(lvl)) continue;
+
+                    limit = structureInfo.BuildLimit[lvl];
+                    break;
+                }
+            }
+            if (dataList.Count >= limit)
+            {
+                if (limit == 0) return new Response<UserStructureData>(201, "Structure not available, upgrade castle");
+                else return new Response<UserStructureData>(202, "Structure max limit reached");
             }
 
             float timeReduced = 0;
@@ -161,20 +184,30 @@ namespace GameOfRevenge.Business.Manager.UserData
             if (removeRes)
             {
                 var success = userResourceManager.HasResourceRequirements(structure.Requirements, playerData.Data.Resources, 1);
-                if (!success) return new Response<UserStructureData>(201, "Insufficient player resources");
+                if (!success) return new Response<UserStructureData>(203, "Insufficient player resources");
             }
             System.Console.WriteLine("building time = " + secs);
 
+            Response<UserRecordBuilderDetails> currBuilder = null;
             if (secs > 0)
             {
-                var currBuilder = await SetBuilderTask(playerId, createBuilder, playerData.Data.Builders, secs, position, timestamp);
-                if (!currBuilder.IsSuccess) return new Response<UserStructureData>(202, currBuilder.Message);
+                currBuilder = await SetBuilderTask(playerId, createBuilder, playerData.Data.Builders, secs, position, timestamp);
+                if (!currBuilder.IsSuccess) return new Response<UserStructureData>(204, currBuilder.Message);
             }
 
             if (removeRes)
             {
                 var success = await userResourceManager.RemoveResourceByRequirement(playerId, structure.Requirements);
-                if (!success) return new Response<UserStructureData>(201, "Insufficient player resources");
+                if (!success)
+                {
+                    if (currBuilder != null)
+                    {
+                        currBuilder.Data.Duration = 0;
+                        var json2 = JsonConvert.SerializeObject((UserBuilderDetails)currBuilder.Data);
+                        await manager.UpdatePlayerDataID(playerId, currBuilder.Data.Id, json2);
+                    }
+                    return new Response<UserStructureData>(203, "Insufficient player resources");
+                }
             }
 
             var json = JsonConvert.SerializeObject(dataList);
@@ -188,7 +221,7 @@ namespace GameOfRevenge.Business.Manager.UserData
                     ValueId = type,
                     Value = dataList
                 };
-                return new Response<UserStructureData>(userStructure, 100, "Structure Added succesfully");
+                return new Response<UserStructureData>(userStructure, 100, "Structure added succesfully");
             }
             else
             {
@@ -196,7 +229,7 @@ namespace GameOfRevenge.Business.Manager.UserData
                 {
                     var success = await userResourceManager.RefundResourceByRequirement(playerId, structure.Requirements);
                 }
-                return new Response<UserStructureData>(203, "Error creating structure");
+                return new Response<UserStructureData>(205, "Error creating structure");
             }
         }
 
@@ -212,13 +245,13 @@ namespace GameOfRevenge.Business.Manager.UserData
                 if (locData != null)
                 {
                     var structureData = CacheStructureDataManager.GetFullStructureData(type);
-                    var structLvls = structureData.Levels.Select(x => x.Data.Level).OrderByDescending(x => x).FirstOrDefault();
-                    if (locData.Level < structLvls)
+                    var higherLvl = structureData.Levels.Select(x => x.Data.Level).OrderByDescending(x => x).FirstOrDefault();
+                    if (locData.Level < higherLvl)
                     {
+                        locData.Level++;
                         var structureSpec = structureData.GetStructureLevelById(locData.Level);
                         var requirements = structureSpec.Requirements;
 
-                        locData.Level++;
                         locData.StartTime = timestamp;
                         locData.HitPoints = structureSpec.Data.HitPoint;
                         locData.Helped = 0;
@@ -244,20 +277,30 @@ namespace GameOfRevenge.Business.Manager.UserData
                         if (removeRes)
                         {
                             var success = userResourceManager.HasResourceRequirements(requirements, playerData.Data.Resources, 1);
-                            if (!success) return new Response<UserStructureData>(201, "Insufficient player resources");
+                            if (!success) return new Response<UserStructureData>(203, "Insufficient player resources");
                         }
-                        System.Console.WriteLine("building time = " + secs);
+//                        System.Console.WriteLine("building time = " + secs);
 
+                        Response<UserRecordBuilderDetails> currBuilder = null;
                         if (secs > 0)
                         {
-                            var currBuilder = await SetBuilderTask(playerId, createBuilder, playerData.Data.Builders, secs, position, timestamp);
-                            if (!currBuilder.IsSuccess) return new Response<UserStructureData>(202, currBuilder.Message);
+                            currBuilder = await SetBuilderTask(playerId, createBuilder, playerData.Data.Builders, secs, position, timestamp);
+                            if (!currBuilder.IsSuccess) return new Response<UserStructureData>(204, currBuilder.Message);
                         }
 
                         if (removeRes)
                         {
                             var success = await userResourceManager.RemoveResourceByRequirement(playerId, requirements);
-                            if (!success) return new Response<UserStructureData>(201, "Insufficient player resources");
+                            if (!success)
+                            {
+                                if (currBuilder != null)//revert builder task
+                                {
+                                    currBuilder.Data.Duration = 0;
+                                    var json2 = JsonConvert.SerializeObject((UserBuilderDetails)currBuilder.Data);
+                                    await manager.UpdatePlayerDataID(playerId, currBuilder.Data.Id, json2);
+                                }
+                                return new Response<UserStructureData>(203, "Insufficient player resources");
+                            }
                         }
                         if (type == StructureType.Embassy)
                         {
@@ -283,9 +326,17 @@ namespace GameOfRevenge.Business.Manager.UserData
                             {
                                 var success = await userResourceManager.RefundResourceByRequirement(playerId, requirements);
                             }
-                            return new Response<UserStructureData>(203, "Error upgrading structure");
+                            return new Response<UserStructureData>(205, "Error upgrading structure");
                         }
                     }
+                    else
+                    {
+                        return new Response<UserStructureData>(202, "Max level reached");
+                    }
+                }
+                else
+                {
+                    return new Response<UserStructureData>(201, "Structure does not exist at location");
                 }
             }
 
