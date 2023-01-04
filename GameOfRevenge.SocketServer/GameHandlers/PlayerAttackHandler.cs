@@ -52,7 +52,7 @@ namespace GameOfRevenge.GameHandlers
 
             DateTime timestart = DateTime.UtcNow;
             bool success = true;
-            double dist = attacker.World.GetDistanceBw2Points(Enemy.Tile, attacker.Tile) * 2;// / 0.2f;
+            double dist = attacker.World.GetDistanceBw2Points(Enemy.Tile, attacker.Tile) * 3;// / 0.2f;
             int reachedTime = (int)dist;
             int battleDuration = 0;
 

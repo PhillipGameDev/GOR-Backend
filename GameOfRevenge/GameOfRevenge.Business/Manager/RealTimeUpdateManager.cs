@@ -54,70 +54,72 @@ namespace GameOfRevenge.Business.Manager
         {
             if (attackPlayerData.Count > 0)
             {
-                List<AttackStatusData> attackerList = null;
+                List<AttackStatusData> list = null;
                 lock (SyncRoot)
                 {
-                    attackerList = attackPlayerData.ToList();
+                    list = attackPlayerData.ToList();
                 }
-                log.Debug("****** UPDATE BATTLE START ****** x " + attackerList.Count);
-                foreach (AttackStatusData item in attackerList)
+                if (list != null)
                 {
-                    string debugMsg = "";
-                    try
+                    log.Debug("****** UPDATE BATTLE START ****** x " + list.Count);
+                    foreach (AttackStatusData item in list)
                     {
-                        debugMsg = item.State+"";
-                        switch (item.State)
+                        string debugMsg = "";
+                        try
                         {
-                            case 0://marching to target
-//                                log.Debug("** MARCHING **");
-                                if (item.Attacker.MarchingArmy.TimeLeftForTask <= 0)
-                                {
-                                    var resp = await new UserResourceManager().GetFullPlayerData(item.Report.DefenderId);
-                                    if (!resp.IsSuccess) throw new Exception("defender data not found");
+                            debugMsg = item.State+"";
+                            switch (item.State)
+                            {
+                                case 0://marching to target
+    //                                log.Debug("** MARCHING **");
+                                    if (item.Attacker.MarchingArmy.TimeLeftForTask <= 0)
+                                    {
+                                        var resp = await new UserResourceManager().GetFullPlayerData(item.Report.DefenderId);
+                                        if (!resp.IsSuccess) throw new Exception("defender data not found");
 
-                                    item.Defender = resp.Data;
+                                        item.Defender = resp.Data;
+                                        item.State++;
+                                    }
+                                    break;
+                                case 1://battle simulation
+    //                                log.Debug("** BATTLE **");
+                                    //TODO: split battle simulation
+                                    var response = await pvpManager.BattleSimulation(item.Attacker, item.Defender);
+                                    if (response.Case >= 200)//illegal
+                                    {
+                                    }
+                                    else if (response.Case < 100)//error
+                                    {
+                                    }
+                                    else
+                                    {
+                                        item.WinnerPlayerId = response.Data.AttackerWon ? item.Attacker.PlayerId : item.Defender.PlayerId;
+                                    }
                                     item.State++;
-                                }
-                                break;
-                            case 1://battle simulation
-//                                log.Debug("** BATTLE **");
-                                //TODO: split battle simulation
-                                var response = await pvpManager.BattleSimulation(item.Attacker, item.Defender);
-                                if (response.Case >= 200)//illegal
-                                {
-                                }
-                                else if (response.Case < 100)//error
-                                {
-                                }
-                                else
-                                {
-                                    item.WinnerPlayerId = response.Data.AttackerWon ? item.Attacker.PlayerId : item.Defender.PlayerId;
-                                }
-                                item.State++;
-                                break;
-                            case 2:
-//                                log.Debug("** WAITING ** "+item.Attacker.MarchingArmy.StartTime+"  "+item.Attacker.MarchingArmy.ReachedTime+"  "+ item.Attacker.MarchingArmy.BattleDuration+"    "+item.Attacker.MarchingArmy.IsTimeForReturn);
-                                if (item.Attacker.MarchingArmy.IsTimeForReturn) item.State++;
-                                break;
-                            case 3://marching to castle
-//                                log.Debug("** MARCHING BACK **  "+item.Attacker.MarchingArmy.TimeLeft);
-                                if (item.Attacker.MarchingArmy.TimeLeft <= 0) item.State++;
-                                break;
-                            case 4://end
-                                log.Debug("** END ** " + item.Attacker.PlayerId +" vs "+item.Defender.PlayerId);
-                                CallBackResult(item);
-                                lock (SyncRoot) attackPlayerData.Remove(item);
-                                break;
+                                    break;
+                                case 2:
+    //                                log.Debug("** WAITING ** "+item.Attacker.MarchingArmy.StartTime+"  "+item.Attacker.MarchingArmy.ReachedTime+"  "+ item.Attacker.MarchingArmy.BattleDuration+"    "+item.Attacker.MarchingArmy.IsTimeForReturn);
+                                    if (item.Attacker.MarchingArmy.IsTimeForReturn) item.State++;
+                                    break;
+                                case 3://marching to castle
+    //                                log.Debug("** MARCHING BACK **  "+item.Attacker.MarchingArmy.TimeLeft);
+                                    if (item.Attacker.MarchingArmy.TimeLeft <= 0) item.State++;
+                                    break;
+                                case 4://end
+                                    log.Debug("** END ** " + item.Attacker.PlayerId +" vs "+item.Defender.PlayerId);
+                                    CallBackResult(item);
+                                    lock (SyncRoot) attackPlayerData.Remove(item);
+                                    break;
+                            }
+                        }
+                        catch (Exception exx)
+                        {
+                            log.Debug("EXCEPTION " + debugMsg+"  "+ exx.Message);
+                            lock (SyncRoot) attackPlayerData.Remove(item);
                         }
                     }
-                    catch (Exception exx)
-                    {
-                        log.Debug("EXCEPTION " + debugMsg+"  "+ exx.Message);
-                        lock (SyncRoot) attackPlayerData.Remove(item);
-                    }
+                    log.Debug("****** UPDATE BATTLE END ******");
                 }
-
-                log.Debug("****** UPDATE BATTLE END ******");
             }
 
             if (Disposable != null) Disposable.Dispose();

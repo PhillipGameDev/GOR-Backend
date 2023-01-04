@@ -223,14 +223,20 @@ namespace GameOfRevenge.Business.Manager.Base
                     }
 
                     line = "10";
-                    if (userMarching != null)
+                    if ((userMarching != null) && !string.IsNullOrEmpty(userMarching.Value))
                     {
-                        finalData.Data.MarchingArmy = JsonConvert.DeserializeObject<MarchingArmy>(userMarching.Value);
-                        if (finalData.Data.MarchingArmy?.TimeLeft <= 0)
+                        var marching = JsonConvert.DeserializeObject<MarchingArmy>(userMarching.Value);
+                        if (marching != null)
                         {
-                            var builderResp = await manager.UpdatePlayerDataID(playerId, userMarching.Id, string.Empty);
-                            //AddOrUpdatePlayerData(playerId, DataType.Custom, 2, json);
-                            finalData.Data.MarchingArmy = null;
+                            if (marching.TimeLeft > 0)
+                            {
+                                finalData.Data.MarchingArmy = marching;
+                            }
+                            else
+                            {
+                                await manager.UpdatePlayerDataID(playerId, userMarching.Id, string.Empty);
+                                //AddOrUpdatePlayerData(playerId, DataType.Custom, 2, json);
+                            }
                         }
                     }
 

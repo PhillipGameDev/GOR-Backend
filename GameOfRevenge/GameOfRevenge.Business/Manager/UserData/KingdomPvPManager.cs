@@ -401,6 +401,7 @@ namespace GameOfRevenge.Business.Manager.UserData
         {
             log.Debug("------------BATTLE SIMULATION "+attackerArmy.PlayerId+" vs "+ defenderArmy.PlayerId);
 //            DateTime timestart = DateTime.UtcNow;
+            var debugMsg = "";
             try
             {
 /*                ValidationHelper.KeyId(attackerId);
@@ -439,12 +440,14 @@ namespace GameOfRevenge.Business.Manager.UserData
                 {
                     attackerPower.Heroes = attackerArmy.MarchingArmy.Heroes;
                 }
+                debugMsg = "1";
 
                 var gateHitPoints = 0;
                 var defenderGate = defenderArmy.Structures.Where(x => x.StructureType == StructureType.Gate)?.FirstOrDefault()?.Buildings.OrderBy(x => x.Level).FirstOrDefault();
                 if (defenderGate != null) gateHitPoints = defenderGate.HitPoints;
 //                var gateLevelData = CacheStructureDataManager.GetFullStructureData(StructureType.Gate).Levels.Where(x => x.Data.Level == defenderGate.Level).FirstOrDefault().Data;
 //                gateHitPoints = gateLevelData.HitPoint;
+                debugMsg = "2";
 
                 var (defenderMultiplier_attack, defenderMultiplier_defense) = GetAtkDefMultiplier(defenderArmy);
                 var defenderPower = new BattlePower()
@@ -456,16 +459,20 @@ namespace GameOfRevenge.Business.Manager.UserData
                     DefenseMultiplier = defenderMultiplier_defense,
                     GateHp = gateHitPoints
                 };
+                debugMsg = "3";
 
                 SetTroopsAlive(attackerPower);
                 SetTroopsAlive(defenderPower);
+                debugMsg = "4";
                 attackerPower.Recalculate();
                 defenderPower.Recalculate();
+                debugMsg = "5";
 
+                log.Debug("atk pwr= " + attackerPower.HitPoint + " vs def pwr=" + defenderPower.HitPoint);
                 while ((defenderPower.HitPoint > 0) && (attackerPower.HitPoint > 0))
                 {
                     Attack(attackerPower, defenderPower);
-                    log.Debug("atk pwr= " + attackerPower.HitPoint + "  def pwr=" + defenderPower.HitPoint);
+                    log.Debug("atk pwr= " + attackerPower.HitPoint + " xx def pwr=" + defenderPower.HitPoint);
                 }
 
                 //TODO: implement percentage based on level (maybe we need to add level to item)
@@ -474,6 +481,7 @@ namespace GameOfRevenge.Business.Manager.UserData
 
                 CalculateTroopLoss(attackerPower, atkHealingBoost);
                 CalculateTroopLoss(defenderPower, defHealingBoost);
+                debugMsg = "6";
 
                 bool attackerWin = attackerPower.HitPoint > defenderPower.HitPoint;
 
@@ -494,6 +502,7 @@ namespace GameOfRevenge.Business.Manager.UserData
                         var response = await manager.AddOrUpdatePlayerData(attackerArmy.PlayerId, DataType.Hero, valueId, data);
                     }
                 }
+                debugMsg = "7";
                 if (defenderArmy.Heroes != null)
                 {
                     foreach (var hero in defenderArmy.Heroes)
@@ -508,6 +517,7 @@ namespace GameOfRevenge.Business.Manager.UserData
                         var response = await manager.AddOrUpdatePlayerData(defenderArmy.PlayerId, DataType.Hero, valueId, data);
                     }
                 }
+                debugMsg = "8";
 
                 var king = attackerArmy.King;
                 king.Experience += 5;
@@ -524,6 +534,7 @@ namespace GameOfRevenge.Business.Manager.UserData
                 }*/
                 var kingdata = JsonConvert.SerializeObject(king);
                 await manager.AddOrUpdatePlayerData(attackerArmy.PlayerId, DataType.Custom, 1, kingdata);
+                debugMsg = "9";
 
 
                 var finalReport = new BattleReport
@@ -532,14 +543,17 @@ namespace GameOfRevenge.Business.Manager.UserData
                     Defender = SetClientReport(defenderPower),
                     AttackerWon = attackerWin
                 };
+                debugMsg = "10";
 
                 await RemoveTroops(attackerArmy, attackerPower);
                 await RemoveTroops(defenderArmy, defenderPower);
+                debugMsg = "11";
 
                 if (attackerWin) await GiveLoot(defenderArmy, attackerPower, finalReport);
 
                 await manager.AddOrUpdatePlayerData(attackerArmy.PlayerId, DataType.Marching, 1, string.Empty);
                 await structManager.UpdateGate(defenderArmy.PlayerId, defenderPower.GateHp);
+                debugMsg = "12";
 
                 string json = JsonConvert.SerializeObject(finalReport);
                 _ = Task.Run(async () =>
@@ -582,7 +596,7 @@ namespace GameOfRevenge.Business.Manager.UserData
             }
             catch (InvalidModelExecption ex)
             {
-                log.Debug("------------EXCEPTION4 " + ex.Message);
+                log.Debug("------------EXCEPTION4 " + debugMsg + "  " + ex.Message);
                 return new Response<BattleReport>()
                 {
                     Case = 200,
@@ -591,7 +605,7 @@ namespace GameOfRevenge.Business.Manager.UserData
             }
             catch (DataNotExistExecption ex)
             {
-                log.Debug("------------EXCEPTION3 " + ex.Message);
+                log.Debug("------------EXCEPTION3 " + debugMsg + "  " + ex.Message);
                 return new Response<BattleReport>()
                 {
                     Case = 201,
@@ -600,7 +614,7 @@ namespace GameOfRevenge.Business.Manager.UserData
             }
             catch (RequirementExecption ex)
             {
-                log.Debug("------------EXCEPTION2 " + ex.Message);
+                log.Debug("------------EXCEPTION2 " + debugMsg + "  " + ex.Message);
                 return new Response<BattleReport>()
                 {
                     Case = 202,
@@ -609,7 +623,7 @@ namespace GameOfRevenge.Business.Manager.UserData
             }
             catch (Exception ex)
             {
-                log.Debug("------------EXCEPTION " + ex.Message);
+                log.Debug("------------EXCEPTION " + debugMsg + "  " + ex.Message);
                 return new Response<BattleReport>()
                 {
                     Case = 0,
