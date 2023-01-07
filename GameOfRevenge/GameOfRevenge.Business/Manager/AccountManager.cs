@@ -48,15 +48,23 @@ namespace GameOfRevenge.Business.Manager
                         int playerId = response.Data.PlayerId;
                         if (response.Case == 100)// new account
                         {
+                            var structureData = CacheData.CacheStructureDataManager.GetFullStructureData(StructureType.CityCounsel);
+                            var cityCounselHealth = structureData.Levels.OrderBy(x => x.Data.Level).FirstOrDefault().Data.HitPoint;
+                            var cityCounselLoc = structureData.Locations.FirstOrDefault();
+
+                            structureData = CacheData.CacheStructureDataManager.GetFullStructureData(StructureType.Gate);
+                            var gateHealth = structureData.Levels.OrderBy(x => x.Data.Level).FirstOrDefault().Data.HitPoint;
+                            var gateLoc = structureData.Locations.FirstOrDefault();
+
+                            structureData = CacheData.CacheStructureDataManager.GetFullStructureData(StructureType.WatchTower);
+                            var wtHealth = structureData.Levels.OrderBy(x => x.Data.Level).FirstOrDefault().Data.HitPoint;
+                            var wtLoc = structureData.Locations.FirstOrDefault();
+
 #if DEBUG
                             await resManager.SumMainResource(playerId, 100000, 100000, 100000, 10000);
 #else
                             await resManager.SumMainResource(playerId, 10000, 10000, 10000, 100);
 #endif
-                            var cityCounselLoc = CacheData.CacheStructureDataManager.GetFullStructureData(StructureType.CityCounsel).Locations.FirstOrDefault();
-                            var gateLoc = CacheData.CacheStructureDataManager.GetFullStructureData(StructureType.Gate).Locations.FirstOrDefault();
-                            var wtLoc = CacheData.CacheStructureDataManager.GetFullStructureData(StructureType.WatchTower).Locations.FirstOrDefault();
-
                             var dataManager = new PlayerDataManager();
                             var king = new UserKingDetails
                             {
@@ -69,11 +77,30 @@ namespace GameOfRevenge.Business.Manager
                             json = JsonConvert.SerializeObject(builder);
                             await dataManager.AddOrUpdatePlayerData(playerId, DataType.Custom, 2, json);
 
-                            await strManager.CreateBuilding(playerId, StructureType.CityCounsel, cityCounselLoc, false, false, true);
+                            var timestamp = DateTime.UtcNow;
+                            var dataList = new List<StructureDetails>();
+                            dataList.Add(new StructureDetails()
+                            {
+                                Level = 1,
+                                LastCollected = timestamp,
+                                Location = cityCounselLoc,
+                                StartTime = timestamp,
+                                Duration = 0,
+                                HitPoints = cityCounselHealth,
+                                Helped = 0
+                            });
+                            json = JsonConvert.SerializeObject(dataList);
+                            await dataManager.AddOrUpdatePlayerData(playerId, DataType.Structure, (int)StructureType.CityCounsel, json);
 
-                            await strManager.CreateBuilding(playerId, StructureType.Gate, gateLoc, false, false, true);
+                            dataList[0].Location = gateLoc;
+                            dataList[0].HitPoints = gateHealth;
+                            json = JsonConvert.SerializeObject(dataList);
+                            await dataManager.AddOrUpdatePlayerData(playerId, DataType.Structure, (int)StructureType.Gate, json);
 
-                            await strManager.CreateBuilding(playerId, StructureType.WatchTower, wtLoc, false, false, true);
+                            dataList[0].Location = wtLoc;
+                            dataList[0].HitPoints = wtHealth;
+                            json = JsonConvert.SerializeObject(dataList);
+                            await dataManager.AddOrUpdatePlayerData(playerId, DataType.Structure, (int)StructureType.WatchTower, json);
                         }
                         await CompleteAccountQuest(playerId, AccountTaskType.SignIn);
                     }
@@ -118,8 +145,8 @@ namespace GameOfRevenge.Business.Manager
                 var response = await Db.ExecuteSPSingleRow<Player>("UpdatePlayerProperties", spParams);
                 if (response.IsSuccess)
                 {
-                    var resp = await CompleteAccountQuest(playerId, AccountTaskType.ChangeName);
-                    if (resp) response.Case = 101;
+                    var updated = await CompleteAccountQuest(playerId, AccountTaskType.ChangeName);
+                    if (updated) response.Case = 101;
                 }
 
                 return response;

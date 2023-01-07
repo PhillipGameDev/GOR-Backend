@@ -40,15 +40,13 @@ namespace GameOfRevenge.Business.Manager.UserData
                     Message = playerData.Message
                 };
             }
-            else
+
+            return new Response<UserStructureData>()
             {
-                return new Response<UserStructureData>()
-                {
-                    Case = playerData.Case,
-                    Data = null,
-                    Message = playerData.Message
-                };
-            }
+                Case = playerData.Case,
+                Data = null,
+                Message = playerData.Message
+            };
         }
 
         private async Task<Response<UserRecordBuilderDetails>> SetBuilderTask(int playerId, bool createBuilder, List<UserRecordBuilderDetails> builders, int duration, int location, DateTime startTime)
@@ -102,7 +100,7 @@ namespace GameOfRevenge.Business.Manager.UserData
         {
             var timestamp = DateTime.UtcNow;
             var existing = await CheckBuildingStatus(playerId, type);
-            List<StructureDetails> dataList;
+            List<StructureDetails> dataList = null;
             if (existing.IsSuccess && existing.HasData)
             {
                 dataList = existing.Data.Value;
@@ -112,10 +110,7 @@ namespace GameOfRevenge.Business.Manager.UserData
                     return new Response<UserStructureData>(existing.Data, 200, "Structure already exists at location");
                 }
             }
-            else
-            {
-                dataList = new List<StructureDetails>();
-            }
+            if (dataList == null) dataList = new List<StructureDetails>();
 
             int limit = 0;
             var structureInfo = CacheStructureDataManager.StructureInfos.FirstOrDefault(x => (x.Info.Code == type));
