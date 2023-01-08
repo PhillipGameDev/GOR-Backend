@@ -112,7 +112,7 @@ namespace GameOfRevenge.Buildings.Handlers
 
         public ITroop IsAnyTroopInTraining()
         {
-            var troop = Troops.Where(d => d.Value.IsConstructing).FirstOrDefault();
+            var troop = Troops.Where(d => d.Value.IsTraining).FirstOrDefault();
             if (troop.Value != null) return troop.Value;
             else return null;
         }

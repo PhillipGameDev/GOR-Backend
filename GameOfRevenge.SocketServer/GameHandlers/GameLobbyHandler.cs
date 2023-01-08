@@ -550,7 +550,19 @@ namespace GameOfRevenge.GameHandlers
             actor.StartOnReal();
             log.InfoFormat("player is added in manager with playerid.");
             log.InfoFormat("player enter in world X {0} Y {1} ", city.X, city.Y);
-            actor.PlayerSpawn(iA, peer, new PlayerSocketDataManager(playerData, actor));
+
+            PlayerSocketDataManager playerDataManager = null;
+            try
+            {
+                playerDataManager = new PlayerSocketDataManager(playerData, actor);
+            }
+            catch (Exception ex)
+            {
+                var msg = "Error generating player data.";
+                return peer.SendOperation(operationRequest.OperationCode, ReturnCode.InvalidOperation, debuMsg: msg);
+            }
+
+            actor.PlayerSpawn(iA, peer, playerDataManager);
             actor.Peer.Actor = actor;  //vice versa mmoactor into the peer and reverse
             var profile = new UserProfileResponse
             {

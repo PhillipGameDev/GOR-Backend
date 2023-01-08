@@ -39,36 +39,56 @@ namespace GameOfRevenge.GameHandlers
             this.playerData = playerData;
             this.player = player;
 //            this.Builders = new List<UserRecordBuilderDetails>();
-            this.DataContributeAccType();
+            this.DataContributeAccType(playerData);
         }
 
-        public void DataContributeAccType()
+        public void DataContributeAccType(List<PlayerDataTable> playerData)
         {
-            foreach (var item in playerData)
+            var sortedList = playerData.OrderBy(x => x.DataType);
+            PlayerDataTable currData = null;
+            try
             {
-                if (item.DataType == DataType.Structure)
-                    this.AddStructureOnPlayer(item);
-                else if (item.DataType == DataType.Resource)
-                    this.AddResourcesOnPlayer(item);
-                else if (item.DataType == DataType.Troop)
-                    this.AddTroopOnPlayerBuilding(item);
-                else if (item.DataType == DataType.Custom)
+                foreach (var data in sortedList)
                 {
-                    if (item.ValueId == 1)
+                    currData = data;
+                    switch (data.DataType)
                     {
-                        King = JsonConvert.DeserializeObject<UserKingDetails>(item.Value);
-    //                    GameService.BPlayerManager.GetAllPlayerData(Int32.Parse(operation.PlayerId)).Result.Data;
+                        case DataType.Structure: this.AddStructureOnPlayer(data); break;
                     }
-                    else if (item.ValueId == 2)
+                }
+
+                foreach (var data in sortedList)
+                {
+                    currData = data;
+                    switch (data.DataType)
                     {
-//                        var builder = JsonConvert.DeserializeObject<UserRecordBuilderDetails>(item.Value);
-//                        builder.Id = item.Id;
-//                        Builders.Add(builder);
+                        case DataType.Resource: this.AddResourcesOnPlayer(data); break;
+                        case DataType.Troop: this.AddTroopOnPlayerBuilding(data); break;
+                        case DataType.Custom: 
+                            if (data.ValueId == 1)//king
+                            {
+                                King = JsonConvert.DeserializeObject<UserKingDetails>(data.Value);
+            //                    GameService.BPlayerManager.GetAllPlayerData(Int32.Parse(operation.PlayerId)).Result.Data;
+                            }
+                            else if (data.ValueId == 2)//builder
+                            {
+        //                        var builder = JsonConvert.DeserializeObject<UserRecordBuilderDetails>(item.Value);
+        //                        builder.Id = item.Id;
+        //                        Builders.Add(builder);
+                            }
+                            break;
                     }
                 }
             }
+            catch (Exception ex)
+            {
+                log.InfoFormat("Error generating player data {0}: {1} ", currData.DataType, JsonConvert.SerializeObject(currData));
+                log.Info(ex.Message);
+                throw ex;
+            }
             if (King == null) King = new UserKingDetails();
         }
+
         public void AddTroopOnPlayerBuilding(PlayerDataTable data)
         {
             var troops = GameService.BPlayerResourceManager.PlayerDataToUserTroopData(data);
@@ -80,24 +100,33 @@ namespace GameOfRevenge.GameHandlers
 #endif
                 foreach (var troop in troops.Value)
                 {
-                    if (troop.InTraning != null)
+                    if (troop.InTraning == null) continue;
+
+                    foreach (var trainer in troop.InTraning)
                     {
-                        foreach (var trainer in troop.InTraning)
+                        var building = GetPlayerBuildingByLocationId(trainer.BuildingLocId);
+                        if (building != null)
                         {
-                            var building = GetPlayerBuildingByLocationId(trainer.BuildingLocId);
-                            if (building != null)
-                            {
-                                var troop1 = GameService.GameBuildingManagerInstances[building.StructureType]
-                                    .Troops[troops.ValueId].AddTroopOnPlayerBuilding(troops.ValueId, building, this.player);
-                                troop1.Init(troops);
-                            }
+                            var bldManager = GameService.GameBuildingManagerInstances[building.StructureType];
+                            var gameTroop = bldManager.Troops[troops.ValueId];
+                            var troop1 = gameTroop.AddTroopOnPlayerBuilding(troops.ValueId, building, this.player);
+                            troop1.Init(troops);
                         }
+#if DEBUG
+                        else
+                            log.InfoFormat("User building not found {0} ", JsonConvert.SerializeObject(trainer));
+#endif
                     }
                 }
 
                 //troop.
             }
+#if DEBUG
+            else
+                log.InfoFormat("Troop not found when convert player data to troop info {0} ", JsonConvert.SerializeObject(data));
+#endif
         }
+
         public void AddResourcesOnPlayer(PlayerDataTable data)
         {
             var resource = GameService.BPlayerResourceManager.PlayerDataToUserResourceData(data);
@@ -107,40 +136,29 @@ namespace GameOfRevenge.GameHandlers
                 log.InfoFormat("Player Data Convert to resource {0} playerData {1} ",
                     JsonConvert.SerializeObject(resource), JsonConvert.SerializeObject(data));
 #endif
-                IPlayerResources r = null;
+                IReadOnlyResourceTable resInfo = null;
                 switch (resource.ValueId)
                 {
-                    case ResourceType.Food:
-                        r = new PlayerResources(CacheResourceDataManager.Food, resource.Value, this.player);
-                        break;
-                    case ResourceType.Gems:
-                        r = new PlayerResources(CacheResourceDataManager.Gems, resource.Value, this.player);
-                        break;
-                    case ResourceType.Ore:
-                        r = new PlayerResources(CacheResourceDataManager.Ore, resource.Value, this.player);
-                        break;
-                    case ResourceType.Wood:
-                        r = new PlayerResources(CacheResourceDataManager.Wood, resource.Value, this.player);
-                        break;
-                    default:
-                        break;
+                    case ResourceType.Food: resInfo = CacheResourceDataManager.Food; break;
+                    case ResourceType.Wood: resInfo = CacheResourceDataManager.Wood; break;
+                    case ResourceType.Ore: resInfo = CacheResourceDataManager.Ore; break;
+                    case ResourceType.Gems: resInfo = CacheResourceDataManager.Gems; break;
                 }
-                if (r != null)
+                if (resInfo != null) 
                 {
 #if DEBUG
-                    log.InfoFormat("Add nerw resources on player account Resource {0} ", resource.ValueId.ToString());
+                    log.InfoFormat("Add new resources on player account Resource {0} ", resource.ValueId.ToString());
 #endif
+                    IPlayerResources r = new PlayerResources(resInfo, resource.Value, this.player);
                     PlayerResources.Add(resource.ValueId, r);
-                    return;
                 }
             }
 #if DEBUG
             else
-                log.InfoFormat("Reource not found when convert player data to resouse info {0} ", JsonConvert.SerializeObject(playerData));
+                log.InfoFormat("Resource not found when convert player data to resourse info {0} ", JsonConvert.SerializeObject(data));
 #endif
-
-            return;
         }
+
         public void AddStructureOnPlayer(PlayerDataTable data)
         {
             var structure = GameService.BPlayerStructureManager.PlayerDataToUserStructureData(data);
@@ -148,8 +166,8 @@ namespace GameOfRevenge.GameHandlers
             {
 #if DEBUG
                 log.InfoFormat("Player Data Convert to structure {0} playerData {1} ",
-#endif
                     JsonConvert.SerializeObject(structure), JsonConvert.SerializeObject(data));
+#endif
                 var multipleBuildings = GameService.BPlayerStructureManager.GetMultipleBuildings(structure);
                 if (!this.PlayerBuildings.ContainsKey(structure.ValueId))
                 {
@@ -166,7 +184,7 @@ namespace GameOfRevenge.GameHandlers
             }
 #if DEBUG
             else
-                log.InfoFormat("structure is null when convert to user structure");
+                log.InfoFormat("Structure not found when convert player data to structure info {0} ", JsonConvert.SerializeObject(data));
 #endif
         }
 
@@ -183,75 +201,37 @@ namespace GameOfRevenge.GameHandlers
                 return;
             }
 
-            IPlayerBuildingManager playerBuilding = null;
+            IPlayerBuildingManager plyBuilding = null;
             switch (structure.ValueId)
             {
-                case StructureType.CityCounsel:
-                    playerBuilding = new CityCounsilBuilding(gameBuilding, this.player, structure);
-                    break;
-                case StructureType.WatchTower:
-                    playerBuilding = new WatchTower(gameBuilding, this.player, structure);
-                    break;
-                case StructureType.Blacksmith:
-                    playerBuilding = new BlackSmith(gameBuilding, this.player, structure);
-                    break;
-                case StructureType.Barracks:
-                    playerBuilding = new BarracksBuilding(gameBuilding, this.player, structure);
-                    break;
-                case StructureType.Academy:
-                    playerBuilding = new Academy(gameBuilding, this.player, structure);
-                    break;
-                case StructureType.Embassy:
-                    playerBuilding = new Embassy(gameBuilding, this.player, structure);
-                    break;
-                case StructureType.Farm:
-                    playerBuilding = new Farm(gameBuilding, this.player, structure);
-                    break;
-                case StructureType.Gate:
-                    playerBuilding = new Gate(gameBuilding, this.player, structure);
-                    break;
-                case StructureType.InfantryCamp:
-                    playerBuilding = new InfantryCamp(gameBuilding, this.player, structure);
-                    break;
-                case StructureType.Infirmary:
-                    playerBuilding = new Infirmary(gameBuilding, this.player, structure);
-                    break;
-                case StructureType.Market:
-                    playerBuilding = new Market(gameBuilding, this.player, structure);
-                    break;
-                case StructureType.Mine:
-                    playerBuilding = new Mine(gameBuilding, this.player, structure);
-                    break;
-                case StructureType.Sawmill:
-                    playerBuilding = new SawMill(gameBuilding, this.player, structure);
-                    break;
-                case StructureType.ShootingRange:
-                    playerBuilding = new ShootingRange(gameBuilding, this.player, structure);
-                    break;
-                case StructureType.Warehouse:
-                    playerBuilding = new WareHouse(gameBuilding, this.player, structure);
-                    break;
-                case StructureType.Workshop:
-                    playerBuilding = new Workshop(gameBuilding, this.player, structure);
-                    break;
-                case StructureType.Stable:
-                    playerBuilding = new Stable(gameBuilding, this.player, structure);
-                    break;
-                case StructureType.Other:
-                    break;
-                case StructureType.TrainingHeroes:
-                    break;
-                default:
-                    break;
+                case StructureType.CityCounsel: plyBuilding = new CityCounsilBuilding(gameBuilding, this.player, structure); break;
+                case StructureType.WatchTower: plyBuilding = new WatchTower(gameBuilding, this.player, structure); break;
+                case StructureType.Blacksmith: plyBuilding = new BlackSmith(gameBuilding, this.player, structure); break;
+                case StructureType.Barracks: plyBuilding = new BarracksBuilding(gameBuilding, this.player, structure); break;
+                case StructureType.Academy: plyBuilding = new Academy(gameBuilding, this.player, structure); break;
+                case StructureType.Embassy: plyBuilding = new Embassy(gameBuilding, this.player, structure); break;
+                case StructureType.Farm: plyBuilding = new Farm(gameBuilding, this.player, structure); break;
+                case StructureType.Gate: plyBuilding = new Gate(gameBuilding, this.player, structure); break;
+                case StructureType.InfantryCamp: plyBuilding = new InfantryCamp(gameBuilding, this.player, structure); break;
+                case StructureType.Infirmary: plyBuilding = new Infirmary(gameBuilding, this.player, structure); break;
+                case StructureType.Market: plyBuilding = new Market(gameBuilding, this.player, structure); break;
+                case StructureType.Mine: plyBuilding = new Mine(gameBuilding, this.player, structure); break;
+                case StructureType.Sawmill: plyBuilding = new SawMill(gameBuilding, this.player, structure); break;
+                case StructureType.ShootingRange: plyBuilding = new ShootingRange(gameBuilding, this.player, structure); break;
+                case StructureType.Warehouse: plyBuilding = new WareHouse(gameBuilding, this.player, structure); break;
+                case StructureType.Workshop: plyBuilding = new Workshop(gameBuilding, this.player, structure); break;
+                case StructureType.Stable: plyBuilding = new Stable(gameBuilding, this.player, structure); break;
+//                case StructureType.TrainingHeroes: plyBuilding = new TrainingHeroes(gameBuilding, this.player, structure); break;
             }
-            if (playerBuilding != null)
+            if (plyBuilding != null)
             {
 #if DEBUG
                 log.InfoFormat("Add New Structure On Player Account {0} ", structure.ValueId.ToString());
 #endif
-                this.PlayerBuildings[structure.ValueId].Add(playerBuilding);
+                this.PlayerBuildings[structure.ValueId].Add(plyBuilding);
             }
         }
+
         public (bool succ, string msg) CheckRequirementsAndUpdateValues(IReadOnlyList<IReadOnlyDataRequirement> requirements)
         {
             foreach (var item in requirements)
@@ -270,37 +250,54 @@ namespace GameOfRevenge.GameHandlers
                     if (this.PlayerResources.ContainsKey((ResourceType)item.ValueId))
                     {
                         bool isSucc = this.PlayerResources[(ResourceType)item.ValueId].HasAvailableRequirement(item);
-                        if (!isSucc)
-                            return (false, "Requirement not found.");
+                        if (!isSucc) return (false, "Requirement not found.");
                     }
                     else
                         return (false, "Player have insufficient resources.");
                 }
             }
             foreach (var item in requirements)
-                if (item.DataType == DataType.Resource)
-                    this.PlayerResources[(ResourceType)item.ValueId].IncrementResourceValue(-item.Value);
+            {
+                if (item.DataType != DataType.Resource) continue;
+
+                this.PlayerResources[(ResourceType)item.ValueId].IncrementResourceValue(-item.Value);
+            }
+
             return (true, "Success");
         }
+
         public IPlayerBuildingManager GetPlayerBuilding(StructureType structType, int locationId)
         {
+            IPlayerBuildingManager resp = null;
+
             if (this.PlayerBuildings.ContainsKey(structType))
-                return player.InternalPlayerDataManager.PlayerBuildings[structType].Where(d => d.Location == locationId).FirstOrDefault();
-            return null;
+            {
+                resp = player.InternalPlayerDataManager.PlayerBuildings[structType].Where(d => d.Location == locationId).FirstOrDefault();
+            }
+
+            return resp;
         }
+
         public IPlayerBuildingManager GetPlayerBuilding(int structType, int locationId)
         {
             return this.GetPlayerBuilding((StructureType)structType, locationId);
         }
+
         public IPlayerBuildingManager GetPlayerBuildingByLocationId(int locationId)
         {
+            IPlayerBuildingManager resp = null;
+
             foreach (var buildings in this.PlayerBuildings)
             {
-                if (buildings.Value.Any(d => d.Location == locationId))
-                    return buildings.Value.Where(d => d.Location == locationId).FirstOrDefault();
+                if (!buildings.Value.Any(d => d.Location == locationId)) continue;
+
+                resp = buildings.Value.Where(d => d.Location == locationId).FirstOrDefault();
+                break;
             }
-            return null;
+
+            return resp;
         }
+
         public void Dispose()
         {
             this.PlayerBuildings.Clear();

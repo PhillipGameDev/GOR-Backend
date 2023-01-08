@@ -139,7 +139,7 @@ namespace GameOfRevenge.Business.Manager
                 var initialData = JsonConvert.DeserializeObject<QuestTroopData>(currentQuest.InitialData);
                 if ((initialData == null) || (initialData.TroopType != troopType)) return;
 
-                if (level == initialData.Level)
+                if ((initialData.Level == 0) || (level == initialData.Level))
                 {
                     QuestTroopData progressData = null;
                     if (!string.IsNullOrEmpty(currentQuest.ProgressData))
@@ -407,7 +407,7 @@ namespace GameOfRevenge.Business.Manager
                     if (progressData4?.Count >= initialData4.Count)
                     {
 //                        currentQuest.ProgressData = currentQuest.InitialData;
-//                        if (progressData4.Iteration > 0) progressData4.Iteration--;
+                        if (progressData4.Iteration > 0) progressData4.Iteration--;
                         progressData4.Count = 0;
                         currentQuest.ProgressData = JsonConvert.SerializeObject(progressData4);
                         currentQuest.Completed = true;
@@ -422,6 +422,7 @@ namespace GameOfRevenge.Business.Manager
                         if (count >= initialData4.Count)
                         {
 //                            currentQuest.ProgressData = currentQuest.InitialData;
+                            if (progressData4.Iteration > 0) progressData4.Iteration--;
                             progressData4.Count = 0;
                             currentQuest.ProgressData = JsonConvert.SerializeObject(progressData4);
                             currentQuest.Completed = true;
@@ -446,10 +447,11 @@ namespace GameOfRevenge.Business.Manager
                         progressData5 = JsonConvert.DeserializeObject<QuestTroopData>(currentQuest.ProgressData);
                     }
 
-                    if ((progressData5 != null) && (progressData5.Level >= initialData5.Level) &&
-                        (progressData5.Count >= initialData5.Count))
+                    if ((progressData5 != null) && (progressData5.Count >= initialData5.Count) &&
+                        ((initialData5.Level == 0) || (progressData5.Level == initialData5.Level)))
                     {
 //                        currentQuest.ProgressData = currentQuest.InitialData;
+                        if (progressData5.Iteration > 0) progressData5.Iteration--;
                         progressData5.Count = 0;
                         currentQuest.ProgressData = JsonConvert.SerializeObject(progressData5);
                         currentQuest.Completed = true;

@@ -17,5 +17,8 @@ namespace GameOfRevenge.Common.Models.Quest.Template
 
         [DataMember(EmitDefaultValue = false)]
         public int Count { get; set; }
+
+        [DataMember(EmitDefaultValue = false)]
+        public int Iteration { get; set; }
     }
 }

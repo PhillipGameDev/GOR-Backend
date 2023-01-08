@@ -47,55 +47,58 @@ namespace GameOfRevenge.Common.Models.Quest
                     case QuestType.BuildingUpgrade:
                     case QuestType.XBuildingCount:
                         var data1 = JsonConvert.DeserializeObject<QuestBuildingData>(initialData);
+                        string format = null;
                         if (questType == QuestType.BuildingUpgrade)
                         {
-                            if (data1.Level == 1)
-                            {
-                                name = string.Format("Create building {0}", data1.StructureType);
-                            }
-                            else
-                            {
-                                name = string.Format("Upgrade {0} to level {1}", data1.StructureType, data1.Level);
-                            }
+                            format = (data1.Level == 1)? "Create building {1}" : "Upgrade {1} to level {2}";
                         }
                         else
                         {
-                            name = string.Format("Have {0:n0} {1}", data1.Count, data1.StructureType);
+                            format = "Have {0:n0} {1}";
                         }
+                        name = string.Format(format, data1.Count, data1.StructureType, data1.Level);
                         break;
                     case QuestType.ResourceCollection:
                         var data2 = JsonConvert.DeserializeObject<QuestResourceData>(initialData);
-                        if (data2.Iteration > 0)
-                        {
-                            name = string.Format("Collect {1}", data2.Count, data2.ResourceType);
-                        }
-                        else
-                        {
-                            name = string.Format("Collect {0:n0} {1}", data2.Count, data2.ResourceType);
-                        }
-                        var iteration = 0;
+                        string format2 = null;
+                        format2 = (data2.Iteration > 0)? "Collect {1}" : "Collect {0:n0} {1}";
+                        name = string.Format(format2, data2.Count, data2.ResourceType);
+                        var iteration2 = 0;
                         if (progressData != null)
                         {
                             data2 = JsonConvert.DeserializeObject<QuestResourceData>(progressData);
-                            iteration = data2.Iteration + (completed ? 1 : 0);
+                            iteration2 = data2.Iteration + (completed ? 1 : 0);
                         }
                         else
                         {
-                            iteration = data2.Iteration;
+                            iteration2 = data2.Iteration;
                         }
-                        if (iteration > 1) name += $" ({iteration})";
+                        if (iteration2 > 1) name += $" ({iteration2})";
                         break;
                     case QuestType.TrainTroops:
                     case QuestType.XTroopCount:
                         var data3 = JsonConvert.DeserializeObject<QuestTroopData>(initialData);
+                        string format3 = null;
                         if (questType == QuestType.TrainTroops)
                         {
-                            name = string.Format("Train {0:n0} {1} {2}", data3.Count, data3.TroopType, data3.Level);
+                            format3 = (data3.Level > 0) ? "Train {0:n0} {1} Lvl.{2}" : "Train {0:n0} {1}";
                         }
                         else
                         {
-                            name = string.Format("Have {0:n0} {1}", data3.Count, data3.TroopType);
+                            format3 = "Have {0:n0} {1}";
                         }
+                        name = string.Format(format3, data3.Count, data3.TroopType, data3.Level);
+                        var iteration3 = 0;
+                        if (progressData != null)
+                        {
+                            data3 = JsonConvert.DeserializeObject<QuestTroopData>(progressData);
+                            iteration3 = data3.Iteration + (completed ? 1 : 0);
+                        }
+                        else
+                        {
+                            iteration3 = data3.Iteration;
+                        }
+                        if (iteration3 > 1) name += $" ({iteration3})";
                         break;
                     case QuestType.Account:
                         var data4 = JsonConvert.DeserializeObject<QuestAccountData>(initialData);

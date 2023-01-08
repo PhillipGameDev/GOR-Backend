@@ -23,11 +23,12 @@ namespace GameOfRevenge.Troops
         public MmoActor Player { get => Building.Player; }
         public IGameTroop GameTroop { get; private set; }
         public TroopType TroopType => GameTroop.TroopType;
-        public bool IsConstructing { get => TimeLeft > 0; }
-        public DateTime StartTime { get; set; }
-        public DateTime EndTime { get => TroopTrainer.EndTime; }
+        public bool IsTraining { get => (TroopTrainer != null) && (TroopTrainer.TimeLeft > 0); }
         public int TroopLevel { get; private set; }
-        public double TimeLeft { get => TroopTrainer.TimeLeft; }
+
+//        public DateTime StartTime { get; set; }
+//        public DateTime EndTime { get => TroopTrainer.EndTime; }
+//        public double TimeLeft { get => TroopTrainer.TimeLeft; }
 
         public Troop(IGameTroop gameTroop, IPlayerBuildingManager building) : this(gameTroop, building, 1) { }
         public Troop(IGameTroop gameTroop, IPlayerBuildingManager building, int level)
@@ -45,15 +46,19 @@ namespace GameOfRevenge.Troops
 
         private void SetTroopData(UserTroopData data)
         {
+#if DEBUG
             log.Info($"Set Troop Data {JsonConvert.SerializeObject(data)}");
+#endif
 
-            if (data != null && data.Value != null)
+            if ((data != null) && (data.Value != null))
             {
                 TroopDetails = data.Value.Where(d => d.Level == TroopLevel).FirstOrDefault();
 
-                if (TroopDetails != null)
-                    TroopTrainer = TroopDetails.InTraning.Where(f => f.BuildingLocId == Building.Location).FirstOrDefault();
-
+                if ((TroopDetails != null) && (TroopDetails.InTraning != null))
+                {
+                    TroopTrainer = TroopDetails.InTraning.Where(x => (x.BuildingLocId == Building.Location)).FirstOrDefault();
+                }
+#if DEBUG
                 try
                 {
                     log.Info($"Set Troop Data 2 {JsonConvert.SerializeObject(data)}  TroopDetails {JsonConvert.SerializeObject(TroopDetails)} TroopTrainer {JsonConvert.SerializeObject(TroopTrainer)}");
@@ -62,8 +67,8 @@ namespace GameOfRevenge.Troops
                 {
                     log.Error("Exception SetTroopData", ex);
                 }
+#endif
             }
-
         }
 
         public void TrainingStart(RecruitTroopRequest request)
@@ -83,8 +88,10 @@ namespace GameOfRevenge.Troops
 
         public void AddBuildingCallBack()
         {
-            if (IsConstructing)
-                Player.Fiber.Schedule(() => { SendTrainingCompleteToTroop(); }, (long)(1000 * TimeLeft));
+            if (IsTraining)
+            {
+                Player.Fiber.Schedule(() => { SendTrainingCompleteToTroop(); }, (long)(1000 * TroopTrainer.TimeLeft));
+            }
         }
 
         public void SendTrainingCompleteToTroop()
@@ -94,7 +101,7 @@ namespace GameOfRevenge.Troops
 
         public void SendTroopTrainingTimeToClient()
         {
-            if (TimeLeft > 0)
+            if (IsTraining)
             {
                 //var response = new TroopTrainingTimeResponse()
                 //{
@@ -115,11 +122,14 @@ namespace GameOfRevenge.Troops
 
         public void TrainingTimeBoostUp()
         {
-            double reduceTime = TimeLeft / 2;
-            log.Info($"Time Left for the training LeftTime {TimeLeft}");
-            // if (reduceTime > 0)
-            //  this.EndTime = this.EndTime.AddSeconds(-reduceTime);
-            log.Info($"Time Left now when boost up apply {TimeLeft} ReduceTime {reduceTime}");
+            if (IsTraining)
+            {
+                double reduceTime = TroopTrainer.TimeLeft / 2;
+                log.Info($"Time Left for the training LeftTime {TroopTrainer.TimeLeft}");
+                // if (reduceTime > 0)
+                //  this.EndTime = this.EndTime.AddSeconds(-reduceTime);
+                log.Info($"Time Left now when boost up apply {TroopTrainer.TimeLeft} ReduceTime {reduceTime}");
+            }
             Player.SendOperation((byte)OperationCode.TroopTrainerTimeBoost, ReturnCode.OK);
         }
     }

@@ -95,9 +95,15 @@ namespace GameOfRevenge.WebServer.Controllers.Api
         }
 
         [HttpPost]
-        public async Task<IActionResult> StoreResource(int structureLocationId, ResourceType type, int value)
+        public async Task<IActionResult> StoreResource2(int structureLocationId, ResourceType type, int value)
         {
             return ReturnResponse(await userResourceManager.StoreResource(Token.PlayerId, structureLocationId, type, value));
+        }
+        //TODO: METHOD OBSOLETE (REMOVE)
+        [HttpPost]
+        public async Task<IActionResult> StoreResource(int structureLocationId, ResourceType valueId, int value)
+        {
+            return ReturnResponse(await userResourceManager.StoreResource(Token.PlayerId, structureLocationId, valueId, value));
         }
 #endregion
 

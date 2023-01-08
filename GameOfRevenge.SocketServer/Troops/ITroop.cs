@@ -8,8 +8,8 @@ namespace GameOfRevenge.Troops
     {
         IGameTroop GameTroop { get; }
         TroopType TroopType { get; }
-        double TimeLeft { get; }
-        bool IsConstructing { get; }
+//        double TimeLeft { get; }
+        bool IsTraining { get; }
 
         void TrainingStart(RecruitTroopRequest request);
         void Init(UserTroopData troopData);

@@ -8,6 +8,7 @@ using GameOfRevenge.Common;
 using GameOfRevenge.Common.Interface.Model;
 using GameOfRevenge.Common.Models;
 using GameOfRevenge.Common.Models.Structure;
+using GameOfRevenge.Common.Net;
 
 namespace GameOfRevenge.Business.CacheData
 {
@@ -136,12 +137,18 @@ namespace GameOfRevenge.Business.CacheData
 
 
         #region Cache Check, Load and Clear
+        public static async Task<Response> StoreData(int type, string data)
+        {
+            var structureManager = new StructureManager();
+            return await structureManager.StoreData(type, data);
+        }
+
         public static async Task LoadCacheMemoryAsync()
         {
             ClearCache();
 
-            var resManager = new StructureManager();
-            var response = await resManager.GetAllStructDataRequirementRel();
+            var structureManager = new StructureManager();
+            var response = await structureManager.GetAllStructDataRequirementRel();
             if (response.IsSuccess && response.HasData)
             {
 

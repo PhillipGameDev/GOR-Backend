@@ -121,7 +121,7 @@ namespace GameOfRevenge.Business.Manager.UserData
                 }
             }
 
-            if ((quest == null) || (quest.Iteration < 1))
+            if ((quest == null) || (quest.Iteration < 1))//TODO: iteration validation required?
             {
                 var redemeedResp = await Db.ExecuteSPNoData("RedeemQuestReward", new Dictionary<string, object>()
                 {

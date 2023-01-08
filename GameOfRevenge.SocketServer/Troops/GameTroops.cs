@@ -62,7 +62,7 @@ namespace GameOfRevenge.Troops
             if (building.Troops.ContainsKey(troopType))
             {
                 troop = building.Troops[troopType];
-                if (troop.IsConstructing)
+                if (troop.IsTraining)
                 {
                     actor.Peer.SendOperation(OperationCode.RecruitTroopRequest, ReturnCode.Failed, null, "Troop is already in the training.");
                     return null;
