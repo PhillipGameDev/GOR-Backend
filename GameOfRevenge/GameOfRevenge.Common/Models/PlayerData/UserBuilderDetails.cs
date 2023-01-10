@@ -1,7 +1,5 @@
 ﻿using System;
 using System.Runtime.Serialization;
-//using GameOfRevenge.Common.Models.Hero;
-//using Newtonsoft.Json;
 
 namespace GameOfRevenge.Common.Models
 {
@@ -12,6 +10,7 @@ namespace GameOfRevenge.Common.Models
         public int Location { get; set; }
     }
 
+    [Serializable]
     [DataContract]
     public class UserRecordBuilderDetails : UserBuilderDetails
     {

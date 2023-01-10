@@ -16,7 +16,7 @@ namespace GameOfRevenge.Common.Interface.UserData
         Task<Response<UserStructureData>> HelpBuilding(int playerId, int toPlayerId, StructureType type, int position, int helpPower);
         Task<Response<UserStructureData>> DestroyBuilding(int playerId, StructureType type, int position);
         Task<Response<UserStructureData>> CheckBuildingStatus(int playerId, StructureType type);
-        Task<Response<int>> CollectResource(int playerId, int locId);
+        Task<Response<int>> CollectResource(int playerId, int locId, float multiplier = 0);
 
         Task<Response> UpdateGate(int playerId, int hp);
         Task<Response<int>> RepairGate(int playerId);

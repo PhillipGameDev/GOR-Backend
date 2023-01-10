@@ -27,7 +27,9 @@ namespace GameOfRevenge.Buildings.Interface
         void AddBuildingUpgrading(UserStructureData data);
         bool HasAvailableRequirement(IReadOnlyDataRequirement values);
        // void SendBuildTimerToClient();
-        void BoostResourceGenerationTime(ResourceBoostUpRequest request);
+
+//        void BoostResourceGenerationTime(ResourceBoostUpRequest request);
+
         ITroop IsAnyTroopInTraining();
         void HandleWoundedTroops(WoundedTroopHealRequest request);
         void WoundedTroopTimerStatusRequest(WoundedTroopTimerStatusRequest request);

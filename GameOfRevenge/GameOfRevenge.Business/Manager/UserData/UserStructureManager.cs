@@ -409,11 +409,10 @@ namespace GameOfRevenge.Business.Manager.UserData
             return new Response<UserStructureData>(100, "Structure does not exists");
         }
 
-        public async Task<Response<int>> CollectResource(int playerId, int locId)
+        public async Task<Response<int>> CollectResource(int playerId, int locId, float multiplier)
         {
             try
             {
-                var timestamp = DateTime.UtcNow;
                 var compPlayerData = await GetFullPlayerData(playerId);
                 if (!compPlayerData.IsSuccess || !compPlayerData.HasData) throw new DataNotExistExecption(compPlayerData.Message);
 
@@ -425,11 +424,32 @@ namespace GameOfRevenge.Business.Manager.UserData
                 if (structDetails == null) throw new DataNotExistExecption("Invalid location id was provided");
 
                 var structData = CacheStructureDataManager.GetFullStructureData(structInfo.StructureType);
-                if (structData == null) throw new DataNotExistExecption("Invalid structure was");
+                if (structData == null) throw new DataNotExistExecption("Invalid structure was provided");
                 var structDataTable = structData.Levels.Where(x => x.Data.Level == structDetails.Level).FirstOrDefault();
                 if (structDataTable == null) throw new DataNotExistExecption("Invalid structure details");
+
+                int resProduction = 0;
+                ResourceType resId;
+                switch (structInfo.StructureType)
+                {
+                    case StructureType.Farm:
+                        resProduction = structDataTable.Data.FoodProduction;
+                        resId = ResourceType.Food;
+                        break;
+                    case StructureType.Sawmill:
+                        resProduction = structDataTable.Data.WoodProduction;
+                        resId = ResourceType.Wood;
+                        break;
+                    case StructureType.Mine:
+                        resProduction = structDataTable.Data.OreProduction;
+                        resId = ResourceType.Ore;
+                        break;
+                    default:
+                        throw new DataNotExistExecption("Invalid building type was provided");
+                }
+                var timestamp = DateTime.UtcNow;
                 var timeEscaped = timestamp - structDetails.LastCollected;
-                Response<UserResourceData> addResponse;
+                var productionAmount = timeEscaped.TotalSeconds * resProduction;
 
                 float boostValue = 0;
                 var playerData = await GetFullPlayerData(playerId);
@@ -444,33 +464,16 @@ namespace GameOfRevenge.Business.Manager.UserData
                     }
                 }
 
-                double addValue = 0;
-                ResourceType resId;
-                switch (structInfo.StructureType)
-                {
-                    case StructureType.Farm:
-                        addValue = timeEscaped.TotalSeconds * structDataTable.Data.FoodProduction;
-                        resId = ResourceType.Food;
-                        break;
-                    case StructureType.Sawmill:
-                        addValue = timeEscaped.TotalSeconds * structDataTable.Data.WoodProduction;
-                        resId = ResourceType.Wood;
-                        break;
-                    case StructureType.Mine:
-                        addValue = timeEscaped.TotalSeconds * structDataTable.Data.OreProduction;
-                        resId = ResourceType.Ore;
-                        break;
-                    default:
-                        throw new DataNotExistExecption("Invalid building type was provided");
-                }
-                int finalValue = (int)(addValue * (1 + (boostValue / 100f)));
-                addResponse = await userResourceManager.SumResource(playerId, resId, finalValue);
-                if (!addResponse.IsSuccess) throw new DataNotExistExecption("Couldnt add resources");
+                var finalMultiplier = 1 + (boostValue / 100f) + multiplier;
+                int finalValue = (int)(productionAmount * finalMultiplier);
+                var resp = await userResourceManager.SumResource(playerId, resId, finalValue);
+                if (!resp.IsSuccess) throw new DataNotExistExecption("Couldnt add resources");
 
                 structDetails.LastCollected = timestamp;
-                var fresponse = await manager.AddOrUpdatePlayerData(playerId, DataType.Structure, structData.Info.Id, JsonConvert.SerializeObject(structInfo.Buildings));
+                var json = JsonConvert.SerializeObject(structInfo.Buildings);
+                var fresponse = await manager.AddOrUpdatePlayerData(playerId, DataType.Structure, structData.Info.Id, json);
 
-                return new Response<int>((int)addValue, addResponse.Case, addResponse.Message);
+                return new Response<int>(finalValue, resp.Case, resp.Message);
             }
             catch (Exception ex)
             {

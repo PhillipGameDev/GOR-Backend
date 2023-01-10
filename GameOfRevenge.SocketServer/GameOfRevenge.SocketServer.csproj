@@ -195,6 +195,7 @@
     <Compile Include="Model\Operation\HelpStructureRequest.cs" />
     <Compile Include="Model\Operation\UpdateQuestRequest.cs" />
     <Compile Include="Troops\Slingshot.cs" />
+    <Compile Include="Model\Operation\ResourceBoostUpResponse.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="GameOfRevenge.dll.config">

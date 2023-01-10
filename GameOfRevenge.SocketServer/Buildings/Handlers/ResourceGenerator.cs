@@ -25,24 +25,23 @@ namespace GameOfRevenge.Buildings.Handlers
         }
         public abstract double ProductionInTime { get; }  // that production is hourly
         public abstract IPlayerResources Resource { get; }
-        public List<BoostUpResources> BoostUpList { get; set; }
+        public BoostUpResource BoostUp { get; set; }
         public ResourceGenerator(UserStructureData structureData, MmoActor player, IGameBuildingManager buildingManager) : base(structureData, player, buildingManager)
         {
-            this.BoostUpList = new List<BoostUpResources>();
+            BoostUp = new BoostUpResource();
         }
-        public override void BoostResourceGenerationTime(ResourceBoostUpRequest request)
+
+        public void BoostResourceGenerationTime(int boostTime)
         {
-            this.BoostUpList.Add(new BoostUpResources()
+            if (BoostUp.TimeLeft <= 0)
             {
-                ForTime = request.BoostTime,
-                Multiplier = request.Multiplier,
-                StartTime = DateTime.UtcNow,
-                EndTime = DateTime.UtcNow.AddSeconds(request.BoostTime)
-            });
-            log.InfoFormat("Boost Resource Request {0} List {1} ",
-                JsonConvert.SerializeObject(request),
-                JsonConvert.SerializeObject(this.BoostUpList));
-            this.Player.SendOperation(OperationCode.BoostResourceTime, ReturnCode.OK);
+                BoostUp.StartTime = DateTime.UtcNow;
+                BoostUp.Duration = 0;
+            }
+            BoostUp.Duration += boostTime;
+            BoostUp.Multiplier = 2;
+
+            log.InfoFormat("Boost Resource boostup= {1} ", JsonConvert.SerializeObject(this.BoostUp));
         }
     }
 }

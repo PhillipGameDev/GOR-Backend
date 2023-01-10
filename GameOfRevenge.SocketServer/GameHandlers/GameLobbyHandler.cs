@@ -15,6 +15,7 @@ using GameOfRevenge.Model;
 using GameOfRevenge.Common.Interface;
 using GameOfRevenge.Business.Manager;
 using GameOfRevenge.Business.CacheData;
+using GameOfRevenge.Buildings.Handlers;
 
 namespace GameOfRevenge.GameHandlers
 {
@@ -464,44 +465,66 @@ namespace GameOfRevenge.GameHandlers
         public async Task<SendResult> HandleCollectResourceRequest(IGorMmoPeer peer, OperationRequest operationRequest)
         {
             var operation = new CollectResourceRequest(peer.Protocol, operationRequest);
-            var response = await GameService.BPlayerStructureManager.CollectResource(peer.Actor.PlayerId, operation.LocationId);
+
+            var building = peer.Actor.InternalPlayerDataManager.GetPlayerBuilding(operation.StructureType, operation.LocationId);
+            if ((building == null) || !(building is ResourceGenerator))
+            {
+                var msg = "Building not found in server.";
+                return peer.SendOperation(operationRequest.OperationCode, ReturnCode.InvalidOperation, debuMsg: msg);
+            }
+
+            var bldResource = (ResourceGenerator)building;
+            var multiplier = (bldResource.BoostUp.Multiplier / 100f);
+            var response = await GameService.BPlayerStructureManager.CollectResource(peer.Actor.PlayerId, operation.LocationId, multiplier);
             if (!response.IsSuccess || !response.HasData)
             {
-                return peer.SendOperation(operationRequest.OperationCode, ReturnCode.InvalidOperation, debuMsg: operation.GetErrorMessage());
+                var msg = operation.GetErrorMessage();
+                return peer.SendOperation(operationRequest.OperationCode, ReturnCode.InvalidOperation, debuMsg: msg);
             }
 
             await GameService.NewRealTimeUpdateManager.PlayerDataChanged(peer.Actor.PlayerId);
 
-            ResourceType resourceType = ResourceType.Other;
-            switch (operation.StructureType)
-            {
-                case (int)StructureType.Farm: resourceType = ResourceType.Food; break;
-                case (int)StructureType.Sawmill: resourceType = ResourceType.Wood; break;
-                case (int)StructureType.Mine: resourceType = ResourceType.Ore; break;
-            }
-
-            CollectResourceResponse uresponse = new CollectResourceResponse()
+            var resourceType = bldResource.Resource.ResourceInfo.Code;
+            var resourceValue = response.Data;
+            var uresponse = new CollectResourceResponse()
             {
                 StructureType = operation.StructureType,
                 LocationId = operation.LocationId,
-                ResourceValue = response.Data
+                ResourceValue = resourceValue
             };
 
-            GameService.NewRealTimeUpdateManager.CollectResourceCheckQuestProgress(peer.Actor.PlayerId, resourceType, response.Data);
+            GameService.NewRealTimeUpdateManager.CollectResourceCheckQuestProgress(peer.Actor.PlayerId, resourceType, resourceValue);
 
             return peer.SendOperation(operationRequest.OperationCode, ReturnCode.OK, uresponse.GetDictionary(), debuMsg: response.Message);
         }
 
         public SendResult HandleBoostResources(IGorMmoPeer peer, OperationRequest operationRequest)
         {
+            string errMsg = null;
             var operation = new ResourceBoostUpRequest(peer.Protocol, operationRequest);
-            if (!operation.IsValid) return peer.SendOperation(operationRequest.OperationCode, ReturnCode.InvalidOperation, debuMsg: operation.GetErrorMessage());
+            if (operation.IsValid)
+            {
+                var building = peer.Actor.InternalPlayerDataManager.GetPlayerBuilding((StructureType)operation.StructureType, operation.LocationId);
+                if ((building != null) && (building is ResourceGenerator bldResource))
+                {
+                    bldResource.BoostResourceGenerationTime(operation.BoostTime);
+                    var response = new ResourceBoostUpResponse()
+                    {
+                        StructureType = operation.StructureType,
+                        LocationId = operation.LocationId,
+                        StartTime = bldResource.BoostUp.StartTime.ToUniversalTime().ToString("s"),
+                        TotalTime = bldResource.BoostUp.Duration,
+                        Multiplier = bldResource.BoostUp.Multiplier
+                    };
 
-            var building = peer.Actor.InternalPlayerDataManager.GetPlayerBuilding((StructureType)operation.StructureType, operation.LocationId);
-            if (building == null) return peer.SendOperation(operationRequest.OperationCode, ReturnCode.InvalidOperation, debuMsg: "building not found in server.");
+                    return peer.SendOperation(operationRequest.OperationCode, ReturnCode.OK, response.GetDictionary(), debuMsg: "OK");
+                }
 
-            building.BoostResourceGenerationTime(operation);
-            return SendResult.Ok;
+                errMsg = "Building not found in server.";
+            }
+            if (errMsg == null) errMsg = operation.GetErrorMessage();
+
+            return peer.SendOperation(operationRequest.OperationCode, ReturnCode.InvalidOperation, debuMsg: errMsg);
         }
 
         public SendResult HandleAttackRequest(IGorMmoPeer peer, OperationRequest operationRequest)
