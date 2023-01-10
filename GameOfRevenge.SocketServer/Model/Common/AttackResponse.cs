@@ -58,7 +58,7 @@ namespace GameOfRevenge.Model
         [DataMember(Code = (byte)RoomParameterKey.HeroIds, IsOptional = true)]
         public int[] HeroIds { get; set; }
 
-        [DataMember(Code = (byte)RoomParameterKey.BattleDuration, IsOptional = true)]
+        [DataMember(Code = (byte)RoomParameterKey.Duration, IsOptional = true)]
         public int BattleDuration { get; set; }
 
 //        [DataMember(Code = (byte)RoomParameterKey.IsReturnFromAttack, IsOptional = true)]

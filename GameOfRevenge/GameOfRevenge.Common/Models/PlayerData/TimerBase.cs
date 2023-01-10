@@ -14,19 +14,19 @@ namespace GameOfRevenge.Common.Models
 //        public DateTime EndTime { get; set; }
 
         public bool HasDuration => Duration > 0;
-        public bool Started => (DateTime.UtcNow - StartTime.ToUniversalTime()).TotalMilliseconds > 0;
+        public bool Started => (DateTime.UtcNow - StartTime.ToUniversalTime()).TotalSeconds > 0;
 
         public DateTime EndTime => StartTime.AddSeconds(Duration);
 
 //        [DataMember]
-        public double TimeLeft
+        public int TimeLeft
         {
             get
             {
-                double seconds = 0;
+                int seconds = 0;
                 if (Duration > 0)
                 {
-                    seconds = (EndTime.ToUniversalTime() - DateTime.UtcNow).TotalSeconds;
+                    seconds = Duration - (int)(DateTime.UtcNow - StartTime.ToUniversalTime()).TotalSeconds;
                     if (seconds < 0) seconds = 0;
                 }
 

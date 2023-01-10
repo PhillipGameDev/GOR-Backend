@@ -7,9 +7,9 @@ namespace GameOfRevenge.Model
     {
         [DataMember(Code = (byte)RoomParameterKey.StartTime, IsOptional = true)]
         public string StartTime { get; set; }
-        [DataMember(Code = (byte)RoomParameterKey.TotalTime, IsOptional = true)]
-        public int TotalTime { get; set; }
-        [DataMember(Code = (byte)RoomParameterKey.Multiplier, IsOptional = true)]
-        public int Multiplier { get; set; }
+        [DataMember(Code = (byte)RoomParameterKey.Duration, IsOptional = true)]
+        public int Duration { get; set; }
+        [DataMember(Code = (byte)RoomParameterKey.Percentage, IsOptional = true)]
+        public int Percentage { get; set; }
     }
 }

@@ -99,7 +99,7 @@ namespace GameOfRevenge.Business.Manager.UserData
                     {
                         if (structureInfo.TimeLeft <= 0) break;
                         var structureData = CacheStructureDataManager.GetFullStructureLevelData(structure.StructureType, structureInfo.Level);
-                        int cost = (int)Math.Ceiling(structureData.Data.InstantBuildCost * ((Math.Ceiling(structureInfo.TimeLeft / 30) * 30) / structureData.Data.TimeToBuild));
+                        int cost = (int)Math.Ceiling(structureData.Data.InstantBuildCost * (((structureInfo.TimeLeft / 30f) * 30) / structureData.Data.TimeToBuild));
                         return new Response<int>(cost, 100, "Speedup building cost");
                     }
                 }
@@ -266,7 +266,7 @@ namespace GameOfRevenge.Business.Manager.UserData
                 if (selectedBuilding == null) return new Response<UserStructureData>(200, "Structure not found");
 
                 var structureData = CacheStructureDataManager.GetFullStructureLevelData(structureGroup.StructureType, selectedBuilding.Level);
-                double multiplier = (Math.Ceiling(selectedBuilding.TimeLeft / 30) * 30) / structureData.Data.TimeToBuild;
+                double multiplier = ((selectedBuilding.TimeLeft / 30f) * 30) / structureData.Data.TimeToBuild;
                 int cost = (int)Math.Ceiling(structureData.Data.InstantBuildCost * multiplier);
                 if (cost > 0)
                 {

@@ -474,7 +474,7 @@ namespace GameOfRevenge.GameHandlers
             }
 
             var bldResource = (ResourceGenerator)building;
-            var multiplier = (bldResource.BoostUp.Multiplier / 100f);
+            var multiplier = (bldResource.BoostUp.Percentage / 100f);
             var response = await GameService.BPlayerStructureManager.CollectResource(peer.Actor.PlayerId, operation.LocationId, multiplier);
             if (!response.IsSuccess || !response.HasData)
             {
@@ -512,9 +512,9 @@ namespace GameOfRevenge.GameHandlers
                     {
                         StructureType = operation.StructureType,
                         LocationId = operation.LocationId,
-                        StartTime = bldResource.BoostUp.StartTime.ToUniversalTime().ToString("s"),
-                        TotalTime = bldResource.BoostUp.Duration,
-                        Multiplier = bldResource.BoostUp.Multiplier
+                        StartTime = bldResource.BoostUp.StartTime.ToUniversalTime().ToString("s") + "Z",
+                        Duration = bldResource.BoostUp.Duration,
+                        Percentage = bldResource.BoostUp.Percentage
                     };
 
                     return peer.SendOperation(operationRequest.OperationCode, ReturnCode.OK, response.GetDictionary(), debuMsg: "OK");

@@ -25,7 +25,7 @@
         TroopLevel = 21,
         TrainingTime = 22,
         BoostUpTime = 23,
-        Multiplier = 24,
+        Percentage = 24,
         EnemyId = 25,
         AttackerId = 26,
         ReachedTime = 27,
@@ -54,6 +54,6 @@
         EnemyUsername = 50,
         ChatId = 51,
         ChatMessage = 52,
-        BattleDuration = 53
+        Duration = 53
     }
 }

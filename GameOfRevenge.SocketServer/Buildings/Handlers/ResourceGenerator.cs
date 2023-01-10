@@ -39,9 +39,13 @@ namespace GameOfRevenge.Buildings.Handlers
                 BoostUp.Duration = 0;
             }
             BoostUp.Duration += boostTime;
-            BoostUp.Multiplier = 2;
+            BoostUp.Percentage = 2;
 
-            log.InfoFormat("Boost Resource boostup= {1} ", JsonConvert.SerializeObject(this.BoostUp));
+            BoostUp.StartTime = DateTime.UtcNow;
+            BoostUp.Duration = 5 * 60;
+            BoostUp.Percentage = 10;
+
+            log.InfoFormat("Boost Resource boostup= {0} ", JsonConvert.SerializeObject(this.BoostUp));
         }
     }
 }
