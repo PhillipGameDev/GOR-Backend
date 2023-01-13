@@ -34,19 +34,11 @@ namespace GameOfRevenge.Business.Manager.Kingdom
             }
             catch (InvalidModelExecption ex)
             {
-                return new Response<ClanData>()
-                {
-                    Case = 200,
-                    Message = ex.Message
-                };
+                return new Response<ClanData>() { Case = 200, Message = ex.Message };
             }
             catch (Exception ex)
             {
-                return new Response<ClanData>()
-                {
-                    Case = 0,
-                    Message = ErrorManager.ShowError(ex)
-                };
+                return new Response<ClanData>() { Case = 0, Message = ErrorManager.ShowError(ex) };
             }
         }
         public async Task<Response> DeleteClan(int playerId, int clanId)
@@ -63,19 +55,11 @@ namespace GameOfRevenge.Business.Manager.Kingdom
             }
             catch (InvalidModelExecption ex)
             {
-                return new Response()
-                {
-                    Case = 200,
-                    Message = ex.Message
-                };
+                return new Response() { Case = 200, Message = ex.Message };
             }
             catch (Exception ex)
             {
-                return new Response()
-                {
-                    Case = 0,
-                    Message = ErrorManager.ShowError(ex)
-                };
+                return new Response() { Case = 0, Message = ErrorManager.ShowError(ex) };
             }
         }
 
@@ -101,19 +85,11 @@ namespace GameOfRevenge.Business.Manager.Kingdom
             }
             catch (InvalidModelExecption ex)
             {
-                return new Response<List<ClanData>>()
-                {
-                    Case = 200,
-                    Message = ex.Message
-                };
+                return new Response<List<ClanData>>() { Case = 200, Message = ex.Message };
             }
             catch (Exception ex)
             {
-                return new Response<List<ClanData>>()
-                {
-                    Case = 0,
-                    Message = ErrorManager.ShowError(ex)
-                };
+                return new Response<List<ClanData>>() { Case = 0, Message = ErrorManager.ShowError(ex) };
             }
         }
 
@@ -156,19 +132,11 @@ namespace GameOfRevenge.Business.Manager.Kingdom
             }
             catch (InvalidModelExecption ex)
             {
-                return new Response<ClanData>()
-                {
-                    Case = 200,
-                    Message = ex.Message
-                };
+                return new Response<ClanData>() { Case = 200, Message = ex.Message };
             }
             catch (Exception ex)
             {
-                return new Response<ClanData>()
-                {
-                    Case = 0,
-                    Message = ErrorManager.ShowError(ex)
-                };
+                return new Response<ClanData>() { Case = 0, Message = ErrorManager.ShowError(ex) };
             }
         }
         public async Task<Response<List<ClanMember>>> GetClanMembers(int clanId)
@@ -185,19 +153,11 @@ namespace GameOfRevenge.Business.Manager.Kingdom
             }
             catch (InvalidModelExecption ex)
             {
-                return new Response<List<ClanMember>>()
-                {
-                    Case = 200,
-                    Message = ex.Message
-                };
+                return new Response<List<ClanMember>>() { Case = 200, Message = ex.Message };
             }
             catch (Exception ex)
             {
-                return new Response<List<ClanMember>>()
-                {
-                    Case = 0,
-                    Message = ErrorManager.ShowError(ex)
-                };
+                return new Response<List<ClanMember>>() { Case = 0, Message = ErrorManager.ShowError(ex) };
             }
 
         }
@@ -215,19 +175,11 @@ namespace GameOfRevenge.Business.Manager.Kingdom
             }
             catch (InvalidModelExecption ex)
             {
-                return new Response<List<ClanInvite>>()
-                {
-                    Case = 200,
-                    Message = ex.Message
-                };
+                return new Response<List<ClanInvite>>() { Case = 200, Message = ex.Message };
             }
             catch (Exception ex)
             {
-                return new Response<List<ClanInvite>>()
-                {
-                    Case = 0,
-                    Message = ErrorManager.ShowError(ex)
-                };
+                return new Response<List<ClanInvite>>() { Case = 0, Message = ErrorManager.ShowError(ex) };
             }
         }
         public async Task<Response<List<ClanJoinReq>>> GetClanJoinRequests(int playerid, int clanId)
@@ -244,19 +196,11 @@ namespace GameOfRevenge.Business.Manager.Kingdom
             }
             catch (InvalidModelExecption ex)
             {
-                return new Response<List<ClanJoinReq>>()
-                {
-                    Case = 200,
-                    Message = ex.Message
-                };
+                return new Response<List<ClanJoinReq>>() { Case = 200, Message = ex.Message };
             }
             catch (Exception ex)
             {
-                return new Response<List<ClanJoinReq>>()
-                {
-                    Case = 0,
-                    Message = ErrorManager.ShowError(ex)
-                };
+                return new Response<List<ClanJoinReq>>() { Case = 0, Message = ErrorManager.ShowError(ex) };
             }
         }
 
@@ -273,19 +217,11 @@ namespace GameOfRevenge.Business.Manager.Kingdom
             }
             catch (InvalidModelExecption ex)
             {
-                return new Response<ClanData>()
-                {
-                    Case = 200,
-                    Message = ex.Message
-                };
+                return new Response<ClanData>() { Case = 200, Message = ex.Message };
             }
             catch (Exception ex)
             {
-                return new Response<ClanData>()
-                {
-                    Case = 0,
-                    Message = ErrorManager.ShowError(ex)
-                };
+                return new Response<ClanData>() { Case = 0, Message = ErrorManager.ShowError(ex) };
             }
         }
         public async Task<Response<ClanInvite>> GetPlayerClanInvitations(int playerId)
@@ -301,19 +237,11 @@ namespace GameOfRevenge.Business.Manager.Kingdom
             }
             catch (InvalidModelExecption ex)
             {
-                return new Response<ClanInvite>()
-                {
-                    Case = 200,
-                    Message = ex.Message
-                };
+                return new Response<ClanInvite>() { Case = 200, Message = ex.Message };
             }
             catch (Exception ex)
             {
-                return new Response<ClanInvite>()
-                {
-                    Case = 0,
-                    Message = ErrorManager.ShowError(ex)
-                };
+                return new Response<ClanInvite>() { Case = 0, Message = ErrorManager.ShowError(ex) };
             }
         }
 
@@ -420,19 +348,32 @@ namespace GameOfRevenge.Business.Manager.Kingdom
             }
             catch (InvalidModelExecption ex)
             {
-                return new Response()
-                {
-                    Case = 200,
-                    Message = ex.Message
-                };
+                return new Response() { Case = 200, Message = ex.Message };
             }
             catch (Exception ex)
             {
-                return new Response()
+                return new Response() { Case = 0, Message = ErrorManager.ShowError(ex) };
+            }
+        }
+
+        public async Task<Response> LeaveClan(int playerId)
+        {
+            try
+            {
+                var spParams = new Dictionary<string, object>()
                 {
-                    Case = 0,
-                    Message = ErrorManager.ShowError(ex)
+                    { "PlayerId", playerId }
                 };
+
+                return await Db.ExecuteSPNoData("LeaveClan", spParams);
+            }
+            catch (InvalidModelExecption ex)
+            {
+                return new Response() { Case = 200, Message = ex.Message };
+            }
+            catch (Exception ex)
+            {
+                return new Response() { Case = 0, Message = ErrorManager.ShowError(ex) };
             }
         }
     }

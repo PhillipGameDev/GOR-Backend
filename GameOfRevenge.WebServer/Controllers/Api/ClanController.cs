@@ -65,6 +65,9 @@ namespace GameOfRevenge.WebServer.Controllers.Api
         [HttpPost]
         public async Task<IActionResult> JoinClanRequest(int clanId) => ReturnResponse(await clanManager.RequestJoiningToClan(Token.PlayerId, clanId));
 
+        [HttpPost]
+        public async Task<IActionResult> LeaveClan() => ReturnResponse(await clanManager.LeaveClan(Token.PlayerId));
+
         //[HttpPost]
         //public async Task<IActionResult> ReplyToJoinRequest(int requestId, bool accept) => ReturnResponse(await clanManager.ReplyToJoinRequest(Token.PlayerId, requestId, accept));
     }

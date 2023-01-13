@@ -26,6 +26,7 @@ namespace GameOfRevenge.Common.Interface
         //Task<Response<ClanInvite>> InviteMemberToClan(int playerId, int clanId);
         //Task<Response> ReplyInvitationToClan(int playerId, int clanId, bool accept);
         Task<Response> RequestJoiningToClan(int playerId, int clanId);
+        Task<Response> LeaveClan(int playerId);
         //Task<Response> ReplyToJoinRequest(int playerId, int requestId, bool accept);
     }
 }
