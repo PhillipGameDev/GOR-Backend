@@ -54,7 +54,7 @@ namespace GameOfRevenge.GameApplication
             {
                 try
                 {
-                    GameService.NewRealTimeUpdateManager.DeletePlayerQuestData(Actor.PlayerId);
+                    GameService.RealTimeUpdateManagerQuestValidator.DeletePlayerQuestData(Actor.PlayerId);
                 }
                 catch { }
             }

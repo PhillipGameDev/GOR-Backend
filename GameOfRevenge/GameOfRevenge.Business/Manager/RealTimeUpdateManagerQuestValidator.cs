@@ -16,7 +16,7 @@ using Newtonsoft.Json;
 
 namespace GameOfRevenge.Business.Manager
 {
-    public class NewRealTimeUpdateManager
+    public class RealTimeUpdateManagerQuestValidator
     {
         private static readonly ILogger log = LogManager.GetCurrentClassLogger();
         private readonly object SyncRoot = new object();
@@ -30,7 +30,7 @@ namespace GameOfRevenge.Business.Manager
         private int reseting;
         private DateTime tomorrow;
 
-        public NewRealTimeUpdateManager()
+        public RealTimeUpdateManagerQuestValidator()
         {
             Running = true;
             tomorrow = DateTime.UtcNow.AddDays(1).Date;
@@ -57,6 +57,8 @@ namespace GameOfRevenge.Business.Manager
 
             //TODO: use internal data reference instead of pulling data from server
             //peer.Actor.InternalPlayerDataManager
+            //TODO2: method used to pull fresh data from server after a change was done in server
+            //we should improve the update request to reduce the pull data
             var userData = await userManager.GetFullPlayerData(playerId);
             var userQuestData = await questManager.GetUserAllQuestProgress(playerId, true);
 

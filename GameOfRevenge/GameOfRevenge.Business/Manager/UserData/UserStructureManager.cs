@@ -338,30 +338,30 @@ namespace GameOfRevenge.Business.Manager.UserData
             return new Response<UserStructureData>(200, "Structure does not exists");
         }
 
-        public async Task<Response<UserStructureData>> HelpBuilding(int playerId, int toPlayerId, StructureType type, int position, int helpSeconds)
+        public async Task<Response<UserStructureData>> HelpBuilding(int playerId, int toPlayerId, StructureType type, int position, int seconds)
         {
-            var existing = await CheckBuildingStatus(toPlayerId, type);
-            if (existing.IsSuccess && existing.HasData)
+            var targetStructures = await CheckBuildingStatus(toPlayerId, type);
+            if (targetStructures.IsSuccess && targetStructures.HasData)
             {
-                var dataList = existing.Data.Value;
-                var locData = dataList.Where(x => x.Location == position).FirstOrDefault();
-                if (locData != null)
+                var dataList = targetStructures.Data.Value;
+                var targetBld = dataList.Find(x => (x.Location == position));
+                if (targetBld != null)
                 {
-                    if ((locData.TimeLeft > 0) && (locData.Helped < 10))
+                    if ((targetBld.Helped < 10) && (targetBld.TimeLeft > 2))
                     {
                         var playerData = await GetFullPlayerData(playerId);
-                        if (!playerData.IsSuccess || (playerData.Data == null)) return new Response<UserStructureData>(200, "Account does not exist");
+                        if (!playerData.IsSuccess || (playerData.Data == null)) return new Response<UserStructureData>(202, "Account does not exist");
 
                         playerData.Data.HelpedBuild++;
                         var respModel1 = await manager.AddOrUpdatePlayerData(playerId, DataType.Activity, 1, playerData.Data.HelpedBuild.ToString());
 
-                        locData.Helped++;
-                        locData.Duration -= helpSeconds;
-                        if (locData.Duration < 0) locData.Duration = 0;
+                        targetBld.Helped++;
+                        targetBld.Duration -= seconds;
+                        if (targetBld.Duration < 0) targetBld.Duration = 0;
 //                        locData.EndTime = locData.EndTime.AddMinutes(-helpPower);
 //                        var respModel = await manager.AddOrUpdatePlayerData(toPlayerId, DataType.Structure, CacheStructureDataManager.GetFullStructureData(type).Info.Id, JsonConvert.SerializeObject(dataList));
                         var json = JsonConvert.SerializeObject(dataList);
-                        var respModel = await manager.UpdatePlayerDataID(toPlayerId, existing.Data.Id, json);
+                        var respModel = await manager.UpdatePlayerDataID(toPlayerId, targetStructures.Data.Id, json);
                         var userData = new UserStructureData()
                         {
                             Id = respModel.Data.Id,
@@ -373,7 +373,7 @@ namespace GameOfRevenge.Business.Manager.UserData
                     }
                     else
                     {
-                        return new Response<UserStructureData>(200, "Help not required");
+                        return new Response<UserStructureData>(201, "Help not required");
                     }
                 }
             }

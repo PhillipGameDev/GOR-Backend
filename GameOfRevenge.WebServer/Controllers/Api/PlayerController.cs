@@ -521,10 +521,12 @@ namespace GameOfRevenge.WebServer.Controllers.Api
         //}
 
 #endregion
+        //OBSOLETE, remove later
         [HttpPost]
         public async Task<IActionResult> HelpBuilding(int toPlayerId, StructureType type, int locId, int helpSeconds)
         {
-            return ReturnResponse(await userStructureManager.HelpBuilding(Token.PlayerId, toPlayerId, type, locId, helpSeconds));
+            return ReturnResponse();
+//            return ReturnResponse(await userStructureManager.HelpBuilding(Token.PlayerId, toPlayerId, type, locId, helpSeconds));
         }
 
 

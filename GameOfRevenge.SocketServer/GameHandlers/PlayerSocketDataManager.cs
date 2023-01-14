@@ -168,9 +168,9 @@ namespace GameOfRevenge.GameHandlers
                 log.InfoFormat("Player Data Convert to structure {0} playerData {1} ",
                     JsonConvert.SerializeObject(structure), JsonConvert.SerializeObject(data));
 #endif
-                var multipleBuildings = GameService.BPlayerStructureManager.GetMultipleBuildings(structure);
                 if (!this.PlayerBuildings.ContainsKey(structure.ValueId))
                 {
+                    var multipleBuildings = GameService.BPlayerStructureManager.GetMultipleBuildings(structure);
                     foreach (var build in multipleBuildings)
                     {
                         IGameBuildingManager gameBuilding = GameService.GameBuildingManagerInstances[structure.ValueId];

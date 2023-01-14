@@ -8,6 +8,7 @@ namespace GameOfRevenge.Interface
         void RemovePlayer(int playerId);
         MmoActor GetPlayer(int playerId);
         void BroadCastToWorld(byte evCode, object data);
+        //TODO: Implement Broadcast to clan
         void ClearAll();
     }
 }

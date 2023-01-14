@@ -8,7 +8,7 @@ namespace GameOfRevenge.Model
         public AttackRequest(IRpcProtocol protocol, OperationRequest request) : base(protocol, request) { }
 
 
-        [DataMember(Code = (byte)RoomParameterKey.EnemyId, IsOptional = true)]
+        [DataMember(Code = (byte)RoomParameterKey.TargetPlayerId, IsOptional = true)]
         public int EnemyId { get; set; }
          
         [DataMember(Code = (byte)RoomParameterKey.TroopType, IsOptional = true)]

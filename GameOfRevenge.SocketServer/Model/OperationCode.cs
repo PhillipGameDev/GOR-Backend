@@ -33,6 +33,7 @@
 
         InstantRecruit = 27,
         HelpStructure = 28,
-        UpdateQuest = 30
+        UpdateQuest = 30,
+        HelpStructureRequest = 31
     }
 }

@@ -46,7 +46,7 @@ namespace GameOfRevenge.GameApplication
         public static IInstantProgressManager InstantProgressManager { get; private set; }
         public static GameLobbyHandler GameLobby { get; private set; }
         public static IWorldHandler WorldHandler { get; private set; }
-        public static NewRealTimeUpdateManager NewRealTimeUpdateManager { get; private set; }
+        public static RealTimeUpdateManagerQuestValidator RealTimeUpdateManagerQuestValidator { get; private set; }
 
         public static void StartInstance()
         {
@@ -87,7 +87,7 @@ namespace GameOfRevenge.GameApplication
             BKingdomManager = new KingdomManager();
             BkingdomePvpManager = new KingdomPvPManager();
             BRealTimeUpdateManager = new RealTimeUpdateManager();
-            NewRealTimeUpdateManager = new NewRealTimeUpdateManager();
+            RealTimeUpdateManagerQuestValidator = new RealTimeUpdateManagerQuestValidator();
 
             instance = new object();
 

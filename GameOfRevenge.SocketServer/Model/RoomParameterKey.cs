@@ -26,7 +26,7 @@
         TrainingTime = 22,
         BoostUpTime = 23,
         Percentage = 24,
-        EnemyId = 25,
+        TargetPlayerId = 25,
         AttackerId = 26,
         ReachedTime = 27,
         WinnerId = 28,

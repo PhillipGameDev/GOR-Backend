@@ -137,14 +137,11 @@ namespace GameOfRevenge.Business.Manager.Base
 
                     if (userActivities != null)
                     {
-                        foreach (var item in userActivities)
+                        //TODO: find a better way to store this value, we should insert it into your main account data
+                        var helpActivity = userActivities.Find(x => (x.ValueId == 1));
+                        if ((helpActivity != null) && int.TryParse(helpActivity.Value, out int value))
                         {
-                            if (item == null) continue;
-                            if (item.ValueId != 1) continue;
-
-                            int.TryParse(item.Value, out int value);
                             finalData.Data.HelpedBuild = value;
-                            break;
                         }
                     }
 
