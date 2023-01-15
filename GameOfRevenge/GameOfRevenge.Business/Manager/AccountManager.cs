@@ -123,15 +123,11 @@ namespace GameOfRevenge.Business.Manager
                         {
                             try
                             {
+                                var found = false;
                                 var dataManager = new PlayerDataManager();
                                 var resp = await dataManager.GetPlayerData(playerId, DataType.Structure, (int)StructureType.TrainingHeroes);
                                 if (resp.IsSuccess && resp.HasData)
                                 {
-                                    var structureData = CacheData.CacheStructureDataManager.GetFullStructureData(StructureType.TrainingHeroes);
-                                    int thHealth = structureData.Levels.OrderBy(x => x.Data.Level).FirstOrDefault().Data.HitPoint;
-                                    int thLoc = structureData.Locations.FirstOrDefault();
-
-                                    var found = false;
                                     var structures = JsonConvert.DeserializeObject<List<StructureDetails>>(resp.Data.Value);
                                     if (structures != null)
                                     {
@@ -139,6 +135,10 @@ namespace GameOfRevenge.Business.Manager
                                         if (bld != null)
                                         {
                                             found = true;
+                                            var structureData = CacheData.CacheStructureDataManager.GetFullStructureData(StructureType.TrainingHeroes);
+                                            int thHealth = structureData.Levels.OrderBy(x => x.Data.Level).FirstOrDefault().Data.HitPoint;
+                                            int thLoc = structureData.Locations.FirstOrDefault();
+
                                             if (bld.Location != thLoc)
                                             {
                                                 bld.Location = thLoc;
@@ -147,24 +147,27 @@ namespace GameOfRevenge.Business.Manager
                                             }
                                         }
                                     }
-                                    if (!found)
-                                    {
-                                        var timestamp = DateTime.UtcNow;
-                                        var dataList = new List<StructureDetails>();
-                                        dataList.Add(new StructureDetails()
-                                        {
-                                            Level = 1,
-                                            LastCollected = timestamp,
-                                            Location = thLoc,
-                                            StartTime = timestamp,
-                                            Duration = 0,
-                                            HitPoints = thHealth,
-                                            Helped = 0
-                                        });
-                                        var json = JsonConvert.SerializeObject(dataList);
-                                        await dataManager.AddOrUpdatePlayerData(playerId, DataType.Structure, (int)StructureType.TrainingHeroes, json);
-                                    }
+                                }
+                                if (!found)
+                                {
+                                    var structureData = CacheData.CacheStructureDataManager.GetFullStructureData(StructureType.TrainingHeroes);
+                                    int thHealth = structureData.Levels.OrderBy(x => x.Data.Level).FirstOrDefault().Data.HitPoint;
+                                    int thLoc = structureData.Locations.FirstOrDefault();
 
+                                    var timestamp = DateTime.UtcNow;
+                                    var dataList = new List<StructureDetails>();
+                                    dataList.Add(new StructureDetails()
+                                    {
+                                        Level = 1,
+                                        LastCollected = timestamp,
+                                        Location = thLoc,
+                                        StartTime = timestamp,
+                                        Duration = 0,
+                                        HitPoints = thHealth,
+                                        Helped = 0
+                                    });
+                                    var json = JsonConvert.SerializeObject(dataList);
+                                    await dataManager.AddOrUpdatePlayerData(playerId, DataType.Structure, (int)StructureType.TrainingHeroes, json);
                                 }
                             }
                             catch { }
