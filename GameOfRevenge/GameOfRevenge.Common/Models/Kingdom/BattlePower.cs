@@ -13,7 +13,10 @@ namespace GameOfRevenge.Common.Models.Kingdom
         public int Defense { get; set; }
         public int TotalArmy { get; set; }
 //        public int Power { get; set; }
-        public int Survived { get; set; }
+        public int Survived
+        {
+            get => TotalArmy - Dead;
+        }
         public int Wounded { get; set; }
         public int Dead { get; set; }
 
@@ -30,10 +33,11 @@ namespace GameOfRevenge.Common.Models.Kingdom
         public int Level => Data.Level;
         public int Hp { get; set; }
 //        public int UnitHp { get; set; }
-        public float RemainUnits => (Data.Health == 0) ? 0 : (Hp / (float)Data.Health);
+        public float RemainUnits => (Data.Health > 0)? (Hp / (float)Data.Health) : 0;
         public int InitialCount { get; set; }
         public int LoadPerUnit { get; set; }
         public int Dead { get; set; }
+        public int Wounded { get; set; }
 
         public IReadOnlyTroopDataTable Data { get; set; }
 

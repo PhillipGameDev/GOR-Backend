@@ -14,5 +14,6 @@ namespace GameOfRevenge.Common.Interface.UserData
 //        Task<Response<AttackStatusData>> AttackOtherPlayer(int attackerId, Response<PlayerCompleteData> defender, int watchLevel, MarchingArmy army, MapLocation location);
         Task<Response<AttackStatusData>> AttackOtherPlayer(int attackerId, PlayerCompleteData attackerData, int defenderId, List<UserNewBoost> defenderBoosts, int watchLevel, MarchingArmy army, MapLocation location);
         Task<Response<BattleReport>> BattleSimulation(PlayerCompleteData attackerData, PlayerCompleteData defenderData);
+        bool UpdatePlayerArmyToMarch(PlayerCompleteData data, MarchingArmy army, bool removeArmy);
     }
 }
