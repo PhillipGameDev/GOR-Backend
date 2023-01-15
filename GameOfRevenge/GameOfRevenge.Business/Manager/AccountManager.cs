@@ -23,7 +23,7 @@ namespace GameOfRevenge.Business.Manager
         private readonly IUserStructureManager strManager = new UserStructureManager();
         private readonly IUserQuestManager questManager = new UserQuestManager();
 
-        public async Task<Response<Player>> TryLoginOrRegister(string identifier, string name, bool accepted)
+        public async Task<Response<Player>> TryLoginOrRegister(string identifier, string name, bool accepted, int version)
         {
             try
             {
@@ -37,7 +37,8 @@ namespace GameOfRevenge.Business.Manager
                     {
                         { "Identifier", identifier },
                         { "Name", name },
-                        { "Accepted", accepted }
+                        { "Accepted", accepted },
+                        { "Version", version }
                     };
 
                     var response = await Db.ExecuteSPSingleRow<Player>("TryLoginOrRegister", spParams);
@@ -60,6 +61,14 @@ namespace GameOfRevenge.Business.Manager
                             var wtHealth = structureData.Levels.OrderBy(x => x.Data.Level).FirstOrDefault().Data.HitPoint;
                             var wtLoc = structureData.Locations.FirstOrDefault();
 
+                            int thHealth = 0;
+                            int thLoc = 0;
+                            if (version > 0)
+                            {
+                                structureData = CacheData.CacheStructureDataManager.GetFullStructureData(StructureType.TrainingHeroes);
+                                thHealth = structureData.Levels.OrderBy(x => x.Data.Level).FirstOrDefault().Data.HitPoint;
+                                thLoc = structureData.Locations.FirstOrDefault();
+                            }
 #if DEBUG
                             await resManager.SumMainResource(playerId, 100000, 100000, 100000, 10000);
 #else
@@ -101,6 +110,64 @@ namespace GameOfRevenge.Business.Manager
                             dataList[0].HitPoints = wtHealth;
                             json = JsonConvert.SerializeObject(dataList);
                             await dataManager.AddOrUpdatePlayerData(playerId, DataType.Structure, (int)StructureType.WatchTower, json);
+
+                            if (version > 0)
+                            {
+                                dataList[0].Location = thLoc;
+                                dataList[0].HitPoints = thHealth;
+                                json = JsonConvert.SerializeObject(dataList);
+                                await dataManager.AddOrUpdatePlayerData(playerId, DataType.Structure, (int)StructureType.TrainingHeroes, json);
+                            }
+                        }
+                        else if ((response.Case == 101) && (version > 0))
+                        {
+                            try
+                            {
+                                var dataManager = new PlayerDataManager();
+                                var resp = await dataManager.GetPlayerData(playerId, DataType.Structure, (int)StructureType.TrainingHeroes);
+                                if (resp.IsSuccess && resp.HasData)
+                                {
+                                    var structureData = CacheData.CacheStructureDataManager.GetFullStructureData(StructureType.TrainingHeroes);
+                                    int thHealth = structureData.Levels.OrderBy(x => x.Data.Level).FirstOrDefault().Data.HitPoint;
+                                    int thLoc = structureData.Locations.FirstOrDefault();
+
+                                    var found = false;
+                                    var structures = JsonConvert.DeserializeObject<List<StructureDetails>>(resp.Data.Value);
+                                    if (structures != null)
+                                    {
+                                        var bld = structures.FirstOrDefault();
+                                        if (bld != null)
+                                        {
+                                            found = true;
+                                            if (bld.Location != thLoc)
+                                            {
+                                                bld.Location = thLoc;
+                                                var json = JsonConvert.SerializeObject(structures);
+                                                await dataManager.AddOrUpdatePlayerData(playerId, DataType.Structure, (int)StructureType.TrainingHeroes, json);
+                                            }
+                                        }
+                                    }
+                                    if (!found)
+                                    {
+                                        var timestamp = DateTime.UtcNow;
+                                        var dataList = new List<StructureDetails>();
+                                        dataList.Add(new StructureDetails()
+                                        {
+                                            Level = 1,
+                                            LastCollected = timestamp,
+                                            Location = thLoc,
+                                            StartTime = timestamp,
+                                            Duration = 0,
+                                            HitPoints = thHealth,
+                                            Helped = 0
+                                        });
+                                        var json = JsonConvert.SerializeObject(dataList);
+                                        await dataManager.AddOrUpdatePlayerData(playerId, DataType.Structure, (int)StructureType.TrainingHeroes, json);
+                                    }
+
+                                }
+                            }
+                            catch { }
                         }
                         await CompleteAccountQuest(playerId, AccountTaskType.SignIn);
                     }

@@ -19,9 +19,9 @@ namespace GameOfRevenge.WebServer.Controllers.Api
 
         [HttpPost]
         [AllowAnonymous]
-        public async Task<IActionResult> TryLoginOrRegister(string identifier, string name, bool accept)
+        public async Task<IActionResult> TryLoginOrRegister(string identifier, string name, bool accept, int version = 0)
         {
-            var response = await accountManager.TryLoginOrRegister(identifier, name, accept);
+            var response = await accountManager.TryLoginOrRegister(identifier, name, accept, version);
             if (response.IsSuccess && response.HasData) response.Data.GenerateToken();
 
             return ReturnResponse(response);
