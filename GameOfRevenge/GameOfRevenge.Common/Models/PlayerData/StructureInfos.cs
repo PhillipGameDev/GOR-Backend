@@ -12,6 +12,7 @@ namespace GameOfRevenge.Common.Models
         public List<StructureDetails> Buildings { get; set; }
     }
 
+    [Serializable]
     [DataContract]
     public class StructureDetails : TimerBase//, IComparer<StructureDetails>
     {

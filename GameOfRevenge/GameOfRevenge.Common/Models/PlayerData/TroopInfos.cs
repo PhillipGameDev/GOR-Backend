@@ -17,6 +17,7 @@ namespace GameOfRevenge.Common.Models
         public int Count { get; set; }
     }
 
+    [Serializable]
     public class TroopInfos
     {
         public long Id { get; set; }
@@ -35,6 +36,7 @@ namespace GameOfRevenge.Common.Models
         }
     }
 
+    [Serializable]
     [DataContract]
     public class TroopDetails
     {
@@ -66,8 +68,9 @@ namespace GameOfRevenge.Common.Models
                         if (recoveryData?.TimeLeft > 0) unavailable += recoveryData.Count;
                     }
                 }
+                var count = Count - (unavailable + Wounded);
 
-                return Count - (unavailable + Wounded);
+                return (count > 0)? count: 0;
             }
         }
 

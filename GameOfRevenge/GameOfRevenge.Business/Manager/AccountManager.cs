@@ -27,10 +27,16 @@ namespace GameOfRevenge.Business.Manager
         {
             try
             {
-                if (string.IsNullOrWhiteSpace(identifier)) throw new InvalidModelExecption("Invalid identifier was provided");
-                else identifier = identifier.Trim();
-                if (string.IsNullOrWhiteSpace(name)) name = "Guest";
-                else name = name.Trim();
+                if (string.IsNullOrWhiteSpace(identifier))
+                    throw new InvalidModelExecption("Invalid identifier was provided");
+                else
+                    identifier = identifier.Trim();
+
+                if (string.IsNullOrWhiteSpace(name))
+                    name = "Guest";
+                else
+                    name = name.Trim();
+
                 if (accepted)
                 {
                     var spParams = new Dictionary<string, object>()
@@ -82,8 +88,7 @@ namespace GameOfRevenge.Business.Manager
                             var json = JsonConvert.SerializeObject(king);
                             await dataManager.AddOrUpdatePlayerData(playerId, DataType.Custom, 1, json);
 
-                            var builder = new UserBuilderDetails();
-                            json = JsonConvert.SerializeObject(builder);
+                            json = JsonConvert.SerializeObject(new UserBuilderDetails());
                             await dataManager.AddOrUpdatePlayerData(playerId, DataType.Custom, 2, json);
 
                             var timestamp = DateTime.UtcNow;
@@ -136,14 +141,13 @@ namespace GameOfRevenge.Business.Manager
                                         {
                                             found = true;
                                             var structureData = CacheData.CacheStructureDataManager.GetFullStructureData(StructureType.TrainingHeroes);
-                                            int thHealth = structureData.Levels.OrderBy(x => x.Data.Level).FirstOrDefault().Data.HitPoint;
                                             int thLoc = structureData.Locations.FirstOrDefault();
 
                                             if (bld.Location != thLoc)
                                             {
                                                 bld.Location = thLoc;
                                                 var json = JsonConvert.SerializeObject(structures);
-                                                await dataManager.AddOrUpdatePlayerData(playerId, DataType.Structure, (int)StructureType.TrainingHeroes, json);
+                                                await dataManager.UpdatePlayerDataID(playerId, resp.Data.Id, json);
                                             }
                                         }
                                     }
@@ -170,14 +174,18 @@ namespace GameOfRevenge.Business.Manager
                                     await dataManager.AddOrUpdatePlayerData(playerId, DataType.Structure, (int)StructureType.TrainingHeroes, json);
                                 }
                             }
-                            catch { }
+                            catch (Exception ex)
+                            {
+                                response.Message = ex.Message;
+                            }
                         }
                         await CompleteAccountQuest(playerId, AccountTaskType.SignIn);
                     }
 
                     return response;
                 }
-                else throw new InvalidModelExecption("Kindly accept terms and condition");
+                else
+                    throw new InvalidModelExecption("Kindly accept terms and condition");
             }
             catch (InvalidModelExecption ex)
             {
