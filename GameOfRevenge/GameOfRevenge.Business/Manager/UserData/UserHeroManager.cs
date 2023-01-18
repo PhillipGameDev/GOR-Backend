@@ -158,6 +158,7 @@ namespace GameOfRevenge.Business.Manager.UserData
                     if (userHeroTable != null)
                     {
                         heroDetails = JsonConvert.DeserializeObject<UserHeroDetails>(userHeroTable.Value);
+                        return new Response<UserHeroDetails>(heroDetails, 101, "Hero already unlocked");
                     }
                     else
                     {
@@ -170,9 +171,8 @@ namespace GameOfRevenge.Business.Manager.UserData
                         {
                             return new Response<UserHeroDetails>(response.Case, response.Message);
                         }
-                        return new Response<UserHeroDetails>(heroDetails, 200, "Hero unlocked");
+                        return new Response<UserHeroDetails>(heroDetails, 100, "Hero unlocked");
                     }
-                    return new Response<UserHeroDetails>(heroDetails, 201, "Hero already unlocked");
                 }
                 else
                 {
