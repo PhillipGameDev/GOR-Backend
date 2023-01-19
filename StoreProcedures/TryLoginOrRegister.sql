@@ -1,6 +1,6 @@
 USE [GameOfRevenge]
 GO
-/****** Object:  StoredProcedure [dbo].[TryLoginOrRegister]    Script Date: 1/14/2023 7:06:20 PM ******/
+/****** Object:  StoredProcedure [dbo].[TryLoginOrRegister]    Script Date: 1/19/2023 3:43:12 AM ******/
 SET ANSI_NULLS ON
 GO
 SET QUOTED_IDENTIFIER ON
@@ -26,6 +26,7 @@ BEGIN
 	DECLARE @tempVersion INT = ISNULL(@Version, 0);
 	DECLARE @existingAccount INT = NULL;
 	DECLARE @existingVersion INT = 0;
+	DECLARE @info VARCHAR(1000) = NULL;
 
 	BEGIN TRY
 		IF (@tempIdentifier IS NULL OR @tempIdentifier = '')
@@ -56,6 +57,8 @@ BEGIN
 					BEGIN
 						IF (@tempVersion > @existingVersion) UPDATE [dbo].[Player] SET [Version] = @tempVersion WHERE [PlayerId] = @existingAccount;
 
+/*						EXEC @info = [dbo].[GetPlayerDetailsById] @existingAccount;*/
+
 						SET @case = 101;
 						SET @message = 'Fetched existing account succesfully';
 					END
@@ -67,7 +70,8 @@ BEGIN
 		SET @message = ERROR_MESSAGE();
 	END CATCH
 
-	SELECT p.[PlayerId], p.[PlayerIdentifier], p.[RavasAccountId], p.[Name], p.[AcceptedTermAndCondition], p.[IsAdmin], p.[IsDeveloper], p.[WorldId], p.[WorldTileId]
+	SELECT p.[PlayerId], p.[PlayerIdentifier], p.[RavasAccountId], p.[Name], p.[AcceptedTermAndCondition], 
+			p.[IsAdmin], p.[IsDeveloper], p.[WorldId], p.[WorldTileId], 'Info' = @info
 	FROM [dbo].[Player] AS p WHERE p.[PlayerId] = @existingAccount;
 
 	EXEC [dbo].[GetMessage] @userId, @message, @case, @error, @time, 1, 1;

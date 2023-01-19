@@ -249,7 +249,7 @@ namespace GameOfRevenge.Business.Manager
             }
         }
 
-        public async Task<Response<Player>> GetAccountInfo(string identifier)
+        public async Task<Response<PlayerInfo>> GetAccountInfo(string identifier)
         {
             try
             {
@@ -260,12 +260,12 @@ namespace GameOfRevenge.Business.Manager
                     { "Identifier", identifier },
                 };
 
-                return await Db.ExecuteSPSingleRow<Player>("GetPlayerDetailsByIdentifier", spParams);
+                return await Db.ExecuteSPSingleRow<PlayerInfo>("GetPlayerDetailsByIdentifier", spParams);
 
             }
             catch (InvalidModelExecption ex)
             {
-                return new Response<Player>()
+                return new Response<PlayerInfo>()
                 {
                     Case = 200,
                     Data = null,
@@ -274,7 +274,7 @@ namespace GameOfRevenge.Business.Manager
             }
             catch (Exception ex)
             {
-                return new Response<Player>()
+                return new Response<PlayerInfo>()
                 {
                     Case = 0,
                     Data = null,
@@ -283,7 +283,7 @@ namespace GameOfRevenge.Business.Manager
             }
         }
 
-        public async Task<Response<Player>> GetAccountInfo(int playerId)
+        public async Task<Response<PlayerInfo>> GetAccountInfo(int playerId)
         {
             try
             {
@@ -292,12 +292,12 @@ namespace GameOfRevenge.Business.Manager
                     { "PlayerId", playerId },
                 };
 
-                return await Db.ExecuteSPSingleRow<Player>("GetPlayerDetailsById", spParams);
+                return await Db.ExecuteSPSingleRow<PlayerInfo>("GetPlayerDetailsById", spParams);
 
             }
             catch (InvalidModelExecption ex)
             {
-                return new Response<Player>()
+                return new Response<PlayerInfo>()
                 {
                     Case = 200,
                     Data = null,
@@ -306,7 +306,7 @@ namespace GameOfRevenge.Business.Manager
             }
             catch (Exception ex)
             {
-                return new Response<Player>()
+                return new Response<PlayerInfo>()
                 {
                     Case = 0,
                     Data = null,

@@ -39,7 +39,7 @@ namespace GameOfRevenge.WebServer.Controllers.Api
         public async Task<IActionResult> GetAccountInfoByIdentifier(string identifier)
         {
             var response = await accountManager.GetAccountInfo(identifier);
-            response.Data.JwtToken = string.Empty;
+//            if (response.IsSuccess && response.HasData) response.Data.JwtToken = null;
             return ReturnResponse(response);
         }
 
@@ -48,8 +48,7 @@ namespace GameOfRevenge.WebServer.Controllers.Api
         public async Task<IActionResult> GetAccountInfoById(int id)
         {
             var response = await accountManager.GetAccountInfo(id);
-            if (response.IsSuccess)
-                response.Data.JwtToken = string.Empty;
+//            if (response.IsSuccess && response.HasData) response.Data.JwtToken = null;
             return ReturnResponse(response);
         }
 

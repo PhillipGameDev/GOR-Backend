@@ -560,13 +560,14 @@ namespace GameOfRevenge.GameHandlers
                 var dbgMsg = "Player data not found from db.";
                 return peer.SendOperation(operationRequest.OperationCode, ReturnCode.InvalidOperation, debuMsg: dbgMsg);
             }
+            log.InfoFormat("get Player Data from db {0} ", JsonConvert.SerializeObject(playerData));
 
             var playerId = operation.PlayerId;
             var player = accountManager.GetAccountInfo(playerId).Result.Data;
             var username = player.Name;
-            var allianceId = 0;//TODO: pull alliance, it should be included in account info
+            var allianceId = player.AllianceId;
 
-            log.InfoFormat("get Player Data from db {0} ", JsonConvert.SerializeObject(playerData));
+            log.InfoFormat("get Player Info from db {0} ", JsonConvert.SerializeObject(player));
             var playerPosData = this.GridWorld.GetPlayerPosition(playerId, username, allianceId);
             city = playerPosData.region;
             actor = playerPosData.actor;

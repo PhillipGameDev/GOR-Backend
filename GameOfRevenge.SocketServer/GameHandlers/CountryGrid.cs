@@ -89,12 +89,13 @@ namespace GameOfRevenge.GameHandlers
                                 {
                                     int plyId = worldPlayer.TileData.PlayerId;
                                     string userName = string.Empty;
-                                    int allianceId = 0;//TODO: basic account info should include alliance id
+                                    int allianceId = 0;
                                     var task = accountManager.GetAccountInfo(plyId);
                                     task.Wait();
                                     if (task.Result.IsSuccess)
                                     {
                                         userName = task.Result.Data.Name;
+                                        allianceId = task.Result.Data.AllianceId;
                                     }
 
                                     var actor = new MmoActor(plyId, userName, allianceId, this, this.WorldRegions[x][y]);

@@ -72,7 +72,7 @@ namespace GameOfRevenge.Business.Manager.UserData
         private readonly IUserResourceManager resManager = new UserResourceManager();
         private readonly IUserStructureManager structManager = new UserStructureManager();
 
-        public Task<Response<Player>> GetAccountInfo(int playerId) => accManager.GetAccountInfo(playerId);
+        public Task<Response<PlayerInfo>> GetAccountInfo(int playerId) => accManager.GetAccountInfo(playerId);
 
 /*        public async Task<Response<AttackStatusData>> AttackOtherPlayer(int attackerId, int defenderId, int watchLevel, MarchingArmy army, MapLocation location)
         {

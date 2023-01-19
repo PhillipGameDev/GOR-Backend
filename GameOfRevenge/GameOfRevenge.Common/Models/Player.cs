@@ -17,6 +17,8 @@ namespace GameOfRevenge.Common.Models
         public int WorldId { get; set; }
         public int WorldTileId { get; set; }
 
+        public PlayerInfo Info { get; set; }
+
         public void LoadFromDataReader(IDataReader reader)
         {
             var index = 0;
@@ -28,7 +30,18 @@ namespace GameOfRevenge.Common.Models
             IsAdmin = reader.GetValue(index) != DBNull.Value && reader.GetBoolean(index); index++;
             IsDeveloper = reader.GetValue(index) != DBNull.Value && reader.GetBoolean(index); index++;
             WorldId = reader.GetValue(index) == DBNull.Value ? 0 : reader.GetInt32(index); index++;
-            WorldTileId = reader.GetValue(index) == DBNull.Value ? 0 : reader.GetInt32(index);
+            WorldTileId = reader.GetValue(index) == DBNull.Value ? 0 : reader.GetInt32(index); index++;
+
+            if (reader.GetValue(index) != DBNull.Value)
+            {
+                var info = reader.GetString(index);
+                try
+                {
+                    Info = Newtonsoft.Json.JsonConvert.DeserializeObject<PlayerInfo>(info);
+                }
+                catch { }
+            }
+
             JwtToken = string.Empty;
         }
     }
