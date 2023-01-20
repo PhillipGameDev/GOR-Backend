@@ -57,7 +57,18 @@ BEGIN
 					BEGIN
 						IF (@tempVersion > @existingVersion) UPDATE [dbo].[Player] SET [Version] = @tempVersion WHERE [PlayerId] = @existingAccount;
 
-/*						EXEC @info = [dbo].[GetPlayerDetailsById] @existingAccount;*/
+						DECLARE @temp TABLE (
+							PlayerId INT,
+							Name VARCHAR(1000),
+							IsAdmin BIT,
+							IsDeveloper BIT,
+							KingLevel TINYINT,
+							VIPLevel TINYINT,
+							CastleLevel TINYINT,
+							ClanId INT
+						);
+						INSERT INTO @temp EXEC [dbo].[GetPlayerDetailsById] @existingAccount, 0;
+						SET @info = (SELECT * FROM @temp FOR JSON PATH, WITHOUT_ARRAY_WRAPPER);
 
 						SET @case = 101;
 						SET @message = 'Fetched existing account succesfully';
