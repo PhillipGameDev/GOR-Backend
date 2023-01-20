@@ -8,7 +8,8 @@ GO
 
 
 ALTER   PROCEDURE [dbo].[GetPlayerDetailsById]
-	@PlayerId INT
+	@PlayerId INT,
+	@Log BIT = 1
 AS
 BEGIN
 	DECLARE @case INT = 1, @error INT = 0;
@@ -18,8 +19,8 @@ BEGIN
 
 	DECLARE @existingId INT = NULL;
 	DECLARE @name VARCHAR(1000) = NULL;
-	DECLARE @isAdmin BIT = 0;
-	DECLARE @isDeveloper BIT = 0;
+	DECLARE @isAdmin BIT = NULL;
+	DECLARE @isDeveloper BIT = NULL;
 	DECLARE @kingLevel TINYINT = NULL;
 	DECLARE @vipLevel TINYINT = NULL;
 	DECLARE @castleLevel TINYINT = NULL;
@@ -33,10 +34,7 @@ BEGIN
 			SET @message = 'No existing account found';
 		END
 	ELSE 
-		BEGIN
-			SET @case = 100;
-			SET @message = 'Fetched existing account succesfully';
-
+		BEGIN TRY
 			DECLARE @json VARCHAR(MAX) = NULL;
 
 			SELECT @json = c.[Value] FROM [dbo].[PlayerData] as c WHERE c.[PlayerId] = @existingId AND c.[DataTypeId] = 7 AND c.[ValueId] = 1;
@@ -85,13 +83,17 @@ BEGIN
 				END CATCH
 
 			SELECT @clanId = c.[ClanId] FROM [dbo].[ClanMember] AS c WHERE c.[PlayerId] = @existingId;
-		END
+
+			SET @case = 100;
+			SET @message = 'Fetched existing account succesfully';
+		END TRY
+		BEGIN CATCH
+			SET @case = 0;
+			SET @error = 1;
+			SET @message = ERROR_MESSAGE();
+		END CATCH
 
 	SELECT 'PlayerId' = @existingId, 'Name' = @name, 'IsAdmin' = @isAdmin, 'IsDeveloper' = @isDeveloper, 'KingLevel' = @kingLevel, 'VIPLevel' = @vipLevel, 'CastleLevel' = @castleLevel, 'ClanId' = @clanId;
 
-/*	SELECT p.[PlayerId], p.[PlayerIdentifier], p.[RavasAccountId], p.[Name], p.[AcceptedTermAndCondition], 
-			p.[IsAdmin], p.[IsDeveloper], p.[WorldId], p.[WorldTileId], 'Info' = @info
-	FROM [dbo].[Player] AS p WHERE p.[PlayerId] = @existingId;*/
-
-	EXEC [dbo].[GetMessage] @userId, @message, @case, @error, @time, 1, 1;
+	IF (@Log = 1) EXEC [dbo].[GetMessage] @userId, @message, @case, @error, @time, 1, 1;
 END

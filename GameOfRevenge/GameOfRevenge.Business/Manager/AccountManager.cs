@@ -292,8 +292,10 @@ namespace GameOfRevenge.Business.Manager
                     { "PlayerId", playerId },
                 };
 
-                return await Db.ExecuteSPSingleRow<PlayerInfo>("GetPlayerDetailsById", spParams);
+                var resp = await Db.ExecuteSPSingleRow<PlayerInfo>("GetPlayerDetailsById", spParams);
+                if (!resp.IsSuccess) resp.Data = null;
 
+                return resp;
             }
             catch (InvalidModelExecption ex)
             {
