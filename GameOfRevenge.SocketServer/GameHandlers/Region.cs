@@ -74,7 +74,7 @@ namespace GameOfRevenge.GameHandlers
         }
         public void OnEnterPlayer(MmoActor comingActor)
         {
-            if (this.IsBooked && this.Owner != null && this.Owner != comingActor)
+            if (this.IsBooked && (this.Owner != null) && (this.Owner != comingActor))
             {
                 var response = this.GetAttackerIaResponse(comingActor);
                 this.Owner.SendEvent(EventCode.IaEnter, response);
@@ -101,7 +101,7 @@ namespace GameOfRevenge.GameHandlers
 
         public void OnExitPlayer(MmoActor exitActor)
         {
-            if (this.IsBooked && this.Owner != null && this.Owner != exitActor)
+            if (this.IsBooked && (this.Owner != null) && (this.Owner != exitActor) && this.Owner.IsInKingdomView)
             {
                 var response = new IaExitResponse
                 {
