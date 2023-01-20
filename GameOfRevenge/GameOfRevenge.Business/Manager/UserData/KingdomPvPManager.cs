@@ -431,7 +431,7 @@ namespace GameOfRevenge.Business.Manager.UserData
 //PULL current defender status
                 var SAVE = true;
 
-                var (attackerMultiplier_attack, attackerMultiplier_defense) = GetAtkDefMultiplier(attackerArmy);
+                var (attackerMultiplier_attack, attackerMultiplier_defense) = GetAtkDefMultiplier(true, attackerArmy);
                 var attackerPower = new BattlePower();
                 attackerPower.PlayerId = attackerArmy.PlayerId;
                 attackerPower.Username = attackerArmy.PlayerName;
@@ -451,7 +451,7 @@ namespace GameOfRevenge.Business.Manager.UserData
 //                gateHitPoints = gateLevelData.HitPoint;
                 debugMsg = "2";
 
-                var (defenderMultiplier_attack, defenderMultiplier_defense) = GetAtkDefMultiplier(defenderArmy);
+                var (defenderMultiplier_attack, defenderMultiplier_defense) = GetAtkDefMultiplier(false, defenderArmy);
                 var defenderPower = new BattlePower()
                 {
                     PlayerId = defenderArmy.PlayerId,
@@ -673,7 +673,7 @@ namespace GameOfRevenge.Business.Manager.UserData
             }
         }
 
-        private static (float, float) GetAtkDefMultiplier(PlayerCompleteData data)
+        private static (float, float) GetAtkDefMultiplier(bool attacker, PlayerCompleteData playerData)
         {
             float attack = 0;
 //            TODO: NotImplementedException 
@@ -684,33 +684,63 @@ namespace GameOfRevenge.Business.Manager.UserData
 //            techInfo = data.Technologies.Where(x => x.TechnologyType == TechnologyType.ArmyDefense)?.FirstOrDefault();
 //            if (techInfo != null) defense = techInfo.Level;
 
-
-
-            float boostValue = 0;
-            var boost = data.Boosts.Find(x => (byte)x.Type == (byte)CityBoostType.Blessing);
-            if ((boost != null) && (boost.TimeLeft > 0))
+            StructureDetails castleBuilding = null;
+            foreach (var boost in playerData.Boosts)
             {
-                var specBoostData = CacheBoostDataManager.SpecNewBoostDatas.First(x => x.Type == boost.Type);
-                if (specBoostData.Table > 0)
+//                var boost = playerData.Boosts.Find(x => (byte)x.Type == (byte)CityBoostType.Blessing);
+                if ((boost == null) || (boost.TimeLeft <= 0)) continue;
+
+                var specBoostData = CacheBoostDataManager.SpecNewBoostDatas.FirstOrDefault(x => (x.Type == boost.Type));
+                if (specBoostData == null) continue;//.Table == 0)
+
+                var lvl = boost.Level;
+                if (lvl == 0)//get level from castle
                 {
-                    float.TryParse(specBoostData.Levels[boost.Level].ToString(), out float levelVal);
-                    boostValue = levelVal;
+                    if (castleBuilding == null)
+                    {
+                        var castleData = playerData.Structures.Find(x => (x.StructureType == StructureType.CityCounsel));
+                        castleBuilding = castleData?.Buildings.FirstOrDefault();
+                    }
+                    if (castleBuilding != null)
+                    {
+                        var castleLevel = castleBuilding.Level;
+                        if (castleBuilding.TimeLeft > 0) castleLevel--;
+                        lvl = (byte)castleLevel;
+                    }
                 }
-            }
-            attack += boostValue / 100f;
-            defense += boostValue / 100f;
 
-            if ((data.MarchingArmy != null) && (data.MarchingArmy.Troops != null))
+                float boostAtkValue = 0;
+                float boostDefValue = 0;
+                foreach (var tech in specBoostData.Techs)
+                {
+                    if (!tech.Levels.ContainsKey(lvl)) continue;
+                    if (!float.TryParse(tech.Levels[lvl].ToString(), out float levelVal)) continue;
+
+                    switch (tech.Tech)
+                    {
+                        case NewBoostTech.TroopAttackMultiplier: if (attacker) boostAtkValue += levelVal; break;
+                        case NewBoostTech.TroopDefenseMultiplier: if (attacker) boostDefValue += levelVal; break;
+                        case NewBoostTech.CityTroopAttackMultiplier: if (!attacker) boostAtkValue += levelVal; break;
+                        case NewBoostTech.CityTroopDefenseMultiplier: if (!attacker) boostDefValue += levelVal; break;
+                    }
+                }
+
+                attack += boostAtkValue / 100f;
+                defense += boostDefValue / 100f;
+            }
+
+            if ((playerData.MarchingArmy != null) && (playerData.MarchingArmy.Troops != null))
             {
-                var troops = data.MarchingArmy.Troops;
+                var troops = playerData.MarchingArmy.Troops;
                 foreach (var troop in troops)
                 {
                     switch (troop.TroopType)
                     {
                         case TroopType.Swordsman:
-                            var tech = data.Boosts.Find(x => (byte)x.Type == (byte)TechnologyType.BarracksAttackTechnology);
+                            var tech = playerData.Boosts.Find(x => (byte)x.Type == (byte)TechnologyType.BarracksAttackTechnology);
                             if ((tech != null) && (!tech.HasDuration || (tech.TimeLeft > 0)))
                             {
+                                //TODO: implement this tech
 //                                tech.Level
                             }
                             break;
@@ -758,7 +788,7 @@ namespace GameOfRevenge.Business.Manager.UserData
             return (attack, defense);
         }
 
-        private async Task ApplyTroopChanges(bool marching, PlayerCompleteData army, BattlePower power, bool SAVE)
+        private async Task ApplyTroopChanges(bool attacker, PlayerCompleteData army, BattlePower power, bool SAVE)
         {
             if (power.TroopsAlive == null) return;
 
@@ -770,7 +800,7 @@ namespace GameOfRevenge.Business.Manager.UserData
                 foreach (var aliveTroop in power.TroopsAlive)
                 {
                     if ((aliveTroop == null) || (aliveTroop.Type != data.TroopType)) continue;
-                    if (marching)
+                    if (attacker)
                     {
                         var survived = aliveTroop.InitialCount - aliveTroop.Dead;
                         if (survived < 1) continue;
