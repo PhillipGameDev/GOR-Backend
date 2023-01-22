@@ -47,7 +47,7 @@ namespace GameOfRevenge.Business.CacheData
         {
             if (type == ResourceType.Other) throw new InvalidModelExecption("Invalid type was provided");
             if (resourceInfos == null) LoadCacheMemory();
-            var res = resourceInfos.Where(x => x.Code == type).FirstOrDefault();
+            var res = resourceInfos.Find(x => (x.Code == type));
             if (res == null) throw new DataNotExistExecption($"Resource of type:{type} was not found");
             else return res;
         }
@@ -62,10 +62,10 @@ namespace GameOfRevenge.Business.CacheData
             if (response.IsSuccess)
             {
                 resourceInfos = response.Data;
-                food = resourceInfos.Where(x => x.Code == ResourceType.Food).FirstOrDefault();
-                wood = resourceInfos.Where(x => x.Code == ResourceType.Wood).FirstOrDefault();
-                ore = resourceInfos.Where(x => x.Code == ResourceType.Ore).FirstOrDefault();
-                gems = resourceInfos.Where(x => x.Code == ResourceType.Gems).FirstOrDefault();
+                food = resourceInfos.Find(x => (x.Code == ResourceType.Food));
+                wood = resourceInfos.Find(x => (x.Code == ResourceType.Wood));
+                ore = resourceInfos.Find(x => (x.Code == ResourceType.Ore));
+                gems = resourceInfos.Find(x => (x.Code == ResourceType.Gems));
 
                 isLoaded = true;
             }

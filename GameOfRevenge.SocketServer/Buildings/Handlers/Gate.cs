@@ -28,16 +28,18 @@ namespace GameOfRevenge.Buildings.Handlers
 
                 if (!playerData.IsSuccess) throw new DataNotExistExecption(playerData.Message);
 
-                var gateData = playerData.Data?.Structures?.Where(x => x.StructureType == StructureType)?.FirstOrDefault()?.Buildings;
+                List<StructureDetails> gateData = null;
+                if (playerData.Data != null)
+                {
+                    gateData = playerData.Data.Structures.Find(x => (x.StructureType == StructureType))?.Buildings;
+                }
                 if (gateData == null || gateData.Count == 0) throw new DataNotExistExecption("Structure does not exists");
-
-                var currentGateData = gateData.FirstOrDefault();
 
                 var dict = new Dictionary<byte, object>();
                 var newValues = new GateResponse(ref dict)
                 {
                     BuildingLocationId = operation.BuildingLocationId,
-                    Hitpoint = currentGateData.HitPoints
+                    Hitpoint = gateData[0].HitPoints
                 };
 
                 Player.SendOperation(OperationCode.GateHp, ReturnCode.OK, dict, playerData.Message);
@@ -73,17 +75,21 @@ namespace GameOfRevenge.Buildings.Handlers
                 var playerData = PlayerData();
                 if (!playerData.IsSuccess) throw new DataNotExistExecption(playerData.Message);
 
-                var gateData = playerData.Data?.Structures?.Where(x => x.StructureType == StructureType)?.FirstOrDefault()?.Buildings;
+                List<StructureDetails> gateData = null;
+                if (playerData.Data != null)
+                {
+                    gateData = playerData.Data.Structures.Find(x => (x.StructureType == StructureType))?.Buildings;
+                }
                 if (gateData == null || gateData.Count == 0) throw new DataNotExistExecption("Structure does not exists");
 
-                var currentGateData = gateData.FirstOrDefault();
-                var structureData = CacheStructureDataManager.GetFullStructureData(StructureType)?.Levels.Where(x => x.Data.Level == currentGateData.Level).FirstOrDefault();
+                //TODO: not implemented yet?
+                var structureData = CacheStructureDataManager.GetFullStructureData(StructureType).Levels.FirstOrDefault(x => (x.Data.Level == gateData[0].Level));
 
                 var dict = new Dictionary<byte, object>();
                 var newValues = new GateResponse(ref dict)
                 {
                     BuildingLocationId = operation.BuildingLocationId,
-                    Hitpoint = currentGateData.HitPoints
+                    Hitpoint = gateData[0].HitPoints
                 };
 
                 Player.SendOperation(OperationCode.RepairGate, ReturnCode.OK, dict, playerData.Message);

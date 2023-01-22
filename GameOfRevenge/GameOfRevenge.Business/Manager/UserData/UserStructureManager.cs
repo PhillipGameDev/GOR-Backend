@@ -236,7 +236,7 @@ namespace GameOfRevenge.Business.Manager.UserData
             if (existing.IsSuccess && existing.HasData)
             {
                 var dataList = existing.Data.Value;
-                var locData = dataList.Where(x => x.Location == location).FirstOrDefault();
+                var locData = dataList.Find(x => (x.Location == location));
                 if (locData != null)
                 {
                     var structureData = CacheStructureDataManager.GetFullStructureData(type);
@@ -400,7 +400,7 @@ namespace GameOfRevenge.Business.Manager.UserData
             if (existing.IsSuccess && existing.HasData)
             {
                 var dataList = existing.Data.Value;
-                var locData = dataList.Where(x => x.Location == location).FirstOrDefault();
+                var locData = dataList.Find(x => (x.Location == location));
                 if (locData != null)
                 {
                     dataList.Remove(locData);
@@ -432,12 +432,12 @@ namespace GameOfRevenge.Business.Manager.UserData
                 if (!structureValid) throw new DataNotExistExecption("Invalid location id was provided");
                 var structInfo = GetStructureLocation(locId, compPlayerData.Data.Structures);
                 if (structInfo == null) throw new DataNotExistExecption("Invalid structure type");
-                var structDetails = structInfo.Buildings.Where(x => x.Location == locId).FirstOrDefault();
+                var structDetails = structInfo.Buildings.Find(x => (x.Location == locId));
                 if (structDetails == null) throw new DataNotExistExecption("Invalid location id was provided");
 
                 var structData = CacheStructureDataManager.GetFullStructureData(structInfo.StructureType);
                 if (structData == null) throw new DataNotExistExecption("Invalid structure was provided");
-                var structDataTable = structData.Levels.Where(x => x.Data.Level == structDetails.Level).FirstOrDefault();
+                var structDataTable = structData.Levels.FirstOrDefault(x => (x.Data.Level == structDetails.Level));
                 if (structDataTable == null) throw new DataNotExistExecption("Invalid structure details");
 
                 int resProduction = 0;
@@ -529,43 +529,56 @@ namespace GameOfRevenge.Business.Manager.UserData
         public async Task<Response> UpdateGate(int playerId, int hp)
         {
             var existing = await CheckBuildingStatus(playerId, StructureType.Gate);
-            if (!existing.IsSuccess || !existing.HasData)
-                return new Response(200, "Structure does not exists");
+            if (!existing.IsSuccess || !existing.HasData) return new Response(200, "Structure does not exists");
 
             var playerData = await GetFullPlayerData(playerId);
             if (!playerData.IsSuccess) return new Response(200, "Account does not exist");
 
-            var gateData = playerData.Data?.Structures?.Where(x => x.StructureType == StructureType.Gate)?.FirstOrDefault()?.Buildings;
-            if (gateData == null || gateData.Count == 0) return new Response(200, "Structure does not exists");
+            //TODO: verify this, we are pulling building data but asked for it before in existing variable
+            List<StructureDetails> gateData = null;
+            var building = playerData.Data.Structures?.Find(x => (x.StructureType == StructureType.Gate));
+            if (building != null) gateData = building.Buildings;
+            if ((gateData == null) || (gateData.Count == 0)) return new Response(200, "Structure does not exists");
 
-            var currentGateData = gateData.FirstOrDefault();
-            currentGateData.HitPoints = hp;
+            gateData[0].HitPoints = hp;
 
-            var respModel = await manager.AddOrUpdatePlayerData(playerId, DataType.Structure, CacheStructureDataManager.GetFullStructureData(StructureType.Gate).Info.Id, JsonConvert.SerializeObject(gateData));
+            var gateId = CacheStructureDataManager.GetFullStructureData(StructureType.Gate).Info.Id;
+            var json = JsonConvert.SerializeObject(gateData);
+            var respModel = await manager.AddOrUpdatePlayerData(playerId, DataType.Structure, gateId, json);
             return new Response<UserStructureData>(respModel.Case, respModel.Message);
         }
         public async Task<Response<int>> RepairGate(int playerId)
         {
             var existing = await CheckBuildingStatus(playerId, StructureType.Gate);
-            if (!existing.IsSuccess || !existing.HasData)
-                return new Response<int>(200, "Structure does not exists");
+            if (!existing.IsSuccess || !existing.HasData) return new Response<int>(200, "Structure does not exists");
 
             var requirements = await RepairGateCost(playerId);
             if (!requirements.IsSuccess) return new Response<int>(requirements.Case, requirements.Message);
 
             var playerData = await GetFullPlayerData(playerId);
             if (!playerData.IsSuccess) return new Response<int>(200, "Account does not exist");
-            var gateData = playerData.Data?.Structures?.Where(x => x.StructureType == StructureType.Gate)?.FirstOrDefault()?.Buildings;
-            if (gateData == null || gateData.Count == 0) return new Response<int>(200, "Structure does not exists");
-            var currentGateData = gateData.FirstOrDefault();
-            var structLvls = CacheStructureDataManager.GetFullStructureData(StructureType.Gate).Levels.Where(x => x.Data.Level == currentGateData.Level).FirstOrDefault().Data;
+
+            List<StructureDetails> gateData = null;
+            var building = playerData.Data.Structures?.Find(x => (x.StructureType == StructureType.Gate));
+            if (building != null) gateData = building.Buildings;
+            if ((gateData == null) || (gateData.Count == 0)) return new Response<int>(200, "Structure does not exists");
+
+            var structLvls = CacheStructureDataManager.GetFullStructureData(StructureType.Gate).Levels;
+            var lvlData = structLvls.FirstOrDefault(x => (x.Data.Level == gateData[0].Level))?.Data;
+            if (lvlData == null) return new Response<int>(200, "Structure cache does not exists");
 
             var success = await userResourceManager.RemoveResourceByRequirement(playerId, requirements.Data);
             if (success)
             {
-                var respModel = await UpdateGate(playerId, structLvls.HitPoint);
-                if (respModel.IsSuccess) return new Response<int>(structLvls.HitPoint, respModel.Case, respModel.Message);
-                else await userResourceManager.RefundResourceByRequirement(playerId, requirements.Data);
+                var respModel = await UpdateGate(playerId, lvlData.HitPoint);
+                if (respModel.IsSuccess)
+                {
+                    return new Response<int>(lvlData.HitPoint, respModel.Case, respModel.Message);
+                }
+                else
+                {
+                    await userResourceManager.RefundResourceByRequirement(playerId, requirements.Data);
+                }
             }
 
             return new Response<int>(200, "Insufficient player resources.");
@@ -575,15 +588,16 @@ namespace GameOfRevenge.Business.Manager.UserData
             var playerData = await GetFullPlayerData(playerId);
             if (!playerData.IsSuccess) return new Response<List<DataRequirement>>(200, "Account does not exist");
 
-            var gateData = playerData.Data?.Structures?.Where(x => x.StructureType == StructureType.Gate)?.FirstOrDefault()?.Buildings;
-            if (gateData == null || gateData.Count == 0) return new Response<List<DataRequirement>>(200, "Structure does not exists");
+            List<StructureDetails> gateData = null;
+            var building = playerData.Data.Structures?.Find(x => x.StructureType == StructureType.Gate);
+            if (building != null) gateData = building.Buildings;
+            if ((gateData == null) || (gateData.Count == 0)) return new Response<List<DataRequirement>>(200, "Structure does not exists");
 
-            var currentGateData = gateData.FirstOrDefault();
-            var structLvls = CacheStructureDataManager.GetFullStructureData(StructureType.Gate).Levels.Where(x => x.Data.Level == currentGateData.Level).FirstOrDefault().Data;
+            var structLvls = CacheStructureDataManager.GetFullStructureData(StructureType.Gate).Levels;
+            var lvlData = structLvls.FirstOrDefault(x => (x.Data.Level == gateData[0].Level))?.Data;
+            if (lvlData == null) return new Response<List<DataRequirement>>(200, "Structure cache does not exists");
 
-            var currentHp = currentGateData.HitPoints;
-            var missingHp = structLvls.HitPoint - currentGateData.HitPoints;
-
+            var missingHp = lvlData.HitPoint - gateData[0].HitPoints;
             var requirements = new List<DataRequirement>()
             {
                 new DataRequirement() { DataType = DataType.Resource, ValueId = CacheResourceDataManager.Food.Id, Value = missingHp},
@@ -598,20 +612,20 @@ namespace GameOfRevenge.Business.Manager.UserData
             var playerData = await GetFullPlayerData(playerId);
             if (!playerData.IsSuccess) return new Response<GateHpData>(200, "Account does not exist");
 
-            var gateData = playerData.Data?.Structures?.Where(x => x.StructureType == StructureType.Gate)?.FirstOrDefault()?.Buildings;
+            List<StructureDetails> gateData = null;
+            var building = playerData.Data.Structures?.Find(x => x.StructureType == StructureType.Gate);
+            if (building != null) gateData = building.Buildings;
             if (gateData == null || gateData.Count == 0) return new Response<GateHpData>(200, "Structure does not exists");
 
-            var currentGateData = gateData.FirstOrDefault();
-            var structLvls = CacheStructureDataManager.GetFullStructureData(StructureType.Gate).Levels.Where(x => x.Data.Level == currentGateData.Level).FirstOrDefault().Data;
+            var structLvls = CacheStructureDataManager.GetFullStructureData(StructureType.Gate).Levels;
+            var lvlData = structLvls.FirstOrDefault(x => (x.Data.Level == gateData[0].Level))?.Data;
+            if (lvlData == null) return new Response<GateHpData>(200, "Structure cache does not exists");
 
-            var currentHp = currentGateData.HitPoints;
-            var maxHp = structLvls.HitPoint;
-            var missingHp = maxHp - currentHp;
-
+            var missingHp = lvlData.HitPoint - gateData[0].HitPoints;
             var gateHpData = new GateHpData()
             {
-                CurrentHp = currentHp,
-                MaxHp = maxHp,
+                CurrentHp = gateData[0].HitPoints,
+                MaxHp = lvlData.HitPoint,
                 RepairCost = new List<DataRequirement>()
                 {
                     new DataRequirement() { DataType = DataType.Resource, ValueId = CacheResourceDataManager.Food.Id, Value = missingHp},

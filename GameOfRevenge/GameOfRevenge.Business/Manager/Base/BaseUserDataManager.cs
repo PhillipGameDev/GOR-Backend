@@ -126,7 +126,7 @@ namespace GameOfRevenge.Business.Manager.Base
                     var userResources = response.Data.Where(x => x.DataType == DataType.Resource)?.ToList();
                     var userStructures = response.Data.Where(x => x.DataType == DataType.Structure)?.ToList();
                     var userTroops = response.Data.Where(x => x.DataType == DataType.Troop)?.ToList();
-                    var userMarching = response.Data.Where(x => x.DataType == DataType.Marching)?.FirstOrDefault();
+                    var userMarching = response.Data.Find(x => (x.DataType == DataType.Marching));
                     var userTechnologies = response.Data.Where(x => x.DataType == DataType.Technology)?.ToList();
                     var userSubTechs = response.Data.Where(x => x.DataType == DataType.SubTechnology)?.ToList();
                     var userItems = response.Data.Where(x => x.DataType == DataType.Inventory)?.ToList();

@@ -138,7 +138,7 @@ namespace GameOfRevenge.GameHandlers
         {
             IInterestArea iA = null;
             var actor = this.PlayersManager.GetPlayer(playerId);
-            var data = this.WorldData.Where(d => d.TileData.PlayerId == playerId).FirstOrDefault();
+            var data = this.WorldData.Find(d => (d.TileData.PlayerId == playerId));
             if (data == null && actor == null)
             {
                 var tile = this.SpawnPlayerInNewCity();

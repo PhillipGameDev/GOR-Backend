@@ -102,19 +102,11 @@ namespace GameOfRevenge.Business.Manager.UserData
             }
             catch (RequirementExecption ex)
             {
-                return new Response<UserTroopData>()
-                {
-                    Case = 203,
-                    Message = ErrorManager.ShowError(ex)
-                };
+                return new Response<UserTroopData>() { Case = 203, Message = ErrorManager.ShowError(ex) };
             }
             catch (Exception ex)
             {
-                return new Response<UserTroopData>()
-                {
-                    Case = 0,
-                    Message = ErrorManager.ShowError(ex)
-                };
+                return new Response<UserTroopData>() { Case = 0, Message = ErrorManager.ShowError(ex) };
                 //Config.PrintLog(String.Format("Exception RecoverWounded {0} {1} ", ex.Message, ex.StackTrace));
             }
         }
@@ -131,53 +123,45 @@ namespace GameOfRevenge.Business.Manager.UserData
                 var compPlayerData = await GetFullPlayerData(playerId);
                 if (!compPlayerData.IsSuccess || !compPlayerData.HasData) throw new DataNotExistExecption(compPlayerData.Message);
 
-                var troopDetails = compPlayerData.Data.Troops.Where(x => x.TroopType == type).FirstOrDefault()?.TroopData;
+                var troopDetails = compPlayerData.Data.Troops.Find(x => (x.TroopType == type))?.TroopData;
+                if (troopDetails == null) throw new DataNotExistExecption($"Troop type {type} was not found");
 
                 foreach (var troop in troops)
                 {
-                    if (troop == null || troop.Level <= 0 || troop.WoundedCount <= 0) continue;
-                    var troopDataList = troopDetails?.Where(x => x.Level == troop.Level).FirstOrDefault();
+                    if ((troop == null) || (troop.Level <= 0) || (troop.WoundedCount <= 0)) continue;
+
+                    var troopDataList = troopDetails.Find(x => (x.Level == troop.Level));
                     if (troopDataList == null) throw new DataNotExistExecption($"Troop type {type} was not found");
-                    if (troopDataList.Count < (troop.DeadCount + troop.WoundedCount)) throw new DataNotExistExecption($"Invalid data was provided");
+
+                    if (troopDataList.Count < (troop.DeadCount + troop.WoundedCount))
+                    {
+                        throw new DataNotExistExecption($"Invalid data was provided");
+                    }
+
                     troopDataList.Count -= troop.DeadCount;
                     troopDataList.Wounded = troop.WoundedCount;
                 }
 
                 var response = await UpdateTroops(playerId, type, troopDetails);
                 if (response.IsSuccess && response.HasData) return response;
+
                 throw new RequirementExecption("Requirements is not meet");
             }
             catch (InvalidModelExecption ex)
             {
-                return new Response<UserTroopData>()
-                {
-                    Case = 200,
-                    Message = ErrorManager.ShowError(ex)
-                };
+                return new Response<UserTroopData>() { Case = 200, Message = ErrorManager.ShowError(ex) };
             }
             catch (DataNotExistExecption ex)
             {
-                return new Response<UserTroopData>()
-                {
-                    Case = 201,
-                    Message = ErrorManager.ShowError(ex)
-                };
+                return new Response<UserTroopData>() { Case = 201, Message = ErrorManager.ShowError(ex) };
             }
             catch (RequirementExecption ex)
             {
-                return new Response<UserTroopData>()
-                {
-                    Case = 202,
-                    Message = ErrorManager.ShowError(ex)
-                };
+                return new Response<UserTroopData>() { Case = 202, Message = ErrorManager.ShowError(ex) };
             }
             catch (Exception)
             {
-                return new Response<UserTroopData>()
-                {
-                    Case = 0,
-                    Message = ErrorManager.ShowError()
-                };
+                return new Response<UserTroopData>() { Case = 0, Message = ErrorManager.ShowError() };
             }
         }
 
@@ -190,19 +174,11 @@ namespace GameOfRevenge.Business.Manager.UserData
             }
             catch (CacheDataNotExistExecption ex)
             {
-                return new Response<UserTroopData>()
-                {
-                    Case = 203,
-                    Message = ErrorManager.ShowError(ex)
-                };
+                return new Response<UserTroopData>() { Case = 203, Message = ErrorManager.ShowError(ex) };
             }
             catch (Exception)
             {
-                return new Response<UserTroopData>()
-                {
-                    Case = 0,
-                    Message = ErrorManager.ShowError()
-                };
+                return new Response<UserTroopData>() { Case = 0, Message = ErrorManager.ShowError() };
             }
         }
         public async Task<Response<UserTroopData>> TrainTroops(int playerId, TroopType type, int level, int count, int fromId)
@@ -231,43 +207,23 @@ namespace GameOfRevenge.Business.Manager.UserData
             }
             catch (CacheDataNotExistExecption ex)
             {
-                return new Response<UserTroopData>()
-                {
-                    Case = 203,
-                    Message = ErrorManager.ShowError(ex)
-                };
+                return new Response<UserTroopData>() { Case = 203, Message = ErrorManager.ShowError(ex) };
             }
             catch (InvalidModelExecption ex)
             {
-                return new Response<UserTroopData>()
-                {
-                    Case = 200,
-                    Message = ErrorManager.ShowError(ex)
-                };
+                return new Response<UserTroopData>() { Case = 200, Message = ErrorManager.ShowError(ex) };
             }
             catch (DataNotExistExecption ex)
             {
-                return new Response<UserTroopData>()
-                {
-                    Case = 201,
-                    Message = ErrorManager.ShowError(ex)
-                };
+                return new Response<UserTroopData>() { Case = 201, Message = ErrorManager.ShowError(ex) };
             }
             catch (RequirementExecption ex)
             {
-                return new Response<UserTroopData>()
-                {
-                    Case = 202,
-                    Message = ErrorManager.ShowError(ex)
-                };
+                return new Response<UserTroopData>() { Case = 202, Message = ErrorManager.ShowError(ex) };
             }
             catch (Exception)
             {
-                return new Response<UserTroopData>()
-                {
-                    Case = 0,
-                    Message = ErrorManager.ShowError()
-                };
+                return new Response<UserTroopData>() { Case = 0, Message = ErrorManager.ShowError() };
             }
         }
         public async Task<Response<UserTroopData>> InstantTrainTroops(int playerId, TroopType type, int level, int count)
@@ -281,7 +237,7 @@ namespace GameOfRevenge.Business.Manager.UserData
                 var isReduced = await userResourceManager.RemoveResourceByRequirement(playerId, CacheResourceDataManager.GetGemReq(1), count);
                 if (!isReduced) throw new RequirementExecption("Requirements is not meet");
 
-                var troopDataList = compPlayerData.Data.Troops.Where(x => x.TroopType == type).FirstOrDefault()?.TroopData;
+                var troopDataList = compPlayerData.Data.Troops.Find(x => (x.TroopType == type))?.TroopData;
                 var response = await AddTroops(playerId, type, level, count);
                 if (!response.IsSuccess || !response.HasData) throw new RequirementExecption("Requirements is not meet");
 
@@ -289,43 +245,23 @@ namespace GameOfRevenge.Business.Manager.UserData
             }
             catch (CacheDataNotExistExecption ex)
             {
-                return new Response<UserTroopData>()
-                {
-                    Case = 203,
-                    Message = ErrorManager.ShowError(ex)
-                };
+                return new Response<UserTroopData>() { Case = 203, Message = ErrorManager.ShowError(ex) };
             }
             catch (InvalidModelExecption ex)
             {
-                return new Response<UserTroopData>()
-                {
-                    Case = 200,
-                    Message = ErrorManager.ShowError(ex)
-                };
+                return new Response<UserTroopData>() { Case = 200, Message = ErrorManager.ShowError(ex) };
             }
             catch (DataNotExistExecption ex)
             {
-                return new Response<UserTroopData>()
-                {
-                    Case = 201,
-                    Message = ErrorManager.ShowError(ex)
-                };
+                return new Response<UserTroopData>() { Case = 201, Message = ErrorManager.ShowError(ex) };
             }
             catch (RequirementExecption ex)
             {
-                return new Response<UserTroopData>()
-                {
-                    Case = 202,
-                    Message = ErrorManager.ShowError(ex)
-                };
+                return new Response<UserTroopData>() { Case = 202, Message = ErrorManager.ShowError(ex) };
             }
             catch (Exception)
             {
-                return new Response<UserTroopData>()
-                {
-                    Case = 0,
-                    Message = ErrorManager.ShowError()
-                };
+                return new Response<UserTroopData>() { Case = 0, Message = ErrorManager.ShowError() };
             }
         }
 
@@ -338,19 +274,11 @@ namespace GameOfRevenge.Business.Manager.UserData
             }
             catch (CacheDataNotExistExecption ex)
             {
-                return new Response<UserTroopData>()
-                {
-                    Case = 200,
-                    Message = ErrorManager.ShowError(ex)
-                };
+                return new Response<UserTroopData>() { Case = 200, Message = ErrorManager.ShowError(ex) };
             }
             catch (Exception)
             {
-                return new Response<UserTroopData>()
-                {
-                    Case = 0,
-                    Message = ErrorManager.ShowError()
-                };
+                return new Response<UserTroopData>() { Case = 0, Message = ErrorManager.ShowError() };
             }
         }
         public async Task<Response<UserTroopData>> AddTroops(int playerId, TroopType type, int level, int count) => await AddTroops(playerId, type, level, count, null, false, 0);
@@ -365,19 +293,11 @@ namespace GameOfRevenge.Business.Manager.UserData
             }
             catch (DataNotExistExecption ex)
             {
-                return new Response<UserTroopData>()
-                {
-                    Case = 201,
-                    Message = ErrorManager.ShowError(ex)
-                };
+                return new Response<UserTroopData>() { Case = 201, Message = ErrorManager.ShowError(ex) };
             }
             catch (Exception)
             {
-                return new Response<UserTroopData>()
-                {
-                    Case = 0,
-                    Message = ErrorManager.ShowError()
-                };
+                return new Response<UserTroopData>() { Case = 0, Message = ErrorManager.ShowError() };
             }
         }
 
@@ -459,7 +379,7 @@ namespace GameOfRevenge.Business.Manager.UserData
                     if (!resp.IsSuccess && !resp.HasData) throw new DataNotExistExecption();
 
                     compPlayerData = resp.Data;
-                    var userTroops = compPlayerData.Troops.Find(x => x.TroopType == type)?.TroopData;
+                    var userTroops = compPlayerData.Troops.Find(x => (x.TroopType == type))?.TroopData;
                     oldtroopInfos = (userTroops == null) ? new List<TroopDetails>() : userTroops;
                 }
 
@@ -468,7 +388,7 @@ namespace GameOfRevenge.Business.Manager.UserData
                     oldtroopInfos.Add(new TroopDetails() { Count = 0, Level = level });
                 }*/
 
-                var toUpdateObj = oldtroopInfos.Where(x => x.Level == level).FirstOrDefault();
+                var toUpdateObj = oldtroopInfos.Find(x => (x.Level == level));
                 if (toUpdateObj == null)
                 {
                     toUpdateObj = new TroopDetails() { Level = level };
@@ -476,7 +396,7 @@ namespace GameOfRevenge.Business.Manager.UserData
                 }
 
                 toUpdateObj.Count += count;
-                toUpdateObj.InTraning = toUpdateObj.InTraning?.Where(x => x?.TimeLeft > 0).ToList();
+                toUpdateObj.InTraning = toUpdateObj.InTraning?.Where(x => (x?.TimeLeft > 0)).ToList();
 
                 if (isTraining)
                 {
@@ -489,10 +409,10 @@ namespace GameOfRevenge.Business.Manager.UserData
                     }
 
                     float timeReduced = 0;
-                    var technology = compPlayerData.Boosts.Find(x => (byte)x.Type == (byte)TechnologyType.TrainSpeedTechnology);
+                    var technology = compPlayerData.Boosts.Find(x => ((byte)x.Type == (byte)TechnologyType.TrainSpeedTechnology));
                     if (technology != null)
                     {
-                        var specBoostData = CacheBoostDataManager.SpecNewBoostDatas.First(x => x.Type == technology.Type);
+                        var specBoostData = CacheBoostDataManager.SpecNewBoostDatas.First(x => (x.Type == technology.Type));
                         if (specBoostData.Table > 0)
                         {
                             float.TryParse(specBoostData.Levels[technology.Level].ToString(), out float levelVal);
@@ -530,35 +450,19 @@ namespace GameOfRevenge.Business.Manager.UserData
             }
             catch (CacheDataNotExistExecption ex)
             {
-                return new Response<UserTroopData>()
-                {
-                    Case = 201,
-                    Message = ErrorManager.ShowError(ex)
-                };
+                return new Response<UserTroopData>() { Case = 201, Message = ErrorManager.ShowError(ex) };
             }
             catch (DataNotExistExecption ex)
             {
-                return new Response<UserTroopData>()
-                {
-                    Case = 201,
-                    Message = ErrorManager.ShowError(ex)
-                };
+                return new Response<UserTroopData>() { Case = 201, Message = ErrorManager.ShowError(ex) };
             }
             catch (RequirementExecption ex)
             {
-                return new Response<UserTroopData>()
-                {
-                    Case = 200,
-                    Message = ErrorManager.ShowError(ex)
-                };
+                return new Response<UserTroopData>() { Case = 200, Message = ErrorManager.ShowError(ex) };
             }
             catch (Exception)
             {
-                return new Response<UserTroopData>()
-                {
-                    Case = 0,
-                    Message = ErrorManager.ShowError()
-                };
+                return new Response<UserTroopData>() { Case = 0, Message = ErrorManager.ShowError() };
             }
         }
 

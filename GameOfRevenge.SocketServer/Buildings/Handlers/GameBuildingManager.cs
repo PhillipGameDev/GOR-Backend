@@ -86,9 +86,11 @@ namespace GameOfRevenge.Buildings.Handlers
                 JsonConvert.SerializeObject(request));
 #endif
             bool success = true;
-            if (actor.InternalPlayerDataManager.PlayerBuildings.ContainsKey((this.StructureType)))
+            var buildings = actor.InternalPlayerDataManager.PlayerBuildings;
+            if (buildings.ContainsKey((this.StructureType)))
             {
-                var building = actor.InternalPlayerDataManager.PlayerBuildings[this.StructureType].Where(d => d.Location == request.StructureLocationId).FirstOrDefault();
+                var locationId = request.StructureLocationId;
+                var building = buildings[this.StructureType].Find(d => (d.Location == locationId));
                 if (building != null)
                 {
                     if (!building.IsConstructing)
@@ -100,12 +102,12 @@ namespace GameOfRevenge.Buildings.Handlers
                         var structureData = CacheBuildingData.GetStructureLevelById(upgradeLevel);
                         if (structureData != null)
                         {
-                            var response = CreateOrUpgradeStructure(actor, structureData.Requirements, request.StructureLocationId, true);
+                            var response = CreateOrUpgradeStructure(actor, structureData.Requirements, locationId, true);
                             if (response.IsSuccess)
                             {
                                 var obj = new StructureCreateUpgradeResponse
                                 {
-                                    StructureLocationId = request.StructureLocationId,
+                                    StructureLocationId = locationId,
                                     StructureType = request.StructureType,
                                     StructureLevel = upgradeLevel
                                 };
@@ -120,27 +122,32 @@ namespace GameOfRevenge.Buildings.Handlers
                         }
                         else
                         {
-                            actor.Peer.SendOperation(OperationCode.UpgradeStructure, ReturnCode.Failed, debuMsg: "Structure data not found.");
+                            var dbgMsg = "Structure data not found.";
+                            actor.Peer.SendOperation(OperationCode.UpgradeStructure, ReturnCode.Failed, debuMsg: dbgMsg);
                             success = false;
                         }
                     }
                     else
                     {
-                        actor.Peer.SendOperation(OperationCode.UpgradeStructure, ReturnCode.Failed, debuMsg: "Building is already in constructing mode for current level. please try after some time. ");
+                        var dbgMsg = "Building is already in constructing mode for current level. please try after some time.";
+                        actor.Peer.SendOperation(OperationCode.UpgradeStructure, ReturnCode.Failed, debuMsg: dbgMsg);
                         success = false;
                     }
                 }
                 else
                 {
-                    actor.Peer.SendOperation(OperationCode.UpgradeStructure, ReturnCode.Failed, debuMsg: "Structure not found.");
+                    var dbgMsg = "Structure not found.";
+                    actor.Peer.SendOperation(OperationCode.UpgradeStructure, ReturnCode.Failed, debuMsg: dbgMsg);
                     success = false;
                 }
             }
             else
             {
-                actor.Peer.SendOperation(OperationCode.UpgradeStructure, ReturnCode.Failed, debuMsg: "Structure not found.");
+                var dbgMsg = "Structure not found.";
+                actor.Peer.SendOperation(OperationCode.UpgradeStructure, ReturnCode.Failed, debuMsg: dbgMsg);
                 success = false;
             }
+
             return success;
         }
         

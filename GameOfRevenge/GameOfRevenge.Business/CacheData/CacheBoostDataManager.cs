@@ -161,9 +161,9 @@ namespace GameOfRevenge.Business.CacheData
                 newBoosts.Boosts.Add(GetSpecForCityBoostShield());
                 newBoosts.Boosts.Add(GetSpecForCityBoostBlessing());
                 newBoosts.Boosts.Add(GetSpecForCityBoostLifeSaver());
-                newBoosts.Boosts.Add(GetSpecForCityBoostFog());
-                newBoosts.Boosts.Add(GetSpecForCityBoostTechBoost());
                 newBoosts.Boosts.Add(GetSpecForCityBoostProductionBoost());
+                newBoosts.Boosts.Add(GetSpecForCityBoostTechBoost());
+                newBoosts.Boosts.Add(GetSpecForCityBoostFog());
 
                 //kingdom technologies
                 newBoosts.Boosts.Add(GetSpecForConstructionTechnology());

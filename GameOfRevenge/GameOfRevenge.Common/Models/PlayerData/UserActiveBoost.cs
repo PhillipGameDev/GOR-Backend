@@ -133,8 +133,7 @@ namespace GameOfRevenge.Common.Models
                 foreach (var data in array)
                 {
                     idx++;
-                    int.TryParse(data.ToString(), out int val);
-                    if (val != 0) levels.Add(idx, data);
+                    if (int.TryParse(data.ToString(), out int val)) levels.Add(idx, data);
                 }
             }
             else
@@ -143,8 +142,7 @@ namespace GameOfRevenge.Common.Models
                 foreach (var data in array)
                 {
                     idx++;
-                    float.TryParse(data.ToString(), out float val);
-                    if (val != 0) levels.Add(idx, data);
+                    if (float.TryParse(data.ToString(), out float val)) levels.Add(idx, data);
                 }
             }
             Levels = levels;
@@ -209,8 +207,7 @@ namespace GameOfRevenge.Common.Models
                 foreach (var data in array)
                 {
                     idx++;
-                    int.TryParse(data.ToString(), out int val);
-                    if (val != 0) levels.Add(idx, data);
+                    if (int.TryParse(data.ToString(), out int val)) levels.Add(idx, data);
                 }
             }
             else
@@ -219,8 +216,7 @@ namespace GameOfRevenge.Common.Models
                 foreach (var data in array)
                 {
                     idx++;
-                    float.TryParse(data.ToString(), out float val);
-                    if (val != 0) levels.Add(idx, data);
+                    if (float.TryParse(data.ToString(), out float val)) levels.Add(idx, data);
                 }
             }
             Levels = levels;

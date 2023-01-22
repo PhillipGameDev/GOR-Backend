@@ -148,7 +148,7 @@ namespace GameOfRevenge.GameApplication
                         gtroops = Troops;
                         break;
                     case StructureType.Workshop:
-                        gtroops = Troops;
+                        gtroops = Troops.Where(x => (x.Value.TroopType == TroopType.Slingshot)).ToDictionary(x => x.Key, s => s.Value);
                         break;
                     case StructureType.ShootingRange:
                         gtroops = Troops.Where(f => f.Value.TroopType == TroopType.Archer).ToDictionary(f => f.Key, s => s.Value);

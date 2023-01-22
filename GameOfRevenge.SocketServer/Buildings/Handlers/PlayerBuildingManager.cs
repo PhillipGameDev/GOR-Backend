@@ -112,9 +112,8 @@ namespace GameOfRevenge.Buildings.Handlers
 
         public ITroop IsAnyTroopInTraining()
         {
-            var troop = Troops.Where(d => d.Value.IsTraining).FirstOrDefault();
-            if (troop.Value != null) return troop.Value;
-            else return null;
+            var troop = Troops.FirstOrDefault(d => d.Value.IsTraining);
+            return (troop.Value != null) ? troop.Value : null;
         }
 
         #region VirtualMethods

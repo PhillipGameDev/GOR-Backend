@@ -59,7 +59,8 @@ namespace GameOfRevenge.GameApplication
                 catch { }
             }
             Clients.Remove(this);
-            log.Debug($"Client disconnected with code: {reasonCode}, reason in details: {reasonDetail}");
+            var str = (Actor != null)? Actor.PlayerId.ToString() : "";
+            log.Debug($"Client {str} disconnected with code: {reasonCode}, reason in details: {reasonDetail}");
             if (Actor != null) Actor.StopOnReal();
             Dispose();
         }

@@ -32,13 +32,13 @@ namespace GameOfRevenge.Business.CacheData
 
         public static IReadOnlyInventoryDataTable GetFullInventoryItemData(int itemId)
         {
-            var item = ItemList.Where(x => x.Id == itemId).FirstOrDefault();
+            var item = ItemList.FirstOrDefault(x => (x.Id == itemId));
             if (item == null) throw new CacheDataNotExistExecption(InventoryNotExist);
             else return item;
         }
         public static IReadOnlyInventoryDataTable GetFullInventoryItemData(InventoryItemType itemType)
         {
-            var item = ItemList.Where(x => x.Code == itemType).FirstOrDefault();
+            var item = ItemList.FirstOrDefault(x => (x.Code == itemType));
             if (item == null) throw new CacheDataNotExistExecption(InventoryNotExist);
             else return item;
         }

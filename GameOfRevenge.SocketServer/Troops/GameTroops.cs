@@ -19,7 +19,7 @@ namespace GameOfRevenge.Troops
 
         public IReadOnlyTroopDataRequirements GetTroopLevel(int level)
         {
-            return TroopData.Levels.Where(d => d.Data.Level == level).FirstOrDefault();
+            return TroopData.Levels.FirstOrDefault(d => (d.Data.Level == level));
         }
 
         public double GetTrainingTotalTime(int level)

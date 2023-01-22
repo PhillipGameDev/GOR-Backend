@@ -272,7 +272,8 @@ namespace GameOfRevenge.GameHandlers
 
             if (this.PlayerBuildings.ContainsKey(structType))
             {
-                resp = player.InternalPlayerDataManager.PlayerBuildings[structType].Where(d => d.Location == locationId).FirstOrDefault();
+                //TODO: check this logic, dif pulling playerbuildings/internalplayerdata
+                resp = player.InternalPlayerDataManager.PlayerBuildings[structType].FirstOrDefault(d => (d.Location == locationId));
             }
 
             return resp;
@@ -289,9 +290,10 @@ namespace GameOfRevenge.GameHandlers
 
             foreach (var buildings in this.PlayerBuildings)
             {
-                if (!buildings.Value.Any(d => d.Location == locationId)) continue;
+                var building = buildings.Value.FirstOrDefault(x => (x.Location == locationId));
+                if (building == null) continue;
 
-                resp = buildings.Value.Where(d => d.Location == locationId).FirstOrDefault();
+                resp = building;
                 break;
             }
 

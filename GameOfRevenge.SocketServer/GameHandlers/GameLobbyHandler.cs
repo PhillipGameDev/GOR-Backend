@@ -595,7 +595,7 @@ namespace GameOfRevenge.GameHandlers
                 CastleLevel = playerInfo.CastleLevel
             };
             actor.SendEvent(EventCode.UserProfile, profile);
-            log.InfoFormat("Send profile data to client X {0} Y {1} userName {2} ", profile.X, profile.Y, profile.UserName);
+            log.InfoFormat("Send profile data to client X {0} Y {1} userName {2} castle {3} ", profile.X, profile.Y, profile.UserName, profile.CastleLevel);
 
             GameService.RealTimeUpdateManagerQuestValidator.TryAddPlayerQuestData(actor.PlayerId, peer.OnQuestUpdate);
 

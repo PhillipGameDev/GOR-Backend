@@ -47,19 +47,11 @@ namespace GameOfRevenge.Business.Manager.UserData
             }
             catch (InvalidModelExecption ex)
             {
-                return new Response<List<UserRecordNewBoost>>()
-                {
-                    Case = 200,
-                    Message = ErrorManager.ShowError(ex)
-                };
+                return new Response<List<UserRecordNewBoost>>() { Case = 200, Message = ErrorManager.ShowError(ex) };
             }
             catch (Exception)
             {
-                return new Response<List<UserRecordNewBoost>>()
-                {
-                    Case = 0,
-                    Message = ErrorManager.ShowError()
-                };
+                return new Response<List<UserRecordNewBoost>>() { Case = 0, Message = ErrorManager.ShowError() };
             }
         }
 
@@ -203,37 +195,22 @@ namespace GameOfRevenge.Business.Manager.UserData
             }
             catch (InvalidModelExecption ex)
             {
-                return new Response<UserBoostData>()
-                {
-                    Case = 200,
-                    Message = ErrorManager.ShowError(ex)
-                };
+                return new Response<UserBoostData>() { Case = 200, Message = ErrorManager.ShowError(ex) };
             }
             catch (DataNotExistExecption ex)
             {
-                return new Response<UserBoostData>()
-                {
-                    Case = 201,
-                    Message = ErrorManager.ShowError(ex)
-                };
+                return new Response<UserBoostData>() { Case = 201, Message = ErrorManager.ShowError(ex) };
             }
             catch (RequirementExecption ex)
             {
-                return new Response<UserBoostData>()
-                {
-                    Case = 202,
-                    Message = ErrorManager.ShowError(ex)
-                };
+                return new Response<UserBoostData>() { Case = 202, Message = ErrorManager.ShowError(ex) };
             }
             catch (Exception)
             {
-                return new Response<UserBoostData>()
-                {
-                    Case = 0,
-                    Message = ErrorManager.ShowError()
-                };
+                return new Response<UserBoostData>() { Case = 0, Message = ErrorManager.ShowError() };
             }
         }
+
         public async Task<Response<UserBoostData>> RemoveBoost(int playerId, NewBoostType type, int count)
         {
             try
@@ -278,35 +255,19 @@ namespace GameOfRevenge.Business.Manager.UserData
             }
             catch (InvalidModelExecption ex)
             {
-                return new Response<UserBoostData>()
-                {
-                    Case = 200,
-                    Message = ErrorManager.ShowError(ex)
-                };
+                return new Response<UserBoostData>() { Case = 200, Message = ErrorManager.ShowError(ex) };
             }
             catch (DataNotExistExecption ex)
             {
-                return new Response<UserBoostData>()
-                {
-                    Case = 201,
-                    Message = ErrorManager.ShowError(ex)
-                };
+                return new Response<UserBoostData>() { Case = 201, Message = ErrorManager.ShowError(ex) };
             }
             catch (RequirementExecption ex)
             {
-                return new Response<UserBoostData>()
-                {
-                    Case = 202,
-                    Message = ErrorManager.ShowError(ex)
-                };
+                return new Response<UserBoostData>() { Case = 202, Message = ErrorManager.ShowError(ex) };
             }
             catch (Exception)
             {
-                return new Response<UserBoostData>()
-                {
-                    Case = 0,
-                    Message = ErrorManager.ShowError()
-                };
+                return new Response<UserBoostData>() { Case = 0, Message = ErrorManager.ShowError() };
             }
         }
     }

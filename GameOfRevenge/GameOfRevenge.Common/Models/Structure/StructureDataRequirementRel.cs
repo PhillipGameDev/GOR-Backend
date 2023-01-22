@@ -31,7 +31,7 @@ namespace GameOfRevenge.Common.Models.Structure
 
         public StructureDataRequirement GetStructureLevelById(int level)
         {
-            return Levels.Where(d => d.Data.Level == level).FirstOrDefault();
+            return Levels.Find(d => (d.Data.Level == level));
         }
 
         [DebuggerBrowsable(DebuggerBrowsableState.Never)]

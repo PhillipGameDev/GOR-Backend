@@ -52,11 +52,10 @@ namespace GameOfRevenge.Troops
 
             if ((data != null) && (data.Value != null))
             {
-                TroopDetails = data.Value.Where(d => d.Level == TroopLevel).FirstOrDefault();
-
+                TroopDetails = data.Value.Find(x => (x.Level == TroopLevel));
                 if ((TroopDetails != null) && (TroopDetails.InTraning != null))
                 {
-                    TroopTrainer = TroopDetails.InTraning.Where(x => (x.BuildingLocId == Building.Location)).FirstOrDefault();
+                    TroopTrainer = TroopDetails.InTraning.Find(x => (x.BuildingLocId == Building.Location));
                 }
 #if DEBUG
                 try

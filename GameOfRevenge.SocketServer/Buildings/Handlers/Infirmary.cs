@@ -39,7 +39,7 @@ namespace GameOfRevenge.Buildings.Handlers
                         troopList = new List<WoundeAndDeadTroopsUpdate>();
                         dict.Add((TroopType)request.TroopType[j], troopList);
                     }
-                    WoundeAndDeadTroopsUpdate obj = troopList.Where(d => d.Level == request.TroopLevel[j]).FirstOrDefault();
+                    WoundeAndDeadTroopsUpdate obj = troopList.Find(d => (d.Level == request.TroopLevel[j]));
                     if (obj == null)
                     {
                         obj = new WoundeAndDeadTroopsUpdate();

@@ -444,9 +444,10 @@ namespace GameOfRevenge.Business.Manager.UserData
                 }
                 debugMsg = "1";
 
-                var gateHitPoints = 0;
-                var defenderGate = defenderArmy.Structures.Where(x => x.StructureType == StructureType.Gate)?.FirstOrDefault()?.Buildings.OrderBy(x => x.Level).FirstOrDefault();
-                if (defenderGate != null) gateHitPoints = defenderGate.HitPoints;
+                StructureDetails defenderGate = null;
+                var structures = defenderArmy.Structures.Find(x => (x.StructureType == StructureType.Gate));
+                if (structures != null) defenderGate = structures.Buildings.OrderBy(x => x.Level).FirstOrDefault();
+                var gateHitPoints = (defenderGate != null)? defenderGate.HitPoints : 0;
 //                var gateLevelData = CacheStructureDataManager.GetFullStructureData(StructureType.Gate).Levels.Where(x => x.Data.Level == defenderGate.Level).FirstOrDefault().Data;
 //                gateHitPoints = gateLevelData.HitPoint;
                 debugMsg = "2";
@@ -1076,7 +1077,7 @@ namespace GameOfRevenge.Business.Manager.UserData
                 {
                     if (troopData == null) continue;
 
-                    var troopLvlDefData = getTroopData.Levels.Where(x => x.Data.Level == troopData.Level).FirstOrDefault();
+                    var troopLvlDefData = getTroopData.Levels.FirstOrDefault(x => (x.Data.Level == troopData.Level));
                     if ((troopLvlDefData == null) || (troopLvlDefData.Data == null)) continue;
 
                     battlePower.TroopsAlive.Add(new TroopDetailsPvP(troop.TroopType, troopData.Count, troopLvlDefData.Data));
@@ -1122,23 +1123,25 @@ namespace GameOfRevenge.Business.Manager.UserData
                 if (removeArmy) toRemove = new List<KeyValuePair<TroopDetails, int>>();
 
                 var playerTroops = data.Troops;
-                var playerMarchingTroops = army.Troops;
-                foreach (var troopClass in playerMarchingTroops)
+                if (playerTroops != null)
                 {
-                    var userTroop = playerTroops?.Where(x => x.TroopType == troopClass.TroopType).FirstOrDefault();
-                    var troopData = userTroop?.TroopData;
-                    if (troopData == null || troopData.Count <= 0) return false;// continue;
-
-                    troopClass.Id = userTroop.Id;
-                    foreach (var item in troopClass.TroopData)
+                    var playerMarchingTroops = army.Troops;
+                    foreach (var troopClass in playerMarchingTroops)
                     {
-                        var lvlData = troopData.Where(x => x.Level == item.Level).FirstOrDefault();
-                        if (lvlData == null) return false;
+                        var userTroop = playerTroops.Find(x => (x.TroopType == troopClass.TroopType));
+                        if (userTroop == null) return false;
 
-                        var reqCount = item.Count;
-                        if ((lvlData.Count - reqCount) < 0) return false;
+                        var troopData = userTroop.TroopData;
+                        if ((troopData == null) || (troopData.Count == 0)) return false;
 
-                        if (removeArmy) toRemove.Add(new KeyValuePair<TroopDetails, int>(lvlData, reqCount));
+                        troopClass.Id = userTroop.Id;
+                        foreach (var item in troopClass.TroopData)
+                        {
+                            var lvlData = troopData.Find(x => (x.Level == item.Level));
+                            if ((lvlData == null) || (lvlData.Count < item.Count)) return false;
+
+                            if (removeArmy) toRemove.Add(new KeyValuePair<TroopDetails, int>(lvlData, item.Count));
+                        }
                     }
                 }
                 if (removeArmy)

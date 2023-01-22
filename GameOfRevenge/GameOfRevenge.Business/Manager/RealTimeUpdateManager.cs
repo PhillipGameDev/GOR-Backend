@@ -27,7 +27,7 @@ namespace GameOfRevenge.Business.Manager
             AttackStatusData data = null;
             lock (SyncRoot)
             {
-                data = attackPlayerData.Where(d => d.Attacker.PlayerId == attackerId).FirstOrDefault();
+                data = attackPlayerData.Find(d => (d.Attacker.PlayerId == attackerId));
             }
             return data;
         }
@@ -37,7 +37,7 @@ namespace GameOfRevenge.Business.Manager
             AttackStatusData data = null;
             lock (SyncRoot)
             {
-                data = attackPlayerData.Where(d => d.Defender.PlayerId == defenderId).FirstOrDefault();
+                data = attackPlayerData.Find(d => (d.Defender.PlayerId == defenderId));
             }
             return data;
         }

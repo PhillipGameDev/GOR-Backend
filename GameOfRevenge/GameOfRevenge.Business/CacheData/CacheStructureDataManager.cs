@@ -418,12 +418,12 @@ namespace GameOfRevenge.Business.CacheData
 
         private static string[] TroopAddRequirementDecriptionInfo(StructureType type, IReadOnlyStructureDataRequirement level)
         {
+            TroopType troopType = TroopType.Other;
             var troopBuildingRelation = CacheTroopDataManager.TroopBuildingRelation.FirstOrDefault(x => x.Structure == type);
-            var troopType = troopBuildingRelation.Troops.FirstOrDefault();
+            if (troopBuildingRelation != null) troopType = troopBuildingRelation.Troops.FirstOrDefault();
+            var troop = CacheTroopDataManager.GetFullTroopData(troopType);
 
             string[] strs = new string[3];
-
-            var troop = CacheTroopDataManager.GetFullTroopData(troopType);
             if (troop != null)
             {
                 var structureId = GetFullStructureData(troopBuildingRelation.Structure).Info.Id;
