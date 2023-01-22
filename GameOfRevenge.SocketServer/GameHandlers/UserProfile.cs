@@ -1,6 +1,7 @@
 ﻿using ExitGames.Concurrency.Fibers;
 using ExitGames.Logging;
 using GameOfRevenge.Common;
+using GameOfRevenge.Common.Models;
 using GameOfRevenge.GameApplication;
 using GameOfRevenge.Interface;
 using GameOfRevenge.Model;
@@ -17,19 +18,17 @@ namespace GameOfRevenge.GameHandlers
 {
     public abstract class UserProfile 
     {
-        public UserProfile(int playerId, string userName, int allianceId)
+        public UserProfile(int playerId, PlayerInfo playerInfo)
         {
             PlayerId = playerId;
-            Username = userName;
-            AllianceId = allianceId;
+            PlayerData = playerInfo;
         }
 
         private static readonly ILogger log = LogManager.GetCurrentClassLogger();
         public ConcurrentDictionary<int, MmoActor> InterestUsers { get; protected set; } = new ConcurrentDictionary<int, MmoActor>();
         public List<IGorMmoPeer> IntrestedPeers { get { return InterestUsers.Where(d => d.Value.Peer != null && d.Value.IsInKingdomView).Select(f => f.Value.Peer).ToList(); } }
         public int PlayerId { get; private set; }
-        public string Username { get; private set; }
-        public int AllianceId { get; private set; }
+        public PlayerInfo PlayerData { get; private set; }
 //        public int UserId { get { return Convert.ToInt32(this.UserId); } }
         public string Email { get; set; }
         public string FullName { get; set; }

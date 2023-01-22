@@ -93,8 +93,10 @@ namespace GameOfRevenge.GameHandlers
                 X = comingActor.Tile.X,
                 Y = comingActor.Tile.Y,
                 PlayerId = comingActor.PlayerId,
-                Username = comingActor.Username,
-                AllianceId = comingActor.AllianceId
+                Username = comingActor.PlayerData.Name,
+                AllianceId = comingActor.PlayerData.AllianceId,
+                KingLevel = comingActor.PlayerData.KingLevel,
+                CastleLevel = comingActor.PlayerData.CastleLevel
             };
             return response;
         }

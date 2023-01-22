@@ -1,4 +1,5 @@
 ﻿using ExitGames.Concurrency.Fibers;
+using GameOfRevenge.Common.Models;
 using GameOfRevenge.GameHandlers;
 using GameOfRevenge.Model;
 
@@ -15,7 +16,7 @@ namespace GameOfRevenge.Interface
         Vector TileDimensions { get; }
 
         Region SpawnPlayerInNewCity();
-        (Region region, MmoActor actor,IInterestArea iA) GetPlayerPosition(int playerId, string userName, int allianceId);
+        (Region region, MmoActor actor, IInterestArea iA) GetPlayerPosition(int playerId, PlayerInfo playerInfo);
         double GetDistanceBw2Points(Region p1, Region p2);
         void Dispose();
     }

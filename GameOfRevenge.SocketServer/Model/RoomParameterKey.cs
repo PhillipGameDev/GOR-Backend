@@ -54,6 +54,7 @@
         EnemyUsername = 50,
         ChatId = 51,
         ChatMessage = 52,
-        Duration = 53
+        Duration = 53,
+        CastleLevel = 54
     }
 }

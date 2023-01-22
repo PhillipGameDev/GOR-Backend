@@ -12,5 +12,11 @@ namespace GameOfRevenge.Model
 
         [DataMember(Code = (byte)RoomParameterKey.AllianceId, IsOptional = false)]
         public int AllianceId { get; set; }
+
+        [DataMember(Code = (byte)RoomParameterKey.KingLevel, IsOptional = false)]
+        public byte KingLevel { get; set; }
+
+        [DataMember(Code = (byte)RoomParameterKey.CastleLevel, IsOptional = false)]
+        public byte CastleLevel { get; set; }
     }
 }

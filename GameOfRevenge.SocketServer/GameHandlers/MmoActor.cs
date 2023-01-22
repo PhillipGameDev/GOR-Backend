@@ -1,5 +1,6 @@
 ﻿using ExitGames.Concurrency.Fibers;
 using ExitGames.Logging;
+using GameOfRevenge.Common.Models;
 using GameOfRevenge.GameApplication;
 using GameOfRevenge.Helpers;
 using GameOfRevenge.Interface;
@@ -27,10 +28,11 @@ namespace GameOfRevenge.GameHandlers
         public IPlayerSocketDataManager InternalPlayerDataManager { get; private set; }
         public IPlayerAttackHandler PlayerAttackHandler { get { return this.InternalPlayerDataManager.AttackHandler; } }
         
-        public MmoActor(int playerId, string userName, int allianceId, IWorld world, Region tile) : base(playerId, userName, allianceId)
+        public MmoActor(int playerId, PlayerInfo playerInfo, IWorld world, Region tile) : base(playerId, playerInfo)
         {
             World = world;
             Tile = tile;
+            //playerInfo assigned on base
         }
         
         public void PlayerSpawn(IInterestArea interestArea, IGorMmoPeer peer, IPlayerSocketDataManager playerDataManager)

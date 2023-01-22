@@ -550,10 +550,6 @@ namespace GameOfRevenge.GameHandlers
             var operation = new PlayerConnectRequest(peer.Protocol, operationRequest);
             if (!operation.IsValid) return peer.SendOperation(operationRequest.OperationCode, ReturnCode.InvalidOperation, debuMsg: operation.GetErrorMessage());
 
-            MmoActor actor = null;
-            Region city = null;
-            IInterestArea iA = null;
-
             var playerData = GameService.BPlayerManager.GetAllPlayerData(operation.PlayerId).Result.Data;
             if (playerData == null)
             {
@@ -563,17 +559,16 @@ namespace GameOfRevenge.GameHandlers
             log.InfoFormat("get Player Data from db {0} ", JsonConvert.SerializeObject(playerData));
 
             var playerId = operation.PlayerId;
-            var player = accountManager.GetAccountInfo(playerId).Result.Data;
-            var username = player.Name;
-            var allianceId = player.AllianceId;
+            var playerInfo = accountManager.GetAccountInfo(playerId).Result.Data;
+            log.InfoFormat("get Player Info from db {0} ", JsonConvert.SerializeObject(playerInfo));
 
-            log.InfoFormat("get Player Info from db {0} ", JsonConvert.SerializeObject(player));
-            var playerPosData = this.GridWorld.GetPlayerPosition(playerId, username, allianceId);
-            city = playerPosData.region;
-            actor = playerPosData.actor;
-            iA = playerPosData.iA;
+            MmoActor actor = null;
+            Region city = null;
+            IInterestArea iA = null;
+            (city, actor, iA) = this.GridWorld.GetPlayerPosition(playerId, playerInfo);
+
             actor.StartOnReal();
-            log.InfoFormat("player is added in manager with playerid.");
+            log.InfoFormat("player is added in manager with playerid {0}", playerId);
             log.InfoFormat("player enter in world X {0} Y {1} ", city.X, city.Y);
 
             PlayerSocketDataManager playerDataManager = null;
@@ -591,11 +586,13 @@ namespace GameOfRevenge.GameHandlers
             actor.Peer.Actor = actor;  //vice versa mmoactor into the peer and reverse
             var profile = new UserProfileResponse
             {
-                AllianceId = allianceId,
+                AllianceId = playerInfo.AllianceId,
                 PlayerId = playerId,
-                UserName = username,
+                UserName = playerInfo.Name,
                 X = actor.Tile.X,
-                Y = actor.Tile.Y
+                Y = actor.Tile.Y,
+                KingLevel = playerInfo.KingLevel,
+                CastleLevel = playerInfo.CastleLevel
             };
             actor.SendEvent(EventCode.UserProfile, profile);
             log.InfoFormat("Send profile data to client X {0} Y {1} userName {2} ", profile.X, profile.Y, profile.UserName);

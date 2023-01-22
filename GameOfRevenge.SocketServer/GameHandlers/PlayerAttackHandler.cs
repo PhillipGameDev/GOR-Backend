@@ -180,10 +180,10 @@ namespace GameOfRevenge.GameHandlers
 //                                if (watchLevel >= 1)
                         {
                             socketResponse.AttackerId = attacker.PlayerId;
-                            socketResponse.AttackerUsername = attacker.Username;
+                            socketResponse.AttackerUsername = attacker.PlayerData.Name;
                         }
                         socketResponse.EnemyId = Enemy.PlayerId;
-                        socketResponse.EnemyUsername = Enemy.Username;// (enemyPeer != null)? enemyPeer.Actor.Username : string.Empty;
+                        socketResponse.EnemyUsername = Enemy.PlayerData.Name;// (enemyPeer != null)? enemyPeer.Actor.Username : string.Empty;
 
                         if (attackBattle.Result.Data.Report.Location != null)//watchLevel >= 3)
                         {
@@ -200,7 +200,7 @@ namespace GameOfRevenge.GameHandlers
 
                         if (watchLevel >= 17)
                         {
-                            socketResponse.KingLevel = attacker.InternalPlayerDataManager.King.Level;
+                            socketResponse.KingLevel = attacker.PlayerData.KingLevel;
                         }
 
                         if (watchLevel >= 23)
