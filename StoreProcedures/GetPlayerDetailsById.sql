@@ -1,6 +1,6 @@
 USE [GameOfRevenge]
 GO
-/****** Object:  StoredProcedure [dbo].[GetPlayerDetailsById]    Script Date: 1/18/2023 5:48:41 PM ******/
+/****** Object:  StoredProcedure [dbo].[GetPlayerDetailsById]    Script Date: 1/22/2023 9:04:05 AM ******/
 SET ANSI_NULLS ON
 GO
 SET QUOTED_IDENTIFIER ON
@@ -59,7 +59,7 @@ BEGIN
 				BEGIN CATCH
 				END CATCH
 
-			SELECT @json = c.[Value] FROM [dbo].[PlayerData] as c WHERE c.[PlayerId] = 71 AND c.[DataTypeId] = 2 AND c.[ValueId] = 1;
+			SELECT @json = c.[Value] FROM [dbo].[PlayerData] as c WHERE c.[PlayerId] = @existingId AND c.[DataTypeId] = 2 AND c.[ValueId] = 1;
 			IF (@json IS NOT NULL)
 				BEGIN TRY
 					DECLARE @tempStartTime DATETIME = NULL;
