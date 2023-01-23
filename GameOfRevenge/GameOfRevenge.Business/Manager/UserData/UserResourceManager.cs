@@ -23,7 +23,7 @@ namespace GameOfRevenge.Business.Manager.UserData
         private async Task<long> GetPlayerDataResourceValue(int playerId, int resId)
         {
             var response = await manager.GetPlayerData(playerId, DataType.Resource, resId);
-            if (response.IsSuccess && response.HasData && response.Data != null)
+            if (response.IsSuccess && response.HasData )
             {
                 long.TryParse(response.Data.Value, out long retResp);
                 return retResp;

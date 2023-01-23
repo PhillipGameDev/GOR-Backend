@@ -1,6 +1,6 @@
 USE [GameOfRevenge]
 GO
-/****** Object:  StoredProcedure [dbo].[TryLoginOrRegister]    Script Date: 1/19/2023 3:43:12 AM ******/
+/****** Object:  StoredProcedure [dbo].[TryLoginOrRegister]    Script Date: 1/23/2023 11:41:12 AM ******/
 SET ANSI_NULLS ON
 GO
 SET QUOTED_IDENTIFIER ON
@@ -20,7 +20,7 @@ BEGIN
 	DECLARE @time DATETIME = CURRENT_TIMESTAMP;
 	DECLARE @userId INT = NULL;
 
-	DECLARE @tempIdentifier VARCHAR(1000) = LTRIM(RTRIM(@Identifier));
+	DECLARE @tempIdentifier VARCHAR(1000) = LTRIM(RTRIM(ISNULL(@Identifier, '')));
 	DECLARE @tempName VARCHAR(1000) = LTRIM(RTRIM(ISNULL(@Name,'Guest')));
 	DECLARE @tempAccepted INT = ISNULL(@Accepted, 0);
 	DECLARE @tempVersion INT = ISNULL(@Version, 0);
@@ -29,7 +29,7 @@ BEGIN
 	DECLARE @info VARCHAR(1000) = NULL;
 
 	BEGIN TRY
-		IF (@tempIdentifier IS NULL OR @tempIdentifier = '')
+		IF (@tempIdentifier = '' OR @tempIdentifier IS NULL)
 			BEGIN
 				SET @case = 200;
 				SET @message = 'Invalid Identifier';
