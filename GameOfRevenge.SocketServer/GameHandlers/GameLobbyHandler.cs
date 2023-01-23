@@ -591,6 +591,7 @@ namespace GameOfRevenge.GameHandlers
                 UserName = playerInfo.Name,
                 X = actor.Tile.X,
                 Y = actor.Tile.Y,
+                VIPLevel = playerInfo.VIPLevel,
                 KingLevel = playerInfo.KingLevel,
                 CastleLevel = playerInfo.CastleLevel
             };

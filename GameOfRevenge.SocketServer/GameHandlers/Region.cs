@@ -95,6 +95,7 @@ namespace GameOfRevenge.GameHandlers
                 PlayerId = comingActor.PlayerId,
                 Username = comingActor.PlayerData.Name,
                 AllianceId = comingActor.PlayerData.AllianceId,
+                VIPLevel = comingActor.PlayerData.VIPLevel,
                 KingLevel = comingActor.PlayerData.KingLevel,
                 CastleLevel = comingActor.PlayerData.CastleLevel
             };

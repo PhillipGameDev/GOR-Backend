@@ -55,6 +55,7 @@
         ChatId = 51,
         ChatMessage = 52,
         Duration = 53,
-        CastleLevel = 54
+        CastleLevel = 54,
+        VIPLevel = 55
     }
 }
