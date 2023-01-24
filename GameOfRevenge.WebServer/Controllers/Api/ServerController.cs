@@ -30,7 +30,7 @@ namespace GameOfRevenge.WebServer.Controllers.Api
         [AllowAnonymous]
         public IActionResult GetCurrentServerTime()
         {
-            return ReturnResponse(Config.UtcTime.ToString("s"));
+            return ReturnResponse(Config.UtcTime.ToString("s") + "Z");
         }
 
         [HttpGet]

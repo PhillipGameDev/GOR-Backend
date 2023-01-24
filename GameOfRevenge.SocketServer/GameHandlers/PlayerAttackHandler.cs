@@ -106,8 +106,8 @@ namespace GameOfRevenge.GameHandlers
                         }
                         troopInfo.TroopData.Add(new TroopDetails
                         {
-                            Count = request.TroopCount[i],
-                            Level = request.TroopLevel[i]
+                            Count = request.TroopCounts[i],
+                            Level = request.TroopLevels[i]
                         });
 
 //                            delay += val3.Count / ((val3.Level > 0)? val3.Level : 1);
@@ -205,18 +205,19 @@ namespace GameOfRevenge.GameHandlers
 
                         if (watchLevel >= 23)
                         {
-                            socketResponse.TroopCount = request.TroopCount;
+                            socketResponse.TroopCounts = request.TroopCounts;
                         }
                         else if (watchLevel >= 11)
                         {
                             int sum = 0;
-                            Array.ForEach(request.TroopCount, x => sum += x);
-                            socketResponse.TroopCount = new int[1]{ sum };
+                            Array.ForEach(request.TroopCounts, x => sum += x);
+                            socketResponse.TroopCounts = new int[]{ sum };
                         }
 
                         if (watchLevel >= 19)
                         {
-                            socketResponse.TroopType = request.TroopType;
+                            socketResponse.TroopTypes = request.TroopType;
+                            socketResponse.TroopLevels = request.TroopLevels;
                         }
 
                         if (request.HeroIds != null)

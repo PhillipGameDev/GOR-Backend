@@ -17,12 +17,13 @@ namespace GameOfRevenge.Model
 
             if (res.KingLevel >= 0) KingLevel = res.KingLevel;
 
-            TroopCount = res.TroopCount;
-            TroopType = res.TroopType;
+            TroopCounts = res.TroopCounts;
+            TroopTypes = res.TroopTypes;
+            TroopLevels = res.TroopLevels;
 
             HeroIds = res.HeroIds;
 
-            StartTime = res.StartTime.ToUniversalTime().ToString("yyyy'-'MM'-'dd'T'HH':'mm':'ss'.'fff'Z'");
+            StartTime = res.StartTime.ToUniversalTime().ToString("s") + "Z";//.ToString("yyyy'-'MM'-'dd'T'HH':'mm':'ss'.'fff'Z'");
             BattleDuration = res.BattleDuration;
 //            CurrentTime = res.CurrentTime;
 //            IsReturnFromAttack = res.IsReturnFromAttack;
@@ -49,11 +50,14 @@ namespace GameOfRevenge.Model
         [DataMember(Code = (byte)RoomParameterKey.KingLevel, IsOptional = true)]
         public int KingLevel { get; set; }
 
+        [DataMember(Code = (byte)RoomParameterKey.TroopLevel, IsOptional = true)]
+        public int[] TroopLevels { get; set; }
+
         [DataMember(Code = (byte)RoomParameterKey.TroopCount, IsOptional = true)]
-        public int[] TroopCount { get; set; }
+        public int[] TroopCounts { get; set; }
 
         [DataMember(Code = (byte)RoomParameterKey.TroopType, IsOptional = true)]
-        public int[] TroopType { get; set; }
+        public int[] TroopTypes { get; set; }
 
         [DataMember(Code = (byte)RoomParameterKey.HeroIds, IsOptional = true)]
         public int[] HeroIds { get; set; }

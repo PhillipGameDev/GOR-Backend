@@ -533,8 +533,8 @@ namespace GameOfRevenge.GameHandlers
             log.Debug("@@@@@@@ HANDLE ATTACK REQUEST FROM "+peer.Actor.PlayerId);
             var operation = new AttackRequest(peer.Protocol, operationRequest);
             if (!operation.IsValid ||
-                (operation.TroopLevel.Length != operation.TroopType.Length) ||
-                (operation.TroopCount.Length != operation.TroopType.Length))
+                (operation.TroopLevels.Length != operation.TroopType.Length) ||
+                (operation.TroopCounts.Length != operation.TroopType.Length))
             {
                 log.Debug("@@@@ ATTACK INVALID");
                 return peer.SendOperation(operationRequest.OperationCode, ReturnCode.InvalidOperation, debuMsg: operation.GetErrorMessage());

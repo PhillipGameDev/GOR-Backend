@@ -73,9 +73,11 @@ namespace GameOfRevenge.Common.Models
         [DataMember]
         public int KingLevel { get; set; } = -1;
         [DataMember]
-        public int[] TroopCount { get; set; }
+        public int[] TroopCounts { get; set; }
         [DataMember]
-        public int[] TroopType { get; set; }
+        public int[] TroopTypes { get; set; }
+        [DataMember]
+        public int[] TroopLevels { get; set; }
         [DataMember]
         public int[] HeroIds { get; set; }
 
