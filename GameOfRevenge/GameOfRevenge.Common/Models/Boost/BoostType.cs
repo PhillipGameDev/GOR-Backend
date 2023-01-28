@@ -17,6 +17,13 @@ namespace GameOfRevenge.Common.Models.Boost
 //        ConstructionBoost = NewBoostType.Construction
     }
 
+    public enum VIPBoostType : byte
+    {
+        Unknown = 0,
+        VIP = NewBoostType.VIP
+        //SVIP
+    }
+
     public enum NewBoostType : byte
     {
         Unknown = 0,
@@ -26,6 +33,9 @@ namespace GameOfRevenge.Common.Models.Boost
         ProductionBoost,
         TechBoost,
         Fog,
+
+        VIP = 15,
+        //SVIP
 
         Construction = 20,
         ResearchSpeed,
@@ -67,6 +77,7 @@ namespace GameOfRevenge.Common.Models.Boost
         TroopTrainingSpeedMultiplier,
         TroopHealingSpeedMultiplier,
         TroopUpkeepReductionMultiplier,
+        BuildingTimeBonus,
 
         AttackPower = 40,
         TroopAttackMultiplier,

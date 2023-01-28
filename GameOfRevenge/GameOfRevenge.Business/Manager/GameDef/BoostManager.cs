@@ -11,7 +11,7 @@ namespace GameOfRevenge.Business.Manager.GameDef
     public class BoostManager : BaseManager
     {
 //        public async Task<Response<List<BoostTable>>> GetAllBoosts() => await Db.ExecuteSPMultipleRow<BoostTable>("GetAllBoosts");
-        public async Task<Response<List<BoostTypeTable>>> GetAllBoostTypes() => await Db.ExecuteSPMultipleRow<BoostTypeTable>("GetAllBoostTypes");
+//        public async Task<Response<List<BoostTypeTable>>> GetAllBoostTypes() => await Db.ExecuteSPMultipleRow<BoostTypeTable>("GetAllBoostTypes");
 /*        public async Task<Response<List<BoostTypeRel>>> GetAllBoostRelData()
         {
             var types = await GetAllBoostTypes();

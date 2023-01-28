@@ -14,31 +14,48 @@ namespace GameOfRevenge.Business.CacheData
         private const string BoostNotExist = "Boost does not exist";
         private static bool isLoaded = false;
         //        private static List<BoostTypeRel> boostInfos = null;
-        private static List<BoostTypeTable> boostInfos = null;
-        private static List<CityBoostType> cityBoostTypes;
+//        private static List<BoostTypeTable> boostInfos = null;
+//        private static List<CityBoostType> cityBoostTypes;
 
         private static List<NewBoostType> newBoostTypes;
 //        private static List<SpecNewBoostData> specNewBoostDatas;
         private static SpecNewBoostDataTable newBoosts;
 
-        public static IReadOnlyList<IReadOnlyBoostTypeTable> BoostInfos { get { LoadCacheMemory(); return boostInfos.ToList(); } }
+//        private static SpecVIPBoostData vipBoosts;
+//        private static List<VIPBoostType> vipBoostTypes;
+
+//        public static IReadOnlyList<IReadOnlyBoostTypeTable> BoostInfos { get { LoadCacheMemory(); return boostInfos.ToList(); } }
+
+//        public static SpecVIPBoostData SpecVIPBoostDatas { get { LoadCacheMemory(); return vipBoosts; } }
 
         public static SpecNewBoostDataTable SpecNewBoostDataTables { get { LoadCacheMemory(); return newBoosts; } }
         public static IReadOnlyList<SpecNewBoostData> SpecNewBoostDatas { get { LoadCacheMemory(); return newBoosts.Boosts.ToList(); } }
 //        public static IReadOnlyList<SpecNewBoostData> SpecNewBoostDatas { get { LoadCacheMemory(); return specNewBoostDatas.ToList(); } }
 
-        public static List<CityBoostType> CityBoostTypes { get { LoadCacheMemory(); return cityBoostTypes; } }
+        public static List<CityBoostType> CityBoostTypes { get { LoadCacheMemory(); return newBoosts.CityBoosts; } }
+
+        public static List<VIPBoostType> VIPBoostTypes { get { LoadCacheMemory(); return newBoosts.VIPBoosts; } }
 
         //        public static IReadOnlyList<IReadOnlyBoostTypeRel> BoostInfos { get { if (boostInfos == null) LoadCacheMemory(); return boostInfos.ToList(); } }
 
         //        public static IReadOnlyList<IReadOnlyBuffItemRel> BuffItemRelations { get { LoadCacheMemory(); return boostTypes; } }
 
-        public static IReadOnlyBoostTypeTable GetFullBoostDataByTypeId(int boostId)
+        public static NewBoostType GetNewBoostByTypeId(int id)
+        {
+            var resp = NewBoostType.Unknown;
+
+            var boost = SpecNewBoostDataTables.Boosts.Find(x => ((int)x.Type == id));
+            if (boost != null) resp = boost.Type;
+
+            return resp;
+        }
+
+/*        public static IReadOnlyBoostTypeTable GetFullBoostDataByTypeId(int boostId)
         {
             var data = BoostInfos.FirstOrDefault(x => x.BoostTypeId == boostId);
             if (data == null) throw new CacheDataNotExistExecption(BoostNotExist);
             else return data;
-        }
+        }*/
 
         /*        public static IReadOnlyBoostTypeTable GetFullBoostDataByBoostId(int boostId)
                 {
@@ -47,17 +64,17 @@ namespace GameOfRevenge.Business.CacheData
                     else return data;
                 }*/
 
-        public static IReadOnlyBoostTypeTable GetFullBoostDataByType(NewBoostType boostType)
+/*        public static IReadOnlyBoostTypeTable GetFullBoostDataByType(NewBoostType boostType)
         {
             var data = BoostInfos.FirstOrDefault(x => x.BoostType == boostType);
             if (data == null) throw new CacheDataNotExistExecption(BoostNotExist);
             else return data;
-        }
+        }*/
 
         public static SpecNewBoostData GetNewBoostDataByType(NewBoostType boostType)
         {
 //            var data = specNewBoostDatas.Find(x => x.Type == boostType);
-            var data = newBoosts.Boosts.Find(x => x.Type == boostType);
+            var data = newBoosts.Boosts.Find(x => (x.Type == boostType));
             if (data == null) throw new CacheDataNotExistExecption(BoostNotExist);
 
             return data;
@@ -128,23 +145,15 @@ namespace GameOfRevenge.Business.CacheData
         {
             if (isLoaded) return;
 
-            var tsk = LoadCacheMemoryAsync();
-            tsk.Wait();
-        }
-
-        public static async Task LoadCacheMemoryAsync()
-        {
             isLoaded = false;
 
-            var resManager = new BoostManager();
-            var response = await resManager.GetAllBoostTypes();// GetAllBoostRelData();
+//            var resManager = new BoostManager();
+//            var response = await resManager.GetAllBoostTypes();// GetAllBoostRelData();
 
-            if (response.IsSuccess)
+//            if (response.IsSuccess)
             {
-                cityBoostTypes = new List<CityBoostType>((CityBoostType[])Enum.GetValues(typeof(CityBoostType)));
-                cityBoostTypes.Remove(CityBoostType.Unknown);
                 //                boostTypes = LoadBuffs();
-                boostInfos = response.Data;
+//                boostInfos = response.Data;
 
                 newBoostTypes = new List<NewBoostType>((NewBoostType[])Enum.GetValues(typeof(NewBoostType)));
                 newBoostTypes.Remove(NewBoostType.Unknown);
@@ -158,12 +167,21 @@ namespace GameOfRevenge.Business.CacheData
 
                 newBoosts = new SpecNewBoostDataTable();
                 //city boosts
+                newBoosts.CityBoosts = new List<CityBoostType>((CityBoostType[])Enum.GetValues(typeof(CityBoostType)));
+                newBoosts.CityBoosts.Remove(CityBoostType.Unknown);
+
                 newBoosts.Boosts.Add(GetSpecForCityBoostShield());
                 newBoosts.Boosts.Add(GetSpecForCityBoostBlessing());
                 newBoosts.Boosts.Add(GetSpecForCityBoostLifeSaver());
                 newBoosts.Boosts.Add(GetSpecForCityBoostProductionBoost());
                 newBoosts.Boosts.Add(GetSpecForCityBoostTechBoost());
                 newBoosts.Boosts.Add(GetSpecForCityBoostFog());
+
+                //VIP boosts
+                newBoosts.VIPBoosts = new List<VIPBoostType>((VIPBoostType[])Enum.GetValues(typeof(VIPBoostType)));
+                newBoosts.VIPBoosts.Remove(VIPBoostType.Unknown);
+
+                newBoosts.Boosts.Add(GetSpecForVIPBoosts());
 
                 //kingdom technologies
                 newBoosts.Boosts.Add(GetSpecForConstructionTechnology());
@@ -188,9 +206,6 @@ namespace GameOfRevenge.Business.CacheData
                 newBoosts.Boosts.Add(GetSpecForSiegeDefenseTechnology());
                 newBoosts.Boosts.Add(GetSpecForBowmenDefenseTechnology());
 
-
-
-
                 var dic = new Dictionary<byte, Dictionary<byte, object>>();
                 foreach (var boost in newBoosts.Boosts)
                 {
@@ -205,6 +220,22 @@ namespace GameOfRevenge.Business.CacheData
                         dic.Add(tech.Table, tech.Levels);
                     }
                 }
+
+
+/*                var vipBoosts = GetSpecForVIPBoosts();
+
+                {
+                    if ((vipBoosts.Table > 0) && !dic.ContainsKey(vipBoosts.Table))
+                    {
+                        dic.Add(vipBoosts.Table, vipBoosts.Levels);
+                    }
+                    foreach (var tech in vipBoosts.Techs)
+                    {
+                        if ((tech.Table == 0) || dic.ContainsKey(tech.Table)) continue;
+
+                        dic.Add(tech.Table, tech.Levels);
+                    }
+                }*/
                 var keys = dic.Keys.ToList();
                 keys.Sort();
                 foreach (var key in keys)
@@ -214,25 +245,25 @@ namespace GameOfRevenge.Business.CacheData
 
                 isLoaded = true;
             }
-            else
-            {
-                throw new CacheDataNotExistExecption(response.Message);
-            }
+//            else
+//            {
+//                throw new CacheDataNotExistExecption(response.Message);
+//            }
         }
 
         public static void ClearCache()
         {
-            if (cityBoostTypes != null)
+/*            if (cityBoostTypes != null)
             {
                 cityBoostTypes.Clear();
                 cityBoostTypes = null;
-            }
+            }*/
 
-            if (boostInfos != null)
+/*            if (boostInfos != null)
             {
                 boostInfos.Clear();
                 boostInfos = null;
-            }
+            }*/
 
             if (newBoostTypes != null)
             {
@@ -319,6 +350,22 @@ namespace GameOfRevenge.Business.CacheData
             return new SpecNewBoostData(NewBoostType.ProductionBoost, techs, 1, Table1);
         }
 
+
+
+
+        private static SpecNewBoostData GetSpecForVIPBoosts()
+        {
+            var techs = new List<NewBoostTechSpec>
+            {
+                //vip 1~
+                new NewBoostTechSpec(NewBoostTech.ResourceProductionMultiplier, 13, Table13, 1, "+{0:N0}%"),
+                new NewBoostTechSpec(NewBoostTech.BuildingTimeBonus, 14, Table14, 1, "{0:N0} Minutes"),
+                //vip 2~
+                new NewBoostTechSpec(NewBoostTech.TroopHealingSpeedMultiplier, 15, Table15, 2, "+{0:N0}%")
+            };
+
+            return new SpecNewBoostData(NewBoostType.VIP, techs, 12, Table12);
+        }
 
 
 
@@ -681,6 +728,101 @@ namespace GameOfRevenge.Business.CacheData
 73,
 75,
 78
+};
+
+
+        private static int[] Table12 = new int[]//VIPPOINTS
+{
+0,
+130,
+500,
+1000,
+2000,
+3000,
+6000,
+11500,
+22000,
+30000,
+45000,
+70000,
+125000,
+170000,
+210000,
+280000,
+330000,
+390000,
+440000,
+500000
+};
+
+        private static float[] Table13 = new float[]//VIPPRODUCTIONBOOST
+{
+5,
+6,
+7,
+8,
+10,
+12,
+15,
+18,
+22,
+30,
+35,
+40,
+45,
+50,
+55,
+60,
+65,
+70,
+75,
+80
+};
+
+        private static int[] Table14 = new int[]//VIPBUILDTIMEBONUS
+{
+6,
+8,
+10,
+12,
+15,
+20,
+30,
+45,
+60,
+90,
+120,
+150,
+180,
+210,
+240,
+240,
+240,
+240,
+240,
+240
+};
+
+        private static int[] Table15 = new int[]
+{
+10,
+12,
+14,
+16,
+20,
+24,
+28,
+32,
+40,
+45,
+50,
+55,
+60,
+65,
+70,
+70,
+75,
+75
 };
 
         private static int[] Table20 = new int[]//FOG

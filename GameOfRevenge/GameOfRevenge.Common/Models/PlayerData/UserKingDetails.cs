@@ -34,6 +34,8 @@ namespace GameOfRevenge.Common.Models
         [DataMember]
         public int Level
         {
+            //TODO: improve this when we remove levels array from this class.
+            //we should order levels and get the lowest value
             get => levels.FindIndex(x => (x > Experience)) - 1;
         }
 #endif

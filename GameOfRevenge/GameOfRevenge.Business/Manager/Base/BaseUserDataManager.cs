@@ -86,6 +86,19 @@ namespace GameOfRevenge.Business.Manager.Base
                         catch {}
                     }
                     if (finalData.Data.King == null) finalData.Data.King = new UserKingDetails();
+                    line = "4b";
+                    var vipData = customs?.Find(x => x.ValueId == 3);
+                    line = "4c";
+                    if (vipData != null)
+                    {
+                        try
+                        {
+                            finalData.Data.VIP = JsonConvert.DeserializeObject<UserVIPDetails>(vipData.Value);
+                        }
+                        catch { }
+                    }
+                    if (finalData.Data.VIP == null) finalData.Data.VIP = new UserVIPDetails(100);
+
 
                     var builders = new List<UserRecordBuilderDetails>();
                     if (customs != null)
@@ -716,7 +729,7 @@ namespace GameOfRevenge.Business.Manager.Base
             {
                 Id = playerData.Id,
                 DataType = DataType.ActiveBoost,
-                ValueId = CacheBoostDataManager.GetFullBoostDataByTypeId(playerData.ValueId).BoostType,
+                ValueId = CacheBoostDataManager.GetNewBoostByTypeId(playerData.ValueId),//CacheBoostDataManager.GetFullBoostDataByTypeId(playerData.ValueId).BoostType,
 //                ValueId = CacheBoostDataManager.GetFullBoostDataByBoostId(playerData.ValueId).Info.BoostType,
                 Value = JsonConvert.DeserializeObject<UserBoostDetails>(playerData.Value)
             };
@@ -798,7 +811,7 @@ namespace GameOfRevenge.Business.Manager.Base
             {
                 Id = data.Id,
                 DataType = DataType.ActiveBoost,
-                ValueId = CacheBoostDataManager.GetFullBoostDataByType(data.ValueId).BoostTypeId,
+                ValueId = (int)data.ValueId,//GetFullBoostDataByType(data.ValueId).BoostTypeId,
                 Value = JsonConvert.SerializeObject(data.Value)
             };
         }

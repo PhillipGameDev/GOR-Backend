@@ -9,6 +9,7 @@ namespace GameOfRevenge.Common.Models
 
         public int HelpedBuild { get; set; }
         public UserKingDetails King { get; set; }
+        public UserVIPDetails VIP { get; set; }
         public List<UserRecordBuilderDetails> Builders { get; set; }
 
         public ResourcesList Resources { get; set; }

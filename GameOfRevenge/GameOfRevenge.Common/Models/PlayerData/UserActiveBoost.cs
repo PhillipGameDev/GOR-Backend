@@ -84,12 +84,28 @@ namespace GameOfRevenge.Common.Models
 
 
 
+/*    [Serializable]
+    [DataContract]
+    public class SpecVIPBoostDataTable : SpecNewBoostDataTable
+    {
+        [DataMember]
+        public new List<SpecVIPBoostData> Boosts { get; set; } = new List<SpecVIPBoostData>();
+
+        public SpecVIPBoostDataTable()
+        {
+        }
+    }*/
+
     [Serializable]
     [DataContract]
     public class SpecNewBoostDataTable
     {
         [DataMember]
         public List<SpecNewBoostData> Boosts { get; set; } = new List<SpecNewBoostData>();
+        [DataMember]
+        public List<CityBoostType> CityBoosts { get; set; }
+        [DataMember]
+        public List<VIPBoostType> VIPBoosts { get; set; }
         [DataMember]
         public Dictionary<byte, Dictionary<byte, object>> Tables { get; set; } = new Dictionary<byte, Dictionary<byte, object>>();
 
@@ -98,20 +114,84 @@ namespace GameOfRevenge.Common.Models
         }
     }
 
+
+/*    [DataContract]
+    public class SpecVIPBoostData : ISpecNewBoostData<BaseSpec>
+    {
+        [DataMember]
+        [JsonConverter(typeof(StringEnumConverter))]
+        public NewBoostType Type { get; private set; }
+
+        [DataMember]
+        public IReadOnlyList<BaseSpec> Techs { get; private set; }
+
+        [DataMember(EmitDefaultValue = false)]
+        public byte Table { get; private set; }
+//        [DataMember]
+//        public IReadOnlyList<VIPBoostTechSpec> Techs { get; }
+//        [DataMember]
+//        public byte VIPLevels { get; }
+        [JsonIgnore]
+        public Dictionary<byte, object> Levels { get; set; }
+
+        public SpecVIPBoostData(NewBoostType type, List<VIPBoostTechSpec> techs, byte table = 0, object tableData = null)
+        {
+//            VIPLevels = vipLevels;
+            Type = type;
+            Table = table;
+            Techs = techs;
+            if (tableData == null) return;
+
+            byte idx = 0;
+            var levels = new Dictionary<byte, object>();
+            if (tableData.GetType() == typeof(int[]))
+            {
+                var array = (int[])tableData;
+                foreach (var data in array)
+                {
+                    idx++;
+                    if (int.TryParse(data.ToString(), out int val)) levels.Add(idx, data);
+                }
+            }
+            else
+            {
+                var array = (float[])tableData;
+                foreach (var data in array)
+                {
+                    idx++;
+                    if (float.TryParse(data.ToString(), out float val)) levels.Add(idx, data);
+                }
+            }
+            Levels = levels;
+        }
+    }*/
+
+/*    public interface ISpecNewBoostData
+    {
+        NewBoostType Type { get; }
+
+        IReadOnlyList<NewBoostTechSpec> Techs { get; }
+
+        byte Table { get; }
+
+        Dictionary<byte, object> Levels { get; set; }
+    }*/
+
     //    [Serializable]
     [DataContract]
     public class SpecNewBoostData// : IReadOnlyNewBoostTechDataRequirement
     {
         //        public long Id { get; set; }
+
         [DataMember]
         [JsonConverter(typeof(StringEnumConverter))]
-        public NewBoostType Type { get; }
+        public NewBoostType Type { get; private set; }
 
         [DataMember]
-        public IReadOnlyList<NewBoostTechSpec> Techs { get; }
+        public IReadOnlyList<NewBoostTechSpec> Techs { get; private set; }
 
         [DataMember(EmitDefaultValue = false)]
-        public byte Table { get; }
+        public byte Table { get; private set; }
 
 //        [DataMember(EmitDefaultValue = false)]
 //        public IReadOnlyList<IReadOnlyNewBoostLevel> Levels { get; }
@@ -165,10 +245,29 @@ namespace GameOfRevenge.Common.Models
                 }*/
     }
 
+/*    [DataContract]
+    public class VIPBoostTechSpec : NewBoostTechSpec
+    {
+        [DataMember]
+        public byte StartVIPLevel { get; set; }
+
+        public VIPBoostTechSpec()
+        {
+        }
+
+        public VIPBoostTechSpec(NewBoostTech tech, byte table, object tableData, byte startLevel, string format = null, string column = null) : base(tech, table, tableData, format, column)
+        {
+            StartVIPLevel = startLevel;
+        }
+    }*/
+
     //    [Serializable]
     [DataContract]
     public class NewBoostTechSpec
     {
+        [DataMember(EmitDefaultValue = false)]
+        public byte StartLevel { get; set; }
+
         [DataMember]
         [JsonConverter(typeof(StringEnumConverter))]
         public NewBoostTech Tech { get; set; }
@@ -184,15 +283,17 @@ namespace GameOfRevenge.Common.Models
         [JsonIgnore]
         public Dictionary<byte, object> Levels { get; set; }
 
-        //        [JsonIgnore]
-        //        public object TableData { get; }
-
         public NewBoostTechSpec()
         {
         }
 
-        public NewBoostTechSpec(NewBoostTech tech, byte table, object tableData, string format = null, string column = null)// : base(tech, table)
+        public NewBoostTechSpec(NewBoostTech tech, byte table, object tableData, string format = null, string column = null) : this(tech, table, tableData, 0, format, column)
         {
+        }
+
+        public NewBoostTechSpec(NewBoostTech tech, byte table, object tableData, byte startLevel, string format = null, string column = null)// : base(tech, table)
+        {
+            StartLevel = startLevel;
             Tech = tech;
             Table = table;
             Column = column;

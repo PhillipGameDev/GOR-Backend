@@ -228,7 +228,7 @@ namespace GameOfRevenge.WebServer
         public static async Task ReloadDataBaseDataAsync()
         {
             Console.WriteLine("RELOAD CACHE START");
-            await CacheBoostDataManager.LoadCacheMemoryAsync();
+            CacheBoostDataManager.LoadCacheMemory();
             await CacheInventoryDataManager.LoadCacheMemoryAsync();
             await CacheResourceDataManager.LoadCacheMemoryAsync();
             await CacheStructureDataManager.LoadCacheMemoryAsync();

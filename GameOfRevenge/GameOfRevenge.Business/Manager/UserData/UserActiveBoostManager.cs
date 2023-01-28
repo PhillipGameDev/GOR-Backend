@@ -183,7 +183,7 @@ namespace GameOfRevenge.Business.Manager.UserData
                 if (NewBoostType.Unknown == GetBoostType(type)) throw new DataNotExistExecption("Boost was null");
 
                 var timeStamp = DateTime.UtcNow;
-                int valueId = CacheBoostDataManager.GetFullBoostDataByType(type).BoostTypeId;
+                int valueId = (int)type;//CacheBoostDataManager.GetFullBoostDataByType(type).BoostTypeId;
 //                var valueId = CacheBoostDataManager.GetFullBoostDataByType(type).Info.BoostTypeId;
                 var resp = await manager.AddOrUpdatePlayerData(playerId, DataType.ActiveBoost, valueId, string.Empty);
                 if (resp.IsSuccess & resp.HasData)
@@ -221,7 +221,7 @@ namespace GameOfRevenge.Business.Manager.UserData
                 var timeStamp = DateTime.UtcNow;
                 if (count <= 0) return new Response<UserBoostData>(CaseType.Success, "Count was zero");
 
-                var invId = CacheBoostDataManager.GetFullBoostDataByType(type).BoostTypeId;
+                var invId = (int)type;//CacheBoostDataManager.GetFullBoostDataByType(type).BoostTypeId;
                 var buffRespData = await manager.GetPlayerData(playerId, DataType.ActiveBoost, invId);
                 UserBoostData buffData = null;
 
