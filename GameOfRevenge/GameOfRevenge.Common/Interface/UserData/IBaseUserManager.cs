@@ -44,6 +44,9 @@ namespace GameOfRevenge.Common.Interface.UserData
         Task<Response<List<PlayerDataTable>>> GetAllPlayerData(int playerId);
         Task<Response<PlayerCompleteData>> GetFullPlayerData(int playerId);
 
+        Task<Response<UserVIPDetails>> AddVIPPoints(int playerId, int points);
+        Task<Response<UserVIPDetails>> ActivateVIPBoosts(int playerId);
+
         bool HasRequirements(IReadOnlyList<IReadOnlyDataRequirement> requirements, PlayerCompleteData playerData);
         bool HasRequirements(IReadOnlyList<IReadOnlyDataRequirement> requirements, PlayerCompleteData playerData, int count);
         bool HasResourceRequirements(IReadOnlyList<IReadOnlyDataRequirement> requirements, ResourcesList resourcess, int count);

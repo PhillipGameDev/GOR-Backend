@@ -1,6 +1,6 @@
 USE [GameOfRevenge]
 GO
-/****** Object:  StoredProcedure [dbo].[GetPlayerData]    Script Date: 10/3/2022 1:35:18 PM ******/
+/****** Object:  StoredProcedure [dbo].[GetPlayerData]    Script Date: 1/28/2023 9:41:28 AM ******/
 SET ANSI_NULLS ON
 GO
 SET QUOTED_IDENTIFIER ON
@@ -38,7 +38,7 @@ BEGIN
 					BEGIN
 						SET @currentId = NULL;
 						SET @case = 201;
-						SET @message = 'Invaid data type code';
+						SET @message = 'Invalid data type code: ' + @tempDataCode;
 					END
 				ELSE
 					BEGIN
@@ -64,7 +64,7 @@ BEGIN
 		SET @message = ERROR_MESSAGE();
 	END CATCH
 
-	IF @currentDataId IS NOT NULL
+/*	IF @currentDataId IS NOT NULL*/
 		BEGIN
 			SELECT p.[PlayerDataId], d.[Code] AS 'DataType', p.[ValueId], p.[Value] FROM [dbo].[PlayerData] AS p 
 			INNER JOIN [dbo].[DataType] AS d ON d.[DataTypeId] = p.[DataTypeId]

@@ -29,7 +29,7 @@ namespace GameOfRevenge.Common.Models.Kingdom
 
     public class TroopDetailsPvP
     {
-        public TroopType Type { get; set; }
+        public TroopInfos Troop { get; set; }
         public int Level => Data.Level;
         public int Hp { get; set; }
 //        public int UnitHp { get; set; }
@@ -41,9 +41,9 @@ namespace GameOfRevenge.Common.Models.Kingdom
 
         public IReadOnlyTroopDataTable Data { get; set; }
 
-        public TroopDetailsPvP(TroopType type, int count, IReadOnlyTroopDataTable data)
+        public TroopDetailsPvP(TroopInfos troop, int count, IReadOnlyTroopDataTable data)
         {
-            Type = type;
+            Troop = troop;
             Data = data;
             InitialCount = count;
             LoadPerUnit = data.WeightLoad;

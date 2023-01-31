@@ -50,6 +50,7 @@ namespace GameOfRevenge.Business.Manager
                 if (!response.HasData) throw new InvalidModelExecption("Unable to validate your user account.");
 
                 int playerId = response.Data.PlayerId;
+                string testx = "";
                 if (response.Case == 100)// new account
                 {
                     //todo add in database
@@ -85,6 +86,9 @@ namespace GameOfRevenge.Business.Manager
                     json = JsonConvert.SerializeObject(new UserBuilderDetails());
                     await dataManager.AddOrUpdatePlayerData(playerId, DataType.Custom, 2, json);
 
+                    json = JsonConvert.SerializeObject(new UserVIPDetails(100));
+                    await dataManager.AddOrUpdatePlayerData(playerId, DataType.Custom, 3, json);
+
                     var timestamp = DateTime.UtcNow;
                     var dataList = new List<StructureDetails>();
                     dataList.Add(new StructureDetails()
@@ -119,47 +123,67 @@ namespace GameOfRevenge.Business.Manager
                 {
                     try
                     {
-                        var found = false;
                         var dataManager = new PlayerDataManager();
                         var resp = await dataManager.GetPlayerData(playerId, DataType.Structure, (int)StructureType.TrainingHeroes);
-                        if (resp.IsSuccess && resp.HasData)
+                        if (resp.IsSuccess)
                         {
-                            var structures = JsonConvert.DeserializeObject<List<StructureDetails>>(resp.Data.Value);
-                            if (structures != null)
+                            var found = false;
+                            if (resp.HasData)
                             {
-                                var bld = structures.FirstOrDefault();
-                                if (bld != null)
+                                var structures = JsonConvert.DeserializeObject<List<StructureDetails>>(resp.Data.Value);
+                                if (structures != null)
                                 {
-                                    found = true;
-                                    var structureData = CacheData.CacheStructureDataManager.GetFullStructureData(StructureType.TrainingHeroes);
-                                    int thLoc = structureData.Locations.FirstOrDefault();
-
-                                    if (bld.Location != thLoc)
+                                    var bld = structures.FirstOrDefault();
+                                    if (bld != null)
                                     {
-                                        bld.Location = thLoc;
-                                        var json = JsonConvert.SerializeObject(structures);
-                                        await dataManager.UpdatePlayerDataID(playerId, resp.Data.Id, json);
+                                        found = true;
+                                        var structureData = CacheData.CacheStructureDataManager.GetFullStructureData(StructureType.TrainingHeroes);
+                                        int thLoc = structureData.Locations.FirstOrDefault();
+
+                                        if (bld.Location != thLoc)
+                                        {
+                                            bld.Location = thLoc;
+                                            var json = JsonConvert.SerializeObject(structures);
+                                            await dataManager.UpdatePlayerDataID(playerId, resp.Data.Id, json);
+                                        }
                                     }
                                 }
                             }
-                        }
-                        if (!found)
-                        {
-                            var structureData = CacheData.CacheStructureDataManager.GetFullStructureData(StructureType.TrainingHeroes);
-                            int thHealth = structureData.Levels.OrderBy(x => x.Data.Level).FirstOrDefault().Data.HitPoint;
-                            int thLoc = structureData.Locations.FirstOrDefault();
-
-                            var timestamp = DateTime.UtcNow;
-                            var dataList = new List<StructureDetails>();
-                            dataList.Add(new StructureDetails()
+                            if (!found)
                             {
-                                Level = 1,
-                                Location = thLoc,
-                                StartTime = timestamp,
-                                HitPoints = thHealth,
-                            });
-                            var json = JsonConvert.SerializeObject(dataList);
-                            await dataManager.AddOrUpdatePlayerData(playerId, DataType.Structure, (int)StructureType.TrainingHeroes, json);
+                                testx += "nofound ";
+                                var structureData = CacheData.CacheStructureDataManager.GetFullStructureData(StructureType.TrainingHeroes);
+                                int thHealth = structureData.Levels.OrderBy(x => x.Data.Level).FirstOrDefault().Data.HitPoint;
+                                int thLoc = structureData.Locations.FirstOrDefault();
+
+                                var timestamp = DateTime.UtcNow;
+                                var dataList = new List<StructureDetails>();
+                                dataList.Add(new StructureDetails()
+                                {
+                                    Level = 1,
+                                    Location = thLoc,
+                                    StartTime = timestamp,
+                                    HitPoints = thHealth,
+                                });
+                                var json = JsonConvert.SerializeObject(dataList);
+                                await dataManager.AddOrUpdatePlayerData(playerId, DataType.Structure, (int)StructureType.TrainingHeroes, json);
+                            }
+                        }
+
+                        resp = await dataManager.GetPlayerData(playerId, DataType.Custom, 3);
+                        if (playerId == 71)
+                        {
+                            testx += resp.IsSuccess ? "ok" : "ng";
+                            testx += resp.HasData ? " si" : " no";
+                        }
+                        if (resp.IsSuccess && !resp.HasData)
+                        {
+                            var json = JsonConvert.SerializeObject(new UserVIPDetails(100));
+                            var x = await dataManager.AddOrUpdatePlayerData(playerId, DataType.Custom, 3, json);
+                            if (playerId == 71)
+                            {
+                                testx += " " + x.IsSuccess + "  " + x.Case + "  " + x.Message;
+                            }
                         }
                     }
                     catch (Exception ex)
@@ -168,6 +192,10 @@ namespace GameOfRevenge.Business.Manager
                     }
                 }
                 await CompleteAccountQuest(playerId, AccountTaskType.SignIn);
+                if (playerId == 71)
+                {
+                    response.Message = response.Case+"  "+version+testx;
+                }
 
                 return response;
             }

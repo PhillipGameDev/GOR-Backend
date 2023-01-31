@@ -91,9 +91,13 @@ namespace GameOfRevenge.GameHandlers
                     //            val.EndTime = val.TaskTime.AddMilliseconds(socketResponse.ReachedTime);
                     //            int delay = 0;
 
+                    //TODO: response fail when troop count is zero
                     for (int i = 0; i < request.TroopType.Length; i++)
                     {
                         TroopType troopType = (TroopType)request.TroopType[i];
+                        //TODO: remove this on next release
+                        if ((troopType == TroopType.Swordsman) && (request.TroopLevels[i] >= 4)) continue;
+
                         TroopInfos troopInfo = marching.Troops.Find(x => (x.TroopType == troopType));
                         if (troopInfo == null)
                         {
@@ -109,9 +113,9 @@ namespace GameOfRevenge.GameHandlers
                             Count = request.TroopCounts[i],
                             Level = request.TroopLevels[i]
                         });
-
 //                            delay += val3.Count / ((val3.Level > 0)? val3.Level : 1);
                     }
+
                     //            delay = 2000;
 
                     if (request.HeroIds != null) marching.Heroes = request.HeroIds.ToList();

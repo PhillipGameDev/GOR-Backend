@@ -251,9 +251,10 @@ namespace GameOfRevenge.Business.Manager.UserData
                         locData.HitPoints = structureSpec.Data.HitPoint;
                         locData.Helped = 0;
 
-                        float timeReduced = 0;
+                        float percentage = 0;
+                        float seconds = 0;
                         var playerData = await GetFullPlayerData(playerId);
-                        var technology = playerData.Data.Boosts.Find(x => (byte)x.Type == (byte)TechnologyType.ConstructionTechnology);
+                        var technology = playerData.Data.Boosts.Find(x => (x.Type == (NewBoostType)TechnologyType.ConstructionTechnology));
                         if (technology != null)
                         {
                             var specBoostData = CacheBoostDataManager.SpecNewBoostDatas.FirstOrDefault(x => x.Type == technology.Type);
@@ -261,11 +262,27 @@ namespace GameOfRevenge.Business.Manager.UserData
                             {
                                 float.TryParse(specBoostData.Levels[technology.Level].ToString(), out float levelVal);
                                 //                            int reducePercentage = technology.Level;
-                                timeReduced = levelVal;// reducePercentage.HasValue ? reducePercentage.Value : 0;
+                                percentage += levelVal;// reducePercentage.HasValue ? reducePercentage.Value : 0;
                             }
                         }
 
-                        int secs = (int)(structureSpec.Data.TimeToBuild * (1 - (timeReduced / 100f)));
+                        var vip = playerData.Data.VIP;
+                        if ((vip != null) && (vip.TimeLeft > 0))
+                        {
+                            var vipBoostData = CacheBoostDataManager.SpecNewBoostDatas.FirstOrDefault(x => (x.Type == (NewBoostType)VIPBoostType.VIP));
+                            if (vipBoostData != null)
+                            {
+                                var vipTech = vipBoostData.Techs.FirstOrDefault(x => (x.Tech == (NewBoostTech)VIPBoostTech.BuildingTimeBonus));
+                                if (vipTech != null)
+                                {
+                                    seconds += vipTech.GetValue(vip.Level);
+                                }
+                            }
+                        }
+
+                        int secs = structureSpec.Data.TimeToBuild - (int)seconds;
+                        float multiplier = (1 - (percentage / 100f));
+                        secs = (int)(secs * multiplier);
                         if (secs < 0) secs = 0;
                         locData.Duration = secs;
 
@@ -463,21 +480,36 @@ namespace GameOfRevenge.Business.Manager.UserData
                 var timeEscaped = timestamp - structDetails.LastCollected;
                 var productionAmount = timeEscaped.TotalSeconds * resProduction;
 
-                float boostValue = 0;
+                float percentage = 0;
                 var playerData = await GetFullPlayerData(playerId);
-                var boost = playerData.Data.Boosts.Find(x => (byte)x.Type == (byte)CityBoostType.ProductionBoost);
+                var boost = playerData.Data.Boosts.Find(x => (x.Type == (NewBoostType)CityBoostType.ProductionBoost));
                 if ((boost != null) && (boost.TimeLeft > 0))
                 {
-                    var specBoostData = CacheBoostDataManager.SpecNewBoostDatas.FirstOrDefault(x => x.Type == boost.Type);
+                    var specBoostData = CacheBoostDataManager.SpecNewBoostDatas.FirstOrDefault(x => (x.Type == boost.Type));
                     if (specBoostData.Table > 0)
                     {
                         float.TryParse(specBoostData.Levels[boost.Level].ToString(), out float levelVal);
-                        boostValue = levelVal;
+                        percentage += levelVal;
                     }
                 }
 
-                var finalMultiplier = 1 + (boostValue / 100f) + multiplier;
+                var vip = playerData.Data.VIP;
+                if ((vip != null) && (vip.TimeLeft > 0))
+                {
+                    var vipBoostData = CacheBoostDataManager.SpecNewBoostDatas.FirstOrDefault(x => (x.Type == (NewBoostType)VIPBoostType.VIP));
+                    if (vipBoostData != null)
+                    {
+                        var vipTech = vipBoostData.Techs.FirstOrDefault(x => (x.Tech == (NewBoostTech)VIPBoostTech.ResourceProductionMultiplier));
+                        if (vipTech != null)
+                        {
+                            percentage += vipTech.GetValue(vip.Level);
+                        }
+                    }
+                }
+
+                var finalMultiplier = 1 + (percentage / 100f) + multiplier;
                 int finalValue = (int)(productionAmount * finalMultiplier);
+
                 var resp = await userResourceManager.SumResource(playerId, resId, finalValue);
                 if (!resp.IsSuccess) throw new DataNotExistExecption("Couldnt add resources");
 

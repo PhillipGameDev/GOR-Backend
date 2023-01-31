@@ -29,8 +29,7 @@ namespace GameOfRevenge.Business.Manager.UserData
 //        public float Attack { get; set; }
 //        public float Defense { get; set; }
 
-        public float AttackMultiplier { get; set; }
-        public float DefenseMultiplier { get; set; }
+        public List<AttackDefenseMultiplier> Multipliers { get; set; }
         public int GateHp { get; set; }
 
         public new List<int> Heroes { get; set; }
@@ -51,15 +50,46 @@ namespace GameOfRevenge.Business.Manager.UserData
             {
                 if (troops.Hp <= 0) continue;
 
+                float attackMultiplier = 1;
+                float defenseMultiplier = 1;
+                var multi = Multipliers.Find(x => (x.Troop == troops.Troop));
+                if (multi != null)
+                {
+                    attackMultiplier = multi.AttackMultiplier;
+                    defenseMultiplier = multi.DefenseMultiplier;
+                    try
+                    {
+                        KingdomPvPManager.log.Debug("------- TROOP MULTI = " + multi.AttackMultiplier);
+                    }
+                    catch { }
+                }
                 points += troops.Data.Health * troops.RemainUnits;
-                attack += troops.Data.AttackDamage * troops.RemainUnits;
-                defense += troops.Data.Defense * troops.RemainUnits;
+                attack += (troops.Data.AttackDamage * troops.RemainUnits) * attackMultiplier;
+                defense += (troops.Data.Defense * troops.RemainUnits) * defenseMultiplier;
+            }
+            var globalMulti = Multipliers.Find(x => (x.Troop == null));
+            if (globalMulti != null)
+            {
+                attack *= globalMulti.AttackMultiplier;
+                defense *= globalMulti.DefenseMultiplier;
+                try
+                {
+                    KingdomPvPManager.log.Debug("------- GLOBAL MULTI = " + globalMulti.AttackMultiplier);
+                }
+                catch { }
             }
 
             HitPoint = (int)points;
-            Attack = (int)(attack * (1 + AttackMultiplier));
-            Defense = (int)(defense * (1 + DefenseMultiplier));
+            Attack = (int)attack;
+            Defense = (int)defense;
         }
+    }
+
+    public class AttackDefenseMultiplier
+    {
+        public TroopInfos Troop { get; set; }
+        public float AttackMultiplier { get; set; } = 1;
+        public float DefenseMultiplier { get; set; } = 1;
     }
 
     public class KingdomPvPManager : BaseUserDataManager, IKingdomPvPManager
@@ -431,13 +461,12 @@ namespace GameOfRevenge.Business.Manager.UserData
 //PULL current defender status
                 var SAVE = true;
 
-                var (attackerMultiplier_attack, attackerMultiplier_defense) = GetAtkDefMultiplier(true, attackerArmy);
+                var attackerMultipliers = GetAtkDefMultiplier(true, attackerArmy);
                 var attackerPower = new BattlePower();
                 attackerPower.PlayerId = attackerArmy.PlayerId;
                 attackerPower.Username = attackerArmy.PlayerName;
                 attackerPower.Army = GetAvailableTroops(attackerArmy.MarchingArmy.Troops);
-                attackerPower.AttackMultiplier = attackerMultiplier_attack;
-                attackerPower.DefenseMultiplier = attackerMultiplier_defense;
+                attackerPower.Multipliers = attackerMultipliers;
                 if ((attackerArmy.MarchingArmy.Heroes != null) && (attackerArmy.MarchingArmy.Heroes.Count > 0))
                 {
                     attackerPower.Heroes = attackerArmy.MarchingArmy.Heroes;
@@ -452,14 +481,13 @@ namespace GameOfRevenge.Business.Manager.UserData
 //                gateHitPoints = gateLevelData.HitPoint;
                 debugMsg = "2";
 
-                var (defenderMultiplier_attack, defenderMultiplier_defense) = GetAtkDefMultiplier(false, defenderArmy);
+                var defenderMultipliers = GetAtkDefMultiplier(false, defenderArmy);
                 var defenderPower = new BattlePower()
                 {
                     PlayerId = defenderArmy.PlayerId,
                     Username = defenderArmy.PlayerName,
                     Army = GetAvailableTroops(defenderArmy.Troops),
-                    AttackMultiplier = defenderMultiplier_attack,
-                    DefenseMultiplier = defenderMultiplier_defense,
+                    Multipliers = defenderMultipliers,
                     GateHp = gateHitPoints
                 };
                 debugMsg = "3";
@@ -674,14 +702,16 @@ namespace GameOfRevenge.Business.Manager.UserData
             }
         }
 
-        private static (float, float) GetAtkDefMultiplier(bool attacker, PlayerCompleteData playerData)
+        private static List<AttackDefenseMultiplier> GetAtkDefMultiplier(bool attacker, PlayerCompleteData playerData)
         {
-            float attack = 0;
+            var list = new List<AttackDefenseMultiplier>();
+
+            float attack = 1;
 //            TODO: NotImplementedException 
 //            var techInfo = data.Boosts.Where(x => (byte)x.Type == TechnologyType.a)?.FirstOrDefault();
 //            if (techInfo != null) attack = techInfo.Level;
 
-            float defense = 0;
+            float defense = 1;
 //            techInfo = data.Technologies.Where(x => x.TechnologyType == TechnologyType.ArmyDefense)?.FirstOrDefault();
 //            if (techInfo != null) defense = techInfo.Level;
 
@@ -729,30 +759,105 @@ namespace GameOfRevenge.Business.Manager.UserData
                 attack += boostAtkValue / 100f;
                 defense += boostDefValue / 100f;
             }
+            float atkPercentage = 0;
+            float defPercentage = 0;
+            var vip = playerData.VIP;
+            if (vip != null)
+            {
+                log.Debug("------- VIP LEVEL = " + vip.Level + " timeLeft = " + vip.TimeLeft);
+            }
+            if ((vip != null) && (vip.TimeLeft > 0))
+            {
+                var vipBoostData = CacheBoostDataManager.SpecNewBoostDatas.FirstOrDefault(x => (x.Type == (NewBoostType)VIPBoostType.VIP));
+                if (vipBoostData != null)
+                {
+                    log.Debug("------- VIP BOOST DATA FOUND");
+                    var vipTech = vipBoostData.Techs.FirstOrDefault(x => (x.Tech == (NewBoostTech)VIPBoostTech.TroopAttackMultiplier));
+                    if (vipTech != null)
+                    {
+                        atkPercentage += vipTech.GetValue(vip.Level);
+                        log.Debug("------- ATK TECH FOUND val ="+atkPercentage);
+                    }
+                    vipTech = vipBoostData.Techs.FirstOrDefault(x => (x.Tech == (NewBoostTech)VIPBoostTech.TroopDefenseMultiplier));
+                    if (vipTech != null)
+                    {
+                        defPercentage += vipTech.GetValue(vip.Level);
+                        log.Debug("------- DEF TECH FOUND val ="+defPercentage);
+                    }
+                }
+            }
+            var multiplier = new AttackDefenseMultiplier();
+            multiplier.AttackMultiplier = attack * (1 + (atkPercentage / 100f));
+            multiplier.DefenseMultiplier = defense * (1 + (defPercentage / 100f));
+            list.Add(multiplier);
 
             if ((playerData.MarchingArmy != null) && (playerData.MarchingArmy.Troops != null))
             {
                 var troops = playerData.MarchingArmy.Troops;
                 foreach (var troop in troops)
                 {
+                    var atkTechType = NewBoostType.Unknown;
+                    var defTechType = NewBoostType.Unknown;
                     switch (troop.TroopType)
                     {
                         case TroopType.Swordsman:
-                            var tech = playerData.Boosts.Find(x => (byte)x.Type == (byte)TechnologyType.BarracksAttackTechnology);
-                            if ((tech != null) && (!tech.HasDuration || (tech.TimeLeft > 0)))
-                            {
-                                //TODO: implement this tech
-//                                tech.Level
-                            }
+                            atkTechType = (NewBoostType)TechnologyType.BarracksAttackTechnology;
+                            defTechType = (NewBoostType)TechnologyType.BarracksDefenseTechnology;
                             break;
                         case TroopType.Archer:
+                            atkTechType = (NewBoostType)TechnologyType.ShootingRangeAttackTechnology;
+                            defTechType = (NewBoostType)TechnologyType.ShootingRangeDefenseTechnology;
                             break;
                         case TroopType.Knight:
+                            atkTechType = (NewBoostType)TechnologyType.StableAttackTechnology;
+                            defTechType = (NewBoostType)TechnologyType.StableDefenseTechnology;
                             break;
                         case TroopType.Slingshot:
+                            atkTechType = (NewBoostType)TechnologyType.WorkshopAttackTechnology;
+                            defTechType = (NewBoostType)TechnologyType.WorkshopDefenseTechnology;
                             break;
+                        default: continue;
+                    }
+
+                    atkPercentage = 0;
+                    if (atkTechType != NewBoostType.Unknown)
+                    {
+                        var tech = playerData.Boosts.Find(x => (x.Type == atkTechType));
+                        if ((tech != null) && (tech.TimeLeft > 0))
+                        {
+                            var specBoostData = CacheBoostDataManager.SpecNewBoostDatas.First(x => (x.Type == atkTechType));
+                            if (specBoostData.Table > 0)
+                            {
+                                float.TryParse(specBoostData.Levels[tech.Level].ToString(), out float levelVal);
+                                atkPercentage += levelVal;
+                            }
+                        }
+                    }
+                    defPercentage = 0;
+                    if (defTechType != NewBoostType.Unknown)
+                    {
+                        var tech = playerData.Boosts.Find(x => (x.Type == defTechType));
+                        if ((tech != null) && (tech.TimeLeft > 0))
+                        {
+                            var specBoostData = CacheBoostDataManager.SpecNewBoostDatas.First(x => (x.Type == defTechType));
+                            if (specBoostData.Table > 0)
+                            {
+                                float.TryParse(specBoostData.Levels[tech.Level].ToString(), out float levelVal);
+                                defPercentage += levelVal;
+                            }
+                        }
+                    }
+
+                    if ((atkPercentage > 0) || (defPercentage > 0))
+                    {
+                        multiplier = new AttackDefenseMultiplier();
+                        multiplier.Troop = troop;
+                        multiplier.AttackMultiplier = 1 + (atkPercentage / 100f);
+                        multiplier.DefenseMultiplier = 1 + (defPercentage / 100f);
+                        list.Add(multiplier);
                     }
                 }
+
             }
 
 /*            if ((data.MarchingArmy != null) && (data.MarchingArmy.Heroes != null))
@@ -786,7 +891,7 @@ namespace GameOfRevenge.Business.Manager.UserData
                 }
             }*/
 
-            return (attack, defense);
+            return list;
         }
 
         private async Task ApplyTroopChanges(bool attacker, PlayerCompleteData army, BattlePower power, bool SAVE)
@@ -800,7 +905,8 @@ namespace GameOfRevenge.Business.Manager.UserData
                 bool hasChange = false;
                 foreach (var aliveTroop in power.TroopsAlive)
                 {
-                    if ((aliveTroop == null) || (aliveTroop.Type != data.TroopType)) continue;
+                    if ((aliveTroop == null) || (aliveTroop.Troop.TroopType != data.TroopType)) continue;
+
                     if (attacker)
                     {
                         var survived = aliveTroop.InitialCount - aliveTroop.Dead;
@@ -1080,7 +1186,8 @@ namespace GameOfRevenge.Business.Manager.UserData
                     var troopLvlDefData = getTroopData.Levels.FirstOrDefault(x => (x.Data.Level == troopData.Level));
                     if ((troopLvlDefData == null) || (troopLvlDefData.Data == null)) continue;
 
-                    battlePower.TroopsAlive.Add(new TroopDetailsPvP(troop.TroopType, troopData.Count, troopLvlDefData.Data));
+                    var troopDetails = new TroopDetailsPvP(troop, troopData.Count, troopLvlDefData.Data);
+                    battlePower.TroopsAlive.Add(troopDetails);
                 }
             }
         }

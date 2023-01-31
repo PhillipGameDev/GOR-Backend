@@ -5,11 +5,10 @@ using System.Threading.Tasks;
 using GameOfRevenge.Business.CacheData;
 using GameOfRevenge.Business.Manager.Base;
 using GameOfRevenge.Common;
-using GameOfRevenge.Common.Interface.Model;
 using GameOfRevenge.Common.Interface.UserData;
 using GameOfRevenge.Common.Models;
+using GameOfRevenge.Common.Models.Boost;
 using GameOfRevenge.Common.Models.PlayerData;
-using GameOfRevenge.Common.Models.Structure;
 using GameOfRevenge.Common.Models.Troop;
 using GameOfRevenge.Common.Net;
 using GameOfRevenge.Common.Services;
@@ -58,21 +57,36 @@ namespace GameOfRevenge.Business.Manager.UserData
                     troopDataList.Wounded -= troop.WoundedCount;
                     if (troopDataList.Wounded < 0) troopDataList.Wounded = 0;
 
-                    float timeReduced = 0;
-                    var technology = compPlayerData.Data.Boosts.Find(x => (byte)x.Type == (byte)TechnologyType.HealSpeedTechnology);
+                    float percentage = 0;
+                    var technology = compPlayerData.Data.Boosts.Find(x => (x.Type == (NewBoostType)TechnologyType.HealSpeedTechnology));
                     if (technology != null)
                     {
-                        var specBoostData = CacheBoostDataManager.SpecNewBoostDatas.First(x => x.Type == technology.Type);
+                        var specBoostData = CacheBoostDataManager.SpecNewBoostDatas.First(x => (x.Type == technology.Type));
                         if (specBoostData.Table > 0)// .Levels.ContainsKey(technology.Level))
                         {
                             float.TryParse(specBoostData.Levels[technology.Level].ToString(), out float levelVal);
 //                            int reducePercentage = levelVal;// technology.Level;
-                            timeReduced = levelVal;//reducePercentage.HasValue ? reducePercentage.Value : 0;
+                            percentage += levelVal;//reducePercentage.HasValue ? reducePercentage.Value : 0;
                         }
                     }
 
-                    float multiplier = (1 - (timeReduced / 100f));
+                    var vip = compPlayerData.Data.VIP;
+                    if ((vip != null) && (vip.TimeLeft > 0))
+                    {
+                        var vipBoostData = CacheBoostDataManager.SpecNewBoostDatas.FirstOrDefault(x => (x.Type == (NewBoostType)VIPBoostType.VIP));
+                        if (vipBoostData != null)
+                        {
+                            var vipTech = vipBoostData.Techs.FirstOrDefault(x => (x.Tech == (NewBoostTech)VIPBoostTech.TroopHealingSpeedMultiplier));
+                            if (vipTech != null)
+                            {
+                                percentage += vipTech.GetValue(vip.Level);
+                            }
+                        }
+                    }
+
+                    float multiplier = (1 - (percentage / 100f));
                     int secs = (int)(troopDbData.Data.WoundedThreshold * troop.WoundedCount * multiplier);
+
                     if (secs > (5 * 60))
                     {
                         if (troopDataList.InRecovery == null) troopDataList.InRecovery = new List<UnavaliableTroopInfo>();
@@ -408,20 +422,33 @@ namespace GameOfRevenge.Business.Manager.UserData
                         compPlayerData = resp.Data;
                     }
 
-                    float timeReduced = 0;
-                    var technology = compPlayerData.Boosts.Find(x => ((byte)x.Type == (byte)TechnologyType.TrainSpeedTechnology));
+                    float percentage = 0;
+                    var technology = compPlayerData.Boosts.Find(x => (x.Type == (NewBoostType)TechnologyType.TrainSpeedTechnology));
                     if (technology != null)
                     {
                         var specBoostData = CacheBoostDataManager.SpecNewBoostDatas.First(x => (x.Type == technology.Type));
                         if (specBoostData.Table > 0)
                         {
                             float.TryParse(specBoostData.Levels[technology.Level].ToString(), out float levelVal);
-//                            int reducePercentage = technology.Level;
-                            timeReduced = levelVal;// reducePercentage.HasValue ? reducePercentage.Value : 0;
+                            //                            int reducePercentage = technology.Level;
+                            percentage += levelVal;// reducePercentage.HasValue ? reducePercentage.Value : 0;
+                        }
+                    }
+                    var vip = compPlayerData.VIP;
+                    if ((vip != null) && (vip.TimeLeft > 0))
+                    {
+                        var vipBoostData = CacheBoostDataManager.SpecNewBoostDatas.FirstOrDefault(x => (x.Type == (NewBoostType)VIPBoostType.VIP));
+                        if (vipBoostData != null)
+                        {
+                            var vipTech = vipBoostData.Techs.FirstOrDefault(x => (x.Tech == (NewBoostTech)VIPBoostTech.TroopTrainingSpeedMultiplier));
+                            if (vipTech != null)
+                            {
+                                percentage += vipTech.GetValue(vip.Level);
+                            }
                         }
                     }
 
-                    float multiplier = (1 - (timeReduced / 100f));
+                    float multiplier = (1 - (percentage / 100f));
                     int secs = (int)(troopDataLvl.Data.TraningTime * count * multiplier);// * 1000;
                     if (secs > (5 * 60))
                     {

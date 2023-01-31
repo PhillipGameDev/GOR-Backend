@@ -41,7 +41,16 @@ namespace GameOfRevenge.Common.Models
         {
             //TODO: improve this when we remove levels array from this class.
             //we should order levels and get the lowest value
-            get => levels.FindIndex(x => (x > Points));
+            get
+            {
+                var lvl = 1;
+                if (Points > 0)
+                {
+                    lvl = levels.FindIndex(x => (x > Points));
+                    if (lvl == -1) lvl = levels.Count;
+                }
+                return lvl;
+            }
         }
 #endif
 

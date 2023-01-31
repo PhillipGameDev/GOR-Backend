@@ -40,14 +40,9 @@ namespace GameOfRevenge.Business.CacheData
 
         //        public static IReadOnlyList<IReadOnlyBuffItemRel> BuffItemRelations { get { LoadCacheMemory(); return boostTypes; } }
 
-        public static NewBoostType GetNewBoostByTypeId(int id)
+        public static SpecNewBoostData GetNewBoostByTypeId(int id)
         {
-            var resp = NewBoostType.Unknown;
-
-            var boost = SpecNewBoostDataTables.Boosts.Find(x => ((int)x.Type == id));
-            if (boost != null) resp = boost.Type;
-
-            return resp;
+            return SpecNewBoostDataTables.Boosts.Find(x => ((int)x.Type == id));
         }
 
 /*        public static IReadOnlyBoostTypeTable GetFullBoostDataByTypeId(int boostId)
@@ -358,13 +353,22 @@ namespace GameOfRevenge.Business.CacheData
             var techs = new List<NewBoostTechSpec>
             {
                 //vip 1~
-                new NewBoostTechSpec(NewBoostTech.ResourceProductionMultiplier, 13, Table13, 1, "+{0:N0}%"),
-                new NewBoostTechSpec(NewBoostTech.BuildingTimeBonus, 14, Table14, 1, "{0:N0} Minutes"),
+                new NewBoostTechSpec().VIPBoostTechSpec((NewBoostTech)VIPBoostTech.ResourceProductionMultiplier, 71, Table71, 1, "+{0:N0}%"),
+                new NewBoostTechSpec().VIPBoostTechSpec((NewBoostTech)VIPBoostTech.BuildingTimeBonus, 72, Table72, 1, "{T1}"),
                 //vip 2~
-                new NewBoostTechSpec(NewBoostTech.TroopHealingSpeedMultiplier, 15, Table15, 2, "+{0:N0}%")
+                new NewBoostTechSpec().VIPBoostTechSpec((NewBoostTech)VIPBoostTech.TroopHealingSpeedMultiplier, 73, Table73, 2, "+{0:N0}%"),
+                //vip 9~
+                new NewBoostTechSpec().VIPBoostTechSpec((NewBoostTech)VIPBoostTech.TroopAttackMultiplier, 74, Table74, 9, "Atk+{0:N0}%"),
+                new NewBoostTechSpec().VIPBoostTechSpec((NewBoostTech)VIPBoostTech.TroopDefenseMultiplier, 75, Table75, 9, "Def+{0:N0}%"),
+                //vip 10~
+                new NewBoostTechSpec().VIPBoostTechSpec((NewBoostTech)VIPBoostTech.InfirmaryCapacityMultiplier, 76, Table76, 10, "+{0:N0}%"),
+                //vip 11~
+                new NewBoostTechSpec().VIPBoostTechSpec((NewBoostTech)VIPBoostTech.TroopTrainingSpeedMultiplier, 77, Table77, 11, "+{0:N0}%"),
+                //vip 14~
+                new NewBoostTechSpec().VIPBoostTechSpec((NewBoostTech)VIPBoostTech.ResourceStorageMultiplier, 78, Table78, 14, "+{0:N0}%")
             };
 
-            return new SpecNewBoostData(NewBoostType.VIP, techs, 12, Table12);
+            return new SpecNewBoostData(NewBoostType.VIP, techs, 70, Table70);
         }
 
 
@@ -730,101 +734,6 @@ namespace GameOfRevenge.Business.CacheData
 78
 };
 
-
-        private static int[] Table12 = new int[]//VIPPOINTS
-{
-0,
-130,
-500,
-1000,
-2000,
-3000,
-6000,
-11500,
-22000,
-30000,
-45000,
-70000,
-125000,
-170000,
-210000,
-280000,
-330000,
-390000,
-440000,
-500000
-};
-
-        private static float[] Table13 = new float[]//VIPPRODUCTIONBOOST
-{
-5,
-6,
-7,
-8,
-10,
-12,
-15,
-18,
-22,
-30,
-35,
-40,
-45,
-50,
-55,
-60,
-65,
-70,
-75,
-80
-};
-
-        private static int[] Table14 = new int[]//VIPBUILDTIMEBONUS
-{
-6,
-8,
-10,
-12,
-15,
-20,
-30,
-45,
-60,
-90,
-120,
-150,
-180,
-210,
-240,
-240,
-240,
-240,
-240,
-240
-};
-
-        private static int[] Table15 = new int[]
-{
-10,
-12,
-14,
-16,
-20,
-24,
-28,
-32,
-40,
-45,
-50,
-55,
-60,
-65,
-70,
-70,
-75,
-75
-};
-
         private static int[] Table20 = new int[]//FOG
 {
 15 * MINUTES,
@@ -957,6 +866,172 @@ namespace GameOfRevenge.Business.CacheData
 };
 
 
+
+        private static int[] Table70 = new int[]//VIP POINTS
+{
+0,
+130,
+500,
+1000,
+2000,
+3000,
+6000,
+11500,
+22000,
+30000,
+45000,
+70000,
+125000,
+170000,
+210000,
+280000,
+330000,
+390000,
+440000,
+500000
+};
+
+        private static float[] Table71 = new float[]//VIP PRODUCTIONBOOST
+{
+5,
+6,
+7,
+8,
+10,
+12,
+15,
+18,
+22,
+30,
+35,
+40,
+45,
+50,
+55,
+60,
+65,
+70,
+75,
+80
+};
+
+        private static int[] Table72 = new int[]//VIP BUILDTIMEBONUS
+{
+6 * MINUTES,
+8 * MINUTES,
+10 * MINUTES,
+12 * MINUTES,
+15 * MINUTES,
+20 * MINUTES,
+30 * MINUTES,
+45 * MINUTES,
+60 * MINUTES,
+90 * MINUTES,
+120 * MINUTES,
+150 * MINUTES,
+180 * MINUTES,
+210 * MINUTES,
+240 * MINUTES,
+240 * MINUTES,
+240 * MINUTES,
+240 * MINUTES,
+240 * MINUTES,
+240 * MINUTES
+};
+
+        private static int[] Table73 = new int[]//VIP HEALING MULTIPLIER
+{
+10,
+12,
+14,
+16,
+20,
+24,
+28,
+32,
+40,
+45,
+50,
+55,
+60,
+65,
+70,
+70,
+75,
+75
+};
+
+        private static int[] Table74 = new int[]//VIP TROOPATTACK
+{
+10,
+15,
+20,
+20,
+20,
+20,
+25,
+25,
+30,
+30,
+30,
+30
+};
+
+        private static int[] Table75 = new int[]//VIP TROOPDEFENSE
+{
+10,
+15,
+15,
+20,
+20,
+20,
+25,
+25,
+30,
+30,
+30,
+30
+};
+
+        private static int[] Table76 = new int[]//VIP INFIRMARYMULTIPLIER
+{
+30,
+30,
+30,
+30,
+30,
+35,
+35,
+35,
+35,
+35,
+35
+};
+
+        private static int[] Table77 = new int[]//VIP TROOPTRAINING
+{
+5,
+10,
+15,
+20,
+25,
+25,
+25,
+25,
+25,
+25
+};
+
+        private static int[] Table78 = new int[]//VIP WAREHOUSESTORAGE MULTIPLIER
+{
+5,
+10,
+10,
+10,
+10,
+10,
+10
+};
 
         private const int DAY = 24 * HOUR;
         private const int HOUR = 60 * MINUTES;

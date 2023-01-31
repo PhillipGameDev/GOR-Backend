@@ -58,6 +58,18 @@ namespace GameOfRevenge.Common.Models.Boost
         BowmenDefense
     }
 
+    public enum VIPBoostTech : byte
+    {
+        ResourceProductionMultiplier = NewBoostTech.ResourceProductionMultiplier,
+        BuildingTimeBonus = NewBoostTech.BuildingTimeBonus,
+        TroopHealingSpeedMultiplier = NewBoostTech.TroopHealingSpeedMultiplier,
+        TroopAttackMultiplier = NewBoostTech.TroopAttackMultiplier,
+        TroopDefenseMultiplier = NewBoostTech.TroopDefenseMultiplier,
+        InfirmaryCapacityMultiplier = NewBoostTech.InfirmaryCapacityMultiplier,
+        TroopTrainingSpeedMultiplier = NewBoostTech.TroopTrainingSpeedMultiplier,
+        ResourceStorageMultiplier = NewBoostTech.ResourceStorageMultiplier
+    }
+
     public enum NewBoostTech : byte
     {
         Unknown = 0,

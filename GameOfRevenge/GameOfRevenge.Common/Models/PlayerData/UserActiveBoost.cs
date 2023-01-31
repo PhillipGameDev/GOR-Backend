@@ -198,6 +198,8 @@ namespace GameOfRevenge.Common.Models
         [JsonIgnore]
         public Dictionary<byte, object> Levels { get; set; }
 
+
+
         public SpecNewBoostData(NewBoostType type, List<NewBoostTechSpec> techs, byte table = 0, object tableData = null)//, List<IReadOnlyNewBoostLevel> levels)
         {
             Type = type;
@@ -283,6 +285,23 @@ namespace GameOfRevenge.Common.Models
         [JsonIgnore]
         public Dictionary<byte, object> Levels { get; set; }
 
+        public float GetValue(int level)
+        {
+            float value = 0;
+//            if (StartLevel > 1) level -= StartLevel - 1;
+
+            for (int lvl = level; lvl > 0; lvl--)
+            {
+                if (!Levels.ContainsKey((byte)lvl)) continue;
+
+                float.TryParse(Levels[(byte)lvl].ToString(), out float val);
+                value = val;
+                break;
+            }
+
+            return value;
+        }
+
         public NewBoostTechSpec()
         {
         }
@@ -296,8 +315,8 @@ namespace GameOfRevenge.Common.Models
             StartLevel = startLevel;
             Tech = tech;
             Table = table;
-            Column = column;
             Format = format;
+            Column = column;
             if (tableData == null) return;
 
             byte idx = 0;
@@ -321,6 +340,39 @@ namespace GameOfRevenge.Common.Models
                 }
             }
             Levels = levels;
+        }
+
+        public NewBoostTechSpec VIPBoostTechSpec(NewBoostTech tech, byte table, object tableData, byte startLevel, string format = null)// : base(tech, table)
+        {
+            StartLevel = startLevel;
+            Tech = tech;
+            Table = table;
+            Format = format;
+            if (tableData == null) return this;
+
+            byte idx = 0;
+            if (startLevel > 1) idx = (byte)(startLevel - 1);
+            var levels = new Dictionary<byte, object>();
+            if (tableData.GetType() == typeof(int[]))
+            {
+                var array = (int[])tableData;
+                foreach (var data in array)
+                {
+                    idx++;
+                    if (int.TryParse(data.ToString(), out int val)) levels.Add(idx, data);
+                }
+            }
+            else
+            {
+                var array = (float[])tableData;
+                foreach (var data in array)
+                {
+                    idx++;
+                    if (float.TryParse(data.ToString(), out float val)) levels.Add(idx, data);
+                }
+            }
+            Levels = levels;
+            return this;
         }
 
         /*        public NewBoostTechSpec(NewBoostTech tech, byte table)//, T[] tableData)//, int startLevel = 1)

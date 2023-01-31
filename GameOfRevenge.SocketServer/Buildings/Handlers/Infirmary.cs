@@ -53,8 +53,9 @@ namespace GameOfRevenge.Buildings.Handlers
                 {
                     for (int j = 0; j < dict.Count(); j++)
                     {
-                        var recoverResponse = GameService.BUsertroopManager.RecoverWounded(this.Player.PlayerId, dict.ElementAt(j).Key, dict.ElementAt(j).Value);
-                        if (recoverResponse.Result.Case > 99 && recoverResponse.Result.Case < 200)
+                        var element = dict.ElementAt(j);
+                        var recoverResponse = GameService.BUsertroopManager.RecoverWounded(this.Player.PlayerId, element.Key, element.Value);
+                        if ((recoverResponse.Result.Case >= 100) && recoverResponse.Result.Case < 200)
                         {
                             var result = recoverResponse.Result.Data;
                             foreach (var item in result.Value)
@@ -63,20 +64,23 @@ namespace GameOfRevenge.Buildings.Handlers
                         }
                         else
                         {
-                            suc = false; message = recoverResponse.Result.Message;
+                            suc = false;
+                            message = recoverResponse.Result.Message;
                             log.InfoFormat("Error in RecoverWounded {0} {1} ", recoverResponse.Result.Message);
                         }
                     }
                 }
                 catch (Exception ex)
                 {
-                    suc = false; message = ex.Message;
+                    suc = false;
+                    message = ex.Message;
                     log.InfoFormat("Exception in HandleWoundedTroops Block2 {0} {1} ", ex.Message, ex.StackTrace);
                 }
             }
             catch (Exception ex)
             {
-                suc = false; message = ex.Message;
+                suc = false;
+                message = ex.Message;
                 log.InfoFormat("Exception in HandleWoundedTroops Block1 {0} {1} ", ex.Message, ex.StackTrace);
             }
             if (suc)

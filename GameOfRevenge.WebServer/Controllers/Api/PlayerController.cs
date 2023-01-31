@@ -345,6 +345,18 @@ namespace GameOfRevenge.WebServer.Controllers.Api
 
 #region Boost
         [HttpPost]
+        public async Task<IActionResult> AddVIPPoints(int points)
+        {
+            return ReturnResponse(await userManager.AddVIPPoints(Token.PlayerId, points));
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> ActivateVIPBoosts()
+        {
+            return ReturnResponse(await userManager.ActivateVIPBoosts(Token.PlayerId));
+        }
+
+        [HttpPost]
         public async Task<IActionResult> AddBoost(NewBoostType type)
         {
 //            if (!Token.IsAdmin) return StatusCode(401);
