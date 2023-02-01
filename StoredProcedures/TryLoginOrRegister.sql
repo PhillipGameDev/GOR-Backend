@@ -1,6 +1,6 @@
 USE [GameOfRevenge]
 GO
-/****** Object:  StoredProcedure [dbo].[TryLoginOrRegister]    Script Date: 1/23/2023 11:41:12 AM ******/
+/****** Object:  StoredProcedure [dbo].[TryLoginOrRegister]    Script Date: 1/31/2023 7:55:58 PM ******/
 SET ANSI_NULLS ON
 GO
 SET QUOTED_IDENTIFIER ON
@@ -44,14 +44,24 @@ BEGIN
 				SELECT @existingAccount = p.[PlayerId], @existingVersion = p.[Version] FROM [dbo].[Player] AS p WHERE p.[PlayerIdentifier] = @tempIdentifier;
 				IF (@existingAccount IS NULL)
 					BEGIN
-						INSERT INTO [dbo].[Player] (PlayerIdentifier, Name, AcceptedTermAndCondition, IsAdmin, IsDeveloper, Version) 
-						VALUES (@tempIdentifier, @tempName, @tempAccepted, 0, 0, @tempVersion);
+						DECLARE @count INT = 0;
+						SELECT @count = COUNT(*) FROM [dbo].[WorldTileData];
+						IF (@count < 100)
+							BEGIN
+								INSERT INTO [dbo].[Player] (PlayerIdentifier, Name, AcceptedTermAndCondition, IsAdmin, IsDeveloper, Version) 
+								VALUES (@tempIdentifier, @tempName, @tempAccepted, 0, 0, @tempVersion);
 
-						SELECT @existingAccount = p.[PlayerId] FROM [dbo].[Player] AS p WHERE p.[PlayerIdentifier] = @tempIdentifier; 
-						EXEC [dbo].[AddFirstTimeData] @existingAccount;
+								SELECT @existingAccount = p.[PlayerId] FROM [dbo].[Player] AS p WHERE p.[PlayerIdentifier] = @tempIdentifier; 
+								EXEC [dbo].[AddFirstTimeData] @existingAccount;
 
-						SET @case = 100;
-						SET @message = 'Created new account succesfully';
+								SET @case = 100;
+								SET @message = 'Created new account succesfully';
+							END
+						ELSE
+							BEGIN
+								SET @case = 202;
+								SET @message = 'Server capacity reached';
+							END
 					END
 				ELSE
 					BEGIN
