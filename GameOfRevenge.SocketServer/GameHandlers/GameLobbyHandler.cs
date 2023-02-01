@@ -562,14 +562,16 @@ namespace GameOfRevenge.GameHandlers
             var playerInfo = accountManager.GetAccountInfo(playerId).Result.Data;
             log.InfoFormat("get Player Info from db {0} ", JsonConvert.SerializeObject(playerInfo));
 
-            MmoActor actor = null;
-            Region city = null;
-            IInterestArea iA = null;
-            (city, actor, iA) = this.GridWorld.GetPlayerPosition(playerId, playerInfo);
+//            (Region r, MmoActor actor, IInterestArea interestArea) = this.GridWorld.GetPlayerPosition(playerId, playerInfo);
+            (MmoActor actor, IInterestArea interestArea) = this.GridWorld.GetPlayerPosition(playerId, playerInfo);
+            if (actor == null)
+            {
+                var dbgMsg = "Player not found in world map";
+                return peer.SendOperation(operationRequest.OperationCode, ReturnCode.InvalidOperation, debuMsg: dbgMsg);
+            }
 
-            actor.StartOnReal();
             log.InfoFormat("player is added in manager with playerid {0}", playerId);
-            log.InfoFormat("player enter in world X {0} Y {1} ", city.X, city.Y);
+            log.InfoFormat("player enter in world X {0} Y {1} ", actor.WorldRegion.X, actor.WorldRegion.Y);
 
             PlayerSocketDataManager playerDataManager = null;
             try
@@ -582,15 +584,16 @@ namespace GameOfRevenge.GameHandlers
                 return peer.SendOperation(operationRequest.OperationCode, ReturnCode.InvalidOperation, debuMsg: msg);
             }
 
-            actor.PlayerSpawn(iA, peer, playerDataManager);
+            actor.StartOnReal();
+            actor.PlayerSpawn(interestArea, peer, playerDataManager);
             actor.Peer.Actor = actor;  //vice versa mmoactor into the peer and reverse
             var profile = new UserProfileResponse
             {
                 AllianceId = playerInfo.AllianceId,
                 PlayerId = playerId,
                 UserName = playerInfo.Name,
-                X = actor.Tile.X,
-                Y = actor.Tile.Y,
+                X = actor.WorldRegion.X,
+                Y = actor.WorldRegion.Y,
                 VIPLevel = playerInfo.VIPLevel,
                 KingLevel = playerInfo.KingLevel,
                 CastleLevel = playerInfo.CastleLevel
@@ -627,7 +630,7 @@ namespace GameOfRevenge.GameHandlers
             if (!region.IsWalkable)
                 return peer.SendOperation(operationRequest.OperationCode, ReturnCode.OK, debuMsg: "tile position is not walkable.");
 
-            peer.Actor.Tile.RemoveUserFromCity(peer.Actor);
+            peer.Actor.WorldRegion.RemovePlayerFromRegion(peer.Actor);
             peer.Actor.PlayerTeleport(region);
             peer.Actor.InterestArea.UpdateInterestArea(region);
 

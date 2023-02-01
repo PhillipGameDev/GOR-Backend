@@ -137,13 +137,14 @@ namespace GameOfRevenge.GameHandlers
                 this.SendOnExitEvent(r);
             }
         }
-        public void SendOnEnterEvent(Region r)
+        public void SendOnEnterEvent(Region region)
         {
-            if (r.IsBooked && (r.Owner != null) && (r.Owner != this.Owner) && this.Owner.IsInKingdomView)
+            if (region.IsBooked && (region.Owner != null) && (region.Owner != this.Owner) && this.Owner.IsInKingdomView)
             {
-                var response = r.GetAttackerIaResponse(r.Owner);
+                var response = new IaEnterResponse(region.Owner);
                 this.Owner.SendEvent(EventCode.IaEnter, response);
-                var attackData = GameService.BRealTimeUpdateManager.GetAttackerData(r.Owner.PlayerId);
+
+                var attackData = GameService.BRealTimeUpdateManager.GetAttackerData(region.Owner.PlayerId);
                 if (attackData != null)
                 {
                     var attackResponse = new AttackResponse(attackData.AttackData);

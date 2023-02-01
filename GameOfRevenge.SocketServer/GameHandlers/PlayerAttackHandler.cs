@@ -52,7 +52,7 @@ namespace GameOfRevenge.GameHandlers
 
             DateTime timestart = DateTime.UtcNow;
             bool success = true;
-            double dist = attacker.World.GetDistanceBw2Points(Enemy.Tile, attacker.Tile) * 3;// / 0.2f;
+            double dist = attacker.World.GetDistanceBw2Points(Enemy.WorldRegion, attacker.WorldRegion) * 3;// / 0.2f;
             int reachedTime = (int)dist;
             int battleDuration = 0;
 
@@ -119,7 +119,7 @@ namespace GameOfRevenge.GameHandlers
                     //            delay = 2000;
 
                     if (request.HeroIds != null) marching.Heroes = request.HeroIds.ToList();
-                    var location = new MapLocation() { X = attacker.Tile.X, Y = attacker.Tile.Y };
+                    var location = new MapLocation() { X = attacker.WorldRegion.X, Y = attacker.WorldRegion.Y };
 
                     log.InfoFormat("Passing Data attackerId {0} Data {1} defenderId {2} ", attacker.PlayerId, JsonConvert.SerializeObject(marching), Enemy.PlayerId);
 

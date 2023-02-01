@@ -10,17 +10,11 @@
 namespace GameOfRevenge.GameHandlers
 {
     using ExitGames.Logging;
-    using GameOfRevenge.Business.Manager;
-    using GameOfRevenge.Common;
     using GameOfRevenge.GameApplication;
     using GameOfRevenge.Helpers;
     using GameOfRevenge.Model;
     using Photon.SocketServer;
     using Photon.SocketServer.Concurrency;
-    using System;
-    using System.Collections.Concurrent;
-    using System.Linq;
-    using System.Threading.Tasks;
 
     public class Region
     {
@@ -58,7 +52,7 @@ namespace GameOfRevenge.GameHandlers
             this.CountryId = worldId;
         }
 
-        public void SpawnCityInTile(MmoActor actor)
+        public void SpawnPlayerInRegion(MmoActor actor)
         {
             if (!this.IsBooked)
             {
@@ -67,18 +61,20 @@ namespace GameOfRevenge.GameHandlers
             }
         }
 
-        public void RemoveUserFromCity(MmoActor actor)
+        public void RemovePlayerFromRegion(MmoActor actor)
         {
             this.IsBooked = false;
             this.Owner = null;
         }
-        public void OnEnterPlayer(MmoActor comingActor)
+
+        public void OnEnterPlayer(MmoActor actor)
         {
-            if (this.IsBooked && (this.Owner != null) && (this.Owner != comingActor))
+            if (this.IsBooked && (this.Owner != null) && (this.Owner != actor))
             {
-                var response = this.GetAttackerIaResponse(comingActor);
+                var response = new IaEnterResponse(actor);
+
                 this.Owner.SendEvent(EventCode.IaEnter, response);
-                var attackData = GameService.BRealTimeUpdateManager.GetAttackerData(comingActor.PlayerId);
+                var attackData = GameService.BRealTimeUpdateManager.GetAttackerData(actor.PlayerId);
                 if (attackData != null)
                 {
                     var attackResponse = new AttackResponse(attackData.AttackData);
@@ -86,29 +82,14 @@ namespace GameOfRevenge.GameHandlers
                 }
             }
         }
-        public IaEnterResponse GetAttackerIaResponse(MmoActor comingActor)
-        {
-            var response = new IaEnterResponse
-            {
-                X = comingActor.Tile.X,
-                Y = comingActor.Tile.Y,
-                PlayerId = comingActor.PlayerId,
-                Username = comingActor.PlayerData.Name,
-                AllianceId = comingActor.PlayerData.AllianceId,
-                VIPLevel = comingActor.PlayerData.VIPLevel,
-                KingLevel = comingActor.PlayerData.KingLevel,
-                CastleLevel = comingActor.PlayerData.CastleLevel
-            };
-            return response;
-        }
 
-        public void OnExitPlayer(MmoActor exitActor)
+        public void OnExitPlayer(MmoActor actor)
         {
-            if (this.IsBooked && (this.Owner != null) && (this.Owner != exitActor) && this.Owner.IsInKingdomView)
+            if (this.IsBooked && (this.Owner != null) && (this.Owner != actor) && this.Owner.IsInKingdomView)
             {
                 var response = new IaExitResponse
                 {
-                    playerId = exitActor.PlayerId
+                    playerId = actor.PlayerId
                 };
                 this.Owner.SendEvent(EventCode.IaExit, response);
             }

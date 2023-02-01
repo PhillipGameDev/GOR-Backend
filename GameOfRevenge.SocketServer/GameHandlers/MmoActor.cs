@@ -23,15 +23,15 @@ namespace GameOfRevenge.GameHandlers
         
         //that user is included of that IA
         public IWorld World { get; private set; }
-        public Region Tile { get; private set; }
+        public Region WorldRegion { get; private set; }
         public IInterestArea InterestArea { get; private set; }
         public IPlayerSocketDataManager InternalPlayerDataManager { get; private set; }
         public IPlayerAttackHandler PlayerAttackHandler { get { return this.InternalPlayerDataManager.AttackHandler; } }
         
-        public MmoActor(int playerId, PlayerInfo playerInfo, IWorld world, Region tile) : base(playerId, playerInfo)
+        public MmoActor(int playerId, PlayerInfo playerInfo, IWorld world, Region region) : base(playerId, playerInfo)
         {
             World = world;
-            Tile = tile;
+            WorldRegion = region;
             //playerInfo assigned on base
         }
         
@@ -41,9 +41,9 @@ namespace GameOfRevenge.GameHandlers
             InterestArea = interestArea;
             InternalPlayerDataManager = playerDataManager;
         }
-        public void PlayerTeleport(Region tile)
+        public void PlayerTeleport(Region region)
         {
-            Tile = tile;
+            WorldRegion = region;
         }
 
         public void JoinKingdomView()

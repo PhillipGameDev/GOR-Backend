@@ -15,8 +15,9 @@ namespace GameOfRevenge.Interface
         BoundingBox Area { get; }
         Vector TileDimensions { get; }
 
-        Region SpawnPlayerInNewCity();
-        (Region region, MmoActor actor, IInterestArea iA) GetPlayerPosition(int playerId, PlayerInfo playerInfo);
+        Region FindFreeRegion();
+//        (Region region, MmoActor actor, IInterestArea iA) GetPlayerPosition(int playerId, PlayerInfo playerInfo);
+        (MmoActor actor, IInterestArea iA) GetPlayerPosition(int playerId, PlayerInfo playerInfo);
         double GetDistanceBw2Points(Region p1, Region p2);
         void Dispose();
     }

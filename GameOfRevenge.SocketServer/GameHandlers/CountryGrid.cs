@@ -59,6 +59,7 @@ namespace GameOfRevenge.GameHandlers
         public List<WorldDataTable> WorldData { get; private set; }
         public IFiber WorldFiber { get; private set; }
         private readonly Random rd = new Random();
+
         public CountryGrid(string name, BoundingBox area, Vector tileDimensions, int worldId, List<WorldDataTable> worldData)
         {
             try
@@ -73,28 +74,38 @@ namespace GameOfRevenge.GameHandlers
                 this.TileDimensions = tileDimensions;
                 this.TileX = (int)Math.Ceiling(Area.Size.X / (double)tileDimensions.X);
                 this.TileY = (int)Math.Ceiling(Area.Size.Y / (double)tileDimensions.Y);
+
+                var count = 0;
                 this.WorldRegions = new Region[TileX][];
                 for (int x = 0; x < TileX; x++)
                 {
                     this.WorldRegions[x] = new Region[TileY];
                     for (int y = 0; y < TileY; y++)
                     {
-                        this.WorldRegions[x][y] = new Region(x, y, TileDimensions, worldId, this);
-                        var worldPlayer = worldData.Find(wd => (wd.X == x) && (wd.Y == y));// Where(d => (d.X == x) && (d.Y == y)).FirstOrDefault();
-                        if (worldPlayer == null) continue;
+                        var worldRegion = new Region(x, y, TileDimensions, worldId, this);
+                        var worldPlayer = worldData.Find(wd => (wd.X == x) && (wd.Y == y));
+                        if (worldPlayer != null)
+                        {
+                            PlayerInfo plyInfo = null;
+                            int playerId = worldPlayer.TileData.PlayerId;
+                            var task = accountManager.GetAccountInfo(playerId);
+                            task.Wait();
+                            if (task.Result.IsSuccess && task.Result.HasData)
+                            {
+                                plyInfo = task.Result.Data;
 
-                        int plyId = worldPlayer.TileData.PlayerId;
-                        PlayerInfo plyInfo = null;
-                        var task = accountManager.GetAccountInfo(plyId);
-                        task.Wait();
+                                var actor = new MmoActor(playerId, plyInfo, this, worldRegion);
+                                actor.WorldRegion.SpawnPlayerInRegion(actor);
+                                this.PlayersManager.AddPlayer(playerId, actor);
 
-                        if (task.Result.IsSuccess && task.Result.HasData) plyInfo = task.Result.Data;
-
-                        var actor = new MmoActor(plyId, plyInfo, this, this.WorldRegions[x][y]);
-                        actor.Tile.SpawnCityInTile(actor);
-                        this.PlayersManager.AddPlayer(plyId, actor);
+                                count++;
+                            }
+                        }
+                        this.WorldRegions[x][y] = worldRegion;
                     }
                 }
+                log.InfoFormat("Total users in world {0}", count);
+
 
                 GameService.BRealTimeUpdateManager.Update(InvokeAttackComplete);
             }
@@ -103,8 +114,8 @@ namespace GameOfRevenge.GameHandlers
                 log.InfoFormat("Exception in CountryGrid Constructor {0} {1} {2} ", ex.Message, ex.StackTrace,
                     JsonConvert.SerializeObject(worldData));
             }
-        
         }
+
         public void InvokeAttackComplete(AttackStatusData data)
         {
             var attacker = PlayersManager.GetPlayer(data.Attacker.PlayerId);
@@ -118,30 +129,54 @@ namespace GameOfRevenge.GameHandlers
                 defender.SendEvent(EventCode.AttackResult, result);
             }
         }
-        public Region SpawnPlayerInNewCity() // todo
+        public Region FindFreeRegion()
         {
-            bool isSpawn = false;
+            int mapSize = 10;
+            //find randomly
+            int xtries = 20;
             do
             {
-                int X = rd.Next(0, 10);
-                int Y = rd.Next(0, 10);
-                if (!this.WorldRegions[X][Y].IsBooked)
+                int x = rd.Next(0, mapSize);
+                int vtries = 10;
+                do
                 {
-                    isSpawn = true;
-                    return this.WorldRegions[X][Y];
-                }
+                    int y = rd.Next(0, mapSize);
+                    if (!WorldRegions[x][y].IsBooked)
+                    {
+                        return WorldRegions[x][y];
+                    }
+                    vtries--;
+                } while (vtries > 0);
+                xtries--;
             }
-            while (!isSpawn);
+            while (xtries > 0);
+            //lineal
+            int total = mapSize * mapSize;
+            int pos = rd.Next(0, total);
+            do
+            {
+                pos++;
+                int x = pos % mapSize;
+                int y = (int)(pos / mapSize) % mapSize;
+                if (!WorldRegions[x][y].IsBooked)
+                {
+                    return WorldRegions[x][y];
+                }
+                total--;
+            } while (total > 0);
+
+
             return null;
         }
-        public (Region region, MmoActor actor, IInterestArea iA) GetPlayerPosition(int playerId, PlayerInfo playerInfo)
+
+/*        public (Region region, MmoActor actor, IInterestArea iA) GetPlayerPosition(int playerId, PlayerInfo playerInfo)
         {
             IInterestArea iA = null;
             var actor = this.PlayersManager.GetPlayer(playerId);
             var data = this.WorldData.Find(d => (d.TileData.PlayerId == playerId));
             if (data == null && actor == null)
             {
-                var tile = this.SpawnPlayerInNewCity();
+                var tile = FindFreeRegion();
                 data = new WorldDataTable()
                 {
                     WorldId = this.WorldId,
@@ -153,7 +188,7 @@ namespace GameOfRevenge.GameHandlers
                 var worldRegion = this.WorldRegions[data.X][data.Y];
                 actor = new MmoActor(playerId, playerInfo, this, worldRegion);
                 iA = new InterestArea(worldRegion, actor, true);
-                worldRegion.SpawnCityInTile(actor);
+                worldRegion.SpawnPlayerInRegion(actor);
                 new DelayedAction().WaitForCallBack(() =>
                 {
                     GameService.BKingdomManager.UpdateWorldTileData(this.WorldId, data.X, data.Y, data.TileData);
@@ -165,8 +200,49 @@ namespace GameOfRevenge.GameHandlers
             {
                 iA = new InterestArea(this.WorldRegions[data.X][data.Y], actor, false);
             }
+
             return (this.WorldRegions[data.X][data.Y], actor, iA);
+        }*/
+
+        public (MmoActor actor, IInterestArea iA) GetPlayerPosition(int playerId, PlayerInfo playerInfo)
+        {
+            IInterestArea interestArea = null;
+            var actor = this.PlayersManager.GetPlayer(playerId);
+            var data = this.WorldData.Find(d => (d.TileData.PlayerId == playerId));
+            if (data == null)
+            {
+                var region = FindFreeRegion();
+                if (region != null)
+                {
+                    data = new WorldDataTable()
+                    {
+                        WorldId = this.WorldId,
+                        X = region.X,
+                        Y = region.Y,
+                        TileData = new WorldTileData(playerId)
+                    };
+                    this.WorldData.Add(data);
+                    var worldRegion = WorldRegions[data.X][data.Y];
+                    actor = new MmoActor(playerId, playerInfo, this, worldRegion);
+                    worldRegion.SpawnPlayerInRegion(actor);
+                    new DelayedAction().WaitForCallBack(() =>
+                    {
+                        GameService.BKingdomManager.UpdateWorldTileData(this.WorldId, data.X, data.Y, data.TileData);
+                    }
+                    , 0);
+                    this.PlayersManager.AddPlayer(playerId, actor);
+                    interestArea = new InterestArea(worldRegion, actor, true);
+                }
+            }
+            else
+            {
+                var worldRegion = WorldRegions[data.X][data.Y];
+                interestArea = new InterestArea(worldRegion, actor, false);
+            }
+
+            return (actor, interestArea);
         }
+
         public double GetDistanceBw2Points(Region p1, Region p2)
         {
             double totalDistance = Math.Sqrt(Math.Pow((p2.X - p1.X), 2)
