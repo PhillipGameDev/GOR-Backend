@@ -32,10 +32,10 @@ namespace GameOfRevenge.Common.Models
         [DataMember]
         public int Points { get; set; }
 
-#if UNITY_2019_4_OR_NEWER
-        [DataMember]
-        public int Level { get; set; }
-#else
+//#if UNITY_2019_4_OR_NEWER
+//        [DataMember]
+//        public int Level { get; set; }
+//#else
         [DataMember]
         public int Level
         {
@@ -43,16 +43,27 @@ namespace GameOfRevenge.Common.Models
             //we should order levels and get the lowest value
             get
             {
-                var lvl = 1;
+                var idx = 1;
                 if (Points > 0)
                 {
-                    lvl = levels.FindIndex(x => (x > Points));
-                    if (lvl == -1) lvl = levels.Count;
+                    int basePts = 0;
+                    int len = levels.Count-1;
+                    for (idx = 0; idx < len; idx++)
+                    {
+                        if (Points >= (basePts + levels[idx]))
+                        {
+                            basePts += levels[idx];
+                            continue;
+                        }
+
+                        break;
+                    }
+//                    idx--;
                 }
-                return lvl;
+                return idx;
             }
         }
-#endif
+//#endif
 
         public UserVIPDetails()
         {

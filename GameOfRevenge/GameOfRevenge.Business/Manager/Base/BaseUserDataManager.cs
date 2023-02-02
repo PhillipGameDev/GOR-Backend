@@ -847,7 +847,7 @@ namespace GameOfRevenge.Business.Manager.Base
                 if (!response.IsSuccess) throw new InvalidModelExecption(response.Message);
 
                 var gemsdata = response.Data.Find(x => (x.DataType == DataType.Resource) && (x.ValueId == (int)ResourceType.Gems));
-                if (gemsdata == null) throw new InvalidModelExecption("Not enough gems");
+                if (gemsdata == null) throw new InvalidModelExecption("No resource gems");
 
                 long.TryParse(gemsdata.Value, out long plyGems);
                 if (plyGems < points) throw new InvalidModelExecption("Not enough gems");
