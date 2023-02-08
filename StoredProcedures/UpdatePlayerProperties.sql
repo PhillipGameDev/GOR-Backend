@@ -1,6 +1,6 @@
 USE [GameOfRevenge]
 GO
-/****** Object:  StoredProcedure [dbo].[UpdatePlayerProperties]    Script Date: 11/2/2022 5:56:38 PM ******/
+/****** Object:  StoredProcedure [dbo].[UpdatePlayerProperties]    Script Date: 2/8/2023 1:47:21 AM ******/
 SET ANSI_NULLS ON
 GO
 SET QUOTED_IDENTIFIER ON
@@ -41,7 +41,7 @@ BEGIN
 		SET @message = ERROR_MESSAGE();
 	END CATCH
 
-	SELECT p.[PlayerId], p.[PlayerIdentifier], p.[RavasAccountId], p.[Name], p.[AcceptedTermAndCondition], p.[IsAdmin], p.[IsDeveloper], p.[WorldId], p.[WorldTileId]
+	SELECT p.[PlayerId], p.[PlayerIdentifier], p.[RavasAccountId], p.[Name], p.[AcceptedTermAndCondition], p.[IsAdmin], p.[IsDeveloper], p.[WorldId], p.[WorldTileId], 'Info' = NULL
 	FROM [dbo].[Player] AS p WHERE p.[PlayerId] = @userId;
 
 
