@@ -8,8 +8,8 @@ namespace GameOfRevenge.Common.Models.Quest
     public interface IReadOnlyQuestTable
     {
         int QuestId { get; }
-        QuestType QuestType { get; }
-        int MilestoneId { get; }
+        QuestType QuestType { get; }//TODO: change QuestType to QuestTask
+        int MilestoneId { get; }//TODO: change MilestoneId to QuestType
         string DataString { get; }
     }
 

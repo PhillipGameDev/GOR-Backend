@@ -13,6 +13,7 @@ namespace GameOfRevenge.Business.Manager.UserData
 {
     public class PlayerDataManager : BaseManager, IPlayerDataManager
     {
+        //TODO: STORED PROCEDURE NOT IMPLEMENTED ON SERVER
         public async Task<Response> AddOrUpdateAllPlayerData(List<PlayerDataTable> playerDatas)
         {
             try
@@ -36,7 +37,7 @@ namespace GameOfRevenge.Business.Manager.UserData
                                 if (data != null && data.PlayerId == playerId)
                                 {
                                     playerDataIds += ", " + data.Id;
-                                    playerDataValues += ", " + data.Id;
+                                    playerDataValues += ", " + data.Value;
                                 }
                             }
 

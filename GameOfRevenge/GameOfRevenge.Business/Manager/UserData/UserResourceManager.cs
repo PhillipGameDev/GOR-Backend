@@ -293,7 +293,7 @@ namespace GameOfRevenge.Business.Manager.UserData
                 list.Add(new DataReward()
                 {
                     RewardId = requirement.RequirementId,
-                    DataId = requirement.DataId,
+                    QuestId = requirement.DataId,
                     DataType = requirement.DataType,
                     ValueId = requirement.ValueId,
                     Value = requirement.Value,

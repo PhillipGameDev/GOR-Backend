@@ -15,9 +15,10 @@
         TrainHero = 6,
         XHeroCount = 7,
 
-        MarketQuest = 8,
+        Custom = 8,
 
         Account = 9
+//      MarketQuest
 //        Custom = 11
     }
 }

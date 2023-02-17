@@ -3,6 +3,7 @@ using GameOfRevenge.Business.Manager.Base;
 using GameOfRevenge.Common;
 using GameOfRevenge.Common.Interface;
 using GameOfRevenge.Common.Models;
+using GameOfRevenge.Common.Models.PlayerData;
 using GameOfRevenge.Common.Models.Quest;
 using GameOfRevenge.Common.Models.Quest.Template;
 using GameOfRevenge.Common.Net;
@@ -23,6 +24,39 @@ namespace GameOfRevenge.Business.Manager.UserData
         public async Task<Response> ResetAllDailyQuests()
         {
             return await Db.ExecuteSPNoData("ResetAllDailyQuests", new Dictionary<string, object>());
+        }
+
+        public async Task<Response<List<PlayerRewardDataTable>>> GetUserAllRewards(int playerId)
+        {
+            try
+            {
+                if (playerId <= 0) throw new InvalidModelExecption("Invalid player id");
+
+                var spParams = new Dictionary<string, object>()
+                {
+                    { "PlayerId", playerId }
+                };
+
+                return await Db.ExecuteSPMultipleRow<PlayerRewardDataTable>("GetPlayerAllRewardData", spParams);
+            }
+            catch (InvalidModelExecption ex)
+            {
+                return new Response<List<PlayerRewardDataTable>>()
+                {
+                    Case = 200,
+                    Data = null,
+                    Message = ex.Message
+                };
+            }
+            catch (Exception ex)
+            {
+                return new Response<List<PlayerRewardDataTable>>()
+                {
+                    Case = 0,
+                    Data = null,
+                    Message = ErrorManager.ShowError(ex)
+                };
+            }
         }
 
         public async Task<Response<List<PlayerQuestDataTable>>> GetAllQuestProgress(int playerId)
@@ -102,7 +136,7 @@ namespace GameOfRevenge.Business.Manager.UserData
             if (questData.Redeemed) return new Response(201, "Quest reward already redemeed");
 
             var questRewards = CacheData.CacheQuestDataManager.GetQuestData(questData.QuestId);
-            await GiveRewards(playerId, questRewards.Rewards); //TODO:implement response error
+            await CollectRewards(playerId, questRewards.Rewards); //TODO:implement response error
 
             QuestResourceData quest = null;
             if (questRewards.Quest.MilestoneId == GameDef.QuestManager.DAILY_QUEST)
@@ -158,7 +192,7 @@ namespace GameOfRevenge.Business.Manager.UserData
             //foreach (var quest in questProgress.Data) if (!quest.Completed) return new Response(200, "Chapter not completed");
 
             var questRewards = CacheData.CacheQuestDataManager.GetFullChapterData(chapterId);
-            await GiveRewards(playerId, questRewards.Rewards); //TODO:implement response error
+            await CollectRewards(playerId, questRewards.Rewards); //TODO:implement response error
 
             var redemeedResp = await Db.ExecuteSPNoData("RedeemChapterReward", new Dictionary<string, object>()
             {
@@ -352,16 +386,16 @@ namespace GameOfRevenge.Business.Manager.UserData
             return new Response<List<UserChapterQuestData>>(chapterQuestRels, userQuestData.Case, userQuestData.Message);
         }
 
-        public async Task<Response<Common.Models.Quest.PlayerQuestDataTable>> GetQuestProgress(int playerId, int questId)
+        public async Task<Response<PlayerQuestDataTable>> GetQuestProgress(int playerId, int questId)
         {
-            return await Db.ExecuteSPSingleRow<Common.Models.Quest.PlayerQuestDataTable>("GetPlayerQuestData", new Dictionary<string, object>()
+            return await Db.ExecuteSPSingleRow<PlayerQuestDataTable>("GetPlayerQuestData", new Dictionary<string, object>()
             {
                 { "PlayerId", playerId },
                 { "QuestId", questId }
             });
         }
 
-        public async Task<Response<Common.Models.Quest.PlayerQuestDataTable>> UpdateQuestData(int playerId, int questId, bool isCompleted, string progress = null)
+        public async Task<Response<PlayerQuestDataTable>> UpdateQuestData(int playerId, int questId, bool isCompleted, string progress = null)
         {
             var dic = new Dictionary<string, object>()
             {
@@ -382,7 +416,7 @@ namespace GameOfRevenge.Business.Manager.UserData
             return await UpdateQuestData(playerId, questId, isCompleted, dataString);
         }
 
-        public async Task<Response<Common.Models.Quest.PlayerQuestDataTable>> UpdateQuestData(int playerId, int questId, bool isCompleted, object progress)
+        public async Task<Response<PlayerQuestDataTable>> UpdateQuestData(int playerId, int questId, bool isCompleted, object progress)
         {
             var dataString = string.Empty;
 
@@ -398,44 +432,100 @@ namespace GameOfRevenge.Business.Manager.UserData
             return await UpdateQuestData(playerId, questId, isCompleted, dataString);
         }
 
-        public async Task GiveRewards(int playerId, IReadOnlyList<IReadOnlyDataReward> rewards)
+        public async Task CollectRewards(int playerId, IReadOnlyList<IReadOnlyDataReward> rewards)
         {
-            var kingRewards = rewards.Where(x => (x.DataType == Common.DataType.Reward)).ToList();
-            if (kingRewards.Count > 0)
+            if (rewards.Count == 0) return;
+
+            List<PlayerDataTable> userRewards = null;
+            var resp = await manager.GetAllPlayerData(playerId, DataType.Reward);
+            userRewards = (resp.IsSuccess && resp.HasData)? resp.Data : new List<PlayerDataTable>();
+
+            foreach (var reward in rewards)
             {
-                UserKingDetails kingDetails = null;
-                var resp = await manager.GetPlayerData(playerId, DataType.Custom, 1);
-                if (resp.IsSuccess && resp.HasData)
+                var data = userRewards.Find(x => (x.ValueId == reward.RewardId));
+                if (data != null)
                 {
-                    try
+                    if (int.TryParse(data.Value, out int count))
                     {
-                        kingDetails = JsonConvert.DeserializeObject<UserKingDetails>(resp.Data.Value);
+                        count += reward.Count;
+                        await manager.UpdatePlayerDataID(playerId, data.Id, count.ToString());
                     }
-                    catch { }
-                }
-                if (kingDetails != null)
-                {
-                    foreach (var reward in kingRewards)
+                    else
                     {
-                        switch (reward.ValueId)
-                        {
-                            case 1: kingDetails.Experience += reward.Value; break; //king exp
-                            case 2: kingDetails.MaxStamina += reward.Value; break; //king stamina
-                        }
+
                     }
-                    var json = JsonConvert.SerializeObject(kingDetails);
-                    await manager.UpdatePlayerDataID(playerId, resp.Data.Id, json);
                 }
                 else
                 {
-                    //error
+                    var saveResp = await manager.AddOrUpdatePlayerData(playerId, DataType.Reward, reward.RewardId, reward.Count.ToString());
+                    if (saveResp.IsSuccess && saveResp.HasData)
+                    {
+                        userRewards.Add(saveResp.Data.ToPlayerDataTable);
+                    }
                 }
             }
+        }
 
-            var resourceRewards = rewards.Where(x => (x.DataType == Common.DataType.Resource)).ToList();
-            if (resourceRewards.Count > 0)
+        public async Task<Response<PlayerDataTableUpdated>> ConsumeReward(int playerId, long playerDataId, int contextId = 0)
+        {
+            var resp = await manager.GetPlayerDataById(playerDataId);
+            if (!resp.IsSuccess || !resp.HasData) return new Response<PlayerDataTableUpdated>(200, "User reward not found");
+
+            var playerData = resp.Data;
+            var rewardId = playerData.ValueId;
+            var rewardData = CacheQuestDataManager.AllQuestRewards
+            .SelectMany(x => x.Rewards).FirstOrDefault(y => y.RewardId == rewardId);
+            if (rewardData == null) return new Response<PlayerDataTableUpdated>(201, "Reward data not found");
+            if (rewardData.Count < 1) return new Response<PlayerDataTableUpdated>(202, "Reward data invalid");
+
+            if (int.TryParse(playerData.Value, out int count))
             {
-                await resmanager.SumResourceByReward(playerId, resourceRewards);
+                if (count > 0)
+                {
+                    count--;
+                    try
+                    {
+                        switch (rewardData.DataType)
+                        {
+                            case DataType.Custom:
+                                UserKingDetails kingDetails = null;
+                                var kingresp = await manager.GetPlayerData(playerId, DataType.Custom, 1);
+                                if (kingresp.IsSuccess && kingresp.HasData)
+                                {
+                                    kingDetails = JsonConvert.DeserializeObject<UserKingDetails>(kingresp.Data.Value);
+                                }
+                                if (kingDetails == null) throw new Exception("King data corrupted");
+
+                                switch (rewardData.ValueId)
+                                {
+                                    case 1: kingDetails.Experience += rewardData.Value; break; //king exp
+                                    case 2: kingDetails.MaxStamina += rewardData.Value; break; //king stamina
+                                }
+                                var kingjson = JsonConvert.SerializeObject(kingDetails);
+                                var kingResp = await manager.UpdatePlayerDataID(playerId, kingresp.Data.Id, kingjson);
+                                if (!kingresp.IsSuccess) throw new Exception(kingResp.Message);
+                                break;
+                            case DataType.Resource:
+                                var sumResp = await resmanager.SumResource(playerId, rewardData.ValueId, rewardData.Value);
+                                if (!sumResp.IsSuccess) throw new Exception(sumResp.Message);
+                                break;
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        return new Response<PlayerDataTableUpdated>(205, "Error consuming reward");
+                    }
+
+                    return await manager.UpdatePlayerDataID(playerId, playerData.Id, count.ToString());
+                }
+                else
+                {
+                    return new Response<PlayerDataTableUpdated>(204, "Reward already consumed");
+                }
+            }
+            else
+            {
+                return new Response<PlayerDataTableUpdated>(203, "User reward value corrupted");
             }
         }
     }

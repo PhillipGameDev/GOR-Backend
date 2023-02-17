@@ -49,5 +49,21 @@ namespace GameOfRevenge.WebServer.Controllers.Api
             var response = await questManager.UpdateQuestData(Token.PlayerId, questId, isCompleted, progress);
             return ReturnResponse(response);
         }
+
+#region Rewards
+        [HttpGet]
+        public async Task<IActionResult> GetAllUserRewards()
+        {
+            var response = await questManager.GetUserAllRewards(Token.PlayerId);
+            return ReturnResponse(response);
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> ConsumeReward(long playerDataId, int contextId = 0)
+        {
+            var response = await questManager.ConsumeReward(Token.PlayerId, playerDataId, contextId);
+            return ReturnResponse(response);
+        }
+        #endregion
     }
 }
