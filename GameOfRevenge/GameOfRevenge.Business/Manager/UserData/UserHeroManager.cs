@@ -140,15 +140,22 @@ namespace GameOfRevenge.Business.Manager.UserData
             }
         }*/
 
-        public async Task<Response<UserHeroDetails>> UnlockHero(int playerId, HeroType type)
+        public async Task<Response<UserHeroDetails>> UnlockHero(int playerId, HeroType type, int pts = 10)
+        {
+            if (type == HeroType.Unknown)
+            {
+                return new Response<UserHeroDetails>() { Case = 202, Message = "Invalid parameters" };
+            }
+
+            return await UnlockHero(playerId, type.ToString(), pts);
+        }
+
+        public async Task<Response<UserHeroDetails>> UnlockHero(int playerId, string type, int pts = 10)
         {
             try
             {
-                if (type == HeroType.Unknown) throw new DataNotExistExecption("Invalid parameters");
-
-                var hero = CacheHeroDataManager.GetFullHeroData(type.ToString());
+                var hero = CacheHeroDataManager.GetFullHeroData(type);
                 if (hero == null) throw new CacheDataNotExistExecption("Hero does not exist");
-
                 int valueId = hero.Info.HeroId;
                 var response = await manager.GetAllPlayerData(playerId, DataType.Hero);
                 if (response.IsSuccess)
@@ -158,19 +165,36 @@ namespace GameOfRevenge.Business.Manager.UserData
                     if (userHeroTable != null)
                     {
                         heroDetails = JsonConvert.DeserializeObject<UserHeroDetails>(userHeroTable.Value);
+//                        heroDetails.Id = userHeroTable.Id;
+
+                        if (pts == 10)
+                        {
+                            if (heroDetails.Points < 10) heroDetails.Points = 10;
+                        }
+                        else
+                        {
+                            heroDetails.Points += pts;
+                        }
+                        var heroJson = JsonConvert.SerializeObject(heroDetails);
+                        var saveResponse = await manager.UpdatePlayerDataID(playerId, userHeroTable.Id, heroJson);
+
                         return new Response<UserHeroDetails>(heroDetails, 101, "Hero already unlocked");
                     }
                     else
                     {
-                        heroDetails = new UserHeroDetails { HeroCode = hero.Info.Code };
+                        heroDetails = new UserHeroDetails()
+                        {
+                            HeroCode = hero.Info.Code,
+                            Points = pts
+                        };
 
                         var data = JsonConvert.SerializeObject(heroDetails);
                         var response2 = await manager.AddOrUpdatePlayerData(playerId, DataType.Hero, valueId, data);
-                        //UpdatePlayerDataID(playerId, userHeroTable.Id, data);
                         if (!response2.IsSuccess)
                         {
-                            return new Response<UserHeroDetails>(response.Case, response.Message);
+                            return new Response<UserHeroDetails>(response2.Case, response2.Message);
                         }
+
                         return new Response<UserHeroDetails>(heroDetails, 100, "Hero unlocked");
                     }
                 }

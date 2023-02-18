@@ -19,6 +19,9 @@ namespace GameOfRevenge.Common.Models
         [DataMember]
         public int Experience { get; set; }//value
 
+        [DataMember]
+        public int BattleCount { get; set; }
+
 #if UNITY_2019_4_OR_NEWER
         [DataMember]
         public int NextLevelXP { get; set; }

@@ -24,6 +24,7 @@ namespace GameOfRevenge.Business.Manager.GameDef
             var heroes = await GetAllHeroes();
             if (!heroes.IsSuccess) return new Response<List<HeroDataRequirementRel>>(heroes.Case, heroes.Message);
 
+
             var reqs = await GetAllHeroRequirements();
             if (!reqs.IsSuccess) return new Response<List<HeroDataRequirementRel>>(reqs.Case, reqs.Message);
 
@@ -35,6 +36,8 @@ namespace GameOfRevenge.Business.Manager.GameDef
 
             foreach (var hero in heroes.Data)
             {
+                if (hero.HeroId > 10) continue;//TODO: remove this validation or update database to remove unsupported heroes.
+
                 var data = new HeroDataRequirementRel
                 {
                     Info = hero,

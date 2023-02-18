@@ -96,6 +96,7 @@ namespace GameOfRevenge.Business.Manager.UserData
     {
         public static readonly ILogger log = LogManager.GetCurrentClassLogger();
 
+        private readonly IUserHeroManager userHeroManager = new UserHeroManager();
         private readonly IUserTroopManager userTroopManager = new UserTroopManager();
         private readonly IUserMailManager mailManager = new UserMailManager();
         private readonly IAccountManager accManager = new AccountManager();
@@ -542,7 +543,7 @@ namespace GameOfRevenge.Business.Manager.UserData
                         if (heroData == null) continue;
 
                         var hero = attackerArmy.Heroes.Find(x => x.HeroCode == heroData.Info.Code);
-                        hero.Points++;
+//                        hero.Points++;
                         hero.AttackCount++;
                         if (!attackerWin) hero.AttackFail++;
 
@@ -578,6 +579,18 @@ namespace GameOfRevenge.Business.Manager.UserData
                 king.Experience += 5;
                 if (king.TimeLeft <= 0) king.StartTime = DateTime.UtcNow;
                 king.Duration += 10 * 60;
+                king.BattleCount++;
+
+                if ((king.BattleCount % 3) == 0)
+                {
+                    var idx = new Random().Next(0, CacheHeroDataManager.HeroInfos.Count);
+                    var heroTable = CacheHeroDataManager.HeroInfos[idx].Info;
+
+                    if (SAVE)
+                    {
+                        var response = await userHeroManager.UnlockHero(attackerArmy.PlayerId, heroTable.Code, 1);
+                    }
+                }
 /*                if (king.TimeLeft > 0)
                 {
                     king.EndTime = king.EndTime.AddMinutes(10);
@@ -587,10 +600,10 @@ namespace GameOfRevenge.Business.Manager.UserData
                     king.StartTime = DateTime.UtcNow;
                     king.EndTime = king.StartTime.AddMinutes(10);
                 }*/
-                var kingdata = JsonConvert.SerializeObject(king);
                 if (SAVE)
                 {
-                    await manager.AddOrUpdatePlayerData(attackerArmy.PlayerId, DataType.Custom, 1, kingdata);
+                    var kingJson = JsonConvert.SerializeObject(king);
+                    await manager.AddOrUpdatePlayerData(attackerArmy.PlayerId, DataType.Custom, 1, kingJson);
                 }
                 debugMsg = "9";
 

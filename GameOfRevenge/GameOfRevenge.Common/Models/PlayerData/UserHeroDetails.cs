@@ -8,8 +8,8 @@ namespace GameOfRevenge.Common.Models
     [DataContract]
     public class UserHeroDetails
     {
-//        [DataMember]
 //        public long Id { get; set; }//id
+
         [DataMember]
         public string HeroCode { get; set; }
 
@@ -32,8 +32,8 @@ namespace GameOfRevenge.Common.Models
 //        [JsonIgnore]
 //        public bool IsAvaliable { get => !IsMarching && Unlocked; }
 
-        public int Level => 1 + (int)Math.Floor(WarPoints / 10f);// 10 warpoints = 1 level
-        public int WarPoints => (int)Math.Floor(Points / 5f);// 5 battles = 1 war point
+        public int Level => 1 + (int)Math.Floor(Points / 10f);// 10 warpoints = 1 level
+//        public int WarPoints => (int)Math.Floor(Points / 5f);// 5 battles = 1 war point
 
     }
 }

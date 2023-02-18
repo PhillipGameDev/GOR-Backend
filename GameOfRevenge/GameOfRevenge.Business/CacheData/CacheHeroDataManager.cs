@@ -14,12 +14,12 @@ namespace GameOfRevenge.Business.CacheData
         public const string HeroNotExist = "Hero item does not exist";
 
         private static bool isLoaded = false;
-        private static List<HeroDataRequirementRel> HeroInfo = null;
+        private static List<HeroDataRequirementRel> heroInfos = null;
         private static List<string> heroTypes;
         private static List<List<HeroDataRel>> heroDataRel;
 
-        public static bool IsLoaded { get => isLoaded && (HeroInfo != null) && (heroDataRel != null); }
-        public static IReadOnlyList<IReadOnlyHeroDataRequirementRel> HeroInfos { get { CheckLoadCacheMemory(); return HeroInfo.ToList(); } }
+        public static bool IsLoaded { get => isLoaded && (heroInfos != null) && (heroDataRel != null); }
+        public static IReadOnlyList<IReadOnlyHeroDataRequirementRel> HeroInfos { get { CheckLoadCacheMemory(); return heroInfos.ToList(); } }
         public static IReadOnlyList<string> ItemTypes { get { CheckLoadCacheMemory(); return heroTypes; } }
         public static List<List<HeroDataRel>> HeroDataRelation { get { CheckLoadCacheMemory(); return heroDataRel; } }
 
@@ -64,7 +64,7 @@ namespace GameOfRevenge.Business.CacheData
 
             if (response.IsSuccess)
             {
-                HeroInfo = response.Data;
+                heroInfos = response.Data;
                 heroTypes = new List<string>();
                 foreach (var item in response.Data)
                 {
@@ -111,10 +111,10 @@ namespace GameOfRevenge.Business.CacheData
         {
             isLoaded = false;
 
-            if (HeroInfo != null)
+            if (heroInfos != null)
             {
-                HeroInfo.Clear();
-                HeroInfo = null;
+                heroInfos.Clear();
+                heroInfos = null;
             }
 
             if (heroTypes != null)
