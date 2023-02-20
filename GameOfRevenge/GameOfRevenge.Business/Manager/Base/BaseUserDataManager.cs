@@ -38,10 +38,14 @@ namespace GameOfRevenge.Business.Manager.Base
             {
                 var currentTimestamp = DateTime.UtcNow;
                 var playerName = "";
+                bool isDeveloper = false;
+                bool isAdmin = false;
                 var resp = await accountManager.GetAccountInfo(playerId);
                 if (resp.IsSuccess)
                 {
                     playerName = resp.Data.Name;
+                    isDeveloper = resp.Data.IsDeveloper;
+                    isAdmin = resp.Data.IsAdmin;
                 }
 
                 var response = await manager.GetAllPlayerData(playerId);
@@ -59,6 +63,8 @@ namespace GameOfRevenge.Business.Manager.Base
                         {
                             PlayerId = playerId,
                             PlayerName = playerName,
+                            IsDeveloper = isDeveloper,
+                            IsAdmin = isAdmin,
                             HelpedBuild = 0,
 
                             Resources = new ResourcesList(),

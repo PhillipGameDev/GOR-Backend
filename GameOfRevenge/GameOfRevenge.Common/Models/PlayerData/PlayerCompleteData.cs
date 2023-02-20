@@ -6,6 +6,8 @@ namespace GameOfRevenge.Common.Models
     {
         public int PlayerId { get; set; }
         public string PlayerName { get; set; }
+        public bool IsDeveloper { get; set; }
+        public bool IsAdmin { get; set; }
 
         public int HelpedBuild { get; set; }
         public UserKingDetails King { get; set; }
