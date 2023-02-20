@@ -496,16 +496,16 @@ namespace GameOfRevenge.WebServer.Controllers.Api
         }
 
         [HttpPost]
-        public async Task<IActionResult> TrainTroopByType(TroopType type, int level, int count, int buildingId)
+        public async Task<IActionResult> TrainTroopByType(TroopType type, int level, int count, int location)
         {
-            var response = await userTroopManager.TrainTroops(Token.PlayerId, type, level, count, buildingId);
+            var response = await userTroopManager.TrainTroops(Token.PlayerId, type, level, count, location);
             return ReturnResponse(response);
         }
 
         [HttpPost]
-        public async Task<IActionResult> TrainTroopById(int id, int level, int count, int buildingId)
+        public async Task<IActionResult> TrainTroopById(int id, int level, int count, int location)
         {
-            var response = await userTroopManager.TrainTroops(Token.PlayerId, id, level, count, buildingId);
+            var response = await userTroopManager.TrainTroops(Token.PlayerId, id, level, count, location);
             return ReturnResponse(response);
         }
 

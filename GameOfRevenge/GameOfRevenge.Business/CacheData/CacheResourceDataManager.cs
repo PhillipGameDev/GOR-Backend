@@ -24,7 +24,7 @@ namespace GameOfRevenge.Business.CacheData
         public static IReadOnlyResourceTable Ore { get { if (ore == null) LoadCacheMemory(); return ore; } }
         public static IReadOnlyResourceTable Gems { get { if (gems == null) LoadCacheMemory(); return gems; } }
 
-        public static IReadOnlyDataRequirement GetGemReq(int value)
+        public static IReadOnlyDataRequirement NewGemRequirement(int value)
         {
             return new DataRequirement()
             {

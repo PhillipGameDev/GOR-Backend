@@ -10,8 +10,8 @@ namespace GameOfRevenge.Common.Interface.UserData
 {
     public interface IUserTroopManager : IBaseUserManager
     {
-        Task<Response<UserTroopData>> TrainTroops(int playerId, int id, int level, int count, int fromId);
-        Task<Response<UserTroopData>> TrainTroops(int playerId, TroopType type, int level, int count, int fromId);
+        Task<Response<UserTroopData>> TrainTroops(int playerId, int id, int level, int count, int location);
+        Task<Response<UserTroopData>> TrainTroops(int playerId, TroopType type, int level, int count, int location);
         Task<Response<UserTroopData>> InstantTrainTroops(int playerId, TroopType type, int level, int count);
 
         Task<Response<UserTroopData>> AddTroops(int playerId, TroopType type, int level, int count);

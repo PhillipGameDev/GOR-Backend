@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using ExitGames.Logging;
 using GameOfRevenge.Business.CacheData;
 using GameOfRevenge.Business.Manager.Base;
 using GameOfRevenge.Common;
@@ -12,11 +13,14 @@ using GameOfRevenge.Common.Models.PlayerData;
 using GameOfRevenge.Common.Models.Troop;
 using GameOfRevenge.Common.Net;
 using GameOfRevenge.Common.Services;
+using Newtonsoft.Json;
 
 namespace GameOfRevenge.Business.Manager.UserData
 {
     public class UserTroopManager : BaseUserDataManager, IUserTroopManager
     {
+        public static readonly ILogger log = LogManager.GetCurrentClassLogger();
+
         private readonly IUserResourceManager userResourceManager;
 
         public UserTroopManager()
@@ -179,12 +183,12 @@ namespace GameOfRevenge.Business.Manager.UserData
             }
         }
 
-        public async Task<Response<UserTroopData>> TrainTroops(int playerId, int id, int level, int count, int fromId)
+        public async Task<Response<UserTroopData>> TrainTroops(int playerId, int id, int level, int count, int location)
         {
             try
             {
                 var troop = CacheTroopDataManager.GetFullTroopData(id);
-                return await TrainTroops(playerId, troop.Info.Code, level, count, fromId);
+                return await TrainTroops(playerId, troop.Info.Code, level, count, location);
             }
             catch (CacheDataNotExistExecption ex)
             {
@@ -195,16 +199,23 @@ namespace GameOfRevenge.Business.Manager.UserData
                 return new Response<UserTroopData>() { Case = 0, Message = ErrorManager.ShowError() };
             }
         }
-        public async Task<Response<UserTroopData>> TrainTroops(int playerId, TroopType type, int level, int count, int fromId)
+        public async Task<Response<UserTroopData>> TrainTroops(int playerId, TroopType type, int level, int count, int location)
         {
             try
             {
                 var troopData = CacheTroopDataManager.GetFullTroopLevelData(type, level);
                 var compPlayerData = await GetFullPlayerData(playerId);
-                if (!compPlayerData.IsSuccess || !compPlayerData.HasData) throw new DataNotExistExecption(compPlayerData.Message);
+                if (!compPlayerData.IsSuccess || !compPlayerData.HasData)
+                {
+                    throw new DataNotExistExecption(compPlayerData.Message);
+                }
 
-                var structureValid = ValidateStructureInLocAndBuild(fromId, type, compPlayerData.Data.Structures);
-                if (!structureValid) throw new RequirementExecption($"Structure to train troops was not found or its not a training building for troop type {type}");
+                var structureValid = ValidateStructureInLocAndBuild(location, type, compPlayerData.Data.Structures);
+                if (!structureValid)
+                {
+                    log.Info($"Structure to train troops was not found or its not a training building for troop type {type}");// + JsonConvert.SerializeObject(operation));
+                    throw new RequirementExecption($"Structure to train troops was not found or its not a training building for troop type {type}");
+                }
 
                 var requirements = troopData.Requirements;
                 var hasRequirements = HasRequirements(requirements, compPlayerData.Data, count);
@@ -214,7 +225,7 @@ namespace GameOfRevenge.Business.Manager.UserData
                 if (!isReduced) throw new RequirementExecption("Requirements is not meet");
 
                 var troopDataList = compPlayerData.Data.Troops.Where(x => x.TroopType == type).FirstOrDefault()?.TroopData;
-                var response = await AddTroops(playerId, type, level, count, troopDataList, true, fromId);
+                var response = await AddTroops(playerId, type, level, count, troopDataList, true, location);
                 if (!response.IsSuccess || !response.HasData) throw new RequirementExecption("Requirements is not meet");
 
                 return response;
@@ -244,14 +255,18 @@ namespace GameOfRevenge.Business.Manager.UserData
         {
             try
             {
-                var troopData = CacheTroopDataManager.GetFullTroopLevelData(type, level);
+//                var troopData = CacheTroopDataManager.GetFullTroopLevelData(type, level);
                 var compPlayerData = await GetFullPlayerData(playerId);
-                if (!compPlayerData.IsSuccess || !compPlayerData.HasData) throw new DataNotExistExecption(compPlayerData.Message);
+                if (!compPlayerData.IsSuccess || !compPlayerData.HasData)
+                {
+                    throw new DataNotExistExecption(compPlayerData.Message);
+                }
 
-                var isReduced = await userResourceManager.RemoveResourceByRequirement(playerId, CacheResourceDataManager.GetGemReq(1), count);
+                var costReq = CacheResourceDataManager.NewGemRequirement(count);
+                var isReduced = await userResourceManager.RemoveResourceByRequirement(playerId, costReq, 1);
                 if (!isReduced) throw new RequirementExecption("Requirements is not meet");
 
-                var troopDataList = compPlayerData.Data.Troops.Find(x => (x.TroopType == type))?.TroopData;
+//                var troopDataList = compPlayerData.Data.Troops.Find(x => (x.TroopType == type))?.TroopData;
                 var response = await AddTroops(playerId, type, level, count);
                 if (!response.IsSuccess || !response.HasData) throw new RequirementExecption("Requirements is not meet");
 
@@ -380,7 +395,7 @@ namespace GameOfRevenge.Business.Manager.UserData
         }
 
 
-        private async Task<Response<UserTroopData>> AddTroops(int playerId, TroopType type, int level, int count, List<TroopDetails> oldtroopInfos, bool isTraining, int fromId)
+        private async Task<Response<UserTroopData>> AddTroops(int playerId, TroopType type, int level, int count, List<TroopDetails> oldtroopInfos, bool isTraining, int locationId)
         {
             try
             {
@@ -390,11 +405,14 @@ namespace GameOfRevenge.Business.Manager.UserData
                 if (oldtroopInfos == null)
                 {
                     var resp = await GetFullPlayerData(playerId);
-                    if (!resp.IsSuccess && !resp.HasData) throw new DataNotExistExecption();
+                    if (!resp.IsSuccess || !resp.HasData)
+                    {
+                        throw new DataNotExistExecption();
+                    }
 
                     compPlayerData = resp.Data;
                     var userTroops = compPlayerData.Troops.Find(x => (x.TroopType == type))?.TroopData;
-                    oldtroopInfos = (userTroops == null) ? new List<TroopDetails>() : userTroops;
+                    oldtroopInfos = (userTroops != null) ? userTroops : new List<TroopDetails>();
                 }
 
 /*                if (oldtroopInfos.Count == 0)//TODO: validate and create new list here
@@ -417,7 +435,10 @@ namespace GameOfRevenge.Business.Manager.UserData
                     if (compPlayerData == null)
                     {
                         var resp = await GetFullPlayerData(playerId);
-                        if (!resp.IsSuccess && !resp.HasData) throw new DataNotExistExecption();
+                        if (!resp.IsSuccess || !resp.HasData)
+                        {
+                            throw new DataNotExistExecption();
+                        }
 
                         compPlayerData = resp.Data;
                     }
@@ -449,19 +470,21 @@ namespace GameOfRevenge.Business.Manager.UserData
                     }
 
                     float multiplier = (1 - (percentage / 100f));
+//                    log.Info("training time = " + troopDataLvl.Data.TraningTime+"  count= "+count+"  "+multiplier+"   "+percentage);
+//                    log.Info("time total = " + (troopDataLvl.Data.TraningTime * count));
                     int secs = (int)(troopDataLvl.Data.TraningTime * count * multiplier);// * 1000;
-                    if (secs > (5 * 60))
+                    if (secs > 2)//(5 * 60))
                     {
                         if (toUpdateObj.InTraning == null) toUpdateObj.InTraning = new List<UnavaliableTroopInfo>();
 
                         //TODO: Improve behaviour, only one group of troops are allowed, we need to support multiple groups,
                         //so the first group is released and we don't need to wait until the sum of groups finish the training
-                        var existingTraning = toUpdateObj.InTraning.Find(x => x.BuildingLocId == fromId);
+                        var existingTraning = toUpdateObj.InTraning.Find(x => x.BuildingLocId == locationId);
                         if (existingTraning == null)
                         {
                             existingTraning = new UnavaliableTroopInfo()
                             {
-                                BuildingLocId = fromId,
+                                BuildingLocId = locationId,
                                 StartTime = DateTime.UtcNow,
                             };
                             toUpdateObj.InTraning.Add(existingTraning);

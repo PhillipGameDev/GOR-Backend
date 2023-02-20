@@ -17,6 +17,7 @@ using GameOfRevenge.Business.Manager;
 using GameOfRevenge.Business.CacheData;
 using GameOfRevenge.Buildings.Handlers;
 using GameOfRevenge.Buildings.Interface;
+using GameOfRevenge.Common.Models;
 
 namespace GameOfRevenge.GameHandlers
 {
@@ -89,12 +90,15 @@ namespace GameOfRevenge.GameHandlers
             var operation = new RecruitTroopRequest(peer.Protocol, operationRequest);
             var recruitResp = await GameService.InstantProgressManager.InstantRecruitTroops(peer.Actor.PlayerId, operation.LocationId, (TroopType)operation.TroopType, operation.TroopLevel, operation.TroopCount);
 
-            if (recruitResp == null)
-                return peer.SendOperation(operationRequest.OperationCode, ReturnCode.InvalidOperation, debuMsg: "player not found");
-            if (!recruitResp.IsSuccess)
-                return peer.SendOperation(operationRequest.OperationCode, ReturnCode.InvalidOperation, debuMsg: recruitResp.Message);
-            if (!recruitResp.HasData)
-                return peer.SendOperation(operationRequest.OperationCode, ReturnCode.InvalidOperation, debuMsg: "player data not found");
+            string msg = null;
+            if (recruitResp == null) msg = "player not found";
+            else if (!recruitResp.IsSuccess) msg = recruitResp.Message;
+            else if (!recruitResp.HasData) msg = "player data not found";
+
+            if (msg != null)
+            {
+                return peer.SendOperation(operationRequest.OperationCode, ReturnCode.InvalidOperation, debuMsg: msg);
+            }
 
             await GameService.RealTimeUpdateManagerQuestValidator.PlayerDataChanged(peer.Actor.PlayerId);
 
@@ -334,64 +338,46 @@ namespace GameOfRevenge.GameHandlers
         {
             var operation = new RecruitTroopRequest(peer.Protocol, operationRequest);
             log.Info("============== HandleRecruitToopRequest >" + JsonConvert.SerializeObject(operation));
-            if (!operation.IsValid) return SendOperationResponse(peer, operationRequest, new Response(CaseType.Error, operation.GetErrorMessage()));
+            if (!operation.IsValid)
+            {
+                return SendOperationResponse(peer, operationRequest, new Response(CaseType.Error, operation.GetErrorMessage()));
+            }
 
             var troopType = (TroopType)operation.TroopType;
             var troopLevel = operation.TroopLevel;
             var troopCount = operation.TroopCount;
-            var response = await GameService.BUsertroopManager.TrainTroops(peer.Actor.PlayerId, troopType, troopLevel, troopCount, operation.LocationId);
-            if (!response.IsSuccess || !response.HasData)
+            var locationId = operation.LocationId;
+            var resp = await GameService.BUsertroopManager.TrainTroops(peer.Actor.PlayerId, troopType, troopLevel, troopCount, locationId);
+            if (!resp.IsSuccess || !resp.HasData)
             {
-                return SendOperationResponse(peer, operationRequest, response);
+                return SendOperationResponse(peer, operationRequest, resp);
+            }
+
+            var (response, data) = await GetTroopStatus(locationId, operation.StructureType, troopType, peer.Actor.PlayerId);
+            if ((data == null) || (data.Keys.Count == 0))
+            {
+                var trainingTroopResp = new TroopTrainingTimeResponse()
+                {
+                    LocationId = locationId,
+                    StructureType = operation.StructureType
+                };
+                data = trainingTroopResp.GetDictionary();
             }
 
             await GameService.RealTimeUpdateManagerQuestValidator.PlayerDataChanged(peer.Actor.PlayerId);
             //update any task that require training troops
             GameService.RealTimeUpdateManagerQuestValidator.TrainTroopsCheckQuestProgress(peer.Actor.PlayerId, troopType, troopLevel, troopCount);
 
-/*            var traningTroopResp = new TroopTrainResponse()
-            {
-                LocationId = operation.LocationId,
-                StructureType = operation.StructureType,
-
-                TotalTime = troopInfo.TotalTime,
-                TrainingTime = troopInfo.TimeLeft
-            };*/
-
-
-            Dictionary<byte, object> data = null;
-
-            var response2 = await GameService.BUsertroopManager.GetFullPlayerData(peer.Actor.PlayerId);
-            if (response2.IsSuccess)
-            {
-                data = GetTroopTrainingData(operation.LocationId, operation.StructureType, troopType, response2.Data.Troops);
-            }
-
-            if (data != null)
-            {
-                return peer.SendOperation(operationRequest.OperationCode, ReturnCode.OK, data, debuMsg: response.Message);
-            }
-            else
-            {
-                response.Case = 0;
-                response.Message = "Invalid troop data";
-                return SendOperationResponse(peer, operationRequest, response);
-            }
+            return SendOperationResponse(peer, operationRequest, response, data);
         }
 
-        public async Task<SendResult> HandleRecruitTroopStatus(IGorMmoPeer peer, OperationRequest operationRequest)
+        private async Task<(Response<PlayerCompleteData>, Dictionary<byte, object>)> GetTroopStatus(int locationId, int structureType, TroopType troopType, int playerId)
         {
-            var operation = new TroopTrainingStatusRequest(peer.Protocol, operationRequest);
-            log.Info(">>>>>>>>> HandleRecruitTroopStatus >"+JsonConvert.SerializeObject(operation));
-
-            if (!operation.IsValid) return SendOperationResponse(peer, operationRequest, new Response(CaseType.Error, operation.GetErrorMessage()));
-
-            var response = await GameService.BUsertroopManager.GetFullPlayerData(peer.Actor.PlayerId);
             Dictionary<byte, object> data = null;
-
+            var response = await GameService.BUsertroopManager.GetFullPlayerData(playerId);
             if (response.IsSuccess)
             {
-                data = GetTroopTrainingData(operation.LocationId, operation.StructureType, (TroopType)operation.TroopType, response.Data.Troops);
+                data = GetTroopTrainingData(locationId, structureType, troopType, response.Data.Troops);
             }
 
             if (data == null)
@@ -399,17 +385,31 @@ namespace GameOfRevenge.GameHandlers
                 response.Case = 0;
                 response.Message = "Invalid troop data";
             }
-//            return peer.SendOperation(operationRequest.OperationCode, ReturnCode.InvalidOperation, debuMsg: "troop not training on location");
+            //            return peer.SendOperation(operationRequest.OperationCode, ReturnCode.InvalidOperation, debuMsg: "troop not training on location");
 
+            return (response, data);
+        }
+
+        public async Task<SendResult> HandleRecruitTroopStatus(IGorMmoPeer peer, OperationRequest operationRequest)
+        {
+            var operation = new TroopTrainingStatusRequest(peer.Protocol, operationRequest);
+            log.Info(">>>>>>>>> HandleRecruitTroopStatus >"+JsonConvert.SerializeObject(operation));
+
+            if (!operation.IsValid)
+            {
+                return SendOperationResponse(peer, operationRequest, new Response(CaseType.Error, operation.GetErrorMessage()));
+            }
+
+            var (response, data) = await GetTroopStatus(operation.LocationId, operation.StructureType, (TroopType)operation.TroopType, peer.Actor.PlayerId);
             return SendOperationResponse(peer, operationRequest, response, data);
         }
 
-        private Dictionary<byte, object> GetTroopTrainingData(int locationId, int structureType, TroopType troopType, List<Common.Models.TroopInfos> troops)
+        private Dictionary<byte, object> GetTroopTrainingData(int locationId, int structureType, TroopType troopType, List<TroopInfos> troops)
         {
             if (!CacheTroopDataManager.TroopTypes.Contains(troopType)) return null;
 
             Dictionary<byte, object> data = null;
-            List<List<Common.Models.UnavaliableTroopInfo>> troopTraining = null;
+            List<List<UnavaliableTroopInfo>> troopTraining = null;
             var troopData = troops.FirstOrDefault(x => x.TroopType == troopType)?.TroopData;
             if (troopData?.Count > 0)
             {
@@ -417,28 +417,23 @@ namespace GameOfRevenge.GameHandlers
             }
             if (troopTraining?.Count > 0)
             {
-                var breakAll = false;
-                foreach (var traning in troopTraining)
+                foreach (var training in troopTraining)
                 {
-                    foreach (var troopInfo in traning)
+                    var troopInfo = training.Find(x => (x.BuildingLocId == locationId));
+                    if (troopInfo == null) continue;
+
+                    var trainingTroopResp = new TroopTrainingTimeResponse()
                     {
-                        if (troopInfo.BuildingLocId != locationId) continue;
+                        LocationId = locationId,
+                        StructureType = structureType,
+                        TotalTime = troopInfo.Duration,
+                        TrainingTime = (int)troopInfo.TimeLeft
+                    };
 
-                        var traningTroopResp = new TroopTrainingTimeResponse()
-                        {
-                            LocationId = locationId,
-                            StructureType = structureType,
-                            TotalTime = troopInfo.Duration,
-                            TrainingTime = (int)troopInfo.TimeLeft
-                        };
+                    data = trainingTroopResp.GetDictionary();
+                    //                                    return peer.SendOperation(operationRequest.OperationCode, ReturnCode.OK, data, debuMsg: response.Message);
 
-                        data = traningTroopResp.GetDictionary();
-                        //                                    return peer.SendOperation(operationRequest.OperationCode, ReturnCode.OK, data, debuMsg: response.Message);
-
-                        breakAll = true;
-                        break;
-                    }
-                    if (breakAll) break;
+                    break;
                 }
             }
             else

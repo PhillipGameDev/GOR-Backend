@@ -42,32 +42,22 @@ namespace GameOfRevenge.Business.Manager.UserData
             if (newTime <= freeCostSeconds) return 0;
             else return (int)(newTime * costPerSecond);
         }*/
+
         private int RecruitCost(TroopType type, int troopLevel, int count)
         {
-            float singleCost = 1;
+            float soldierCost = 1;
             switch (type)
             {
-                case TroopType.Other:
-                    break;
-                case TroopType.Swordsman:
-                    singleCost += 1;
-                    break;
-                case TroopType.Archer:
-                    singleCost += 1.5f;
-                    break;
-                case TroopType.Knight:
-                    singleCost += 2f;
-                    break;
-                case TroopType.Slingshot:
-                    singleCost += 5f;
-                    break;
-                default:
-                    break;
+                case TroopType.Swordsman: soldierCost += 1; break;
+                case TroopType.Archer: soldierCost += 1.5f;  break;
+                case TroopType.Knight: soldierCost += 2f; break;
+                case TroopType.Slingshot: soldierCost += 5f; break;
+                default: break;
             }
 
-            singleCost += (troopLevel / 2);
+            soldierCost += (troopLevel / 2f);
 
-            return (int)(singleCost * count);
+            return (int)(soldierCost * count);
         }
 
         public Response<int> GetInstantBuildCost(int playerId, StructureType structType, int level)
@@ -153,7 +143,6 @@ namespace GameOfRevenge.Business.Manager.UserData
                 }
                 if (cost > 0)
                 {
-                    log.Info("TAKE GEMS");
                     var playerGems = playerData.Resources.Gems;
                     if (playerGems < cost) throw new RequirementExecption("Not enough gems");
 
@@ -166,12 +155,10 @@ namespace GameOfRevenge.Business.Manager.UserData
                 Response<UserStructureData> createBuildResponse = null;
                 if (level > 1)
                 {
-                    log.Info("UPGRADE BUILDING");
                     createBuildResponse = await _userStructureManager.UpgradeBuilding(playerId, structType, locId, removeResources, createBuilder);
                 }
                 else
                 {
-                    log.Info("CREATE BUILDING");
                     createBuildResponse = await _userStructureManager.CreateBuilding(playerId, structType, locId, removeResources, createBuilder, false);
                 }
                 if (createBuildResponse == null)
@@ -181,7 +168,6 @@ namespace GameOfRevenge.Business.Manager.UserData
 
                 if (!createBuildResponse.IsSuccess)
                 {
-                    log.Info("RETURN GEMS");
                     if (cost > 0) await _userResourceManager.SumGemsResource(playerId, cost);
                     return createBuildResponse;// new Response<UserStructureData>(createBuildResponse.Case, createBuildResponse.Message);
                 }
@@ -190,27 +176,21 @@ namespace GameOfRevenge.Business.Manager.UserData
                 buildings.Find(x => x.Location == locId).Duration = 0;
 
                 var json = JsonConvert.SerializeObject(buildings);
-                log.Info("UPDATING BUILDING DATA "+ createBuildResponse.Data.Id +"  "+ json);
                 var response = await manager.UpdatePlayerDataID(playerId, createBuildResponse.Data.Id, json);
-                log.Info("RESPONSE "+response.Message);
 
                     //AddOrUpdatePlayerData(playerId, DataType.Structure, structureData.Info.Id, json);
                 if (response.IsSuccess)
                 {
-                    log.Info("PULL BUILDERS");
                     var builderResp = await manager.GetAllPlayerData(playerId, DataType.Custom, 2);
                     if (builderResp.IsSuccess && builderResp.HasData)
                     {
-                        log.Info("BUILDERS = "+builderResp.Data.Count);
                         foreach (var builderData in builderResp.Data)
                         {
-                            log.Info(">> "+builderData.Value);
                             var builder = JsonConvert.DeserializeObject<UserBuilderDetails>(builderData.Value);
                             if (builder.Location != locId) continue;
 
                             builder.Duration = 0;
                             json = JsonConvert.SerializeObject(builder);
-                            log.Info("UPDATING BUILDER "+builderData.Id+"  "+json);
                             var respBuilder = await manager.UpdatePlayerDataID(playerId, builderData.Id, json);
                             break;
                         }
@@ -315,6 +295,51 @@ namespace GameOfRevenge.Business.Manager.UserData
             }
         }
 
+        private UnavaliableTroopInfo GetTroopTrainingData(int locationId, TroopType troopType, List<TroopInfos> troops)
+        {
+            if (!CacheTroopDataManager.TroopTypes.Contains(troopType)) return null;
+
+            UnavaliableTroopInfo data = null;
+            List<List<UnavaliableTroopInfo>> troopTraining = null;
+            var troopData = troops.FirstOrDefault(x => x.TroopType == troopType)?.TroopData;
+            if (troopData?.Count > 0)
+            {
+                troopTraining = troopData.Select(x => x.InTraning).Where(x => x != null)?.ToList();
+            }
+            if (troopTraining?.Count > 0)
+            {
+                foreach (var training in troopTraining)
+                {
+                    var troopInfo = training.Find(x => (x.BuildingLocId == locationId));
+                    if (troopInfo == null) continue;
+
+                    data = troopInfo;
+                    break;
+                }
+            }
+
+            return data;
+        }
+
+        private async Task<(Response<PlayerCompleteData>, UnavaliableTroopInfo)> GetTroopStatus(int locationId, TroopType troopType, int playerId)
+        {
+            UnavaliableTroopInfo data = null;
+            var response = await GetFullPlayerData(playerId);
+            if (response.IsSuccess)
+            {
+                data = GetTroopTrainingData(locationId, troopType, response.Data.Troops);
+            }
+
+            if (data == null)
+            {
+                response.Case = 0;
+                response.Message = "Invalid troop data";
+            }
+            //            return peer.SendOperation(operationRequest.OperationCode, ReturnCode.InvalidOperation, debuMsg: "troop not training on location");
+
+            return (response, data);
+        }
+
         public async Task<Response<UserTroopData>> InstantRecruitTroops(int playerId, int locId, TroopType type, int troopLevel, int count)
         {
             try
@@ -322,39 +347,57 @@ namespace GameOfRevenge.Business.Manager.UserData
                 var playerData = await GetFullPlayerData(playerId);
                 if (!playerData.IsSuccess || !playerData.HasData) throw new DataNotExistExecption(playerData.Message);
 
-                var troopData = CacheTroopDataManager.GetFullTroopLevelData(type, troopLevel);
-                var singleTroopTime = troopData.Data.TraningTime;
-                var finalTime = singleTroopTime * count;
-                var cost = RecruitCost(type, troopLevel, count);
+//                var troopData = CacheTroopDataManager.GetFullTroopLevelData(type, troopLevel);
+//                var singleTroopTime = troopData.Data.TraningTime;
+//                var finalTime = singleTroopTime * count;
 
-                var playerGems = playerData.Data.Resources.Gems;
-                if (playerGems < cost) return new Response<UserTroopData>(200, "Not enough gems");
-
-                var resCut = await _userResourceManager.SumGemsResource(playerId, -cost);
-                if (!resCut.IsSuccess) return new Response<UserTroopData>(200, "Not enough gems");
-
-                foreach (var troop in playerData.Data.Troops)
+                int trainingCount = count;
+                double multiplier = 1;
+                if (count == 0)//speed up instant
                 {
-                    if (troop.TroopType == type)
-                    {
-                        foreach (var troopLvl in troop.TroopData)
-                        {
-                            if (troopLvl.Level == troopLevel)
-                            {
-                                troopLvl.Count += count;
-                            }
-
-                            return await _userTroopManager.UpdateTroops(playerId, type, troop.TroopData);
-                        }
-                    }
+                    var troopInfo = GetTroopTrainingData(locId, type, playerData.Data.Troops);
+                    multiplier = ((troopInfo.TimeLeft / 30f) * 30) / troopInfo.Duration;
+                    trainingCount = troopInfo.Count;
                 }
 
-                var troopDataList = new List<TroopDetails>();
-                troopDataList.Add(new TroopDetails()
+                var cost = RecruitCost(type, troopLevel, trainingCount);
+                var finalCost = (int)Math.Ceiling(cost * multiplier);
+
+
+                var playerGems = playerData.Data.Resources.Gems;
+                if (playerGems < finalCost) return new Response<UserTroopData>(200, "Not enough gems");
+
+                var resCut = await _userResourceManager.SumGemsResource(playerId, -finalCost);
+                if (!resCut.IsSuccess) return new Response<UserTroopData>(200, "Not enough gems");
+
+                List<TroopDetails> troopDataList = null;
+                TroopDetails data = null;
+                var troops = playerData.Data.Troops.Find(x => (x.TroopType == type));
+                if (troops != null)
                 {
-                    Count = count,
-                    Level = troopLevel,
-                });
+                    troopDataList = troops.TroopData;
+                    data = troopDataList.Find(x => (x.Level == troopLevel));
+                }
+                else
+                {
+                    troopDataList = new List<TroopDetails>();
+                }
+
+                if (count > 0)//normal instant
+                {
+                    if (data == null)
+                    {
+                        data = new TroopDetails() { Level = troopLevel };
+                        troopDataList.Add(data);
+                    }
+                    data.Count += count;
+                }
+                else if (data != null)//speed up instant
+                {
+                    var training = data.InTraning.Find(x => (x.BuildingLocId == locId));
+                    if (training != null) data.InTraning.Remove(training);
+                    if (data.InTraning.Count == 0) data.InTraning = null;
+                }
 
                 return await _userTroopManager.UpdateTroops(playerId, type, troopDataList);
             }
@@ -363,7 +406,5 @@ namespace GameOfRevenge.Business.Manager.UserData
             catch (RequirementExecption ex) { return new Response<UserTroopData>(202, ErrorManager.ShowError(ex)); }
             catch (Exception ex) { return new Response<UserTroopData>(0, ErrorManager.ShowError(ex)); }
         }
-
-
     }
 }
