@@ -47,33 +47,37 @@ namespace GameOfRevenge.Business.Manager.GameDef
                 {
                     var chapterId = chapter.ChapterId;
                     var quests = new List<QuestRewardRelData>();
-                    var chapterQuests = allChapterQuests.Data.Where(x => x.ChapterId == chapterId).ToList();
-                    List<DataReward> chapterRewards = null;
-                    chapterRewards = new List<DataReward>();//TODO: remove this on future builds, we should be able to send null data
+                    var chapterQuests = allChapterQuests.Data.Where(x => (x.ChapterId == chapterId)).ToList();
+                    QuestRewardRelData chapterRewardRelData = null;// new QuestRewardRelData();
+//                    chapterRewardRelData.Rewards = new List<DataReward>();//TODO: remove this on future builds, we should be able to send null data
                     foreach (var quest in chapterQuests)
                     {
                         var questId = quest.QuestId;
-                        var questData = allQuests.Data.Find(x => x.QuestId == questId);
+                        var questData = allQuests.Data.Find(x => (x.QuestId == questId));
                         if (questData == null) continue;
-                        if ((questData.QuestType == QuestType.Custom) && (questData.MilestoneId == 0))
-                        {
-                            chapterRewards = allQuestRewards.Data.Where(x => x.QuestId == questId).ToList();
-                            continue;//chapter quest rewards
-                        }
 
-                        quests.Add(new QuestRewardRelData()
+                        var questRewards = new QuestRewardRelData()
                         {
                             Quest = questData,
-                            Rewards = allQuestRewards.Data.Where(x => x.QuestId == questId).ToList()
-                        });
+                            Rewards = allQuestRewards.Data.Where(x => (x.QuestId == questId)).ToList()
+                        };
+
+                        if ((questData.QuestType == QuestType.Custom) && (questData.MilestoneId == 0))
+                        {
+                            chapterRewardRelData = questRewards;//chapter quest rewards
+                        }
+                        else
+                        {
+                            quests.Add(questRewards);
+                        }
                     }
                     
                     response.Data.Add(new ChapterQuestRelData()
                     {
                         Chapter = chapter,
                         Quests = quests,
-                        Rewards = chapterRewards
-//                        Rewards = allChapterRewards.Data.Where(x => x.QuestId == chapterId).ToList()
+                        Rewards = ((chapterRewardRelData != null) && (chapterRewardRelData.Rewards != null)) ? chapterRewardRelData.Rewards : new List<DataReward>(),
+                        QuestRewards = chapterRewardRelData
                     });
                 }
 

@@ -588,7 +588,7 @@ namespace GameOfRevenge.Business.Manager.UserData
 
                     if (SAVE)
                     {
-                        var response = await userHeroManager.UnlockHero(attackerArmy.PlayerId, heroTable.Code, 1);
+                        var response = await userHeroManager.AddHeroPoints(attackerArmy.PlayerId, heroTable.Code, 1);
                     }
                 }
 /*                if (king.TimeLeft > 0)

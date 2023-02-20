@@ -33,6 +33,7 @@ namespace GameOfRevenge.Common.Models.Quest
         public ChapterTable Chapter { get; set; }
         public List<QuestRewardRelData> Quests { get; set; }
         public List<DataReward> Rewards { get; set; }
+        public QuestRewardRelData QuestRewards { get; set; }
 
         [DebuggerBrowsable(DebuggerBrowsableState.Never)]
         IReadOnlyChapterTable IReadOnlyChapterQuestRelData.Chapter { get => Chapter; }

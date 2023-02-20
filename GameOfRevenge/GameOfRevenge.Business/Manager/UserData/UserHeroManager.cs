@@ -140,63 +140,71 @@ namespace GameOfRevenge.Business.Manager.UserData
             }
         }*/
 
-        public async Task<Response<UserHeroDetails>> UnlockHero(int playerId, HeroType type, int pts = 10)
+        public async Task<Response<UserHeroDetails>> UnlockHero(int playerId, HeroType type)
         {
             if (type == HeroType.Unknown)
             {
                 return new Response<UserHeroDetails>() { Case = 202, Message = "Invalid parameters" };
             }
 
-            return await UnlockHero(playerId, type.ToString(), pts);
+            return await AddHeroPoints(playerId, type.ToString(), 0, true);
         }
 
-        public async Task<Response<UserHeroDetails>> UnlockHero(int playerId, string type, int pts = 10)
+        public async Task<Response<UserHeroDetails>> AddHeroPoints(int playerId, string type, int pts, bool unlock = false)
         {
             try
             {
                 var hero = CacheHeroDataManager.GetFullHeroData(type);
                 if (hero == null) throw new CacheDataNotExistExecption("Hero does not exist");
+
                 int valueId = hero.Info.HeroId;
                 var response = await manager.GetAllPlayerData(playerId, DataType.Hero);
                 if (response.IsSuccess)
                 {
                     UserHeroDetails heroDetails = null;
-                    PlayerDataTable userHeroTable = response.Data.Find(x => x.ValueId == valueId);
+                    PlayerDataTable userHeroTable = response.Data.Find(x => (x.ValueId == valueId));
                     if (userHeroTable != null)
                     {
                         heroDetails = JsonConvert.DeserializeObject<UserHeroDetails>(userHeroTable.Value);
-//                        heroDetails.Id = userHeroTable.Id;
-
-                        if (pts == 10)
-                        {
-                            if (heroDetails.Points < 10) heroDetails.Points = 10;
-                        }
-                        else
-                        {
-                            heroDetails.Points += pts;
-                        }
-                        var heroJson = JsonConvert.SerializeObject(heroDetails);
-                        var saveResponse = await manager.UpdatePlayerDataID(playerId, userHeroTable.Id, heroJson);
-
-                        return new Response<UserHeroDetails>(heroDetails, 101, "Hero already unlocked");
                     }
                     else
                     {
-                        heroDetails = new UserHeroDetails()
-                        {
-                            HeroCode = hero.Info.Code,
-                            Points = pts
-                        };
-
-                        var data = JsonConvert.SerializeObject(heroDetails);
-                        var response2 = await manager.AddOrUpdatePlayerData(playerId, DataType.Hero, valueId, data);
-                        if (!response2.IsSuccess)
-                        {
-                            return new Response<UserHeroDetails>(response2.Case, response2.Message);
-                        }
-
-                        return new Response<UserHeroDetails>(heroDetails, 100, "Hero unlocked");
+                        heroDetails = new UserHeroDetails() { HeroCode = hero.Info.Code };
                     }
+
+                    if (unlock)
+                    {
+                        if (heroDetails.Points < UserHeroDetails.UNLOCK_POINTS)
+                        {
+                            heroDetails.Points = UserHeroDetails.UNLOCK_POINTS;
+                        }
+                        else
+                        {
+                            return new Response<UserHeroDetails>(heroDetails, 101, "Hero already unlocked");
+                        }
+                    }
+                    else
+                    {
+                        heroDetails.Points += pts;
+                    }
+
+                    var heroJson = JsonConvert.SerializeObject(heroDetails);
+                    Response<PlayerDataTableUpdated> saveResponse = null;
+                    if (userHeroTable != null)
+                    {
+                        saveResponse = await manager.UpdatePlayerDataID(playerId, userHeroTable.Id, heroJson);
+                    }
+                    else
+                    {
+                        saveResponse = await manager.AddOrUpdatePlayerData(playerId, DataType.Hero, valueId, heroJson);
+                    }
+                    if (!saveResponse.IsSuccess)
+                    {
+                        return new Response<UserHeroDetails>(saveResponse.Case, saveResponse.Message);
+                    }
+
+                    var str = unlock ? "Hero unlocked" : "Points added";
+                    return new Response<UserHeroDetails>(heroDetails, 100, str);
                 }
                 else
                 {
@@ -205,23 +213,23 @@ namespace GameOfRevenge.Business.Manager.UserData
             }
             catch (InvalidModelExecption ex)
             {
-                return new Response<UserHeroDetails>() { Case = 200, Message = ex.Message };// ErrorManager.ShowError(ex) };
+                return new Response<UserHeroDetails>() { Case = 200, Message = ErrorManager.ShowError(ex) };
             }
             catch (CacheDataNotExistExecption ex)
             {
-                return new Response<UserHeroDetails>() { Case = 201, Message = ex.Message };// ErrorManager.ShowError(ex) };
+                return new Response<UserHeroDetails>() { Case = 201, Message = ErrorManager.ShowError(ex) };
             }
             catch (DataNotExistExecption ex)
             {
-                return new Response<UserHeroDetails>() { Case = 202, Message = ex.Message };// ErrorManager.ShowError(ex) };
+                return new Response<UserHeroDetails>() { Case = 202, Message = ErrorManager.ShowError(ex) };
             }
             catch (RequirementExecption ex)
             {
-                return new Response<UserHeroDetails>() { Case = 203, Message = ex.Message };// ErrorManager.ShowError(ex) };
+                return new Response<UserHeroDetails>() { Case = 203, Message = ErrorManager.ShowError(ex) };
             }
             catch (Exception ex)
             {
-                return new Response<UserHeroDetails>() { Case = 0, Message = ex.Message };// ErrorManager.ShowError() };
+                return new Response<UserHeroDetails>() { Case = 0, Message = ErrorManager.ShowError() };
             }
         }
 

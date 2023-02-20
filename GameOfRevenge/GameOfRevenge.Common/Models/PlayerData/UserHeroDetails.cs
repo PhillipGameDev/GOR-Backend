@@ -5,9 +5,11 @@ using System.Runtime.Serialization;
 
 namespace GameOfRevenge.Common.Models
 {
+    [System.Serializable]
     [DataContract]
     public class UserHeroDetails
     {
+        public const int UNLOCK_POINTS = 10;
 //        public long Id { get; set; }//id
 
         [DataMember]
@@ -32,7 +34,7 @@ namespace GameOfRevenge.Common.Models
 //        [JsonIgnore]
 //        public bool IsAvaliable { get => !IsMarching && Unlocked; }
 
-        public int Level => 1 + (int)Math.Floor(Points / 10f);// 10 warpoints = 1 level
+        public int Level => (int)Math.Floor(Points / (float)UNLOCK_POINTS);// 10 warpoints = 1 level
 //        public int WarPoints => (int)Math.Floor(Points / 5f);// 5 battles = 1 war point
 
     }

@@ -74,6 +74,7 @@ namespace GameOfRevenge.Business.CacheData
                         foreach (var chapterQuest in chapterQuests)
                         {
                             all.AddRange(chapterQuest.Quests);
+                            if (chapterQuest.QuestRewards != null) all.Add(chapterQuest.QuestRewards);
                         }
                         all.AddRange(sideQuests);
                         all.AddRange(dailyQuests);
