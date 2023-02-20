@@ -49,6 +49,41 @@ namespace GameOfRevenge.Business.Manager.UserData
             };
         }
 
+        public async Task<Response<UserStructureData>> CheckBuildingStatus(int playerId, int location)
+        {
+            var allPlayerData = await manager.GetAllPlayerData(playerId);
+            if (allPlayerData.IsSuccess)
+            {
+                var userStructures = allPlayerData.Data.Where(x => (x.DataType == DataType.Structure));
+                if (userStructures != null)
+                {
+                    foreach (var structures in userStructures)
+                    {
+                        if (structures == null) continue;
+
+                        var userStructureData = PlayerDataToUserStructureData(structures);
+                        if (!userStructureData.Value.Exists(x => (x.Location == location))) continue;
+
+                        return new Response<UserStructureData>()
+                        {
+                            Case = 100,
+                            Data = userStructureData,
+                            Message = "Fetched building data"
+                        };
+                    }
+                }
+
+                allPlayerData.Message = "User building not found";
+            }
+
+            return new Response<UserStructureData>()
+            {
+                Case = 200,
+                Data = null,
+                Message = allPlayerData.Message
+            };
+        }
+
         private async Task<Response<UserRecordBuilderDetails>> SetBuilderTask(int playerId, bool createBuilder, List<UserRecordBuilderDetails> builders, int duration, int location, DateTime startTime)
         {
             UserRecordBuilderDetails currBuilder = null;
@@ -376,33 +411,111 @@ namespace GameOfRevenge.Business.Manager.UserData
                         targetBld.Duration -= seconds;
                         if (targetBld.Duration < 0) targetBld.Duration = 0;
 
-//                        locData.EndTime = locData.EndTime.AddMinutes(-helpPower);
-//                        var respModel = await manager.AddOrUpdatePlayerData(toPlayerId, DataType.Structure, CacheStructureDataManager.GetFullStructureData(type).Info.Id, JsonConvert.SerializeObject(dataList));
                         var json = JsonConvert.SerializeObject(dataList);
                         var respModel = await manager.UpdatePlayerDataID(toPlayerId, targetStructures.Data.Id, json);
 
-                        //TODO:remove the initial checkbuildingstatus method and use the next line instead
-                        var targetPlayerData = await GetFullPlayerData(toPlayerId);
-                        var builder = targetPlayerData.Data.Builders.Find(x => (x.Location == location));
+                        var builder = await GetBuilder(toPlayerId, location);
                         if (builder != null)
                         {
                             builder.Duration = targetBld.Duration;
                             json = JsonConvert.SerializeObject((UserBuilderDetails)builder);
-                            var builderResp = await manager.UpdatePlayerDataID(playerId, builder.Id, json);
+                            var builderResp = await manager.UpdatePlayerDataID(toPlayerId, builder.Id, json);
                         }
 
-                        var userData = new UserStructureData()
-                        {
-                            Id = respModel.Data.Id,
-                            DataType = DataType.Structure,
-                            ValueId = type,
-                            Value = dataList
-                        };
-                        return new Response<UserStructureData>(userData, 100, "Structure helped succesfully");
+                        return new Response<UserStructureData>(targetStructures.Data, 100, "Structure helped succesfully");
                     }
                     else
                     {
                         return new Response<UserStructureData>(201, "Help not required");
+                    }
+                }
+            }
+
+            return new Response<UserStructureData>(200, "Structure does not exists");
+        }
+
+        async Task<List<UserRecordBuilderDetails>> GetBuilders(int playerId)
+        {
+            var builders = new List<UserRecordBuilderDetails>();
+
+            var resp = await manager.GetAllPlayerData(playerId, DataType.Custom, 2);
+            if (resp.IsSuccess)
+            {
+                foreach (var data in resp.Data)
+                {
+                    UserRecordBuilderDetails builder = null;
+                    try
+                    {
+                        builder = JsonConvert.DeserializeObject<UserRecordBuilderDetails>(data.Value);
+                    }
+                    catch { }
+
+                    if (builder != null)
+                    {
+                        builder.Id = data.Id;
+                        builders.Add(builder);
+                    }
+                }
+            }
+
+            return builders;
+        }
+
+        async Task<UserRecordBuilderDetails> GetBuilder(int playerId, int location)
+        {
+            var resp = await manager.GetAllPlayerData(playerId, DataType.Custom, 2);
+            if (resp.IsSuccess)
+            {
+                foreach (var data in resp.Data)
+                {
+                    UserRecordBuilderDetails builder = null;
+                    try
+                    {
+                        builder = JsonConvert.DeserializeObject<UserRecordBuilderDetails>(data.Value);
+                    }
+                    catch { }
+
+                    if ((builder != null) && (builder.Location == location))
+                    {
+                        builder.Id = data.Id;
+                        return builder;
+                    }
+                }
+            }
+
+            return null;
+        }
+
+        public async Task<Response<UserStructureData>> SpeedupBuilding(int toPlayerId, int location, int seconds)
+        {
+            var targetStructures = await CheckBuildingStatus(toPlayerId, location);
+            if (targetStructures.IsSuccess && targetStructures.HasData)
+            {
+                var dataList = targetStructures.Data.Value;
+                var targetBld = dataList.Find(x => (x.Location == location));
+                if (targetBld != null)
+                {
+                    if (targetBld.TimeLeft > 2)
+                    {
+                        targetBld.Duration -= seconds;
+                        if (targetBld.Duration < 0) targetBld.Duration = 0;
+
+                        var json = JsonConvert.SerializeObject(dataList);
+                        var respModel = await manager.UpdatePlayerDataID(toPlayerId, targetStructures.Data.Id, json);
+
+                        var builder = await GetBuilder(toPlayerId, location);
+                        if (builder != null)
+                        {
+                            builder.Duration = targetBld.Duration;
+                            json = JsonConvert.SerializeObject((UserBuilderDetails)builder);
+                            var builderResp = await manager.UpdatePlayerDataID(toPlayerId, builder.Id, json);
+                        }
+
+                        return new Response<UserStructureData>(targetStructures.Data, 100, "Building time successfully reduced");
+                    }
+                    else
+                    {
+                        return new Response<UserStructureData>(201, "Time reduction not required");
                     }
                 }
             }
@@ -557,7 +670,7 @@ namespace GameOfRevenge.Business.Manager.UserData
 
 
 
-        #region Gate
+#region Gate
         public async Task<Response> UpdateGate(int playerId, int hp)
         {
             var existing = await CheckBuildingStatus(playerId, StructureType.Gate);
@@ -579,6 +692,7 @@ namespace GameOfRevenge.Business.Manager.UserData
             var respModel = await manager.AddOrUpdatePlayerData(playerId, DataType.Structure, gateId, json);
             return new Response<UserStructureData>(respModel.Case, respModel.Message);
         }
+
         public async Task<Response<int>> RepairGate(int playerId)
         {
             var existing = await CheckBuildingStatus(playerId, StructureType.Gate);
@@ -668,7 +782,7 @@ namespace GameOfRevenge.Business.Manager.UserData
 
             return new Response<GateHpData>(gateHpData, 100, "Missing hp");
         }
-        #endregion
+#endregion
     }
 }
 

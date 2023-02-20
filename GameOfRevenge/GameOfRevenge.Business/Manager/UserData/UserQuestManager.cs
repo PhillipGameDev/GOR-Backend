@@ -3,7 +3,6 @@ using GameOfRevenge.Business.Manager.Base;
 using GameOfRevenge.Common;
 using GameOfRevenge.Common.Interface;
 using GameOfRevenge.Common.Models;
-using GameOfRevenge.Common.Models.PlayerData;
 using GameOfRevenge.Common.Models.Quest;
 using GameOfRevenge.Common.Models.Quest.Template;
 using GameOfRevenge.Common.Net;
@@ -18,6 +17,9 @@ namespace GameOfRevenge.Business.Manager.UserData
 {
     public class UserQuestManager : BaseManager, IUserQuestManager
     {
+        private readonly UserHeroManager userHeroManager = new UserHeroManager();
+        private readonly UserStructureManager userStructureManager = new UserStructureManager();
+        private readonly UserTroopManager userTroopManager = new UserTroopManager();
         private readonly UserResourceManager resmanager = new UserResourceManager();
         protected static readonly IPlayerDataManager manager = new PlayerDataManager();
 
@@ -466,7 +468,7 @@ namespace GameOfRevenge.Business.Manager.UserData
             }
         }
 
-        public async Task<Response<PlayerDataTableUpdated>> ConsumeReward(int playerId, long playerDataId, int contextId = 0)
+        public async Task<Response<PlayerDataTableUpdated>> ConsumeReward(int playerId, long playerDataId, string contextId = null)
         {
             var resp = await manager.GetPlayerDataById(playerDataId);
             if (!resp.IsSuccess || !resp.HasData) return new Response<PlayerDataTableUpdated>(200, "User reward not found");
@@ -485,30 +487,105 @@ namespace GameOfRevenge.Business.Manager.UserData
                     count--;
                     try
                     {
+                        long kingDetailsId = 0;
+                        UserKingDetails kingDetails = null;
+                        if ((rewardData.DataType == DataType.Custom) || (rewardData.DataType == DataType.Hero))
+                        {
+                            var kingresp = await manager.GetPlayerData(playerId, DataType.Custom, 1);
+                            if (kingresp.IsSuccess && kingresp.HasData)
+                            {
+                                kingDetails = JsonConvert.DeserializeObject<UserKingDetails>(kingresp.Data.Value);
+                                kingDetailsId = kingresp.Data.Id;
+                            }
+                            if (kingDetails == null) throw new Exception("King data corrupted");
+                        }
+
+                        bool updateKing = false;
                         switch (rewardData.DataType)
                         {
                             case DataType.Custom:
-                                UserKingDetails kingDetails = null;
-                                var kingresp = await manager.GetPlayerData(playerId, DataType.Custom, 1);
-                                if (kingresp.IsSuccess && kingresp.HasData)
-                                {
-                                    kingDetails = JsonConvert.DeserializeObject<UserKingDetails>(kingresp.Data.Value);
-                                }
-                                if (kingDetails == null) throw new Exception("King data corrupted");
-
                                 switch (rewardData.ValueId)
                                 {
                                     case 1: kingDetails.Experience += rewardData.Value; break; //king exp
                                     case 2: kingDetails.MaxStamina += rewardData.Value; break; //king stamina
                                 }
-                                var kingjson = JsonConvert.SerializeObject(kingDetails);
-                                var kingResp = await manager.UpdatePlayerDataID(playerId, kingresp.Data.Id, kingjson);
-                                if (!kingresp.IsSuccess) throw new Exception(kingResp.Message);
+                                updateKing = true;
                                 break;
                             case DataType.Resource:
                                 var sumResp = await resmanager.SumResource(playerId, rewardData.ValueId, rewardData.Value);
                                 if (!sumResp.IsSuccess) throw new Exception(sumResp.Message);
                                 break;
+                            case DataType.Hero:
+                                switch (rewardData.ValueId)
+                                {
+                                    case 1: //hero points
+                                        var heroResp = await userHeroManager.AddHeroPoints(playerId, contextId, rewardData.Value);
+                                        if (!heroResp.IsSuccess) throw new Exception(heroResp.Message);
+                                        break;
+                                }
+//                                updateKing = true;
+                                break;
+                            case DataType.Structure:
+                                int.TryParse(contextId, out int locationId);
+                                if (locationId > 0)
+                                {
+                                    var speedupResp = await userStructureManager.SpeedupBuilding(playerId, locationId, rewardData.Value);
+                                    if (speedupResp.IsSuccess) throw new Exception(speedupResp.Message);
+                                }
+                                else
+                                {
+                                    throw new Exception("Invalid Building location");
+                                }
+                                break;
+                            case DataType.Troop:
+                                int.TryParse(contextId, out int placementId);
+                                if (placementId > 0)
+                                {
+                                    var fullPlayerData = await userTroopManager.GetFullPlayerData(playerId);
+                                    if (!fullPlayerData.IsSuccess) throw new Exception(fullPlayerData.Message);
+
+                                    TroopType troopType = TroopType.Other;
+                                    List<TroopDetails> listTroops = null;
+                                    List<UnavaliableTroopInfo> listInTraining = null;
+                                    UnavaliableTroopInfo troopTraining = null;
+                                    fullPlayerData.Data.Troops.Find(troop =>
+                                    {
+                                        TroopDetails troopDetails = null;
+                                        if (troop.TroopData != null)
+                                        {
+                                            troopType = troop.TroopType;
+                                            listTroops = troop.TroopData;
+                                            troopDetails = listTroops?.Find((data) =>
+                                            {
+                                                listInTraining = data.InTraning;
+                                                troopTraining = listInTraining?.Find((info) => (info.BuildingLocId == placementId));
+                                                return troopTraining != null;
+                                            });
+                                        }
+
+                                        return troopDetails != null;
+                                    });
+                                    if (troopTraining == null) throw new Exception("Training troop not found");
+
+                                    troopTraining.Duration -= rewardData.Value;
+                                    if (troopTraining.Duration < 0)
+                                    {
+                                        listInTraining.Remove(troopTraining);
+                                    }
+                                    await userTroopManager.UpdateTroops(playerId, troopType, listTroops);
+                                }
+                                else
+                                {
+                                    throw new Exception("Invalid Troop location");
+                                }
+                                break;
+                        }
+
+                        if (updateKing)
+                        {
+                            var kingjson = JsonConvert.SerializeObject(kingDetails);
+                            var kingResp = await manager.UpdatePlayerDataID(playerId, kingDetailsId, kingjson);
+                            if (!kingResp.IsSuccess) throw new Exception(kingResp.Message);
                         }
                     }
                     catch (Exception ex)

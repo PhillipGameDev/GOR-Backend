@@ -59,7 +59,7 @@ namespace GameOfRevenge.WebServer.Controllers.Api
         }
 
         [HttpPost]
-        public async Task<IActionResult> ConsumeReward(long playerDataId, int contextId = 0)
+        public async Task<IActionResult> ConsumeReward(long playerDataId, string contextId = null)
         {
             var response = await questManager.ConsumeReward(Token.PlayerId, playerDataId, contextId);
             return ReturnResponse(response);

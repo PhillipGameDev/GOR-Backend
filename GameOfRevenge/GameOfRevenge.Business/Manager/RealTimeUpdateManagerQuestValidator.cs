@@ -51,7 +51,7 @@ namespace GameOfRevenge.Business.Manager
 
         public async Task PlayerDataChanged(int playerId)
         {
-            log.Info("player "+playerId+" data changed");
+            log.Info("player " + playerId + " data changed");
             allPlayerDatas.TryGetValue(playerId, out var data);
             if (data == null) return;
 
@@ -59,6 +59,7 @@ namespace GameOfRevenge.Business.Manager
             //peer.Actor.InternalPlayerDataManager
             //TODO2: method used to pull fresh data from server after a change was done in server
             //we should improve the update request to reduce the pull data
+
             var userData = await userManager.GetFullPlayerData(playerId);
             var userQuestData = await questManager.GetUserAllQuestProgress(playerId, true);
 
@@ -275,99 +276,97 @@ namespace GameOfRevenge.Business.Manager
         public void CheckPlayerQuestData(PlayerUserQuestData data)
         {
             //check daily quest
-            log.Info("check quests");
+            log.Info("--check quests");
+            var showLog = data.UserData.IsAdmin;
             int idx = 0;
             foreach (var userQuest in data.QuestData.DailyQuests)
             {
                 idx++;
-                log.Info(idx+"  "+userQuest.QuestId+"   c:"+userQuest.Completed+"   "+userQuest.ProgressData);
+                if (showLog) log.Info(idx+"  "+userQuest.QuestId+"   c:"+userQuest.Completed+"   "+userQuest.ProgressData);
                 if (!userQuest.Completed) CheckQuestProgress(data, userQuest);
             }
 
             //check side quest
+            if (showLog) log.Info("--side quests");
             foreach (var userQuest in data.QuestData.SideQuests)
             {
-                log.Info(userQuest.QuestId + "   c:" + userQuest.Completed + "   " + userQuest.ProgressData);
+                if (showLog) log.Info(userQuest.QuestId + "   c:" + userQuest.Completed + "   " + userQuest.ProgressData);
                 if (!userQuest.Completed) CheckQuestProgress(data, userQuest);
             }
 
             //check current milestone quest
+            if (showLog) log.Info("--chapter quests");
             var currChapterQuest = data.QuestData.ChapterQuests.Find(x => !x.Completed());
             if (currChapterQuest != null)
             {
                 var currQuest = currChapterQuest.Quests.Find(x => !x.Completed);
                 if (currQuest != null) CheckQuestProgress(data, currQuest);
             }
+            if (showLog) log.Info("----");
         }
 
         public void CheckQuestProgress(PlayerUserQuestData data, UserQuestProgressData currentQuest)
         {
+            var showLog = data.UserData.IsAdmin;
+
             switch (currentQuest.QuestType)
             {
                 case QuestType.BuildingUpgrade:
+                    if (showLog) log.Info("check building upgrade");
                     var initialData1 = JsonConvert.DeserializeObject<QuestBuildingData>(currentQuest.InitialData);
-                    QuestBuildingData progressData1 = null;
+                    bool completed1 = false;
                     if (!string.IsNullOrEmpty(currentQuest.ProgressData))
                     {
-                        progressData1 = JsonConvert.DeserializeObject<QuestBuildingData>(currentQuest.ProgressData);
+                        var progressData1 = JsonConvert.DeserializeObject<QuestBuildingData>(currentQuest.ProgressData);
+                        completed1 = (progressData1 != null) && (progressData1.Level >= initialData1.Level);
                     }
 
-                    if (progressData1?.Level >= initialData1.Level)
+                    if (!completed1)
+                    {
+                        var bld = data.UserData.Structures.Find(x => (x.StructureType == initialData1.StructureType))?
+                                        .Buildings.Find(x =>
+                                        {
+                                            var lvl = x.Level - ((x.TimeLeft > 0)? 1 : 0);
+                                            return lvl >= initialData1.Level;
+                                        });
+                        completed1 = (bld != null);
+                    }
+
+                    if (completed1 && !currentQuest.Completed)
                     {
                         currentQuest.ProgressData = currentQuest.InitialData;
                         currentQuest.Completed = true;
 
                         UpdateQuestData(data, currentQuest);
                     }
-                    else
-                    {
-                        var structureDetails = data.UserData.Structures.Find(x => x.StructureType == initialData1.StructureType)?
-                                                .Buildings.Find(x => (x.TimeLeft <= 0) && (x.Level >= initialData1.Level));
-                        if (structureDetails != null)
-                        {
-                            currentQuest.ProgressData = currentQuest.InitialData;
-                            currentQuest.Completed = true;
-
-                            UpdateQuestData(data, currentQuest);
-                        }
-                    }
                     break;
                 case QuestType.XBuildingCount:
-                    int progress2Count = 0;
+                    if (showLog) log.Info("check building count");
                     var initialData2 = JsonConvert.DeserializeObject<QuestBuildingData>(currentQuest.InitialData);
                     QuestBuildingData progressData2 = null;
+                    bool completed2 = false;
                     if (!string.IsNullOrEmpty(currentQuest.ProgressData))
                     {
                         progressData2 = JsonConvert.DeserializeObject<QuestBuildingData>(currentQuest.ProgressData);
-                        progress2Count = progressData2.Count;
+                        completed2 = (progressData2 != null) && (progressData2.Count >= initialData2.Count);
                     }
 
-                    if (progressData2?.Count >= initialData2.Count)
+                    if (!completed2)
                     {
-//                        currentQuest.ProgressData = currentQuest.InitialData;
-                        progressData2.Count = 0;
-                        currentQuest.ProgressData = JsonConvert.SerializeObject(progressData2);
-                        currentQuest.Completed = true;
-
-                        UpdateQuestData(data, currentQuest);
-                    }
-                    else
-                    {
-                        var structureDetails = data.UserData.Structures.Find(x => x.StructureType == initialData2.StructureType)?
-                                                .Buildings.Where(x => (x.TimeLeft <= 0))?.ToList();
-                        if (structureDetails != null)
+                        var blds = data.UserData.Structures.Find(x => (x.StructureType == initialData2.StructureType));
+                        if (blds != null)
                         {
-                            int count = structureDetails.Count;
+                            var count = blds.Buildings.Sum(x =>
+                            {
+                                var lvl = x.Level - ((x.TimeLeft > 0) ? 1 : 0);
+                                return (lvl >= 1) ? 1 : 0;
+                            });
+
                             if (count >= initialData2.Count)
                             {
-                                progressData2.Count = 0;
-                                currentQuest.ProgressData = JsonConvert.SerializeObject(progressData2);
-//                                currentQuest.ProgressData = currentQuest.InitialData;
-                                currentQuest.Completed = true;
-
-                                UpdateQuestData(data, currentQuest);
+                                completed2 = true;
                             }
-                            else if (count > progress2Count)
+                            else if ((progressData2 == null) || (count > progressData2.Count))
                             {
                                 progressData2 = initialData2;
                                 progressData2.Count = count;
@@ -377,38 +376,70 @@ namespace GameOfRevenge.Business.Manager
                             }
                         }
                     }
-                    break;
-                case QuestType.ResourceCollection:
-                    var initialData3 = JsonConvert.DeserializeObject<QuestResourceData>(currentQuest.InitialData);
-                    QuestResourceData progressData3 = null;
-                    if (!string.IsNullOrEmpty(currentQuest.ProgressData))
+                    if (completed2 && !currentQuest.Completed)
                     {
-                        progressData3 = JsonConvert.DeserializeObject<QuestResourceData>(currentQuest.ProgressData);
-                    }
-
-                    if (progressData3?.Count >= initialData3.Count)
-                    {
-                        if (progressData3.Iteration > 0) progressData3.Iteration--;
-                        progressData3.Count = 0;//initialData3.Count;
-                        currentQuest.ProgressData = JsonConvert.SerializeObject(progressData3);
+                        progressData2 = initialData2;
+                        progressData2.Count = 0;
+                        currentQuest.ProgressData = JsonConvert.SerializeObject(progressData2);
                         currentQuest.Completed = true;
 
                         UpdateQuestData(data, currentQuest);
                     }
                     break;
+                case QuestType.ResourceCollection:
+                    if (showLog) log.Info("check resource collection");
+                    if (!string.IsNullOrEmpty(currentQuest.ProgressData))
+                    {
+                        var progressData3 = JsonConvert.DeserializeObject<QuestResourceData>(currentQuest.ProgressData);
+                        if (progressData3 != null)
+                        {
+                            var initialData3 = JsonConvert.DeserializeObject<QuestResourceData>(currentQuest.InitialData);
+                            if (progressData3.Count >= initialData3.Count)
+                            {
+                                if (progressData3.Iteration > 0) progressData3.Iteration--;
+                                progressData3.Count = 0;//initialData3.Count;
+                                currentQuest.ProgressData = JsonConvert.SerializeObject(progressData3);
+                                currentQuest.Completed = true;
+
+                                UpdateQuestData(data, currentQuest);
+                            }
+                        }
+                    }
+                    break;
                 case QuestType.XTroopCount:
-                    int progress4Count = 0;
+                    if (showLog) log.Info("check troop count");
                     var initialData4 = JsonConvert.DeserializeObject<QuestTroopData>(currentQuest.InitialData);
                     QuestTroopData progressData4 = null;
+                    bool completed4 = false;
                     if (!string.IsNullOrEmpty(currentQuest.ProgressData))
                     {
                         progressData4 = JsonConvert.DeserializeObject<QuestTroopData>(currentQuest.ProgressData);
-                        progress4Count = progressData4.Count;
+                        completed4 = (progressData4 != null) && (progressData4.Count >= initialData4.Count);
                     }
 
-                    if (progressData4?.Count >= initialData4.Count)
+                    if (!completed4)
                     {
-//                        currentQuest.ProgressData = currentQuest.InitialData;
+                        var troops = data.UserData.Troops.Find(x => (x.TroopType == initialData4.TroopType));
+                        if (troops != null)
+                        {
+                            var count = troops.TroopData.Sum(x => x.FinalCount);
+
+                            if (count >= initialData4.Count)
+                            {
+                                completed4 = true;
+                            }
+                            else if ((progressData4 == null) || (count > progressData4.Count))
+                            {
+                                progressData4 = initialData4;
+                                progressData4.Count = count;
+                                currentQuest.ProgressData = JsonConvert.SerializeObject(progressData4);
+
+                                UpdateQuestData(data, currentQuest);
+                            }
+                        }
+                    }
+                    if (completed4 && !currentQuest.Completed)
+                    {
                         if (progressData4.Iteration > 0) progressData4.Iteration--;
                         progressData4.Count = 0;
                         currentQuest.ProgressData = JsonConvert.SerializeObject(progressData4);
@@ -416,52 +447,31 @@ namespace GameOfRevenge.Business.Manager
 
                         UpdateQuestData(data, currentQuest);
                     }
-                    else
-                    {
-                        var count = 0;
-                        data.UserData.Troops.Find(x => (x.TroopType == initialData4.TroopType))?
-                                    .TroopData.ForEach(x => count += x.FinalCount);
-                        if (count >= initialData4.Count)
-                        {
-//                            currentQuest.ProgressData = currentQuest.InitialData;
-                            if (progressData4.Iteration > 0) progressData4.Iteration--;
-                            progressData4.Count = 0;
-                            currentQuest.ProgressData = JsonConvert.SerializeObject(progressData4);
-                            currentQuest.Completed = true;
-
-                            UpdateQuestData(data, currentQuest);
-                        }
-                        else if (count > progress4Count)
-                        {
-                            progressData4 = initialData4;
-                            progressData4.Count = count;
-                            currentQuest.ProgressData = JsonConvert.SerializeObject(progressData4);
-
-                            UpdateQuestData(data, currentQuest);
-                        }
-                    }
                     break;
                 case QuestType.TrainTroops:
-                    var initialData5 = JsonConvert.DeserializeObject<QuestTroopData>(currentQuest.InitialData);
-                    QuestTroopData progressData5 = null;
+                    if (showLog) log.Info("check train troops");
                     if (!string.IsNullOrEmpty(currentQuest.ProgressData))
                     {
-                        progressData5 = JsonConvert.DeserializeObject<QuestTroopData>(currentQuest.ProgressData);
-                    }
+                        var progressData5 = JsonConvert.DeserializeObject<QuestTroopData>(currentQuest.ProgressData);
+                        if (progressData5 != null)
+                        {
+                            var initialData5 = JsonConvert.DeserializeObject<QuestTroopData>(currentQuest.InitialData);
+                            if ((progressData5.Count >= initialData5.Count) &&
+                                ((initialData5.Level == 0) || (progressData5.Level == initialData5.Level)))
+                            {
+        //                        currentQuest.ProgressData = currentQuest.InitialData;
+                                if (progressData5.Iteration > 0) progressData5.Iteration--;
+                                progressData5.Count = 0;
+                                currentQuest.ProgressData = JsonConvert.SerializeObject(progressData5);
+                                currentQuest.Completed = true;
 
-                    if ((progressData5 != null) && (progressData5.Count >= initialData5.Count) &&
-                        ((initialData5.Level == 0) || (progressData5.Level == initialData5.Level)))
-                    {
-//                        currentQuest.ProgressData = currentQuest.InitialData;
-                        if (progressData5.Iteration > 0) progressData5.Iteration--;
-                        progressData5.Count = 0;
-                        currentQuest.ProgressData = JsonConvert.SerializeObject(progressData5);
-                        currentQuest.Completed = true;
-
-                        UpdateQuestData(data, currentQuest);
+                                UpdateQuestData(data, currentQuest);
+                            }
+                        }
                     }
                     break;
             }
+            if (showLog) log.Info("end chk");
         }
 
         private void UpdateQuestData(PlayerUserQuestData data, UserQuestProgressData currentQuest)

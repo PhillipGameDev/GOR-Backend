@@ -10,7 +10,7 @@ namespace GameOfRevenge.Common.Interface
     public interface IUserQuestManager
     {
         Task<Response<List<PlayerRewardDataTable>>> GetUserAllRewards(int playerId);
-        Task<Response<PlayerDataTableUpdated>> ConsumeReward(int playerId, long playerDataId, int contextId = 0);
+        Task<Response<PlayerDataTableUpdated>> ConsumeReward(int playerId, long playerDataId, string contextId = null);
 
 
         Task<Response<List<PlayerQuestDataTable>>> GetAllQuestProgress(int playerId);
