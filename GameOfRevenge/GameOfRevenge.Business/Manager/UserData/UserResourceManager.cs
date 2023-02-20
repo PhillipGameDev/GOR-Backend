@@ -335,7 +335,7 @@ namespace GameOfRevenge.Business.Manager.UserData
         public async Task<bool> RemoveResourceByRequirement(int playerId, IReadOnlyList<IReadOnlyDataRequirement> requirements) => await RemoveResourceByRequirement(playerId, requirements, 1);
         public async Task<bool> RefundResourceByRequirement(int playerId, IReadOnlyList<IReadOnlyDataRequirement> requirements) => await SumResourceByRequirement(playerId, requirements, 1);
 
-        public async Task<bool> RemoveResourceByRequirement(int playerId, IReadOnlyDataRequirement gems, int count) => await RemoveResourceByRequirement(playerId, new List<IReadOnlyDataRequirement>() { gems }, 1);
-        public async Task<bool> RefundResourceByRequirement(int playerId, IReadOnlyDataRequirement gems, int count) => await SumResourceByRequirement(playerId, new List<IReadOnlyDataRequirement>() { gems }, 1);
+        public async Task<bool> RemoveResourceByRequirement(int playerId, IReadOnlyDataRequirement gems, int count) => await RemoveResourceByRequirement(playerId, new List<IReadOnlyDataRequirement>() { gems }, count);
+        public async Task<bool> RefundResourceByRequirement(int playerId, IReadOnlyDataRequirement gems, int count) => await SumResourceByRequirement(playerId, new List<IReadOnlyDataRequirement>() { gems }, count);
     }
 }
