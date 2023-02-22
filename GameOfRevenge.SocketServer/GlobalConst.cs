@@ -6,10 +6,12 @@ namespace GameOfRevenge
     {
         public static (string worldName, byte worldId, BoundingBox boundingBox, Vector tileDimention) GetPopWorld()
         {
-            return ("popWorld", 1, new BoundingBox(new Vector(0, 0), new Vector(worldArea, worldArea)), new Vector(tileArea, tileArea));
+            var bounding = new BoundingBox(new Vector(0, 0), new Vector(worldArea, worldArea));
+            var tile = new Vector(tileArea, tileArea);
+            return ("popWorld", 1, bounding, tile);
         }
 
-        public const float worldArea = 1200;   //(1000*1000)/10*10 = 10000; tils
+        public const float worldArea = 10;   //(1000*1000)/10*10 = 10000; tils
         public const float tileArea = 1;
         public const float TilesIaX = 10;
         public const float TilesIaY = 10;

@@ -72,11 +72,14 @@ namespace GameOfRevenge.GameHandlers
                 this.PlayersManager = new PlayersManager();
                 this.Area = area;
                 this.TileDimensions = tileDimensions;
+                log.InfoFormat("world size = {0},{1}", Area.Size.X, Area.Size.Y);
+                log.InfoFormat("tile size = {0},{1}", tileDimensions.X, tileDimensions.Y);
                 this.TileX = (int)Math.Ceiling(Area.Size.X / (double)tileDimensions.X);
                 this.TileY = (int)Math.Ceiling(Area.Size.Y / (double)tileDimensions.Y);
 
                 var count = 0;
                 this.WorldRegions = new Region[TileX][];
+                log.Info("region len = "+WorldRegions.Length);
                 for (int x = 0; x < TileX; x++)
                 {
                     this.WorldRegions[x] = new Region[TileY];
@@ -99,6 +102,10 @@ namespace GameOfRevenge.GameHandlers
                                 this.PlayersManager.AddPlayer(playerId, actor);
 
                                 count++;
+                            }
+                            else
+                            {
+                                log.InfoFormat("player {0} missing for tile {1} ({2},{3})", playerId, worldPlayer.Id, worldPlayer.X, worldPlayer.Y);
                             }
                         }
                         this.WorldRegions[x][y] = worldRegion;
@@ -131,7 +138,7 @@ namespace GameOfRevenge.GameHandlers
         }
         public Region FindFreeRegion()
         {
-            int mapSize = 10;
+            int mapSize = WorldRegions.Length;
             //find randomly
             int xtries = 20;
             do
