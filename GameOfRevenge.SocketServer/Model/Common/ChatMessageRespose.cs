@@ -15,6 +15,9 @@ namespace GameOfRevenge.Model
         [DataMember(Code = (byte)RoomParameterKey.Username, IsOptional = true)]
         public string Username { get; set; }
 
+        [DataMember(Code = (byte)RoomParameterKey.VIPLevel, IsOptional = true)]
+        public byte VIPLevel { get; set; }
+
         [DataMember(Code = (byte)RoomParameterKey.AllianceId, IsOptional = true)]
         public int AllianceId { get; set; }
 

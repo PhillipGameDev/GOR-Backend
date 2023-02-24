@@ -224,12 +224,14 @@ namespace GameOfRevenge.GameHandlers
 
         private SendResult GlobalChat(IGorMmoPeer peer, OperationRequest operationRequest)
         {
+            
             GameLobbyHandler.log.Info(">>>>>GLOBAL CHAT");
             var operation = new ChatMessageRequest(peer.Protocol, operationRequest);
             ChatMessageRespose response = new ChatMessageRespose()
             {
-                PlayerId = operation.PlayerId,
-                Username = operation.Username,
+                PlayerId = peer.Actor.PlayerData.PlayerId, //operation.PlayerId,
+                Username = peer.Actor.PlayerData.Name, //operation.Username,
+                VIPLevel = peer.Actor.PlayerData.VIPLevel,
                 AllianceId = 0,//global chat alliance is zero. //operation.AllianceId,
                 Timestamp = DateTimeOffset.Now.ToUnixTimeSeconds(), //ToString("dd/MM/yyyy HH:mm:ss"),
                 ChatMessage = operation.ChatMessage
@@ -253,8 +255,9 @@ namespace GameOfRevenge.GameHandlers
             var operation = new ChatMessageRequest(peer.Protocol, operationRequest);
             ChatMessageRespose response = new ChatMessageRespose()
             {
-                PlayerId = operation.PlayerId,
-                Username = operation.Username,
+                PlayerId = peer.Actor.PlayerData.PlayerId, //operation.PlayerId,
+                Username = peer.Actor.PlayerData.Name, //operation.Username,
+                VIPLevel = peer.Actor.PlayerData.VIPLevel,
                 AllianceId = operation.AllianceId,
                 Timestamp = DateTimeOffset.Now.ToUnixTimeSeconds(),//ToString("dd/MM/yyyy HH:mm:ss"),
                 ChatMessage = operation.ChatMessage,
