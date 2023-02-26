@@ -1,6 +1,6 @@
 USE [GameOfRevenge]
 GO
-/****** Object:  StoredProcedure [dbo].[GetPlayerDetailsById]    Script Date: 1/22/2023 9:04:05 AM ******/
+/****** Object:  StoredProcedure [dbo].[GetPlayerDetailsById]    Script Date: 2/26/2023 1:58:06 AM ******/
 SET ANSI_NULLS ON
 GO
 SET QUOTED_IDENTIFIER ON
@@ -22,11 +22,12 @@ BEGIN
 	DECLARE @isAdmin BIT = NULL;
 	DECLARE @isDeveloper BIT = NULL;
 	DECLARE @kingLevel TINYINT = NULL;
-	DECLARE @vipLevel TINYINT = NULL;
+/*	DECLARE @vipLevel TINYINT = NULL;*/
+	DECLARE @vipPoints INT = NULL;
 	DECLARE @castleLevel TINYINT = NULL;
 	DECLARE @clanId INT = NULL;
 
-	SELECT @existingId = p.[PlayerId], @name = p.[Name] FROM [dbo].[Player] AS p WHERE p.[PlayerId] = @userId;
+	SELECT @existingId = p.[PlayerId], @name = p.[Name], @vipPoints = p.[VIPPoints] FROM [dbo].[Player] AS p WHERE p.[PlayerId] = @userId;
 
 	IF (@existingId IS NULL)
 		BEGIN
@@ -48,7 +49,7 @@ BEGIN
 				BEGIN CATCH
 				END CATCH
 
-			SELECT @json = c.[Value] FROM [dbo].[PlayerData] as c WHERE c.[PlayerId] = @existingId AND c.[DataTypeId] = 7 AND c.[ValueId] = 3;
+/*			SELECT @json = c.[Value] FROM [dbo].[PlayerData] as c WHERE c.[PlayerId] = @existingId AND c.[DataTypeId] = 7 AND c.[ValueId] = 3;
 			IF (@json IS NOT NULL)
 				BEGIN TRY
 					SELECT
@@ -57,7 +58,7 @@ BEGIN
 					WITH (Level TINYINT);
 				END TRY
 				BEGIN CATCH
-				END CATCH
+				END CATCH*/
 
 			SELECT @json = c.[Value] FROM [dbo].[PlayerData] as c WHERE c.[PlayerId] = @existingId AND c.[DataTypeId] = 2 AND c.[ValueId] = 1;
 			IF (@json IS NOT NULL)
@@ -93,7 +94,7 @@ BEGIN
 			SET @message = ERROR_MESSAGE();
 		END CATCH
 
-	SELECT 'PlayerId' = @existingId, 'Name' = @name, 'IsAdmin' = @isAdmin, 'IsDeveloper' = @isDeveloper, 'KingLevel' = @kingLevel, 'VIPLevel' = @vipLevel, 'CastleLevel' = @castleLevel, 'ClanId' = @clanId;
+	SELECT 'PlayerId' = @existingId, 'Name' = @name, 'IsAdmin' = @isAdmin, 'IsDeveloper' = @isDeveloper, 'KingLevel' = @kingLevel, 'VIPPoints' = @vipPoints, 'CastleLevel' = @castleLevel, 'ClanId' = @clanId;
 
 	IF (@Log = 1) EXEC [dbo].[GetMessage] @userId, @message, @case, @error, @time, 1, 1;
 END

@@ -14,7 +14,7 @@ namespace GameOfRevenge.Common.Models
         public bool IsAdmin { get; set; }
         public bool IsDeveloper { get; set; }
         public string JwtToken { get; set; }
-        public int WorldId { get; set; }
+        public int VIPPoints { get; set; }
         public int WorldTileId { get; set; }
 
         public PlayerInfo Info { get; set; }
@@ -29,7 +29,7 @@ namespace GameOfRevenge.Common.Models
             AcceptedTermAndCondition = reader.GetValue(index) != DBNull.Value && reader.GetBoolean(index); index++;
             IsAdmin = reader.GetValue(index) != DBNull.Value && reader.GetBoolean(index); index++;
             IsDeveloper = reader.GetValue(index) != DBNull.Value && reader.GetBoolean(index); index++;
-            WorldId = reader.GetValue(index) == DBNull.Value ? 0 : reader.GetInt32(index); index++;
+            VIPPoints = reader.GetValue(index) == DBNull.Value ? 0 : reader.GetInt32(index); index++;
             WorldTileId = reader.GetValue(index) == DBNull.Value ? 0 : reader.GetInt32(index); index++;
 
             if (reader.GetValue(index) != DBNull.Value)

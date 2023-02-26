@@ -1,6 +1,6 @@
 USE [GameOfRevenge]
 GO
-/****** Object:  StoredProcedure [dbo].[TryLoginOrRegister]    Script Date: 1/31/2023 7:55:58 PM ******/
+/****** Object:  StoredProcedure [dbo].[TryLoginOrRegister]    Script Date: 2/26/2023 2:19:47 AM ******/
 SET ANSI_NULLS ON
 GO
 SET QUOTED_IDENTIFIER ON
@@ -48,8 +48,8 @@ BEGIN
 						SELECT @count = COUNT(*) FROM [dbo].[WorldTileData];
 						IF (@count < 100)
 							BEGIN
-								INSERT INTO [dbo].[Player] (PlayerIdentifier, Name, AcceptedTermAndCondition, IsAdmin, IsDeveloper, Version) 
-								VALUES (@tempIdentifier, @tempName, @tempAccepted, 0, 0, @tempVersion);
+								INSERT INTO [dbo].[Player] (PlayerIdentifier, Name, AcceptedTermAndCondition, IsAdmin, IsDeveloper, VIPPoints, Version) 
+								VALUES (@tempIdentifier, @tempName, @tempAccepted, 0, 0, 0, @tempVersion);
 
 								SELECT @existingAccount = p.[PlayerId] FROM [dbo].[Player] AS p WHERE p.[PlayerIdentifier] = @tempIdentifier; 
 								EXEC [dbo].[AddFirstTimeData] @existingAccount;
@@ -73,7 +73,7 @@ BEGIN
 							IsAdmin BIT,
 							IsDeveloper BIT,
 							KingLevel TINYINT,
-							VIPLevel TINYINT,
+							VIPPoints INT,
 							CastleLevel TINYINT,
 							ClanId INT
 						);
@@ -92,7 +92,7 @@ BEGIN
 	END CATCH
 
 	SELECT p.[PlayerId], p.[PlayerIdentifier], p.[RavasAccountId], p.[Name], p.[AcceptedTermAndCondition], 
-			p.[IsAdmin], p.[IsDeveloper], p.[WorldId], p.[WorldTileId], 'Info' = @info
+			p.[IsAdmin], p.[IsDeveloper], p.[VIPPoints], p.[WorldTileId], 'Info' = @info
 	FROM [dbo].[Player] AS p WHERE p.[PlayerId] = @existingAccount;
 
 	EXEC [dbo].[GetMessage] @userId, @message, @case, @error, @time, 1, 1;

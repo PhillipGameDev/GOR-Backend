@@ -22,8 +22,10 @@
         UpgradeTechnology = 18,
         RepairGate = 19,
         GateHp = 20,
+
         GlobalChat = 21,
         AllianceChat = 29,
+
         CheckUnderAttack = 22,
 
         InstantBuild = 23,

@@ -14,8 +14,8 @@ namespace GameOfRevenge.Model
         [DataMember(Code = (byte)RoomParameterKey.AllianceId, IsOptional = false)]
         public int AllianceId { get; set; }
 
-        [DataMember(Code = (byte)RoomParameterKey.VIPLevel, IsOptional = false)]
-        public byte VIPLevel { get; set; }
+        [DataMember(Code = (byte)RoomParameterKey.VIPPoints, IsOptional = false)]
+        public int VIPPoints { get; set; }
 
         [DataMember(Code = (byte)RoomParameterKey.KingLevel, IsOptional = false)]
         public byte KingLevel { get; set; }
@@ -30,7 +30,7 @@ namespace GameOfRevenge.Model
             PlayerId = actor.PlayerId;
             Username = actor.PlayerData.Name;
             AllianceId = actor.PlayerData.AllianceId;
-            VIPLevel = actor.PlayerData.VIPLevel;
+            VIPPoints = actor.PlayerData.VIPPoints;
             KingLevel = actor.PlayerData.KingLevel;
             CastleLevel = actor.PlayerData.CastleLevel;
         }
