@@ -7,7 +7,7 @@ namespace GameOfRevenge.Model
     public class ChatMessageRespose : DictionaryEncode
     {
         [DataMember(Code = (byte)RoomParameterKey.ChatId, IsOptional = true)]
-        public int ChatId { get; set; }
+        public long ChatId { get; set; }
 
         [DataMember(Code = (byte)RoomParameterKey.PlayerId, IsOptional = true)]
         public int PlayerId { get; set; }
@@ -15,8 +15,8 @@ namespace GameOfRevenge.Model
         [DataMember(Code = (byte)RoomParameterKey.Username, IsOptional = true)]
         public string Username { get; set; }
 
-        [DataMember(Code = (byte)RoomParameterKey.VIPLevel, IsOptional = true)]
-        public byte VIPLevel { get; set; }
+        [DataMember(Code = (byte)RoomParameterKey.VIPPoints, IsOptional = true)]
+        public int VIPPoints { get; set; }
 
         [DataMember(Code = (byte)RoomParameterKey.AllianceId, IsOptional = true)]
         public int AllianceId { get; set; }

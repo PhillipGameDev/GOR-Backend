@@ -204,6 +204,8 @@ namespace GameOfRevenge.WebServer
             services.AddSingleton<ITechnologyManager>(new TechnologyManager());
             services.AddSingleton<IMarketManager>(new MarketManager());
 
+            services.AddSingleton<IChatManager>(new ChatManager());
+
             services.AddSingleton<IClanManager>(new ClanManager());
 
             services.AddSingleton<IBaseUserManager>(new BaseUserDataManager());

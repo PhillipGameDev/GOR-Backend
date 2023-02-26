@@ -55,7 +55,7 @@ namespace GameOfRevenge.GameHandlers
                     case OperationCode.UpgradeTechnology: return UpgradeTechnologyRequest(peer, operationRequest);//18
                     case OperationCode.RepairGate: return RepairGateRequest(peer, operationRequest);//19
                     case OperationCode.GateHp: return GetGateHpRequest(peer, operationRequest);//20
-                    case OperationCode.GlobalChat: return GlobalChat(peer, operationRequest);//21
+                    case OperationCode.GlobalChat: return await GlobalChat(peer, operationRequest);//21
                     case OperationCode.AllianceChat: return AllianceChat(peer, operationRequest);//29
                     case OperationCode.Ping: return peer.SendOperation(operationRequest.OperationCode, ReturnCode.OK);//2
                     case OperationCode.GetInstantBuildCost: return GetInstantBuildCost(peer, operationRequest);//26
@@ -222,31 +222,44 @@ namespace GameOfRevenge.GameHandlers
             return result;
         }
 
-        private SendResult GlobalChat(IGorMmoPeer peer, OperationRequest operationRequest)
+        private async Task<SendResult> GlobalChat(IGorMmoPeer peer, OperationRequest operationRequest)
         {
-            
             GameLobbyHandler.log.Info(">>>>>GLOBAL CHAT");
             var operation = new ChatMessageRequest(peer.Protocol, operationRequest);
-            ChatMessageRespose response = new ChatMessageRespose()
+            if (!operation.IsValid)
             {
-                PlayerId = peer.Actor.PlayerData.PlayerId, //operation.PlayerId,
-                Username = peer.Actor.PlayerData.Name, //operation.Username,
-                VIPLevel = peer.Actor.PlayerData.VIPLevel,
-                AllianceId = 0,//global chat alliance is zero. //operation.AllianceId,
-                Timestamp = DateTimeOffset.Now.ToUnixTimeSeconds(), //ToString("dd/MM/yyyy HH:mm:ss"),
-                ChatMessage = operation.ChatMessage
-            };
-            lock (chatBuffer)
-            {
-                chatCounter++;
-                response.ChatId = chatCounter;
-                chatBuffer.Add(response);
-                if (chatBuffer.Count > 100) chatBuffer.RemoveAt(0);
+                var msg = operation.GetErrorMessage();
+                return peer.SendOperation(operationRequest.OperationCode, ReturnCode.InvalidOperation, debuMsg: msg);
             }
-            var data = response.GetDictionary();
-            GameLobbyHandler.log.Info(">>>>>data =" + data);
 
-            return peer.Broadcast(OperationCode.GlobalChat, ReturnCode.OK, data);
+            var resp = await GameService.BChatManager.CreateMessage(peer.Actor.PlayerId, operation.ChatMessage);
+            if (resp.IsSuccess && resp.HasData)
+            {
+                var response = new ChatMessageRespose()
+                {
+                    ChatId = resp.Data.ChatId,
+                    PlayerId = peer.Actor.PlayerData.PlayerId, //operation.PlayerId,
+                    Username = peer.Actor.PlayerData.Name, //operation.Username,
+                    VIPPoints = peer.Actor.PlayerData.VIPPoints,
+                    AllianceId = 0,//global chat alliance is zero. //operation.AllianceId,
+                    Timestamp = DateTimeOffset.Now.ToUnixTimeSeconds(), //ToString("dd/MM/yyyy HH:mm:ss"),
+                    ChatMessage = operation.ChatMessage
+                };
+                lock (chatBuffer)
+                {
+                    chatCounter++;
+//                    response.ChatId = chatCounter;
+                    chatBuffer.Add(response);
+                    if (chatBuffer.Count > 100) chatBuffer.RemoveAt(0);
+                }
+                var data = response.GetDictionary();
+                GameLobbyHandler.log.Info(">>>>>data =" + data);
+
+                return peer.Broadcast(OperationCode.GlobalChat, ReturnCode.OK, data);
+            }
+
+            var msg2 = "Failed delivery message";
+            return peer.SendOperation(operationRequest.OperationCode, ReturnCode.Failed, debuMsg: msg2);
         }
 
         private SendResult AllianceChat(IGorMmoPeer peer, OperationRequest operationRequest)
@@ -257,7 +270,7 @@ namespace GameOfRevenge.GameHandlers
             {
                 PlayerId = peer.Actor.PlayerData.PlayerId, //operation.PlayerId,
                 Username = peer.Actor.PlayerData.Name, //operation.Username,
-                VIPLevel = peer.Actor.PlayerData.VIPLevel,
+                VIPPoints = peer.Actor.PlayerData.VIPPoints,
                 AllianceId = operation.AllianceId,
                 Timestamp = DateTimeOffset.Now.ToUnixTimeSeconds(),//ToString("dd/MM/yyyy HH:mm:ss"),
                 ChatMessage = operation.ChatMessage,
@@ -585,6 +598,7 @@ namespace GameOfRevenge.GameHandlers
             actor.StartOnReal();
             actor.PlayerSpawn(interestArea, peer, playerDataManager);
             actor.Peer.Actor = actor;  //vice versa mmoactor into the peer and reverse
+            var vipPts = peer.Actor.PlayerData.VIPPoints;//playerInfo.VIPPoints;
             var profile = new UserProfileResponse
             {
                 AllianceId = playerInfo.AllianceId,
@@ -592,7 +606,7 @@ namespace GameOfRevenge.GameHandlers
                 UserName = playerInfo.Name,
                 X = actor.WorldRegion.X,
                 Y = actor.WorldRegion.Y,
-                VIPLevel = playerInfo.VIPLevel,
+                VIPPoints = vipPts,
                 KingLevel = playerInfo.KingLevel,
                 CastleLevel = playerInfo.CastleLevel
             };

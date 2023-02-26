@@ -48,6 +48,8 @@ namespace GameOfRevenge.GameApplication
         public static IWorldHandler WorldHandler { get; private set; }
         public static RealTimeUpdateManagerQuestValidator RealTimeUpdateManagerQuestValidator { get; private set; }
 
+        public static IChatManager BChatManager { get; private set; }
+
         public static void StartInstance()
         {
             if (instance != null) return;
@@ -88,6 +90,8 @@ namespace GameOfRevenge.GameApplication
             BkingdomePvpManager = new KingdomPvPManager();
             BRealTimeUpdateManager = new RealTimeUpdateManager();
             RealTimeUpdateManagerQuestValidator = new RealTimeUpdateManagerQuestValidator();
+
+            BChatManager = new ChatManager();
 
             instance = new object();
 
