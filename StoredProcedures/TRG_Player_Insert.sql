@@ -1,6 +1,6 @@
 USE [GameOfRevenge]
 GO
-/****** Object:  Trigger [dbo].[TRG_Player_Insert]    Script Date: 1/16/2023 12:04:17 AM ******/
+/****** Object:  Trigger [dbo].[TRG_Player_Insert]    Script Date: 2/27/2023 11:29:06 AM ******/
 SET ANSI_NULLS ON
 GO
 SET QUOTED_IDENTIFIER ON
@@ -18,14 +18,17 @@ BEGIN
 	DECLARE @AcceptedTermAndCondition BIT;
 	DECLARE @IsAdmin BIT;
 	DECLARE @IsDeveloper BIT;
+	DECLARE @VIPPoints INT;
 	DECLARE @Version INT;
 
-    SELECT @PlayerIdentifier = i.[PlayerIdentifier], @RavasAccountId = i.[RavasAccountId], @Name = i.[Name], @AcceptedTermAndCondition = i.[AcceptedTermAndCondition], @IsAdmin = i.[IsAdmin], @IsDeveloper = i.[IsDeveloper], @Version = i.[Version] FROM inserted AS i;
+    SELECT @PlayerIdentifier = i.[PlayerIdentifier], @RavasAccountId = i.[RavasAccountId], @Name = i.[Name], 
+			@AcceptedTermAndCondition = i.[AcceptedTermAndCondition], @IsAdmin = i.[IsAdmin], @IsDeveloper = i.[IsDeveloper], 
+			@VIPPoints = i.[VIPPoints], @Version = i.[Version] FROM inserted AS i;
 
 	IF (@RavasAccountId IS NULL)
 		BEGIN
-			INSERT INTO [dbo].[Player] (PlayerIdentifier, RavasAccountId, Name, AcceptedTermAndCondition, IsAdmin, IsDeveloper, Version)
-			VALUES (@PlayerIdentifier, @RavasAccountId, @Name, @AcceptedTermAndCondition, @IsAdmin, @IsDeveloper, @Version)
+			INSERT INTO [dbo].[Player] (PlayerIdentifier, RavasAccountId, Name, AcceptedTermAndCondition, IsAdmin, IsDeveloper, VIPPoints, Version)
+			VALUES (@PlayerIdentifier, @RavasAccountId, @Name, @AcceptedTermAndCondition, @IsAdmin, @IsDeveloper, @VIPPoints, @Version)
 		END
 	ELSE
 		BEGIN
@@ -34,8 +37,8 @@ BEGIN
 
 			IF (@existingId IS NULL)
 				BEGIN
-					INSERT INTO [dbo].[Player] (PlayerIdentifier, RavasAccountId, Name, AcceptedTermAndCondition, IsAdmin, IsDeveloper, Version)
-					VALUES (@PlayerIdentifier, @RavasAccountId, @Name, @AcceptedTermAndCondition, @IsAdmin, @IsDeveloper, @Version)
+					INSERT INTO [dbo].[Player] (PlayerIdentifier, RavasAccountId, Name, AcceptedTermAndCondition, IsAdmin, IsDeveloper, VIPPoints, Version)
+					VALUES (@PlayerIdentifier, @RavasAccountId, @Name, @AcceptedTermAndCondition, @IsAdmin, @IsDeveloper, @VIPPoints, @Version)
 				END
 			ELSE
 				BEGIN
