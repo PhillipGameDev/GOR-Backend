@@ -16,6 +16,7 @@ using GameOfRevenge.Common.Models.PlayerData;
 using GameOfRevenge.GameApplication;
 using GameOfRevenge.Common.Models.Structure;
 using GameOfRevenge.Common.Interface.Model;
+using GameOfRevenge.Business.Manager.UserData;
 
 namespace GameOfRevenge.GameHandlers
 {
@@ -91,7 +92,7 @@ namespace GameOfRevenge.GameHandlers
 
         public void AddTroopOnPlayerBuilding(PlayerDataTable data)
         {
-            var troops = GameService.BPlayerResourceManager.PlayerDataToUserTroopData(data);
+            var troops = PlayerData.PlayerDataToUserTroopData(data);
             if (troops != null)
             {
 #if DEBUG
@@ -129,7 +130,7 @@ namespace GameOfRevenge.GameHandlers
 
         public void AddResourcesOnPlayer(PlayerDataTable data)
         {
-            var resource = GameService.BPlayerResourceManager.PlayerDataToUserResourceData(data);
+            var resource = PlayerData.PlayerDataToUserResourceData(data);
             if (resource != null)
             {
 #if DEBUG
@@ -161,7 +162,7 @@ namespace GameOfRevenge.GameHandlers
 
         public void AddStructureOnPlayer(PlayerDataTable data)
         {
-            var structure = GameService.BPlayerStructureManager.PlayerDataToUserStructureData(data);
+            var structure = PlayerData.PlayerDataToUserStructureData(data);
             if (structure != null)
             {
 #if DEBUG

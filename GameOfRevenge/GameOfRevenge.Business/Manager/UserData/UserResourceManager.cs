@@ -92,7 +92,7 @@ namespace GameOfRevenge.Business.Manager.UserData
                     return new Response<UserResourceData>()
                     {
                         Case = response.Case,
-                        Data = PlayerDataToUserResourceData(response.Data),
+                        Data = PlayerData.PlayerDataToUserResourceData(response.Data),
                         Message = response.Message
                     };
                 }
@@ -237,7 +237,7 @@ namespace GameOfRevenge.Business.Manager.UserData
                 return new Response<UserResourceData>()
                 {
                     Case = response.Case,
-                    Data = PlayerDataToUserResourceData(response.Data),
+                    Data = PlayerData.PlayerDataToUserResourceData(response.Data),
                     Message = response.Message
                 };
             }

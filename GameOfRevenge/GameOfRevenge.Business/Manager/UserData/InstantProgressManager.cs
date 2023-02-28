@@ -196,7 +196,7 @@ namespace GameOfRevenge.Business.Manager.UserData
                         }
                     }
 
-                    var userData = _userStructureManager.PlayerDataToUserStructureData(response.Data);
+                    var userData = PlayerData.PlayerDataToUserStructureData(response.Data);
                     return new Response<UserStructureData>(userData, 100, "Structure upgrade completed");
                 }
 
@@ -278,7 +278,7 @@ namespace GameOfRevenge.Business.Manager.UserData
                     var builderResp = await manager.UpdatePlayerDataID(playerId, builder.Id, json);
                 }
 
-                var userStructure = _userStructureManager.PlayerDataToUserStructureData(response.Data);
+                var userStructure = PlayerData.PlayerDataToUserStructureData(response.Data);
                 return new Response<UserStructureData>(userStructure, 100, "Structure upgrade completed");
             }
             catch (CacheDataNotExistExecption ex)

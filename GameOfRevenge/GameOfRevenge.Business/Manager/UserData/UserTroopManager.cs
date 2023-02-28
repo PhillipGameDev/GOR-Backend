@@ -316,9 +316,9 @@ namespace GameOfRevenge.Business.Manager.UserData
         {
             try
             {
-                var playerData = UserTroopDataToPlayerData(new UserTroopData() { Value = troops, ValueId = type });
+                var playerData = PlayerData.UserTroopDataToPlayerData(new UserTroopData() { Value = troops, ValueId = type });
                 var newValueResp = await manager.AddOrUpdatePlayerData(playerId, DataType.Troop, playerData.ValueId, playerData.Value);
-                return new Response<UserTroopData>(PlayerDataToUserTroopData(newValueResp.Data), newValueResp.Case, newValueResp.Message);
+                return new Response<UserTroopData>(PlayerData.PlayerDataToUserTroopData(newValueResp.Data), newValueResp.Case, newValueResp.Message);
             }
             catch (DataNotExistExecption ex)
             {

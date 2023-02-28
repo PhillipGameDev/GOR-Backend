@@ -91,7 +91,7 @@ namespace GameOfRevenge.Business.Manager.UserData
 
                 if (response.IsSuccess)
                 {
-                    return new Response<UserInventoryDataUpdated>(PlayerDataToUserInventoryData(response.Data), response.Case, response.Message);
+                    return new Response<UserInventoryDataUpdated>(PlayerData.PlayerDataToUserInventoryData(response.Data), response.Case, response.Message);
                 }
                 else
                 {
@@ -162,7 +162,7 @@ namespace GameOfRevenge.Business.Manager.UserData
                 var response = await manager.AddOrUpdatePlayerData(playerId, DataType.Inventory, item.Id, value.ToString(), unique);
                 if (response.IsSuccess)
                 {
-                    return new Response<UserInventoryData>(PlayerDataToUserInventoryData(response.Data), response.Case, response.Message);
+                    return new Response<UserInventoryData>(PlayerData.PlayerDataToUserInventoryData(response.Data), response.Case, response.Message);
                 }
                 else
                 {
@@ -240,7 +240,7 @@ namespace GameOfRevenge.Business.Manager.UserData
 
                 if (response.IsSuccess)
                 {
-                    return new Response<UserInventoryDataUpdated>(PlayerDataToUserInventoryData(response.Data), response.Case, response.Message);
+                    return new Response<UserInventoryDataUpdated>(PlayerData.PlayerDataToUserInventoryData(response.Data), response.Case, response.Message);
                 }
                 else
                 {
@@ -308,7 +308,7 @@ namespace GameOfRevenge.Business.Manager.UserData
 
                 if (response.IsSuccess)
                 {
-                    return new Response<UserInventoryData>(PlayerDataToUserInventoryData(response.Data), response.Case, response.Message);
+                    return new Response<UserInventoryData>(PlayerData.PlayerDataToUserInventoryData(response.Data), response.Case, response.Message);
                 }
                 else
                 {
@@ -462,7 +462,7 @@ namespace GameOfRevenge.Business.Manager.UserData
                 var existingItem = await manager.GetPlayerData(playerId, DataType.Inventory, item.Id);
                 if (!existingItem.IsSuccess && !existingItem.HasData) throw new RequirementExecption(existingItem.Message);
 
-                var data = PlayerDataToUserInventoryData(existingItem.Data);
+                var data = PlayerData.PlayerDataToUserInventoryData(existingItem.Data);
                 if (data.Value < count) throw new RequirementExecption("Not enought items");
 
                 var response = await RemoveItem(playerId, itemType, count);

@@ -36,7 +36,7 @@ namespace GameOfRevenge.Business.Manager.UserData
                 return new Response<UserStructureData>()
                 {
                     Case = playerData.Case,
-                    Data = PlayerDataToUserStructureData(playerData.Data),
+                    Data = PlayerData.PlayerDataToUserStructureData(playerData.Data),
                     Message = playerData.Message
                 };
             }
@@ -61,7 +61,7 @@ namespace GameOfRevenge.Business.Manager.UserData
                     {
                         if (structures == null) continue;
 
-                        var userStructureData = PlayerDataToUserStructureData(structures);
+                        var userStructureData = PlayerData.PlayerDataToUserStructureData(structures);
                         if (!userStructureData.Value.Exists(x => (x.Location == location))) continue;
 
                         return new Response<UserStructureData>()

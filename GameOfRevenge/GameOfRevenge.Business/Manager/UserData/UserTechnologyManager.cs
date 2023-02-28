@@ -192,7 +192,7 @@ namespace GameOfRevenge.Business.Manager.UserData
 
                 json = JsonConvert.SerializeObject(currentUserTech);
                 var response = await manager.AddOrUpdatePlayerData(playerId, DataType.Technology, tech.Info.Id, json);
-                var data = PlayerDataToUserTechnologyData(response.Data)?.Value;
+                var data = PlayerData.PlayerDataToUserTechnologyData(response.Data)?.Value;
 
                 return new Response<TechnologyInfos>(data, response.Case, response.Message);
             }

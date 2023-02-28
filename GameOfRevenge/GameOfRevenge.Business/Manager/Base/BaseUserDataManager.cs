@@ -172,7 +172,7 @@ namespace GameOfRevenge.Business.Manager.Base
                         {
                             if (item == null) continue;
 
-                            resourceList.Add(PlayerDataToUserResourceData(item));
+                            resourceList.Add(PlayerData.PlayerDataToUserResourceData(item));
                         }
                         finalData.Data.Resources.Food = (long)resourceList.FirstOrDefault(x => x.ValueId == ResourceType.Food)?.Value;
                         finalData.Data.Resources.Wood = (long)resourceList.FirstOrDefault(x => x.ValueId == ResourceType.Wood)?.Value;
@@ -188,7 +188,7 @@ namespace GameOfRevenge.Business.Manager.Base
                         {
                             if (item == null) continue;
 
-                            structureList.Add(PlayerDataToUserStructureData(item));
+                            structureList.Add(PlayerData.PlayerDataToUserStructureData(item));
                         }
 
                         foreach (var item in structureList)
@@ -210,7 +210,7 @@ namespace GameOfRevenge.Business.Manager.Base
                         {
                             if (item == null) continue;
 
-                            troopList.Add(PlayerDataToUserTroopData(item));
+                            troopList.Add(PlayerData.PlayerDataToUserTroopData(item));
                         }
                         foreach (var userTroop in troopList)
                         {
@@ -275,7 +275,7 @@ namespace GameOfRevenge.Business.Manager.Base
                         {
                             if (tech == null) continue;
 
-                            var technology = PlayerDataToUserTechnologyData(tech);
+                            var technology = PlayerData.PlayerDataToUserTechnologyData(tech);
     /*                        foreach (var item in finalData.Data.Technologies)
                             {
                                 if (technology.ValueId == item.TechnologyType)
@@ -318,7 +318,7 @@ namespace GameOfRevenge.Business.Manager.Base
                         {
                             if (pItemData == null) continue;
 
-                            var itemData = PlayerDataToUserInventoryData(pItemData);
+                            var itemData = PlayerData.PlayerDataToUserInventoryData(pItemData);
                             if (itemData != null)
                             {
                                 finalData.Data.Items.Add(new UserItemDetails
@@ -340,7 +340,7 @@ namespace GameOfRevenge.Business.Manager.Base
                     //ADD BOOST
                     foreach (var item in userBoosts)
                     {
-                        var boostData = PlayerDataToUserNewBoostData(item);
+                        var boostData = PlayerData.PlayerDataToUserNewBoostData(item);
 //                        if (boostData.ValueId == 0)
                         if ((boostData != null) && (!boostData.Value.HasDuration || (boostData.Value.TimeLeft > 0)))
                         {
@@ -549,279 +549,6 @@ namespace GameOfRevenge.Business.Manager.Base
             }
         }
 
-        public UserKingData PlayerDataToKingData(PlayerDataTable playerData)
-        {
-            if (playerData == null) return default;
-
-            return new UserKingData()
-            {
-                Id = playerData.Id,
-                DataType = DataType.Custom,
-                ValueId = 1,
-                Value = JsonConvert.DeserializeObject<UserKingDetails>(playerData.Value)
-            };
-        }
-
-        public UserResourceData PlayerDataToUserResourceData(PlayerDataTable playerData)
-        {
-            long.TryParse(playerData.Value, out long value);
-
-            return new UserResourceData()
-            {
-                Id = playerData.Id,
-                DataType = DataType.Resource,
-                ValueId = CacheResourceDataManager.GetResourceData(playerData.ValueId).Code,
-                Value = value
-            };
-        }
-
-        public UserResourceData PlayerDataToUserResourceData(PlayerDataTableUpdated playerDataUpdated) => PlayerDataToUserResourceData(playerDataUpdated.ToPlayerDataTable);
-
-        public UserStructureData PlayerDataToUserStructureData(PlayerDataTable playerData)
-        {
-            return new UserStructureData()
-            {
-                Id = playerData.Id,
-                DataType = DataType.Structure,
-                ValueId = CacheStructureDataManager.GetFullStructureData(playerData.ValueId).Info.Code,
-                Value = JsonConvert.DeserializeObject<List<StructureDetails>>(playerData.Value)
-            };
-        }
-
-        public UserStructureData PlayerDataToUserStructureData(PlayerDataTableUpdated playerDataUpdated) => PlayerDataToUserStructureData(playerDataUpdated.ToPlayerDataTable);
-
-        public UserTroopData PlayerDataToUserTroopData(PlayerDataTable playerData)
-        {
-            if (playerData == null) return default;
-
-            return new UserTroopData()
-            {
-                Id = playerData.Id,
-                DataType = DataType.Troop,
-                ValueId = CacheTroopDataManager.GetFullTroopData(playerData.ValueId).Info.Code,
-                Value = JsonConvert.DeserializeObject<List<TroopDetails>>(playerData.Value)
-            };
-        }
-
-        public UserTroopData PlayerDataToUserTroopData(PlayerDataTableUpdated playerDataUpdated)
-        {
-            if (playerDataUpdated == null) return default;
-
-            return PlayerDataToUserTroopData(playerDataUpdated.ToPlayerDataTable);
-        }
-
-        public UserTechnologyData PlayerDataToUserTechnologyData(PlayerDataTable playerData)
-        {
-            if (playerData == null) return null;
-            var details = JsonConvert.DeserializeObject<TechnologyInfos>(playerData.Value);
-
-            return new UserTechnologyData()
-            {
-                Id = playerData.Id,
-                DataType = DataType.Technology,
-                ValueId = CacheTechnologyDataManager.GetFullTechnologyData(playerData.ValueId).Info.Code,
-                Value = details
-            };
-        }
-
-        public UserTechnologyData PlayerDataToUserTechnologyData(PlayerDataTableUpdated playerDataUpdated)
-        {
-            if (playerDataUpdated == null) return null;
-            return PlayerDataToUserTechnologyData(playerDataUpdated.ToPlayerDataTable);
-        }
-
-/*        public UserSubTechnologyData PlayerDataToUserSubTechnologyData(PlayerDataTable playerData)
-        {
-            if (playerData == null) return null;
-            var details = JsonConvert.DeserializeObject<SubTechnologyInfos>(playerData.Value);
-
-            return new UserSubTechnologyData()
-            {
-                Id = playerData.Id,
-                DataType = DataType.SubTechnology,
-                ValueId = CacheTechnologyDataManager.GetFullSubTechnologyData(playerData.ValueId).Info.Code,
-                Value = details
-            };
-        }
-
-        public UserSubTechnologyData PlayerDataToUserSubTechnologyData(PlayerDataTableUpdated playerDataUpdated)
-        {
-            if (playerDataUpdated == null) return null;
-            return PlayerDataToUserSubTechnologyData(playerDataUpdated.ToPlayerDataTable);
-        }*/
-
-        public UserInventoryData PlayerDataToUserInventoryData(PlayerDataTable playerData)
-        {
-            int.TryParse(playerData.Value, out int val);
-
-            return new UserInventoryData()
-            {
-                Id = playerData.Id,
-                DataType = DataType.Inventory,
-                ValueId = CacheInventoryDataManager.GetFullInventoryItemData(playerData.ValueId).Code,
-                Value = val
-            };
-        }
-
-        public UserInventoryDataUpdated PlayerDataToUserInventoryData(PlayerDataTableUpdated playerDataUpdated)
-        {
-            int.TryParse(playerDataUpdated.Value, out int val);
-
-            return new UserInventoryDataUpdated()
-            {
-                Id = playerDataUpdated.Id,
-                DataType = DataType.Inventory,
-                ValueId = CacheInventoryDataManager.GetFullInventoryItemData(playerDataUpdated.ValueId).Code,
-                Value = val,
-                OldValue = playerDataUpdated.OldValue
-            };
-        }
-
-        public UserNewBoostData PlayerDataToUserNewBoostData(PlayerDataTable playerData)
-        {
-            UserNewBoostData data;
-
-//            System.Console.WriteLine(playerData.Value);
-            if (playerData.Value.Contains("EndTime"))
-            {
-                var boostDetails = JsonConvert.DeserializeObject<UserBoostDetails>(playerData.Value);
-                var oldBoostType = boostDetails.BoostType;
-                NewBoostType boostType = NewBoostType.Unknown;
-                switch(oldBoostType)
-                {
-                    case NewBoostType.Shield: boostType = NewBoostType.Shield; break;
-                    case NewBoostType.Blessing: boostType = NewBoostType.Blessing; break;
-                    case NewBoostType.LifeSaver: boostType = NewBoostType.LifeSaver; break;
-                    case NewBoostType.ProductionBoost: boostType = NewBoostType.ProductionBoost; break;
-//                    case BoostType.SpeedGathering: boostType = NewBoostType.ResearchSpeed
-                    case NewBoostType.Fog: boostType = NewBoostType.Fog; break;
-                    case NewBoostType.TechBoost: boostType = NewBoostType.TechBoost; break;
-                }
-
-                data = new UserNewBoostData()
-                {
-                    Id = playerData.Id,
-                    DataType = DataType.ActiveBoost,
-                    ValueId = (NewBoostType)playerData.ValueId,
-                    Value = new UserNewBoost
-                    {
-                        Type = boostType,
-                        StartTime = boostDetails.StartTime,
-                        Duration = (int)(boostDetails.EndTime - boostDetails.StartTime).TotalSeconds
-//                        Level = 1
-                    }
-                };
-            }
-            else
-            {
-                var boost = JsonConvert.DeserializeObject<UserNewBoost>(playerData.Value);
-                data = new UserNewBoostData()
-                {
-                    Id = playerData.Id,
-                    DataType = DataType.ActiveBoost,
-                    ValueId = (NewBoostType)playerData.ValueId,//.BoostType,
-                                                               //                ValueId = CacheBoostDataManager.GetFullBoostDataByBoostId(playerData.ValueId).Info.BoostType,
-                    Value = boost// JsonConvert.DeserializeObject<UserNewBoost>(playerData.Value)
-                };
-                data.Value.Type = data.ValueId;
-            }
-
-            return data;
-        }
-
-        public UserBoostData PlayerDataToUserBoostData(PlayerDataTable playerData)
-        {
-            return new UserBoostData()
-            {
-                Id = playerData.Id,
-                DataType = DataType.ActiveBoost,
-                ValueId = CacheBoostDataManager.GetNewBoostByTypeId(playerData.ValueId).Type,//CacheBoostDataManager.GetFullBoostDataByTypeId(playerData.ValueId).BoostType,
-//                ValueId = CacheBoostDataManager.GetFullBoostDataByBoostId(playerData.ValueId).Info.BoostType,
-                Value = JsonConvert.DeserializeObject<UserBoostDetails>(playerData.Value)
-            };
-        }
-
-        public UserBoostData PlayerDataToUserBoostData(PlayerDataTableUpdated playerDataUpdated) => PlayerDataToUserBoostData(playerDataUpdated.ToPlayerDataTable);
-
-        public UserHeroData PlayerDataToUserHeroData(PlayerDataTable playerData)
-        {
-            int.TryParse(playerData.Value, out int val);
-
-            return new UserHeroData()
-            {
-                Id = playerData.Id,
-                DataType = DataType.Hero,
-                ValueId = CacheHeroDataManager.GetFullHeroData(playerData.ValueId.ToString()).Info.Code, //hero type
-                Value = val//war points
-            };
-        }
-
-        public UserHeroData PlayerDataToUserHeroData(PlayerDataTableUpdated playerDataUpdated) => PlayerDataToUserHeroData(playerDataUpdated.ToPlayerDataTable);
-
-
-
-
-        public PlayerDataTable UserResourceDataToPlayerData(UserResourceData playerData)
-        {
-            return new PlayerDataTable()
-            {
-                Id = playerData.Id,
-                DataType = DataType.Resource,
-                ValueId = CacheResourceDataManager.GetResourceData(playerData.ValueId).Id,
-                Value = playerData.Value.ToString()
-            };
-        }
-        public PlayerDataTable UserStructureDataToPlayerData(UserStructureData playerData)
-        {
-            return new PlayerDataTable()
-            {
-                Id = playerData.Id,
-                DataType = DataType.Structure,
-                ValueId = CacheStructureDataManager.GetFullStructureData(playerData.ValueId).Info.Id,
-                Value = JsonConvert.SerializeObject(playerData.Value)
-            };
-        }
-        public PlayerDataTable UserTroopDataToPlayerData(UserTroopData playerData)
-        {
-            return new PlayerDataTable()
-            {
-                Id = playerData.Id,
-                DataType = DataType.Troop,
-                ValueId = CacheTroopDataManager.GetFullTroopData(playerData.ValueId).Info.Id,
-                Value = JsonConvert.SerializeObject(playerData.Value)
-            };
-        }
-        public PlayerDataTable UserTechnologyDataToPlayerData(UserTechnologyData playerData)
-        {
-            return new PlayerDataTable()
-            {
-                Id = playerData.Id,
-                DataType = DataType.Technology,
-                ValueId = CacheTechnologyDataManager.GetFullTechnologyData(playerData.ValueId).Info.Id,
-                Value = JsonConvert.SerializeObject(playerData.Value),
-            };
-        }
-        public PlayerDataTable UserInventoryDataToPlayerData(UserInventoryData data)
-        {
-            return new PlayerDataTable()
-            {
-                Id = data.Id,
-                DataType = DataType.Inventory,
-                ValueId = CacheInventoryDataManager.GetFullInventoryItemData(data.ValueId).Id,// Info.Id,
-                Value = data.Value.ToString()
-            };
-        }
-        public PlayerDataTable UserBoostDataToPlayerData(UserBoostData data)
-        {
-            return new PlayerDataTable()
-            {
-                Id = data.Id,
-                DataType = DataType.ActiveBoost,
-                ValueId = (int)data.ValueId,//GetFullBoostDataByType(data.ValueId).BoostTypeId,
-                Value = JsonConvert.SerializeObject(data.Value)
-            };
-        }
-
 
         public NewBoostType GetBoostType(NewBoostType type) => GetBoostType(type.ToString());
         public NewBoostType GetBoostType(string type) => type.ToEnum<NewBoostType>();
@@ -862,7 +589,7 @@ namespace GameOfRevenge.Business.Manager.Base
                 if (vipdata != null)
                 {
                     var vipdetails = JsonConvert.DeserializeObject<UserVIPDetails>(vipdata.Value);
-                    vipdetails.Points += points;
+                    vipdetails.Points += points;//TODO: add vippoints to player info
                     var json = JsonConvert.SerializeObject(vipdetails);
                     var saveResp = await manager.UpdatePlayerDataID(playerId, vipdata.Id, json);
                     if (saveResp.IsSuccess)

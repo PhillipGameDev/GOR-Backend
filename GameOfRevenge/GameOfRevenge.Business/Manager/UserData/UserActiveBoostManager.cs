@@ -94,7 +94,7 @@ namespace GameOfRevenge.Business.Manager.UserData
                 UserNewBoostData boostData = null;
                 if (boostRespData != null)
                 {
-                    boostData = PlayerDataToUserNewBoostData(boostRespData);
+                    boostData = PlayerData.PlayerDataToUserNewBoostData(boostRespData);
                 }
 //                if (boostData.Value.Level == 0) throw new DataNotExistExecption("Boost not available");
 
@@ -115,7 +115,7 @@ namespace GameOfRevenge.Business.Manager.UserData
                 {
                     var castle = allPlayerData.Find(x => (x.DataType == DataType.Structure) && (x.ValueId == (int)Common.Models.Structure.StructureType.CityCounsel));
                     //                var castle = await manager.GetPlayerData(playerId, DataType.Structure, (int)Common.Models.Structure.StructureType.CityCounsel);
-                    var castleData = PlayerDataToUserStructureData(castle);//.Data);
+                    var castleData = PlayerData.PlayerDataToUserStructureData(castle);//.Data);
                     var castleBuilding = castleData.Value.FirstOrDefault();// Sort((x, y) => x.Level.CompareTo(y.Level));
                     var castleLevel = castleBuilding.Level;
                     if (castleBuilding.TimeLeft > 0) castleLevel--;
@@ -188,7 +188,7 @@ namespace GameOfRevenge.Business.Manager.UserData
                 var resp = await manager.AddOrUpdatePlayerData(playerId, DataType.ActiveBoost, valueId, string.Empty);
                 if (resp.IsSuccess & resp.HasData)
                 {
-                    var buffData = PlayerDataToUserBoostData(resp.Data);
+                    var buffData = PlayerData.PlayerDataToUserBoostData(resp.Data);
                     return new Response<UserBoostData>(buffData, resp.Case, resp.Message);
                 }
                 else return new Response<UserBoostData>(resp.Case, resp.Message);
@@ -227,7 +227,7 @@ namespace GameOfRevenge.Business.Manager.UserData
 
                 if (buffRespData.IsSuccess && buffRespData.HasData)
                 {
-                    buffData = PlayerDataToUserBoostData(buffRespData.Data);
+                    buffData = PlayerData.PlayerDataToUserBoostData(buffRespData.Data);
                     if (buffData != null)
                     {
                         if (buffData.Value == null || buffData.Value.TimeLeft <= 0)
