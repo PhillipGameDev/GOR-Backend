@@ -1,5 +1,6 @@
 ﻿namespace GameOfRevenge.Common.Models.Hero
 {
+
     public enum HeroType
     {
         Unknown = 0,

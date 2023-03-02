@@ -42,20 +42,23 @@ namespace GameOfRevenge.Business.Manager.UserData
                 if (troopDbInfo == null) throw new CacheDataNotExistExecption($"Troop type {type} was not found");
 
                 var compPlayerData = await GetFullPlayerData(playerId);
-                if (!compPlayerData.IsSuccess || !compPlayerData.HasData) throw new DataNotExistExecption(compPlayerData.Message);
+                if (!compPlayerData.IsSuccess || !compPlayerData.HasData)
+                {
+                    throw new DataNotExistExecption(compPlayerData.Message);
+                }
 
-                List<TroopDetails> troopDetails = compPlayerData.Data.Troops.Find(x => x.TroopType == type)?.TroopData;
-                if (troopDetails == null) throw new DataNotExistExecption($"Troop type {type} was not found");
+                List<TroopDetails> troopDetails = compPlayerData.Data.Troops.Find(x => (x.TroopType == type))?.TroopData;
+                if (troopDetails == null) throw new DataNotExistExecption($"User troop type {type} was not found");
 
                 foreach (var troop in troops)
                 {
-                    if ((troop == null) || (troop.Level <= 0) || (troop.WoundedCount <= 0)) continue;
+                    if ((troop == null) || (troop.WoundedCount <= 0)) continue;
 
-                    var troopDbData = troopDbInfo.Levels.First(x => x.Data.Level == troop.Level);
-                    if (troopDbData == null) throw new DataNotExistExecption($"Troop type {type} was not found");
+                    var troopDbData = troopDbInfo.Levels.FirstOrDefault(x => (x.Data.Level == troop.Level));
+                    if (troopDbData == null) throw new DataNotExistExecption($"Troop type {type} Lvl.{troop.Level} was not found");
 
-                    var troopDataList = troopDetails.Find(x => x.Level == troop.Level);
-                    if (troopDataList == null) continue;//throw new DataNotExistExecption($"Troop type {type} was not found");
+                    var troopDataList = troopDetails.Find(x => (x.Level == troop.Level));
+                    if (troopDataList == null) throw new DataNotExistExecption($"User troop type {type} Lvl.{troop.Level} was not found");
 
 //                        if (troopDataList.Wounded <= 0 || troopDataList.Wounded < troop.WoundedCount) throw new DataNotExistExecption($"Invalid data was provided");
                     troopDataList.Wounded -= troop.WoundedCount;
@@ -65,8 +68,8 @@ namespace GameOfRevenge.Business.Manager.UserData
                     var technology = compPlayerData.Data.Boosts.Find(x => (x.Type == (NewBoostType)TechnologyType.HealSpeedTechnology));
                     if (technology != null)
                     {
-                        var specBoostData = CacheBoostDataManager.SpecNewBoostDatas.First(x => (x.Type == technology.Type));
-                        if (specBoostData.Table > 0)// .Levels.ContainsKey(technology.Level))
+                        var specBoostData = CacheBoostDataManager.SpecNewBoostDatas.FirstOrDefault(x => (x.Type == technology.Type));
+                        if (specBoostData.Levels.ContainsKey(technology.Level))
                         {
                             float.TryParse(specBoostData.Levels[technology.Level].ToString(), out float levelVal);
 //                            int reducePercentage = levelVal;// technology.Level;
@@ -78,20 +81,17 @@ namespace GameOfRevenge.Business.Manager.UserData
                     if ((vip != null) && (vip.TimeLeft > 0))
                     {
                         var vipBoostData = CacheBoostDataManager.SpecNewBoostDatas.FirstOrDefault(x => (x.Type == (NewBoostType)VIPBoostType.VIP));
-                        if (vipBoostData != null)
+                        var vipTech = vipBoostData.Techs.FirstOrDefault(x => (x.Tech == (NewBoostTech)VIPBoostTech.TroopHealingSpeedMultiplier));
+                        if (vipTech != null)
                         {
-                            var vipTech = vipBoostData.Techs.FirstOrDefault(x => (x.Tech == (NewBoostTech)VIPBoostTech.TroopHealingSpeedMultiplier));
-                            if (vipTech != null)
-                            {
-                                percentage += vipTech.GetValue(vip.Level);
-                            }
+                            percentage += vipTech.GetValue(vip.Level);
                         }
                     }
 
                     float multiplier = (1 - (percentage / 100f));
                     int secs = (int)(troopDbData.Data.WoundedThreshold * troop.WoundedCount * multiplier);
 
-                    if (secs > (5 * 60))
+                    if (secs > 2)//(5 * 60))
                     {
                         if (troopDataList.InRecovery == null) troopDataList.InRecovery = new List<UnavaliableTroopInfo>();
                         troopDataList.InRecovery.Add(new UnavaliableTroopInfo()
@@ -394,6 +394,20 @@ namespace GameOfRevenge.Business.Manager.UserData
             else return GetPopulationData(compPlayerData.Structures, compPlayerData.Troops);
         }
 
+        public int GetCurrentPopulationWounded(IReadOnlyList<TroopInfos> troops)
+        {
+            var currentPopulation = 0;
+
+            foreach (var army in troops)
+            {
+                foreach (var troop in army.TroopData)
+                {
+                    currentPopulation += troop.Wounded;
+                }
+            }
+
+            return currentPopulation;
+        }
 
         private async Task<Response<UserTroopData>> AddTroops(int playerId, TroopType type, int level, int count, List<TroopDetails> oldtroopInfos, bool isTraining, int locationId)
         {

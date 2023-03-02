@@ -39,6 +39,7 @@ namespace GameOfRevenge.Business.Manager.UserData
 
         public async Task<Response<List<UserResourceData>>> SumMainResource(int playerId, int food, int wood, int ore, int gems)
         {
+            //TODO: improve this process, we should implement a single call on database to handle this type of request
             var foodData = await SumFoodResource(playerId, food);
             var woodData = await SumWoodResource(playerId, wood);
             var oreData = await SumOreResource(playerId, ore);

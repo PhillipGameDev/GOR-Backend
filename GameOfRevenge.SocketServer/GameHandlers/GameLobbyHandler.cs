@@ -49,7 +49,7 @@ namespace GameOfRevenge.GameHandlers
                     case OperationCode.TroopTrainerTimeBoost: return HandleTroopBoostUp(peer, operationRequest);//12
                     case OperationCode.CollectResourceRequest: return await HandleCollectResourceRequest(peer, operationRequest);//13
                     case OperationCode.BoostResourceTime: return HandleBoostResources(peer, operationRequest);//14
-                    case OperationCode.AttackRequest: return HandleAttackRequest(peer, operationRequest);//15
+                    case OperationCode.AttackRequest: return await HandleAttackRequest(peer, operationRequest);//15
                     case OperationCode.WoundedHealReqeust: return HandleWoundedHealRequest(peer, operationRequest);//16
                     case OperationCode.WoundedHealTimerRequest: return HandleWoundedHealTimerStatus(peer, operationRequest);//17
                     case OperationCode.UpgradeTechnology: return UpgradeTechnologyRequest(peer, operationRequest);//18
@@ -332,7 +332,9 @@ namespace GameOfRevenge.GameHandlers
 
             var building = peer.Actor.InternalPlayerDataManager.GetPlayerBuildingByLocationId(operation.BuildingLocationId);
             if (building == null)
+            {
                 return peer.SendOperation(operationRequest.OperationCode, ReturnCode.InvalidOperation, debuMsg: "building not found in server.");
+            }
 
             building.HandleWoundedTroops(operation);
             return SendResult.Ok;
@@ -539,19 +541,20 @@ namespace GameOfRevenge.GameHandlers
             return peer.SendOperation(operationRequest.OperationCode, ReturnCode.InvalidOperation, debuMsg: errMsg);
         }
 
-        public SendResult HandleAttackRequest(IGorMmoPeer peer, OperationRequest operationRequest)
+        public async Task<SendResult> HandleAttackRequest(IGorMmoPeer peer, OperationRequest operationRequest)
         {
-            log.Debug("@@@@@@@ HANDLE ATTACK REQUEST FROM "+peer.Actor.PlayerId);
+            log.Debug("@@@@@@@ HANDLE ATTACK REQUEST FROM " + peer.Actor.PlayerId);
+            string errMsg = null;
             var operation = new AttackRequest(peer.Protocol, operationRequest);
-            if (!operation.IsValid ||
-                (operation.TroopLevels.Length != operation.TroopType.Length) ||
-                (operation.TroopCounts.Length != operation.TroopType.Length))
+            if (operation.IsValid)
             {
-                log.Debug("@@@@ ATTACK INVALID");
-                return peer.SendOperation(operationRequest.OperationCode, ReturnCode.InvalidOperation, debuMsg: operation.GetErrorMessage());
+                var success = await peer.Actor.PlayerAttackHandler.AttackRequestAsync(operation);
+                return success? SendResult.Ok : SendResult.Failed;
             }
+            if (errMsg == null) errMsg = operation.GetErrorMessage();
 
-            return peer.Actor.PlayerAttackHandler.AttackRequest(operation)? SendResult.Ok : SendResult.Failed;
+            log.Debug("@@@@ ATTACK INVALID");
+            return peer.SendOperation(operationRequest.OperationCode, ReturnCode.InvalidOperation, debuMsg: errMsg);
         }
 
         private static readonly IAccountManager accountManager = new AccountManager();

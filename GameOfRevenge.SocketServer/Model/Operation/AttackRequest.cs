@@ -11,14 +11,8 @@ namespace GameOfRevenge.Model
         [DataMember(Code = (byte)RoomParameterKey.TargetPlayerId, IsOptional = true)]
         public int EnemyId { get; set; }
          
-        [DataMember(Code = (byte)RoomParameterKey.TroopType, IsOptional = true)]
-        public int[] TroopType { get; set; }
-
-        [DataMember(Code = (byte)RoomParameterKey.TroopLevel, IsOptional = true)]
-        public int[] TroopLevels { get; set; }
-
-        [DataMember(Code = (byte)RoomParameterKey.TroopCount, IsOptional = true)]
-        public int[] TroopCounts { get; set; }
+        [DataMember(Code = (byte)RoomParameterKey.TroopsData, IsOptional = true)]
+        public int[] Troops { get; set; }
 
         [DataMember(Code = (byte)RoomParameterKey.HeroIds, IsOptional = true)]
         public int[] HeroIds { get; set; }

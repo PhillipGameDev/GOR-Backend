@@ -18,6 +18,8 @@ namespace GameOfRevenge.Common.Interface.UserData
         Task<Response<UserStructureData>> CheckBuildingStatus(int playerId, StructureType type);
         Task<Response<int>> CollectResource(int playerId, int locId, float multiplier = 0);
 
+        int GetMaxInfirmaryCapacity(IReadOnlyList<StructureInfos> structures);
+
         Task<Response> UpdateGate(int playerId, int hp);
         Task<Response<int>> RepairGate(int playerId);
         Task<Response<List<DataRequirement>>> RepairGateCost(int playerId);

@@ -667,7 +667,29 @@ namespace GameOfRevenge.Business.Manager.UserData
             }
         }
 
+        public int GetMaxInfirmaryCapacity(IReadOnlyList<StructureInfos> structures)
+        {
+            var maxCapacity = 0;
+            try
+            {
 
+                foreach (var structure in structures)
+                {
+                    foreach (var building in structure.Buildings)
+                    {
+                        int lvl = (building.TimeLeft > 0) ? (building.Level - 1) : building.Level;
+                        try
+                        {
+                            maxCapacity += CacheStructureDataManager.GetStructureDataTable(structure.StructureType, lvl).WoundedCapacity;
+                        }
+                        catch { }
+                    }
+                }
+            }
+            catch { }
+
+            return maxCapacity;
+        }
 
 
 #region Gate

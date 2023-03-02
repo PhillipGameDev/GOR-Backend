@@ -1,9 +1,10 @@
-﻿using GameOfRevenge.Model;
+﻿using System.Threading.Tasks;
+using GameOfRevenge.Model;
 
 namespace GameOfRevenge.Interface
 {
     public interface IPlayerAttackHandler
     {
-        bool AttackRequest(AttackRequest request);
+        Task<bool> AttackRequestAsync(AttackRequest request);
     }
 }

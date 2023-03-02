@@ -26,6 +26,7 @@ namespace GameOfRevenge.Common.Interface.UserData
         Response<int> GetMaxPopulation(IReadOnlyList<StructureInfos> structures);
         Response<int> GetCurrentPopulation(IReadOnlyList<TroopInfos> troops);
         Response<PopulationData> GetPopulationData(PlayerCompleteData compPlayerData);
+        int GetCurrentPopulationWounded(IReadOnlyList<TroopInfos> troops);
 
         //Task<Response> InstantTrainTroops(int playerId, int buildingLoc);
         //Task<Response> InstantTrainTroops(PlayerCompleteData compPlayerData);

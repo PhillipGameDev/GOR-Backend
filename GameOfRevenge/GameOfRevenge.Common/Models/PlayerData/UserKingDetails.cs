@@ -1,8 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Runtime.Serialization;
-//using GameOfRevenge.Common.Models.Hero;
-//using Newtonsoft.Json;
 
 namespace GameOfRevenge.Common.Models
 {
@@ -13,11 +11,8 @@ namespace GameOfRevenge.Common.Models
 
         [DataMember]
         public int MaxStamina { get; set; } = 20;
-        //        public long Id { get; set; }//id
-        //        public string Code { get; set; }
-        //        public int Experience { get; set; }
         [DataMember]
-        public int Experience { get; set; }//value
+        public int Experience { get; set; }
 
         [DataMember]
         public int BattleCount { get; set; }
@@ -26,7 +21,7 @@ namespace GameOfRevenge.Common.Models
         [DataMember]
         public int NextLevelXP { get; set; }
         [DataMember]
-        public int Level { get; set; }
+        public byte Level { get; set; }
 #else
         [DataMember]
         public int NextLevelXP
@@ -35,11 +30,11 @@ namespace GameOfRevenge.Common.Models
         }
 
         [DataMember]
-        public int Level
+        public byte Level
         {
             //TODO: improve this when we remove levels array from this class.
             //we should order levels and get the lowest value
-            get => levels.FindIndex(x => (x > Experience)) - 1;
+            get => (byte)(levels.FindIndex(x => (x > Experience)) - 1);
         }
 #endif
 
@@ -58,18 +53,5 @@ namespace GameOfRevenge.Common.Models
                 return stamina;
             }
         }
-
-        /*        //        [JsonIgnore]
-                //SERVER SIDE FUNCTION
-                public int Level => 1 + (int)Math.Floor(WarPoints / 10f);// 10 warpoints = 1 level
-                                                                         //        [JsonIgnore]
-                                                                         //SERVER SIDE FUNCTION
-        //        public int WarPoints => (int)Math.Floor(BattleCount / 5f);// 5 battles = 1 war point
-        */
-
-        //        public bool Unlocked { get; set; }
-        //        public bool IsMarching { get; set; }
-        //        [JsonIgnore]
-        //        public bool IsAvaliable { get => !IsMarching && Unlocked; }
     }
 }

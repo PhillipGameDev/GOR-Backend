@@ -135,7 +135,6 @@
     <Compile Include="Interface\IWorld.cs" />
     <Compile Include="Interface\IWorldHandler.cs" />
     <Compile Include="Model\BoundingBox.cs" />
-    <Compile Include="Model\Common\AttackResponse.cs" />
     <Compile Include="Model\Common\AttackResultResponse.cs" />
     <Compile Include="Model\Common\ChatMessageRespose.cs" />
     <Compile Include="Model\Common\CommonBuildingResponse.cs" />
@@ -196,6 +195,7 @@
     <Compile Include="Model\Operation\UpdateQuestRequest.cs" />
     <Compile Include="Troops\Slingshot.cs" />
     <Compile Include="Model\Operation\ResourceBoostUpResponse.cs" />
+    <Compile Include="Model\Common\AttackResponse.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="GameOfRevenge.dll.config">

@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Runtime.Serialization;
+using GameOfRevenge.Common.Models.Hero;
 //using Newtonsoft.Json;
 
 namespace GameOfRevenge.Common.Models
@@ -36,8 +37,7 @@ namespace GameOfRevenge.Common.Models
         }
     }
 
-    [Serializable]
-    [DataContract]
+    [DataContract, Serializable]
     public class TroopDetails
     {
         [DataMember]
@@ -94,6 +94,8 @@ namespace GameOfRevenge.Common.Models
     public class MarchingArmy
     {
         [DataMember]
+        public long Id { get; set; }
+        [DataMember]
         public List<TroopInfos> Troops { get; set; }
         [DataMember]
         public int TargetPlayer { get; set; }
@@ -104,50 +106,35 @@ namespace GameOfRevenge.Common.Models
         [DataMember]
         public int BattleDuration { get; set; }
 
+        [DataMember(EmitDefaultValue = false)]
+        public List<HeroType> Heroes { get; set; }
+
         public double TimeLeftForTask
         {
             get
             {
-                DateTime taskTime = StartTime.AddSeconds(ReachedTime);
-                double totalSeconds = (taskTime - DateTime.Now).TotalSeconds;
-                return totalSeconds <= 0 ? 0 : totalSeconds;
+                DateTime taskTime = StartTime.ToUniversalTime().AddSeconds(ReachedTime);
+                double totalSeconds = (taskTime - DateTime.UtcNow).TotalSeconds;
+                return (totalSeconds > 0) ? totalSeconds : 0;
             }
         }
-
-        [DataMember(EmitDefaultValue = false)]
-        public List<int> Heroes { get; set; }
 
         public bool IsTimeForReturn
         {
             get
             {
-                DateTime returnTime = StartTime.AddSeconds(ReachedTime + BattleDuration);
-                return DateTime.Now > returnTime;
-//                double marchingTime = (TaskTime - StartTime).TotalMilliseconds;
-//                DateTime returnTime = EndTime.AddMilliseconds(-marchingTime);
-//                return returnTime < DateTime.UtcNow;
+                DateTime returnTime = StartTime.ToUniversalTime().AddSeconds(ReachedTime + BattleDuration);
+                return DateTime.UtcNow > returnTime;
             }
         }
-
-/*        public double TimeLeftForReturn
-        {
-            get
-            {
-                double marchingTime = (TaskTime - StartTime).TotalMilliseconds;
-                double totalSeconds = (EndTime.AddMilliseconds(-marchingTime) - DateTime.UtcNow).TotalSeconds;
-                return totalSeconds <= 0 ? 0 : totalSeconds;
-            }
-        }*/
 
         public double TimeLeft
         {
             get
             {
-                DateTime endTime = StartTime.AddSeconds((ReachedTime * 2) + BattleDuration);
-                double totalSecs = (endTime - DateTime.Now).TotalSeconds;
-                if (totalSecs < 0) totalSecs = 0;
-//                double totalSecs = (EndTime - DateTime.UtcNow).TotalSeconds;
-                return totalSecs;
+                DateTime endTime = StartTime.ToUniversalTime().AddSeconds((ReachedTime * 2) + BattleDuration);
+                double totalSecs = (endTime - DateTime.UtcNow).TotalSeconds;
+                return (totalSecs > 0)? totalSecs : 0;
             }
         }
     }

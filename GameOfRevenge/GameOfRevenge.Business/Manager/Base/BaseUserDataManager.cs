@@ -36,489 +36,433 @@ namespace GameOfRevenge.Business.Manager.Base
             string line = "-";
             try
             {
-                var currentTimestamp = DateTime.UtcNow;
-                var playerName = "";
-                bool isDeveloper = false;
-                bool isAdmin = false;
                 var resp = await accountManager.GetAccountInfo(playerId);
-                if (resp.IsSuccess)
-                {
-                    playerName = resp.Data.Name;
-                    isDeveloper = resp.Data.IsDeveloper;
-                    isAdmin = resp.Data.IsAdmin;
-                }
+                if (!resp.IsSuccess) throw new DataNotExistExecption(resp.Message);
+
+                var playerName = resp.Data.Name;
+                var isDeveloper = resp.Data.IsDeveloper;
+                var isAdmin = resp.Data.IsAdmin;
 
                 var response = await manager.GetAllPlayerData(playerId);
+                if (!response.IsSuccess) throw new DataNotExistExecption(response.Message + line);
 
                 line = "1";
-                if (response.IsSuccess)
+                var finalData = new Response<PlayerCompleteData>()
                 {
-//                    System.Console.WriteLine(Newtonsoft.Json.JsonConvert.SerializeObject(response.Data));
-
-                    var finalData = new Response<PlayerCompleteData>()
+                    Case = 100,
+                    Message = "Complete player data",
+                    Data = new PlayerCompleteData()
                     {
-                        Case = 100,
-                        Message = "Complete player data",
-                        Data = new PlayerCompleteData()
-                        {
-                            PlayerId = playerId,
-                            PlayerName = playerName,
-                            IsDeveloper = isDeveloper,
-                            IsAdmin = isAdmin,
-                            HelpedBuild = 0,
+                        PlayerId = playerId,
+                        PlayerName = playerName,
+                        IsDeveloper = isDeveloper,
+                        IsAdmin = isAdmin,
+                        HelpedBuild = 0,
 
-                            Resources = new ResourcesList(),
-                            Structures = new List<StructureInfos>(),
-                            Troops = new List<TroopInfos>(),
-                            Items = new List<UserItemDetails>(),
-                            Technologies = new List<TechnologyInfos>(),
+                        Resources = new ResourcesList(),
+                        Structures = new List<StructureInfos>(),
+                        Troops = new List<TroopInfos>(),
+                        Items = new List<UserItemDetails>(),
+                        Technologies = new List<TechnologyInfos>(),
 //                            SubTechnologies = new List<SubTechnologyInfos>(),
-                            Boosts = new List<UserRecordNewBoost>(),
-                            Heroes = new List<UserHeroDetails>()
-                        }
-                    };
-
-                    line = "2";
-                    var customs = response.Data.Where(x => x.DataType == DataType.Custom)?.ToList();
-                    line = "3";
-                    var kingData = customs?.Find(x => x.ValueId == 1);
-                    line = "4";
-                    if (kingData != null)
-                    {
-                        try
-                        {
-                            finalData.Data.King = JsonConvert.DeserializeObject<UserKingDetails>(kingData.Value);
-                        }
-                        catch {}
+                        Boosts = new List<UserRecordNewBoost>(),
+                        Heroes = new List<UserHeroDetails>()
                     }
-                    if (finalData.Data.King == null) finalData.Data.King = new UserKingDetails();
-                    line = "4b";
-                    var vipData = customs?.Find(x => x.ValueId == 3);
-                    line = "4c";
-                    if (vipData != null)
+                };
+
+                line = "2";
+                var customs = response.Data.Where(x => x.DataType == DataType.Custom)?.ToList();
+                line = "3";
+                var kingData = customs?.Find(x => x.ValueId == 1);
+                line = "4";
+                if (kingData != null)
+                {
+                    try
                     {
+                        finalData.Data.King = JsonConvert.DeserializeObject<UserKingDetails>(kingData.Value);
+                    }
+                    catch {}
+                }
+                if (finalData.Data.King == null) finalData.Data.King = new UserKingDetails();
+                line = "4b";
+                var vipData = customs?.Find(x => x.ValueId == 3);
+                line = "4c";
+                if (vipData != null)
+                {
+                    try
+                    {
+                        finalData.Data.VIP = JsonConvert.DeserializeObject<UserVIPDetails>(vipData.Value);
+                    }
+                    catch { }
+                }
+                if (finalData.Data.VIP == null) finalData.Data.VIP = new UserVIPDetails();
+
+
+                var builders = new List<UserRecordBuilderDetails>();
+                if (customs != null)
+                {
+                    foreach (var customData in customs)
+                    {
+                        if (customData.ValueId != 2) continue;
+
+                        UserRecordBuilderDetails bld = null;
                         try
                         {
-                            finalData.Data.VIP = JsonConvert.DeserializeObject<UserVIPDetails>(vipData.Value);
+                            bld = JsonConvert.DeserializeObject<UserRecordBuilderDetails>(customData.Value);
                         }
                         catch { }
+                        if (bld == null) continue;
+
+                        bld.Id = customData.Id;
+                        builders.Add(bld);
                     }
-                    if (finalData.Data.VIP == null) finalData.Data.VIP = new UserVIPDetails();
-
-
-                    var builders = new List<UserRecordBuilderDetails>();
-                    if (customs != null)
-                    {
-                        foreach (var customData in customs)
-                        {
-                            if (customData.ValueId != 2) continue;
-
-                            UserRecordBuilderDetails bld = null;
-                            try
-                            {
-                                bld = JsonConvert.DeserializeObject<UserRecordBuilderDetails>(customData.Value);
-                            }
-                            catch { }
-                            if (bld == null) continue;
-
-                            bld.Id = customData.Id;
-                            builders.Add(bld);
-                        }
-                    }
+                }
 //                    var builderData = new UserRecordBuilderDetails();
-                    if (builders.Count == 0)
+                if (builders.Count == 0)
+                {
+                    var json = JsonConvert.SerializeObject(new UserBuilderDetails());
+                    var builderResp = await manager.AddOrUpdatePlayerData(playerId, DataType.Custom, 2, json);
+                    if (builderResp.IsSuccess)
                     {
-                        var json = JsonConvert.SerializeObject(new UserBuilderDetails());
-                        var builderResp = await manager.AddOrUpdatePlayerData(playerId, DataType.Custom, 2, json);
-                        if (builderResp.IsSuccess)
+                        builders.Add(new UserRecordBuilderDetails()
                         {
-                            builders.Add(new UserRecordBuilderDetails()
+                            Id = builderResp.Data.Id
+                        });
+                    }
+                }
+                finalData.Data.Builders = builders;
+
+                line = "5";
+
+                var userResources = response.Data.Where(x => x.DataType == DataType.Resource)?.ToList();
+                var userStructures = response.Data.Where(x => x.DataType == DataType.Structure)?.ToList();
+                var userTroops = response.Data.Where(x => x.DataType == DataType.Troop)?.ToList();
+                var userMarching = response.Data.Find(x => (x.DataType == DataType.Marching));
+                var userTechnologies = response.Data.Where(x => x.DataType == DataType.Technology)?.ToList();
+                var userSubTechs = response.Data.Where(x => x.DataType == DataType.SubTechnology)?.ToList();
+                var userItems = response.Data.Where(x => x.DataType == DataType.Inventory)?.ToList();
+                var userBoosts = response.Data.Where(x => x.DataType == DataType.ActiveBoost)?.ToList();
+                var userHeroData = response.Data.Where(x => x.DataType == DataType.Hero)?.ToList();
+                var userActivities = response.Data.Where(x => x.DataType == DataType.Activity)?.ToList();
+                line = "6";
+
+                if (userActivities != null)
+                {
+                    //TODO: find a better way to store this value, we should insert it into your main account data
+                    var helpActivity = userActivities.Find(x => (x.ValueId == 1));
+                    if ((helpActivity != null) && int.TryParse(helpActivity.Value, out int value))
+                    {
+                        finalData.Data.HelpedBuild = value;
+                    }
+                }
+
+                line = "7";
+                if (userResources != null)
+                {
+                    var resourceList = new List<UserResourceData>();
+                    foreach (var item in userResources)
+                    {
+                        if (item == null) continue;
+
+                        resourceList.Add(PlayerData.PlayerDataToUserResourceData(item));
+                    }
+                    finalData.Data.Resources.Food = (long)resourceList.FirstOrDefault(x => x.ValueId == ResourceType.Food)?.Value;
+                    finalData.Data.Resources.Wood = (long)resourceList.FirstOrDefault(x => x.ValueId == ResourceType.Wood)?.Value;
+                    finalData.Data.Resources.Ore = (long)resourceList.FirstOrDefault(x => x.ValueId == ResourceType.Ore)?.Value;
+                    finalData.Data.Resources.Gems = (long)resourceList.FirstOrDefault(x => x.ValueId == ResourceType.Gems)?.Value;
+                }
+
+                line = "8";
+                if (userStructures != null)
+                {
+                    var structureList = new List<UserStructureData>();
+                    foreach (var item in userStructures)
+                    {
+                        if (item == null) continue;
+
+                        structureList.Add(PlayerData.PlayerDataToUserStructureData(item));
+                    }
+
+                    foreach (var item in structureList)
+                    {
+                        finalData.Data.Structures.Add(new StructureInfos()
+                        {
+                            Id = item.Id,
+                            StructureType = item.ValueId,
+                            Buildings = item.Value
+                        });
+                    }
+                }
+
+                line = "9";
+                if (userTroops != null)
+                {
+                    var troopList = new List<UserTroopData>();
+                    foreach (var item in userTroops)
+                    {
+                        if (item == null) continue;
+
+                        troopList.Add(PlayerData.PlayerDataToUserTroopData(item));
+                    }
+                    foreach (var userTroop in troopList)
+                    {
+                        //                            var troopData = CacheTroopDataManager.GetFullTroopData(userTroop.ValueId);
+
+                        if (userTroop.Value != null)
+                        {
+                            foreach (TroopDetails troop in userTroop.Value)
                             {
-                                Id = builderResp.Data.Id
-                            });
-                        }
-                    }
-                    finalData.Data.Builders = builders;
-
-                    line = "5";
-
-                    var userResources = response.Data.Where(x => x.DataType == DataType.Resource)?.ToList();
-                    var userStructures = response.Data.Where(x => x.DataType == DataType.Structure)?.ToList();
-                    var userTroops = response.Data.Where(x => x.DataType == DataType.Troop)?.ToList();
-                    var userMarching = response.Data.Find(x => (x.DataType == DataType.Marching));
-                    var userTechnologies = response.Data.Where(x => x.DataType == DataType.Technology)?.ToList();
-                    var userSubTechs = response.Data.Where(x => x.DataType == DataType.SubTechnology)?.ToList();
-                    var userItems = response.Data.Where(x => x.DataType == DataType.Inventory)?.ToList();
-                    var userBoosts = response.Data.Where(x => x.DataType == DataType.ActiveBoost)?.ToList();
-                    var userHeroData = response.Data.Where(x => x.DataType == DataType.Hero)?.ToList();
-                    var userActivities = response.Data.Where(x => x.DataType == DataType.Activity)?.ToList();
-                    line = "6";
-
-                    if (userActivities != null)
-                    {
-                        //TODO: find a better way to store this value, we should insert it into your main account data
-                        var helpActivity = userActivities.Find(x => (x.ValueId == 1));
-                        if ((helpActivity != null) && int.TryParse(helpActivity.Value, out int value))
-                        {
-                            finalData.Data.HelpedBuild = value;
-                        }
-                    }
-
-                    line = "7";
-                    if (userResources != null)
-                    {
-                        var resourceList = new List<UserResourceData>();
-                        foreach (var item in userResources)
-                        {
-                            if (item == null) continue;
-
-                            resourceList.Add(PlayerData.PlayerDataToUserResourceData(item));
-                        }
-                        finalData.Data.Resources.Food = (long)resourceList.FirstOrDefault(x => x.ValueId == ResourceType.Food)?.Value;
-                        finalData.Data.Resources.Wood = (long)resourceList.FirstOrDefault(x => x.ValueId == ResourceType.Wood)?.Value;
-                        finalData.Data.Resources.Ore = (long)resourceList.FirstOrDefault(x => x.ValueId == ResourceType.Ore)?.Value;
-                        finalData.Data.Resources.Gems = (long)resourceList.FirstOrDefault(x => x.ValueId == ResourceType.Gems)?.Value;
-                    }
-
-                    line = "8";
-                    if (userStructures != null)
-                    {
-                        var structureList = new List<UserStructureData>();
-                        foreach (var item in userStructures)
-                        {
-                            if (item == null) continue;
-
-                            structureList.Add(PlayerData.PlayerDataToUserStructureData(item));
-                        }
-
-                        foreach (var item in structureList)
-                        {
-                            finalData.Data.Structures.Add(new StructureInfos()
-                            {
-                                Id = item.Id,
-                                StructureType = item.ValueId,
-                                Buildings = item.Value
-                            });
-                        }
-                    }
-
-                    line = "9";
-                    if (userTroops != null)
-                    {
-                        var troopList = new List<UserTroopData>();
-                        foreach (var item in userTroops)
-                        {
-                            if (item == null) continue;
-
-                            troopList.Add(PlayerData.PlayerDataToUserTroopData(item));
-                        }
-                        foreach (var userTroop in troopList)
-                        {
-                            //                            var troopData = CacheTroopDataManager.GetFullTroopData(userTroop.ValueId);
-
-                            if (userTroop.Value != null)
-                            {
-                                foreach (TroopDetails troop in userTroop.Value)
+                                if (troop.InRecovery != null)
                                 {
-                                    if (troop.InRecovery != null)
-                                    {
-                                        troop.InRecovery = troop.InRecovery.Where(x => x.TimeLeft > 0).ToList();
-                                        if (troop.InRecovery.Count == 0) troop.InRecovery = null;
-                                    }
-
-                                    if (troop.InTraning != null)
-                                    {
-                                        troop.InTraning = troop.InTraning.Where(x => x.TimeLeft > 0).ToList();
-                                        if (troop.InTraning.Count == 0) troop.InTraning = null;
-                                    }
+                                    troop.InRecovery = troop.InRecovery.Where(x => x.TimeLeft > 0).ToList();
+                                    if (troop.InRecovery.Count == 0) troop.InRecovery = null;
                                 }
 
-                                finalData.Data.Troops.Add(new TroopInfos(userTroop.Id, userTroop.ValueId, userTroop.Value));
+                                if (troop.InTraning != null)
+                                {
+                                    troop.InTraning = troop.InTraning.Where(x => x.TimeLeft > 0).ToList();
+                                    if (troop.InTraning.Count == 0) troop.InTraning = null;
+                                }
                             }
+
+                            finalData.Data.Troops.Add(new TroopInfos(userTroop.Id, userTroop.ValueId, userTroop.Value));
                         }
                     }
+                }
 
-                    line = "10";
-                    if ((userMarching != null) && !string.IsNullOrEmpty(userMarching.Value))
+                line = "10";
+                if ((userMarching != null) && !string.IsNullOrEmpty(userMarching.Value))
+                {
+                    var marching = JsonConvert.DeserializeObject<MarchingArmy>(userMarching.Value);
+                    if (marching != null)
                     {
-                        var marching = JsonConvert.DeserializeObject<MarchingArmy>(userMarching.Value);
-                        if (marching != null)
+                        if (marching.TimeLeft > 0)
                         {
-                            if (marching.TimeLeft > 0)
-                            {
-                                finalData.Data.MarchingArmy = marching;
-                            }
-                            else
-                            {
-                                await manager.UpdatePlayerDataID(playerId, userMarching.Id, string.Empty);
-                                //AddOrUpdatePlayerData(playerId, DataType.Custom, 2, json);
-                            }
+                            marching.Id = userMarching.Id;
+                            finalData.Data.MarchingArmy = marching;
+                        }
+                        else
+                        {
+                            await manager.UpdatePlayerDataID(playerId, userMarching.Id, string.Empty);
+                            //AddOrUpdatePlayerData(playerId, DataType.Custom, 2, json);
                         }
                     }
+                }
 
 
-                    //POPULATE TECHNOLOGIES
+                //POPULATE TECHNOLOGIES
 /*                    var techs = CacheTechnologyDataManager.TechnologyInfos;
-                    foreach (var tech in techs)
+                foreach (var tech in techs)
+                {
+                    finalData.Data.Technologies.Add(new TechnologyInfos()
                     {
-                        finalData.Data.Technologies.Add(new TechnologyInfos()
-                        {
-                            TechnologyType = tech.Info.Code,
-                            Level = 0
-                        });
-                    }*/
+                        TechnologyType = tech.Info.Code,
+                        Level = 0
+                    });
+                }*/
 
-                    line = "11";
-                    if (userTechnologies != null)
+                line = "11";
+                if (userTechnologies != null)
+                {
+                    foreach (var tech in userTechnologies)
                     {
-                        foreach (var tech in userTechnologies)
+                        if (tech == null) continue;
+
+                        var technology = PlayerData.PlayerDataToUserTechnologyData(tech);
+/*                        foreach (var item in finalData.Data.Technologies)
                         {
-                            if (tech == null) continue;
-
-                            var technology = PlayerData.PlayerDataToUserTechnologyData(tech);
-    /*                        foreach (var item in finalData.Data.Technologies)
+                            if (technology.ValueId == item.TechnologyType)
                             {
-                                if (technology.ValueId == item.TechnologyType)
-                                {
-                                    item.Level = technology.Value.Level;
-                                    item.StartTime = technology.Value.StartTime;
-                                    item.EndTime = technology.Value.EndTime;
-                                }
-                            }*/
-                            finalData.Data.Technologies.Add(technology.Value);
-                        }
-                    }
-
-/*                    if (userSubTechs != null)
-                    {
-                        foreach (var tech in userSubTechs)
-                        {
-                            if (tech == null) continue;
-
-                            var subTech = PlayerDataToUserSubTechnologyData(tech);
-                            finalData.Data.SubTechnologies.Add(subTech.Value);
-                        }
-                    }*/
-
-                    //POPULATE ITEMS
-/*                    var items = CacheInventoryDataManager.ItemInfos;
-                    foreach (var item in items)
-                    {
-                        finalData.Data.Items.Add(new InventoryInfo()
-                        {
-                            ItemType = item.Code,
-                            Level = 0
-                        });
-                    }*/
-                    line = "12";
-
-                    if (userItems != null)
-                    {
-                        foreach (var pItemData in userItems)
-                        {
-                            if (pItemData == null) continue;
-
-                            var itemData = PlayerData.PlayerDataToUserInventoryData(pItemData);
-                            if (itemData != null)
-                            {
-                                finalData.Data.Items.Add(new UserItemDetails
-                                {
-                                    id = itemData.Id,
-                                    ItemType = itemData.ValueId,
-                                    Level = itemData.Value
-                                });
-                            }
-    /*                            foreach (var item in finalData.Data.Items)
-                            {
-                                if (itemData.ValueId == item.ItemType)
-                                    item.Level = itemData.Value;
-                            }*/
-                        }
-                    }
-
-                    line = "13";
-                    //ADD BOOST
-                    foreach (var item in userBoosts)
-                    {
-                        var boostData = PlayerData.PlayerDataToUserNewBoostData(item);
-//                        if (boostData.ValueId == 0)
-                        if ((boostData != null) && (!boostData.Value.HasDuration || (boostData.Value.TimeLeft > 0)))
-                        {
-                            finalData.Data.Boosts.Add(new UserRecordNewBoost(boostData.Id, boostData.Value));
-                        }
-                    }
-
-
-                    line = "14";
-                    int line2 = 0;
-                    ////ADD HEROES
-                    if (userHeroData != null)
-                    {
-                        foreach (var heroInfo in CacheHeroDataManager.HeroInfos)
-                        {
-//                            HeroType heroType = heroInfo.Info.Code.ToEnum<HeroType>();
-
-                            var userHero = userHeroData.Find(x => x.ValueId == heroInfo.Info.HeroId);
-                            if (userHero == null) continue;
-
-                            var userHeroDetails = JsonConvert.DeserializeObject<UserHeroDetails>(userHero.Value);
-                            if (userHeroDetails == null) continue;
-
-                            var data = new UserHeroDetails()
-                            {
-                                HeroCode = heroInfo.Info.Code,
-                                Points = userHeroDetails.Points,
-                                Power = userHeroDetails.Power,
-                                AttackCount = userHeroDetails.AttackCount,
-                                AttackFail = userHeroDetails.AttackFail,
-                                DefenseCount = userHeroDetails.DefenseCount,
-                                DefenseFail = userHeroDetails.DefenseFail
-                            };
-
-
-/*                            var heroDataRelations = CacheHeroDataManager.GetHeroDataRelations(heroType);
-
-                            //Points        1
-                            //Power         2
-                            //AttackCount   3
-                            //AttackFail    4
-                            //DefenseCount  5
-                            //DefenseFail   6
-                            var valId = heroDataRelations.Find(x => x.StatType == 1).Id;//Points
-                            var entry = userHeroData.Find(x => x.ValueId == valId);
-                            if (entry == null) continue;
-
-                            int.TryParse(entry.Value, out int points);
-
-                            valId = heroDataRelations.Find(x => x.StatType == 2).Id;//Power
-                            entry = userHeroData.Find(x => x.ValueId == valId);
-                            int.TryParse(entry?.Value, out int power);
-
-                            valId = heroDataRelations.Find(x => x.StatType == 3).Id;//AttackCount
-                            entry = userHeroData.Find(x => x.ValueId == valId);
-                            int.TryParse(entry?.Value, out int attkCount);
-
-                            valId = heroDataRelations.Find(x => x.StatType == 4).Id;//AttackFail
-                            entry = userHeroData.Find(x => x.ValueId == valId);
-                            int.TryParse(entry?.Value, out int attkFail);
-
-                            valId = heroDataRelations.Find(x => x.StatType == 5).Id;//DefenseCount
-                            entry = userHeroData.Find(x => x.ValueId == valId);
-                            int.TryParse(entry?.Value, out int defCount);
-
-                            valId = heroDataRelations.Find(x => x.StatType == 6).Id;//DefenseFail
-                            entry = userHeroData.Find(x => x.ValueId == valId);
-                            int.TryParse(entry?.Value, out int defFail);
-
-                            var data = new UserHeroDetails()
-                            {
-                                HeroCode = heroInfo.Info.Code,
-                                Points = points,
-                                Power = power,
-                                AttackCount = attkCount,
-                                AttackFail = attkFail,
-                                DefenseCount = defCount,
-                                DefenseFail = defFail
-                            };*/
-                            finalData.Data.Heroes.Add(data);
-
-                            if ((finalData.Data.MarchingArmy != null) && (finalData.Data.MarchingArmy.Heroes != null))
-                            {
-                                data.IsMarching = finalData.Data.MarchingArmy.Heroes.Exists(x => x == heroInfo.Info.HeroId);//(int)heroType);
-                            }
-                        }
-
-/*                        foreach (var item in userHeroData)
-                        {
-                            if (item == null) continue;
-
-                            line2++;
-                            var userHeroData = PlayerDataToUserHeroData(item);
-                            if (userHeroData == null) continue;
-
-                            HeroType heroType = userHeroData.ValueId.ToEnum<HeroType>();
-                            if (heroType == HeroType.Unknown) continue;
-
-                            var data = userHeroData.ToUserHeroDetails();
-                            finalData.Data.Heroes.Add(data);
-
-                            if ((finalData.Data.MarchingArmy != null) && (finalData.Data.MarchingArmy.Heroes != null))
-                            {
-                                data.IsMarching = finalData.Data.MarchingArmy.Heroes.Exists(x => x == (int)heroType);
+                                item.Level = technology.Value.Level;
+                                item.StartTime = technology.Value.StartTime;
+                                item.EndTime = technology.Value.EndTime;
                             }
                         }*/
+                        finalData.Data.Technologies.Add(technology.Value);
                     }
+                }
+
+/*                    if (userSubTechs != null)
+                {
+                    foreach (var tech in userSubTechs)
+                    {
+                        if (tech == null) continue;
+
+                        var subTech = PlayerDataToUserSubTechnologyData(tech);
+                        finalData.Data.SubTechnologies.Add(subTech.Value);
+                    }
+                }*/
+
+                //POPULATE ITEMS
+/*                    var items = CacheInventoryDataManager.ItemInfos;
+                foreach (var item in items)
+                {
+                    finalData.Data.Items.Add(new InventoryInfo()
+                    {
+                        ItemType = item.Code,
+                        Level = 0
+                    });
+                }*/
+                line = "12";
+
+                if (userItems != null)
+                {
+                    foreach (var pItemData in userItems)
+                    {
+                        if (pItemData == null) continue;
+
+                        var itemData = PlayerData.PlayerDataToUserInventoryData(pItemData);
+                        if (itemData != null)
+                        {
+                            finalData.Data.Items.Add(new UserItemDetails
+                            {
+                                id = itemData.Id,
+                                ItemType = itemData.ValueId,
+                                Level = itemData.Value
+                            });
+                        }
+/*                            foreach (var item in finalData.Data.Items)
+                        {
+                            if (itemData.ValueId == item.ItemType)
+                                item.Level = itemData.Value;
+                        }*/
+                    }
+                }
+
+                line = "13";
+                //ADD BOOST
+                foreach (var item in userBoosts)
+                {
+                    var boostData = PlayerData.PlayerDataToUserNewBoostData(item);
+//                        if (boostData.ValueId == 0)
+                    if ((boostData != null) && (!boostData.Value.HasDuration || (boostData.Value.TimeLeft > 0)))
+                    {
+                        finalData.Data.Boosts.Add(new UserRecordNewBoost(boostData.Id, boostData.Value));
+                    }
+                }
+
+
+                line = "14";
+                int line2 = 0;
+                ////ADD HEROES
+                if (userHeroData != null)
+                {
+                    List<HeroType> marchingHeroes = null;
+                    if (finalData.Data.MarchingArmy != null)
+                    {
+                        marchingHeroes = finalData.Data.MarchingArmy.Heroes;
+                    }
+
+                    foreach (var heroInfo in CacheHeroDataManager.HeroInfos)
+                    {
+//                            HeroType heroType = heroInfo.Info.Code.ToEnum<HeroType>();
+
+                        var userHero = userHeroData.Find(x => (x.ValueId == heroInfo.Info.HeroId));
+                        if (userHero == null) continue;
+
+                        var userHeroDetails = JsonConvert.DeserializeObject<UserHeroDetails>(userHero.Value);
+                        if (userHeroDetails == null) continue;
+
+                        var data = new UserHeroDetails()
+                        {
+                            HeroType = (HeroType)heroInfo.Info.HeroId,
+                            Points = userHeroDetails.Points,
+                            Power = userHeroDetails.Power,
+                            AttackCount = userHeroDetails.AttackCount,
+                            AttackFail = userHeroDetails.AttackFail,
+                            DefenseCount = userHeroDetails.DefenseCount,
+                            DefenseFail = userHeroDetails.DefenseFail
+                        };
+                        if (marchingHeroes != null)
+                        {
+                            data.IsMarching = marchingHeroes.Exists(x => (x.ToString() == heroInfo.Info.Code));//(int)heroType);
+                        }
+                        finalData.Data.Heroes.Add(data);
+                    }
+
+/*                        foreach (var item in userHeroData)
+                    {
+                        if (item == null) continue;
+
+                        line2++;
+                        var userHeroData = PlayerDataToUserHeroData(item);
+                        if (userHeroData == null) continue;
+
+                        HeroType heroType = userHeroData.ValueId.ToEnum<HeroType>();
+                        if (heroType == HeroType.Unknown) continue;
+
+                        var data = userHeroData.ToUserHeroDetails();
+                        finalData.Data.Heroes.Add(data);
+
+                        if ((finalData.Data.MarchingArmy != null) && (finalData.Data.MarchingArmy.Heroes != null))
+                        {
+                            data.IsMarching = finalData.Data.MarchingArmy.Heroes.Exists(x => x == (int)heroType);
+                        }
+                    }*/
+                }
 
 
 /*                    var heroes = CacheHeroDataManager.HeroInfos;
-                    foreach (var hero in heroes)
+                foreach (var hero in heroes)
+                {
+                    UserHeroDetails userHeroData = new UserHeroDetails()
                     {
-                        UserHeroDetails userHeroData = new UserHeroDetails()
-                        {
-                            HeroId = hero.Info.HeroId,
-                            Code = hero.Info.Code,
-                            Unlocked = false,
-                            IsMarching = false,
-                            WarPoints = 0
-                        };
-                        finalData.Data.Heroes.Add(userHeroData);
+                        HeroId = hero.Info.HeroId,
+                        Code = hero.Info.Code,
+                        Unlocked = false,
+                        IsMarching = false,
+                        WarPoints = 0
+                    };
+                    finalData.Data.Heroes.Add(userHeroData);
 
 
-                        if (finalData.Data.MarchingArmy != null)
-                        {
-                            userHeroData.IsMarching = finalData.Data.MarchingArmy.Heros.Exists(x => x == userHeroData.HeroId);
-                        }
-                    }*/
+                    if (finalData.Data.MarchingArmy != null)
+                    {
+                        userHeroData.IsMarching = finalData.Data.MarchingArmy.Heros.Exists(x => x == userHeroData.HeroId);
+                    }
+                }*/
 
 /* OLD HERO IMPLEMENTATION, REQUIREMENT BASED ON STRUCTURE
-                    var structureDataIds = heroes.Select(x => x.Requirements.Select(y => y.StructureDataId)).ToList();
+                var structureDataIds = heroes.Select(x => x.Requirements.Select(y => y.StructureDataId)).ToList();
 
-                    foreach (var hero in heroes)
+                foreach (var hero in heroes)
+                {
+                    UserHeroDetails userHeroData = new UserHeroDetails()
                     {
-                        UserHeroDetails userHeroData = new UserHeroDetails()
+                        HeroId = hero.Info.HeroId,
+                        IsMarching = false,
+                        Unlocked = false,
+                        Code = hero.Info.Code
+                    };
+
+                    finalData.Data.Heroes.Add(userHeroData);
+
+                    foreach (var req in hero.Requirements)
+                    {
+                        var structure = CacheStructureDataManager.GetFullStructureData(req.StructureId);
+                        var structureType = structure.Info.Code;
+
+                        foreach (var userStructure in finalData.Data.Structures)
                         {
-                            HeroId = hero.Info.HeroId,
-                            IsMarching = false,
-                            Unlocked = false,
-                            Code = hero.Info.Code
-                        };
-
-                        finalData.Data.Heroes.Add(userHeroData);
-
-                        foreach (var req in hero.Requirements)
-                        {
-                            var structure = CacheStructureDataManager.GetFullStructureData(req.StructureId);
-                            var structureType = structure.Info.Code;
-
-                            foreach (var userStructure in finalData.Data.Structures)
+                            if (userStructure.StructureType == structureType)
                             {
-                                if (userStructure.StructureType == structureType)
-                                {
-                                    var structureData = structure.Levels.FirstOrDefault(x => x.Data.DataId == req.StructureDataId);
-                                    var structureLevel = structureData.Data.Level;
+                                var structureData = structure.Levels.FirstOrDefault(x => x.Data.DataId == req.StructureDataId);
+                                var structureLevel = structureData.Data.Level;
 
-                                    foreach (var userBuildings in userStructure.Buildings)
+                                foreach (var userBuildings in userStructure.Buildings)
+                                {
+                                    if (userBuildings.Level >= structureLevel)
                                     {
-                                        if (userBuildings.Level >= structureLevel)
-                                        {
-                                            userHeroData.Unlocked = true;
-                                            userHeroData.IsMarching = finalData.Data.MarchingArmy != null ? finalData.Data.MarchingArmy.Heros.Exists(x => x == userHeroData.HeroId) : false;
-                                        }
+                                        userHeroData.Unlocked = true;
+                                        userHeroData.IsMarching = finalData.Data.MarchingArmy != null ? finalData.Data.MarchingArmy.Heros.Exists(x => x == userHeroData.HeroId) : false;
                                     }
                                 }
                             }
                         }
-                    }*/
+                    }
+                }*/
 
-                    return finalData;
-                }
-
-                return new Response<PlayerCompleteData>()
-                {
-                    Case = response.Case,
-                    Message = response.Message + line,
-                    Data = null
-                };
+                return finalData;
             }
             catch (InvalidModelExecption ex)
             {

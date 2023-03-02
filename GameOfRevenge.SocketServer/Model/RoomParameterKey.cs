@@ -56,6 +56,8 @@
         ChatMessage = 52,
         Duration = 53,
         CastleLevel = 54,
-        VIPPoints = 55
+        VIPPoints = 55,
+        TroopsData = 56,
+        HeroesData = 57
     }
 }

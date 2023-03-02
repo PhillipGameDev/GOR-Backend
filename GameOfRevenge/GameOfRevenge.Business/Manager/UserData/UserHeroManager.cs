@@ -169,7 +169,7 @@ namespace GameOfRevenge.Business.Manager.UserData
                     }
                     else
                     {
-                        heroDetails = new UserHeroDetails() { HeroCode = hero.Info.Code };
+                        heroDetails = new UserHeroDetails() { HeroType = (HeroType)hero.Info.HeroId };
                     }
 
                     if (unlock)

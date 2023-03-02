@@ -7,6 +7,7 @@ using GameOfRevenge.Business.Manager.UserData;
 using GameOfRevenge.Common.Interface;
 using GameOfRevenge.Common.Interface.UserData;
 using GameOfRevenge.Common.Models;
+using GameOfRevenge.Common.Models.Kingdom;
 using GameOfRevenge.Common.Services;
 
 namespace GameOfRevenge.Business.Manager
@@ -15,9 +16,10 @@ namespace GameOfRevenge.Business.Manager
     {
         public static readonly ILogger log = LogManager.GetCurrentClassLogger();
 
+        private static readonly UserResourceManager userResourceManager = new UserResourceManager();
         private static readonly List<AttackStatusData> attackPlayerData = new List<AttackStatusData>();
 
-        private readonly IKingdomPvPManager pvpManager = new KingdomPvPManager();
+        private readonly KingdomPvPManager pvpManager = new KingdomPvPManager();
         protected readonly object SyncRoot = new object(); // that is for world user access
 
         public DelayedAction Disposable;
@@ -64,57 +66,83 @@ namespace GameOfRevenge.Business.Manager
                     log.Debug("****** UPDATE BATTLE START ****** x " + list.Count);
                     foreach (AttackStatusData item in list)
                     {
-                        string debugMsg = "";
                         try
                         {
-                            debugMsg = item.State+"";
                             switch (item.State)
                             {
                                 case 0://marching to target
-    //                                log.Debug("** MARCHING **");
                                     if (item.Attacker.MarchingArmy.TimeLeftForTask <= 0)
                                     {
-                                        var resp = await new UserResourceManager().GetFullPlayerData(item.Report.DefenderId);
+                                        var resp = await userResourceManager.GetFullPlayerData(item.Report.DefenderId);
                                         if (!resp.IsSuccess) throw new Exception("defender data not found");
 
                                         item.Defender = resp.Data;
                                         item.State++;
                                     }
                                     break;
-                                case 1://battle simulation
-    //                                log.Debug("** BATTLE **");
-                                    //TODO: split battle simulation
-                                    var response = await pvpManager.BattleSimulation(item.Attacker, item.Defender);
-                                    if (response.Case >= 200)//illegal
+
+                                case 1://prepare data
+                                    var (atkPower, defPower) = pvpManager.PrepareBattleData(item.Attacker, item.Defender);
+                                    item.AttackerPower = atkPower;
+                                    item.DefenderPower = defPower;
+
+                                    item.initialAttackerAtkPower = atkPower.Attack;
+                                    item.initialAttackerDefPower = atkPower.Defense;
+                                    item.initialDefenderAtkPower = defPower.Attack;
+                                    item.initialDefenderDefPower = defPower.Defense;
+
+                                    log.Debug("atk pwr= " + atkPower.HitPoint + " vs def pwr=" + defPower.HitPoint);
+                                    item.State++;
+                                    break;
+
+                                case 2://battle simulation
+                                    if ((item.DefenderPower.HitPoint > 0) && (item.AttackerPower.HitPoint > 0))
                                     {
-                                    }
-                                    else if (response.Case < 100)//error
-                                    {
+                                        pvpManager.Attack(item.AttackerPower, item.DefenderPower);
+                                        log.Debug("atk pwr= " + item.AttackerPower.HitPoint + " xx def pwr=" + item.DefenderPower.HitPoint);
                                     }
                                     else
                                     {
-                                        item.WinnerPlayerId = response.Data.AttackerWon ? item.Attacker.PlayerId : item.Defender.PlayerId;
+                                        item.AttackerPower.Attack = item.initialAttackerAtkPower;
+                                        item.AttackerPower.Defense = item.initialAttackerDefPower;
+                                        item.DefenderPower.Attack = item.initialDefenderAtkPower;
+                                        item.DefenderPower.Defense = item.initialDefenderDefPower;
+
+                                        var report = pvpManager.FinishBattleData(item.Attacker, item.AttackerPower, item.Defender, item.DefenderPower);
+                                        item.BattleReport = report;
+                                        item.WinnerPlayerId = report.AttackerWon? item.Attacker.PlayerId : item.Defender.PlayerId;
+                                        item.State++;
                                     }
-                                    item.State++;
                                     break;
-                                case 2:
-    //                                log.Debug("** WAITING ** "+item.Attacker.MarchingArmy.StartTime+"  "+item.Attacker.MarchingArmy.ReachedTime+"  "+ item.Attacker.MarchingArmy.BattleDuration+"    "+item.Attacker.MarchingArmy.IsTimeForReturn);
-                                    if (item.Attacker.MarchingArmy.IsTimeForReturn) item.State++;
+
+                                case 3://waiting for return
+                                    if (item.Attacker.MarchingArmy.IsTimeForReturn)
+                                    {
+                                        //SAVE DEFENDER REPORT
+                                        await pvpManager.ApplyDefenderChangesAndSendReport(item.BattleReport, item.Defender);
+                                        item.State++;
+                                    }
                                     break;
-                                case 3://marching to castle
-    //                                log.Debug("** MARCHING BACK **  "+item.Attacker.MarchingArmy.TimeLeft);
-                                    if (item.Attacker.MarchingArmy.TimeLeft <= 0) item.State++;
+
+                                case 4://marching to castle
+                                    if (item.Attacker.MarchingArmy.TimeLeft <= 0)
+                                    {
+                                        //SAVE PLAYER REPORT AND END BATTLE
+                                        await pvpManager.ApplyAttackerChangesAndSendReport(item.BattleReport, item.Attacker);
+                                        item.State++;
+                                    }
                                     break;
-                                case 4://end
+
+                                case 5://end
                                     log.Debug("** END ** " + item.Attacker.PlayerId +" vs "+item.Defender.PlayerId);
                                     CallBackResult(item);
                                     lock (SyncRoot) attackPlayerData.Remove(item);
                                     break;
                             }
                         }
-                        catch (Exception exx)
+                        catch (Exception ex)
                         {
-                            log.Debug("EXCEPTION " + debugMsg+"  "+ exx.Message);
+                            log.Debug("EXCEPTION " + item.State+"  "+ item.Attacker.PlayerId+" vs "+item.Defender.PlayerId+"  " +ex.Message);
                             lock (SyncRoot) attackPlayerData.Remove(item);
                         }
                     }
