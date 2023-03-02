@@ -16,14 +16,14 @@ namespace GameOfRevenge.Business.CacheData
         private static bool isLoaded = false;
         private static List<HeroDataRequirementRel> heroInfos = null;
         private static List<string> heroTypes;
-        private static List<List<HeroDataRel>> heroDataRel;
+//        private static List<List<HeroDataRel>> heroDataRel;
 
-        public static bool IsLoaded { get => isLoaded && (heroInfos != null) && (heroDataRel != null); }
+        public static bool IsLoaded { get => isLoaded && (heroInfos != null); }// && (heroDataRel != null); }
         public static IReadOnlyList<IReadOnlyHeroDataRequirementRel> HeroInfos { get { CheckLoadCacheMemory(); return heroInfos.ToList(); } }
         public static IReadOnlyList<string> ItemTypes { get { CheckLoadCacheMemory(); return heroTypes; } }
-        public static List<List<HeroDataRel>> HeroDataRelation { get { CheckLoadCacheMemory(); return heroDataRel; } }
+//        public static List<List<HeroDataRel>> HeroDataRelation { get { CheckLoadCacheMemory(); return heroDataRel; } }
 
-        public static List<HeroDataRel> GetHeroDataRelations(HeroType heroType)
+/*        public static List<HeroDataRel> GetHeroDataRelations(HeroType heroType)
         {
             var hero = GetFullHeroData(heroType.ToString());
             return HeroDataRelation.Find(x => x[0].HeroId == hero.Info.HeroId);
@@ -33,7 +33,7 @@ namespace GameOfRevenge.Business.CacheData
         {
             var heroDataTypes = GetHeroDataRelations(heroType);
             return heroDataTypes.Find(x => x.StatType == statType).Id;
-        }
+        }*/
 
         public static IReadOnlyHeroDataRequirementRel GetFullHeroDataID(int heroId)
         {
@@ -80,7 +80,7 @@ namespace GameOfRevenge.Business.CacheData
                 throw new CacheDataNotExistExecption(response.Message);
             }
 
-            var response2 = await resManager.GetAllHeroDataRelation();
+/*            var response2 = await resManager.GetAllHeroDataRelation();
             if (response2.IsSuccess)
             {
                 heroDataRel = response2.Data.GroupBy(x => x.HeroId).Select(y => y.ToList()).ToList();
@@ -90,7 +90,7 @@ namespace GameOfRevenge.Business.CacheData
             {
                 ClearCache();
                 throw new CacheDataNotExistExecption(response2.Message);
-            }
+            }*/
         }
         public static void LoadCacheMemory()
         {
