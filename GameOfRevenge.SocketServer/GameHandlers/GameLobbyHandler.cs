@@ -24,9 +24,8 @@ namespace GameOfRevenge.GameHandlers
     public class GameLobbyHandler
     {
         public static readonly ILogger log = LogManager.GetCurrentClassLogger();
-        public IWorld GridWorld { get { return GameService.WorldHandler.DefaultWorld; } }
-        private List<ChatMessageRespose> chatBuffer = new List<ChatMessageRespose>();
-        private int chatCounter;
+
+        public IWorld GridWorld => GameService.WorldHandler.DefaultWorld;
 
         public async Task<SendResult> OnLobbyMessageRecived(IGorMmoPeer peer, OperationRequest operationRequest, SendParameters sendParameters)
         {
@@ -245,13 +244,6 @@ namespace GameOfRevenge.GameHandlers
                     Timestamp = DateTimeOffset.Now.ToUnixTimeSeconds(), //ToString("dd/MM/yyyy HH:mm:ss"),
                     ChatMessage = operation.ChatMessage
                 };
-                lock (chatBuffer)
-                {
-                    chatCounter++;
-//                    response.ChatId = chatCounter;
-                    chatBuffer.Add(response);
-                    if (chatBuffer.Count > 100) chatBuffer.RemoveAt(0);
-                }
                 var data = response.GetDictionary();
                 GameLobbyHandler.log.Info(">>>>>data =" + data);
 
@@ -275,13 +267,6 @@ namespace GameOfRevenge.GameHandlers
                 Timestamp = DateTimeOffset.Now.ToUnixTimeSeconds(),//ToString("dd/MM/yyyy HH:mm:ss"),
                 ChatMessage = operation.ChatMessage,
             };
-            lock (chatBuffer)
-            {
-                chatCounter++;
-                response.ChatId = chatCounter;
-                chatBuffer.Add(response);
-                if (chatBuffer.Count > 100) chatBuffer.RemoveAt(0);
-            }
             var data = response.GetDictionary();
             GameLobbyHandler.log.Info(">>>>>data =" + data);
 
@@ -658,7 +643,14 @@ namespace GameOfRevenge.GameHandlers
                 return peer.SendOperation(operationRequest.OperationCode, ReturnCode.InvalidOperation, debuMsg: "interest area not found.");
 
             peer.Actor.InterestArea.JoinKingdomView();
-            return peer.SendOperation(operationRequest.OperationCode, ReturnCode.OK);
+            var joinResp = new JoinKingdomResponse()
+            {
+                WorldSizeX = (short)peer.Actor.World.Area.Max.X,
+                WorldSizeY = (short)peer.Actor.World.Area.Max.Y
+            };
+            var data = joinResp.GetDictionary();
+
+            return peer.SendOperation(operationRequest.OperationCode, ReturnCode.OK, data);
         }
 
         public SendResult HandlePlayerLeaveKingdomView(IGorMmoPeer peer, OperationRequest operationRequest)
@@ -672,15 +664,28 @@ namespace GameOfRevenge.GameHandlers
 
         public SendResult HandlePlayerCameraMove(IGorMmoPeer peer, OperationRequest operationRequest)
         {
-            // log.InfoFormat("HandlePlayerCameraMove Dict {0} ", Helper.DicToString(operationRequest.Parameters));
+            log.InfoFormat("HandlePlayerCameraMove Dict {0} ", GlobalHelper.DicToString(operationRequest.Parameters));
             var operation = new CameraMoveRequest(peer.Protocol, operationRequest);
             if (!operation.IsValid) return peer.SendOperation(operationRequest.OperationCode, ReturnCode.InvalidOperation, debuMsg: operation.GetErrorMessage());
 
-            if (peer.Actor != null && peer.Actor.InterestArea != null)
+            if ((peer.Actor != null) && (peer.Actor.InterestArea != null))
             {
-                var region = this.GridWorld.WorldRegions[(int)operation.X][(int)operation.Y];
-                peer.Actor.InterestArea.CameraMove(region);
-                return peer.SendOperation(operationRequest.OperationCode, ReturnCode.OK);
+                var x = (int)operation.X;
+                var y = (int)operation.Y;
+                var regions = GridWorld.WorldRegions;
+                log.Info(" world =" + GridWorld.WorldId + "  " + GridWorld.Name);
+                log.Info("Regions = " + regions.Length + " x " + regions[0].Length);
+                var outOfBounds = (x >= regions.Length) || (y >= regions[0].Length) || (x < 0) || (y < 0);
+                if (outOfBounds)
+                {
+                    log.Info("camera out of bounds");
+                    return peer.SendOperation(operationRequest.OperationCode, ReturnCode.InvalidOperation);
+                }
+                else
+                {
+                    peer.Actor.InterestArea.CameraMove(regions[x][y]);
+                    return peer.SendOperation(operationRequest.OperationCode, ReturnCode.OK);
+                }
             }
 
             return SendResult.Ok;

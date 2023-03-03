@@ -20,7 +20,7 @@ namespace GameOfRevenge.ResourcesHandler
             this.actor = actor;
             Value = value;
             ResourceInfo = info;
-            log.Info($"INIT player resource info {JsonConvert.SerializeObject(ResourceInfo)} value {Value}");
+//            log.Info($"INIT player resource info {JsonConvert.SerializeObject(ResourceInfo)} value {Value}");
         }
 
         public bool HasAvailableRequirement(IReadOnlyDataRequirement requirment)

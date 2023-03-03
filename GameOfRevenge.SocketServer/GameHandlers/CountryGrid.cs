@@ -76,6 +76,7 @@ namespace GameOfRevenge.GameHandlers
                 log.InfoFormat("tile size = {0},{1}", tileDimensions.X, tileDimensions.Y);
                 this.TileX = (int)Math.Ceiling(Area.Size.X / (double)tileDimensions.X);
                 this.TileY = (int)Math.Ceiling(Area.Size.Y / (double)tileDimensions.Y);
+                log.InfoFormat("tile xy = {0},{1}", TileX, TileY);
 
                 var count = 0;
                 this.WorldRegions = new Region[TileX][];

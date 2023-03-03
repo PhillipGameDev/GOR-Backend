@@ -96,8 +96,8 @@ namespace GameOfRevenge.GameHandlers
             if (troops != null)
             {
 #if DEBUG
-                log.InfoFormat("Player Data Convert to Troop {0} playerData {1} ",
-                  JsonConvert.SerializeObject(troops), JsonConvert.SerializeObject(data));
+//                log.InfoFormat("Player Data Convert to Troop {0} playerData {1} ",
+//                  JsonConvert.SerializeObject(troops), JsonConvert.SerializeObject(data));
 #endif
                 foreach (var troop in troops.Value)
                 {
@@ -134,8 +134,8 @@ namespace GameOfRevenge.GameHandlers
             if (resource != null)
             {
 #if DEBUG
-                log.InfoFormat("Player Data Convert to resource {0} playerData {1} ",
-                    JsonConvert.SerializeObject(resource), JsonConvert.SerializeObject(data));
+//                log.InfoFormat("Player Data Convert to resource {0} playerData {1} ",
+//                    JsonConvert.SerializeObject(resource), JsonConvert.SerializeObject(data));
 #endif
                 IReadOnlyResourceTable resInfo = null;
                 switch (resource.ValueId)
@@ -148,7 +148,7 @@ namespace GameOfRevenge.GameHandlers
                 if (resInfo != null) 
                 {
 #if DEBUG
-                    log.InfoFormat("Add new resources on player account Resource {0} ", resource.ValueId.ToString());
+//                    log.InfoFormat("Add new resources on player account Resource {0} ", resource.ValueId.ToString());
 #endif
                     IPlayerResources r = new PlayerResources(resInfo, resource.Value, this.player);
                     PlayerResources.Add(resource.ValueId, r);
@@ -166,8 +166,8 @@ namespace GameOfRevenge.GameHandlers
             if (structure != null)
             {
 #if DEBUG
-                log.InfoFormat("Player Data Convert to structure {0} playerData {1} ",
-                    JsonConvert.SerializeObject(structure), JsonConvert.SerializeObject(data));
+//                log.InfoFormat("Player Data Convert to structure {0} playerData {1} ",
+//                    JsonConvert.SerializeObject(structure), JsonConvert.SerializeObject(data));
 #endif
                 if (!this.PlayerBuildings.ContainsKey(structure.ValueId))
                 {
@@ -227,7 +227,7 @@ namespace GameOfRevenge.GameHandlers
             if (plyBuilding != null)
             {
 #if DEBUG
-                log.InfoFormat("Add New Structure On Player Account {0} ", structure.ValueId.ToString());
+//                log.InfoFormat("Add New Structure On Player Account {0} ", structure.ValueId.ToString());
 #endif
                 this.PlayerBuildings[structure.ValueId].Add(plyBuilding);
             }

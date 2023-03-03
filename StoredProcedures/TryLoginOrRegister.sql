@@ -46,7 +46,7 @@ BEGIN
 					BEGIN
 						DECLARE @count INT = 0;
 						SELECT @count = COUNT(*) FROM [dbo].[WorldTileData];
-						IF (@count < 100)
+						IF (@count < 10000)
 							BEGIN
 								INSERT INTO [dbo].[Player] (PlayerIdentifier, Name, AcceptedTermAndCondition, IsAdmin, IsDeveloper, VIPPoints, Version) 
 								VALUES (@tempIdentifier, @tempName, @tempAccepted, 0, 0, 0, @tempVersion);

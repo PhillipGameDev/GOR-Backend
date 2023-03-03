@@ -11,9 +11,19 @@ namespace GameOfRevenge.GameHandlers
 {
     public class WorldHandler : IWorldHandler
     {
+        public static readonly ILogger log = LogManager.GetCurrentClassLogger();
+
         private readonly ConcurrentDictionary<int, IWorld> worlds;
         public ConcurrentDictionary<int, IWorld> Worlds => worlds;
-        public IWorld DefaultWorld { get { if (worlds.Count > 0) return worlds.ElementAt(0).Value; else return default; } }
+
+        public IWorld DefaultWorld
+        {
+            get
+            {
+                log.Info("GET DEFAULT WORLD = " + worlds.Count);
+                if (worlds.Count > 0) return worlds.ElementAt(0).Value; else return default;
+            }
+        }
 
         public WorldHandler()
         {
@@ -22,17 +32,22 @@ namespace GameOfRevenge.GameHandlers
 
         public void SetupPvpWorld(int worldId, List<WorldDataTable> worldData)
         {
-            var pvpWorld = GlobalConst.GetPopWorld();
-            AddNewCityOnWorld(worldId, pvpWorld.worldName, pvpWorld.boundingBox, pvpWorld.tileDimention, worldData);
+            if (!worlds.ContainsKey(worldId))
+            {
+                var w = GlobalConst.GetPopWorld();
+                var world = new CountryGrid(w.worldName, w.boundingBox, w.tileDimention, worldId, worldData);
+                worlds.TryAdd(worldId, world);
+            }
+//            AddNewCityOnWorld(worldId, pvpWorld.worldName, pvpWorld.boundingBox, pvpWorld.tileDimention, worldData);
         }
 
-        public void AddNewCityOnWorld(int worldId, string worldName, BoundingBox boundingBox, Vector tiles, List<WorldDataTable> worldData)
+/*        public void AddNewCityOnWorld(int worldId, string worldName, BoundingBox boundingBox, Vector tiles, List<WorldDataTable> worldData)
         {
             if (!worlds.TryGetValue(worldId, out IWorld world))
             {
                 world = new CountryGrid(worldName, boundingBox, tiles, worldId, worldData);
                 worlds.TryAdd(worldId, world);
             }
-        }
+        }*/
     }
 }

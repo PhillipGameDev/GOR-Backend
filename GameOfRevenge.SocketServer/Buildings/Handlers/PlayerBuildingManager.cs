@@ -50,7 +50,7 @@ namespace GameOfRevenge.Buildings.Handlers
             BaseBuilderManager = buildingManager;
             Player = player;
             if (IsConstructing) AddBuildingCallBack();
-            log.InfoFormat("INIT player Structure info {0}", JsonConvert.SerializeObject(this.PlayerStructureData));
+//            log.InfoFormat("INIT player Structure info {0}", JsonConvert.SerializeObject(this.PlayerStructureData));
         }
 
         public void SetStructureData(UserStructureData structureData)
