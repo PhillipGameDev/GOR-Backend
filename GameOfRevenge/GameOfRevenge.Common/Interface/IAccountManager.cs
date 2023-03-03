@@ -7,7 +7,7 @@ namespace GameOfRevenge.Common.Interface
     public interface IAccountManager
     {
         Task<Response<Player>> TryLoginOrRegister(string identifier, string name, bool accepted, int version);
-        Task<Response<Player>> ChangeName(int playerId, string name);
+        Task<Response<string[]>> ChangeName(int playerId, string name);
         Task<Response<PlayerInfo>> GetAccountInfo(int playerId);
         Task<Response<PlayerInfo>> GetAccountInfo(string identifier);
         Task<Response<PlayerTutorialData>> GetTutorialInfo(string identifier);

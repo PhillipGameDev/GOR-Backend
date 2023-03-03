@@ -209,7 +209,7 @@ namespace GameOfRevenge.Business.Manager
             }
         }
 
-        public async Task<Response<Player>> ChangeName(int playerId, string name)
+        public async Task<Response<string[]>> ChangeName(int playerId, string name)
         {
             try
             {
@@ -229,25 +229,15 @@ namespace GameOfRevenge.Business.Manager
                     if (updated) response.Case = 101;
                 }
 
-                return response;
+                return new Response<string[]>() { Case = response.Case, Data = null, Message = response.Message };
             }
             catch (InvalidModelExecption ex)
             {
-                return new Response<Player>()
-                {
-                    Case = 200,
-                    Data = null,
-                    Message = ex.Message
-                };
+                return new Response<string[]>() { Case = 200, Data = null, Message = ex.Message };
             }
             catch (Exception ex)
             {
-                return new Response<Player>()
-                {
-                    Case = 0,
-                    Data = null,
-                    Message = ErrorManager.ShowError(ex)
-                };
+                return new Response<string[]>() { Case = 0, Data = null, Message = ErrorManager.ShowError(ex) };
             }
         }
 
