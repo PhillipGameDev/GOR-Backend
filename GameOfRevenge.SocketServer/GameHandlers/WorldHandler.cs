@@ -20,7 +20,6 @@ namespace GameOfRevenge.GameHandlers
         {
             get
             {
-                log.Info("GET DEFAULT WORLD = " + worlds.Count);
                 if (worlds.Count > 0) return worlds.ElementAt(0).Value; else return default;
             }
         }

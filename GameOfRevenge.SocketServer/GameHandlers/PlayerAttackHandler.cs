@@ -53,7 +53,7 @@ namespace GameOfRevenge.GameHandlers
 
             DateTime timestart = DateTime.UtcNow.AddSeconds(2);
             bool success = true;
-            double dist = attacker.World.GetDistanceBw2Points(Enemy.WorldRegion, attacker.WorldRegion) * 20;// / 0.2f;
+            double dist = attacker.World.GetDistanceBw2Points(Enemy.WorldRegion, attacker.WorldRegion) * 100;// / 0.2f;
             int reachedTime = (int)dist;
 
             //apply HeroType.AlyamamahEyes - Troop Marching Time

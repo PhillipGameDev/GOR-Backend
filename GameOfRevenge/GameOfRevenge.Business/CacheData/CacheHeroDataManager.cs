@@ -11,7 +11,7 @@ namespace GameOfRevenge.Business.CacheData
 {
     public static class CacheHeroDataManager
     {
-        public const string HeroNotExist = "Hero item does not exist";
+        public const string HeroNotExist = "Hero does not exist";
 
         private static bool isLoaded = false;
         private static List<HeroDataRequirementRel> heroInfos = null;
