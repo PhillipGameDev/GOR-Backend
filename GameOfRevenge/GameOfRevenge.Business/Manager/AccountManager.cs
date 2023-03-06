@@ -310,13 +310,13 @@ namespace GameOfRevenge.Business.Manager
         }
 
 
-        public async Task<Response<PlayerTutorialData>> GetTutorialInfo(string identifier)
+        public async Task<Response<PlayerTutorialData>> GetTutorialInfo(string playerId)
         {
             try
             {
                 var spParams = new Dictionary<string, object>()
                 {
-                    { "PlayerIdentifier", identifier },
+                    { "PlayerId", playerId },
                 };
 
                 return await Db.ExecuteSPSingleRow<PlayerTutorialData>("GetPlayerTutorial", spParams);
@@ -342,13 +342,13 @@ namespace GameOfRevenge.Business.Manager
             }
         }
 
-        public async Task<Response<PlayerTutorialData>> UpdateTutorialInfo(string identifier, string playerData, bool isComplete)
+        public async Task<Response<PlayerTutorialData>> UpdateTutorialInfo(string playerId, string playerData, bool isComplete)
         {
             try
             {
                 var spParams = new Dictionary<string, object>()
                 {
-                    { "PlayerIdentifier", identifier },
+                    { "PlayerId", playerId },
                     { "ProgressData", playerData },
                     { "IsComplete", isComplete },
                 };

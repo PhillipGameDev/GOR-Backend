@@ -10,7 +10,7 @@ namespace GameOfRevenge.Common.Interface
         Task<Response<string[]>> ChangeName(int playerId, string name);
         Task<Response<PlayerInfo>> GetAccountInfo(int playerId);
         Task<Response<PlayerInfo>> GetAccountInfo(string identifier);
-        Task<Response<PlayerTutorialData>> GetTutorialInfo(string identifier);
-        Task<Response<PlayerTutorialData>> UpdateTutorialInfo(string identifier, string playerData, bool isComplete);
+        Task<Response<PlayerTutorialData>> GetTutorialInfo(string playerId);
+        Task<Response<PlayerTutorialData>> UpdateTutorialInfo(string playerId, string playerData, bool isComplete);
     }
 }

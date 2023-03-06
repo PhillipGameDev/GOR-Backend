@@ -52,17 +52,17 @@ namespace GameOfRevenge.WebServer.Controllers.Api
 
         [HttpPost]
         [AllowAnonymous]
-        public async Task<IActionResult> GetTutorialInfo(string identifier)
+        public async Task<IActionResult> GetTutorialInfo(string playerId)
         {
-            var response = await accountManager.GetTutorialInfo(identifier);
+            var response = await accountManager.GetTutorialInfo(playerId);
             return ReturnResponse(response);
         }
 
         [HttpPost]
         [AllowAnonymous]
-        public async Task<IActionResult> UpdateTutorialInfo(string identifier, string data, bool isComplete)
+        public async Task<IActionResult> UpdateTutorialInfo(string playerId, string data, bool isComplete)
         {
-            var response = await accountManager.UpdateTutorialInfo(identifier, data, isComplete);
+            var response = await accountManager.UpdateTutorialInfo(playerId, data, isComplete);
             return ReturnResponse(response);
         }
     }
