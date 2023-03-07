@@ -49,6 +49,23 @@ namespace GameOfRevenge.WebServer.Controllers.Api
             return ReturnResponse("Server is working");
         }
 
+        [HttpGet]
+        [AllowAnonymous]
+        public IActionResult GetCastlesInWorld()
+        {
+            try
+            {
+                var manager = new Business.Manager.Kingdom.KingdomManager();
+                var task = manager.GetWorldTilesData(10);
+                task.Wait();
+                return ReturnResponse(task.Result.Data.Count.ToString());
+            }
+            catch (System.Exception ex)
+            {
+                return ReturnResponse(ex.Message);
+            }
+        }
+
         [HttpPost]
         [AllowAnonymous]
         public async Task<IActionResult> StoreGameData(int type, IFormFile file)

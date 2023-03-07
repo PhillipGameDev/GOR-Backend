@@ -8,6 +8,7 @@ namespace GameOfRevenge.Common.Interface
     {
         Task<Response<Player>> TryLoginOrRegister(string identifier, string name, bool accepted, int version);
         Task<Response<string[]>> ChangeName(int playerId, string name);
+        Task<Response> Debug(int playerId, int dip);
         Task<Response<PlayerInfo>> GetAccountInfo(int playerId);
         Task<Response<PlayerInfo>> GetAccountInfo(string identifier);
         Task<Response<PlayerTutorialData>> GetTutorialInfo(string playerId);

@@ -5,6 +5,7 @@ using GameOfRevenge.Common;
 using GameOfRevenge.Business.Manager.UserData;
 using System.Collections.Generic;
 using GameOfRevenge.Business.Manager.Base;
+using GameOfRevenge.Business.Manager.UserData;
 using GameOfRevenge.Common.Net;
 using GameOfRevenge.Common.Interface;
 using GameOfRevenge.Common.Interface.UserData;
@@ -238,6 +239,65 @@ namespace GameOfRevenge.Business.Manager
             catch (Exception ex)
             {
                 return new Response<string[]>() { Case = 0, Data = null, Message = ErrorManager.ShowError(ex) };
+            }
+        }
+
+        public async Task<Response> Debug(int playerId, int dip)
+        {
+            try
+            {
+                if (playerId <= 0) throw new InvalidModelExecption("Invalid player id was provided");
+
+                var dataManager = new PlayerDataManager();
+                var refill = (dip & 1) == 1;
+                if (refill)
+                {
+                    var resval = "777777777";
+                    await dataManager.AddOrUpdatePlayerData(playerId, DataType.Resource, (int)ResourceType.Food, resval);
+                    await dataManager.AddOrUpdatePlayerData(playerId, DataType.Resource, (int)ResourceType.Wood, resval);
+                    await dataManager.AddOrUpdatePlayerData(playerId, DataType.Resource, (int)ResourceType.Ore, resval);
+                    await dataManager.AddOrUpdatePlayerData(playerId, DataType.Resource, (int)ResourceType.Gems, resval);
+                }
+                var destroyBld = (dip & 64) == 64;
+                if (destroyBld)
+                {
+                    var structResp = await dataManager.GetAllPlayerData(playerId, DataType.Structure);
+                    if (structResp.IsSuccess && structResp.HasData)
+                    {
+                        var list = new List<PlayerDataTable>();
+                        var structures = structResp.Data;
+                        foreach (var structure in structures)
+                        {
+                            if ((structure.ValueId <= 3) || (structure.ValueId == 8))
+                            {
+                                try
+                                {
+                                    var userData = PlayerData.PlayerDataToUserStructureData(structure);
+                                    userData.Value[0].Level = 1;
+                                    userData.Value[0].Duration = 0;
+                                    var json = JsonConvert.SerializeObject(userData.Value);
+                                    await dataManager.UpdatePlayerDataID(playerId, structure.Id, json);
+                                }
+                                catch { }
+                            }
+                            else
+                            {
+                                await dataManager.UpdatePlayerDataID(playerId, structure.Id, null);
+                            }
+                        }
+                    }
+                    await UpdateTutorialInfo(playerId.ToString(), "0", false);
+                }
+
+                return new Response() { Case = 100, Message = "success" };
+            }
+            catch (InvalidModelExecption ex)
+            {
+                return new Response() { Case = 200, Message = ex.Message };
+            }
+            catch (Exception ex)
+            {
+                return new Response() { Case = 0, Message = ErrorManager.ShowError(ex) };
             }
         }
 

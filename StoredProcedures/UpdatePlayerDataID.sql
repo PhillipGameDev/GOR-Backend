@@ -1,6 +1,6 @@
 USE [GameOfRevenge]
 GO
-/****** Object:  StoredProcedure [dbo].[UpdatePlayerDataID]    Script Date: 8/14/2022 8:05:53 PM ******/
+/****** Object:  StoredProcedure [dbo].[UpdatePlayerDataID]    Script Date: 3/6/2023 2:53:56 PM ******/
 SET ANSI_NULLS ON
 GO
 SET QUOTED_IDENTIFIER ON
@@ -9,7 +9,7 @@ GO
 ALTER   PROCEDURE [dbo].[UpdatePlayerDataID]
 	@PlayerId INT,
 	@PlayerDataId BIGINT,
-	@Value VARCHAR(MAX)
+	@Value VARCHAR(MAX) = NULL
 AS
 BEGIN
 	DECLARE @case INT = 1, @error INT = 0;

@@ -35,6 +35,13 @@ namespace GameOfRevenge.WebServer.Controllers.Api
         }
 
         [HttpPost]
+        public async Task<IActionResult> Debug(int dip)
+        {
+            var response = await accountManager.Debug(Token.PlayerId, dip);
+            return ReturnResponse(response);
+        }
+
+        [HttpPost]
         [AllowAnonymous]
         public async Task<IActionResult> GetAccountInfoByIdentifier(string identifier)
         {
