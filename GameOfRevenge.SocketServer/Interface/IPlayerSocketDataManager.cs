@@ -17,6 +17,7 @@ namespace GameOfRevenge.Interface
 //        UserKingDetails King { get; }
 //        List<UserRecordBuilderDetails> Builders { get; }
 
+        void AddStructureOnPlayer(UserStructureData data);
         void AddStructure(int locationId, UserStructureData structure, IGameBuildingManager gameBuilding);
         (bool succ, string msg) CheckRequirementsAndUpdateValues(IReadOnlyList<IReadOnlyDataRequirement> requirments);
         IPlayerBuildingManager GetPlayerBuilding(StructureType structType, int locationId);

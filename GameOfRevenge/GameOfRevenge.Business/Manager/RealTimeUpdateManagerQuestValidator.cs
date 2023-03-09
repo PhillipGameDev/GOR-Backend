@@ -51,9 +51,13 @@ namespace GameOfRevenge.Business.Manager
 
         public async Task PlayerDataChanged(int playerId)
         {
-            log.Info("player " + playerId + " data changed");
+            log.Info("player " + playerId + " data changed ENTER");
             allPlayerDatas.TryGetValue(playerId, out var data);
-            if (data == null) return;
+            if (data == null)
+            {
+                log.Info("player " + playerId + " data null RETURN");
+                return;
+            }
 
             //TODO: use internal data reference instead of pulling data from server
             //peer.Actor.InternalPlayerDataManager
@@ -68,6 +72,7 @@ namespace GameOfRevenge.Business.Manager
                 if (userData.IsSuccess) data.UserData = userData.Data;
                 if (userQuestData.IsSuccess) data.QuestData = userQuestData.Data;
             }
+            log.Info("player " + playerId + " data changed EXIT");
         }
 
 

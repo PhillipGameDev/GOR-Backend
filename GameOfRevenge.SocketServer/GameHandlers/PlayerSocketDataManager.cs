@@ -163,29 +163,31 @@ namespace GameOfRevenge.GameHandlers
         public void AddStructureOnPlayer(PlayerDataTable data)
         {
             var structure = PlayerData.PlayerDataToUserStructureData(data);
-            if (structure != null)
-            {
+            if (structure != null) AddStructureOnPlayer(structure);
+#if DEBUG
+            else
+                log.InfoFormat("Structure not found when convert player data to structure info {0} ", JsonConvert.SerializeObject(data));
+#endif
+        }
+
+        public void AddStructureOnPlayer(UserStructureData structure)
+        {
 #if DEBUG
 //                log.InfoFormat("Player Data Convert to structure {0} playerData {1} ",
 //                    JsonConvert.SerializeObject(structure), JsonConvert.SerializeObject(data));
 #endif
-                if (!this.PlayerBuildings.ContainsKey(structure.ValueId))
+            if (!this.PlayerBuildings.ContainsKey(structure.ValueId))
+            {
+                var multipleBuildings = GameService.BPlayerStructureManager.GetMultipleBuildings(structure);
+                foreach (var build in multipleBuildings)
                 {
-                    var multipleBuildings = GameService.BPlayerStructureManager.GetMultipleBuildings(structure);
-                    foreach (var build in multipleBuildings)
-                    {
-                        IGameBuildingManager gameBuilding = GameService.GameBuildingManagerInstances[structure.ValueId];
-                        this.AddStructure(build.Key, build.Value, gameBuilding);
-                    }
+                    IGameBuildingManager gameBuilding = GameService.GameBuildingManagerInstances[structure.ValueId];
+                    this.AddStructure(build.Key, build.Value, gameBuilding);
                 }
-#if DEBUG
-                else
-                    log.InfoFormat("that structure is already defined in player structureType {0} ", structure.ValueId.ToString());
-#endif
             }
 #if DEBUG
             else
-                log.InfoFormat("Structure not found when convert player data to structure info {0} ", JsonConvert.SerializeObject(data));
+                log.InfoFormat("that structure is already defined in player structureType {0} ", structure.ValueId.ToString());
 #endif
         }
 
@@ -222,6 +224,7 @@ namespace GameOfRevenge.GameHandlers
                 case StructureType.Warehouse: plyBuilding = new WareHouse(gameBuilding, this.player, structure); break;
                 case StructureType.Workshop: plyBuilding = new Workshop(gameBuilding, this.player, structure); break;
                 case StructureType.Stable: plyBuilding = new Stable(gameBuilding, this.player, structure); break;
+//TRAINING HEROES not requiered, level 1 is max build level
 //                case StructureType.TrainingHeroes: plyBuilding = new TrainingHeroes(gameBuilding, this.player, structure); break;
             }
             if (plyBuilding != null)

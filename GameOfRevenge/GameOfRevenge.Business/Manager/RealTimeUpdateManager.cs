@@ -39,7 +39,7 @@ namespace GameOfRevenge.Business.Manager
             AttackStatusData data = null;
             lock (SyncRoot)
             {
-                data = attackPlayerData.Find(d => (d.Defender.PlayerId == defenderId));
+                data = attackPlayerData.Find(d => (d.Defender != null) && (d.Defender.PlayerId == defenderId));
             }
             return data;
         }

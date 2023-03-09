@@ -147,7 +147,7 @@ namespace GameOfRevenge.Business.Manager.UserData
                     if (playerGems < cost) throw new RequirementExecption("Not enough gems");
 
                     var resCut = await _userResourceManager.SumGemsResource(playerId, -cost);
-                    if (!resCut.IsSuccess) throw new RequirementExecption("Not enough gems");
+                    if (!resCut.IsSuccess) throw new RequirementExecption("Issue removing gems");
                 }
 
                 bool removeResources = true;
@@ -254,7 +254,7 @@ namespace GameOfRevenge.Business.Manager.UserData
                     if (playerGems < cost) throw new RequirementExecption("Not enough gems");
 
                     var resCut = await _userResourceManager.SumGemsResource(playerId, -cost);
-                    if (!resCut.IsSuccess) throw new RequirementExecption("Not enough gems");
+                    if (!resCut.IsSuccess) throw new RequirementExecption("Issue removing gems");
                 }
 
 //                    var structureData = CacheStructureDataManager.GetFullStructureData(structure.StructureType);
@@ -365,10 +365,10 @@ namespace GameOfRevenge.Business.Manager.UserData
 
 
                 var playerGems = playerData.Data.Resources.Gems;
-                if (playerGems < finalCost) return new Response<UserTroopData>(200, "Not enough gems");
+                if (playerGems < finalCost) throw new RequirementExecption("Not enough gems");
 
                 var resCut = await _userResourceManager.SumGemsResource(playerId, -finalCost);
-                if (!resCut.IsSuccess) return new Response<UserTroopData>(200, "Not enough gems");
+                if (!resCut.IsSuccess) throw new RequirementExecption("Issue removing gems");
 
                 List<TroopDetails> troopDataList = null;
                 TroopDetails data = null;

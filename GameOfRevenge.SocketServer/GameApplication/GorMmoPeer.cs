@@ -50,18 +50,35 @@ namespace GameOfRevenge.GameApplication
 
         protected override void OnDisconnect(DisconnectReason reasonCode, string reasonDetail)
         {
+#if DEBUG
+            if (!string.IsNullOrEmpty(reasonDetail)) reasonDetail = ", reason in details: " + reasonDetail;
+#endif
             if (Actor != null)
             {
                 try
                 {
                     GameService.RealTimeUpdateManagerQuestValidator.DeletePlayerQuestData(Actor.PlayerId);
                 }
-                catch { }
+                catch (Exception ex)
+                {
+#if DEBUG
+                    log.Debug("Exception delting quest data "+ex.Message);
+#endif
+                }
+#if DEBUG
+                log.Debug($"Client {Actor.PlayerId} disconnected with code: {reasonCode}{reasonDetail}");
+#endif
+
+                Actor.StopOnReal();
             }
+#if DEBUG
+            else
+            {
+                log.Debug($"Client -- disconnected with code: {reasonCode}{reasonDetail}");
+            }
+#endif
+
             Clients.Remove(this);
-            var str = (Actor != null)? Actor.PlayerId.ToString() : "";
-            log.Debug($"Client {str} disconnected with code: {reasonCode}, reason in details: {reasonDetail}");
-            if (Actor != null) Actor.StopOnReal();
             Dispose();
         }
 
