@@ -621,7 +621,7 @@ namespace GameOfRevenge.GameHandlers
             GameService.RealTimeUpdateManagerQuestValidator.TryAddPlayerQuestData(actor.PlayerId, peer.OnQuestUpdate);
 
 
-            var attackData = GameService.BRealTimeUpdateManager.GetDefenderData(actor.PlayerId);
+            var attackData = GameService.BRealTimeUpdateManager.GetAttackDataForDefender(actor.PlayerId);
             if (attackData != null)
             {
                 var attackResponse = new AttackResponse(attackData.AttackData);//attack / under attack event

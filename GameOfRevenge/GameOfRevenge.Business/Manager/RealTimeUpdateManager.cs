@@ -5,9 +5,7 @@ using System.Threading.Tasks;
 using ExitGames.Logging;
 using GameOfRevenge.Business.Manager.UserData;
 using GameOfRevenge.Common.Interface;
-using GameOfRevenge.Common.Interface.UserData;
 using GameOfRevenge.Common.Models;
-using GameOfRevenge.Common.Models.Kingdom;
 using GameOfRevenge.Common.Services;
 
 namespace GameOfRevenge.Business.Manager
@@ -29,17 +27,17 @@ namespace GameOfRevenge.Business.Manager
             AttackStatusData data = null;
             lock (SyncRoot)
             {
-                data = attackPlayerData.Find(d => (d.Attacker.PlayerId == attackerId));
+                data = attackPlayerData.Find(x => (x.Attacker.PlayerId == attackerId));
             }
             return data;
         }
 
-        public AttackStatusData GetDefenderData(int defenderId)
+        public AttackStatusData GetAttackDataForDefender(int defenderId)
         {
             AttackStatusData data = null;
             lock (SyncRoot)
             {
-                data = attackPlayerData.Find(d => (d.Defender != null) && (d.Defender.PlayerId == defenderId));
+                data = attackPlayerData.Find(x => (x.AttackData.EnemyId == defenderId));
             }
             return data;
         }
