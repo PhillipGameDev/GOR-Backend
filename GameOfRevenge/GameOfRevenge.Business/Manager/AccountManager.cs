@@ -286,6 +286,16 @@ namespace GameOfRevenge.Business.Manager
                             }
                         }
                     }
+                    var troopResp = await dataManager.GetAllPlayerData(playerId, DataType.Troop);
+                    if (troopResp.IsSuccess && troopResp.HasData)
+                    {
+                        var list = new List<PlayerDataTable>();
+                        var troops = troopResp.Data;
+                        foreach (var troop in troops)
+                        {
+                            await dataManager.UpdatePlayerDataID(playerId, troop.Id, null);
+                        }
+                    }
                     await UpdateTutorialInfo(playerId.ToString(), "0", false);
                 }
 
