@@ -209,12 +209,15 @@ namespace GameOfRevenge.Business.Manager
             }
         }
 
-        public async Task<Response<string[]>> SetProperties(int playerId, string name = null, int? vipPoints = null, bool? terms = null, int? worldTileId = null)
+        public async Task<Response<Player>> SetProperties(int playerId, string name = null, int? vipPoints = null, bool? terms = null, int? worldTileId = null)
         {
             try
             {
                 if (playerId <= 0) throw new InvalidModelExecption("Invalid player id was provided");
-                if (string.IsNullOrWhiteSpace(name) || (name.Length < 3)) throw new InvalidModelExecption("Invalid name was provided");
+                if ((name != null) && (string.IsNullOrWhiteSpace(name) || (name.Length < 3)))
+                {
+                    throw new InvalidModelExecption("Invalid name was provided");
+                }
 
                 var spParams = new Dictionary<string, object>()
                 {
@@ -225,7 +228,26 @@ namespace GameOfRevenge.Business.Manager
                 if (terms != null) spParams.Add("Terms", (bool)terms ? 1 : 0);
                 if (worldTileId != null) spParams.Add("WorldTileId", worldTileId);
 
-                var response = await Db.ExecuteSPSingleRow<Player>("UpdatePlayerProperties", spParams);
+                return await Db.ExecuteSPSingleRow<Player>("UpdatePlayerProperties", spParams);
+            }
+            catch (InvalidModelExecption ex)
+            {
+                return new Response<Player>() { Case = 200, Data = null, Message = ex.Message };
+            }
+            catch (Exception ex)
+            {
+                return new Response<Player>() { Case = 0, Data = null, Message = ErrorManager.ShowError(ex) };
+            }
+        }
+
+        public async Task<Response<string[]>> ChangeName(int playerId, string name)
+        {
+            try
+            {
+                if (playerId <= 0) throw new InvalidModelExecption("Invalid player id was provided");
+                if (string.IsNullOrWhiteSpace(name) || (name.Length < 3)) throw new InvalidModelExecption("Invalid name was provided");
+
+                var response = await SetProperties(playerId, name: name);
                 if (response.IsSuccess)
                 {
                     var updated = await CompleteAccountQuest(playerId, AccountTaskType.ChangeName);

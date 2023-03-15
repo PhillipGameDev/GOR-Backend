@@ -96,8 +96,8 @@ namespace GameOfRevenge.GameHandlers
             if (troops != null)
             {
 #if DEBUG
-//                log.InfoFormat("Player Data Convert to Troop {0} playerData {1} ",
-//                  JsonConvert.SerializeObject(troops), JsonConvert.SerializeObject(data));
+                log.InfoFormat("Player Data Convert to Troop {0} playerData {1} ",
+                  JsonConvert.SerializeObject(troops), JsonConvert.SerializeObject(data));
 #endif
                 foreach (var troop in troops.Value)
                 {
@@ -230,7 +230,7 @@ namespace GameOfRevenge.GameHandlers
             if (plyBuilding != null)
             {
 #if DEBUG
-//                log.InfoFormat("Add New Structure On Player Account {0} ", structure.ValueId.ToString());
+                log.InfoFormat("Add New Structure On Player Account {0} at Location {1}", structure.ValueId.ToString(), locationId);
 #endif
                 this.PlayerBuildings[structure.ValueId].Add(plyBuilding);
             }

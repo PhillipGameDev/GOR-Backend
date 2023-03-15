@@ -99,7 +99,7 @@ namespace GameOfRevenge.GameHandlers
                                 plyInfo = task.Result.Data;
 
                                 var actor = new MmoActor(playerId, plyInfo, this, worldRegion);
-                                actor.WorldRegion.SpawnPlayerInRegion(actor);
+                                actor.WorldRegion.SetPlayerInRegion(actor);
                                 this.PlayersManager.AddPlayer(playerId, actor);
 
                                 count++;
@@ -212,34 +212,40 @@ namespace GameOfRevenge.GameHandlers
             return (this.WorldRegions[data.X][data.Y], actor, iA);
         }*/
 
-        public (MmoActor actor, IInterestArea iA) GetPlayerPosition(int playerId, PlayerInfo playerInfo)
+        public async Task<(MmoActor actor, IInterestArea iA)> GetPlayerPositionAsync(int playerId, PlayerInfo playerInfo)
         {
             IInterestArea interestArea = null;
-            var actor = this.PlayersManager.GetPlayer(playerId);
-            var data = this.WorldData.Find(d => (d.TileData.PlayerId == playerId));
+            var actor = PlayersManager.GetPlayer(playerId);
+            var data = WorldData.Find(d => (d.TileData.PlayerId == playerId));
             if (data == null)
             {
                 var region = FindFreeRegion();
                 if (region != null)
                 {
-                    data = new WorldDataTable()
+                    var tileData = new WorldTileData(playerId);
+                    var resp = await GameService.BKingdomManager.UpdateWorldTileData(WorldId, region.X, region.Y, tileData);
+                    if (resp.IsSuccess && resp.HasData)
                     {
-                        WorldId = this.WorldId,
-                        X = region.X,
-                        Y = region.Y,
-                        TileData = new WorldTileData(playerId)
-                    };
-                    this.WorldData.Add(data);
-                    var worldRegion = WorldRegions[data.X][data.Y];
-                    actor = new MmoActor(playerId, playerInfo, this, worldRegion);
-                    worldRegion.SpawnPlayerInRegion(actor);
-                    new DelayedAction().WaitForCallBack(() =>
-                    {
-                        GameService.BKingdomManager.UpdateWorldTileData(this.WorldId, data.X, data.Y, data.TileData);
+                        var setResp = await GameService.BAccountManager.SetProperties(playerId, worldTileId: resp.Data.Id);
+                        if (setResp.IsSuccess)
+                        {
+                            data = new WorldDataTable()
+                            {
+                                WorldId = WorldId,
+                                X = region.X,
+                                Y = region.Y,
+                                TileData = tileData
+                            };
+                            WorldData.Add(data);
+
+                            var worldRegion = WorldRegions[region.X][region.Y];
+                            actor = new MmoActor(playerId, playerInfo, this, worldRegion);
+                            worldRegion.SetPlayerInRegion(actor);
+                            PlayersManager.AddPlayer(playerId, actor);
+
+                            interestArea = new InterestArea(worldRegion, actor, true);
+                        }
                     }
-                    , 0);
-                    this.PlayersManager.AddPlayer(playerId, actor);
-                    interestArea = new InterestArea(worldRegion, actor, true);
                 }
             }
             else

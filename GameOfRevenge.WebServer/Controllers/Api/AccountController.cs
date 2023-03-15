@@ -1,10 +1,8 @@
 ﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using System.Threading.Tasks;
-using GameOfRevenge.Common.Net;
 using GameOfRevenge.Common.Interface;
 using GameOfRevenge.WebServer.Services;
-using GameOfRevenge.Business;
 
 namespace GameOfRevenge.WebServer.Controllers.Api
 {
@@ -30,7 +28,7 @@ namespace GameOfRevenge.WebServer.Controllers.Api
         [HttpPost]
         public async Task<IActionResult> ChangeName(string name)
         {
-            var response = await accountManager.SetProperties(Token.PlayerId, name: name);
+            var response = await accountManager.ChangeName(Token.PlayerId, name: name);
             return ReturnResponse(response);
         }
 

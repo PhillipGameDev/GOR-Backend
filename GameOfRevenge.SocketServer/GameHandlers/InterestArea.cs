@@ -16,7 +16,7 @@ namespace GameOfRevenge.GameHandlers
     public class InterestArea : IInterestArea, IDisposable
     {
         private static readonly ILogger log = LogManager.GetCurrentClassLogger();
-        public IWorld World { get { return this.CastleRegion.country; } }
+        public IWorld World { get { return this.CastleRegion.Country; } }
         public MmoActor Owner { get; private set; }
         public Region CastleRegion { get; private set; }
         public Region CameraRegion { get; private set; }

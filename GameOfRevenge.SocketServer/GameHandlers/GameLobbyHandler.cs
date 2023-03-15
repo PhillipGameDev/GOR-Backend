@@ -36,7 +36,7 @@ namespace GameOfRevenge.GameHandlers
 
                 switch ((OperationCode)operationRequest.OperationCode)
                 {
-                    case OperationCode.PlayerConnectToServer: return HandlPlayerConnectToGameServer(peer, operationRequest);//1
+                    case OperationCode.PlayerConnectToServer: return await HandlPlayerConnectToGameServer(peer, operationRequest);//1
                     case OperationCode.UserTeleport: return HandlePlayerTeleport(peer, operationRequest);//3
                     case OperationCode.JoinKingdomRoom: return HandlePlayerJoinKingdomView(peer, operationRequest);//4
                     case OperationCode.LeaveKingdomRoom: return HandlePlayerLeaveKingdomView(peer, operationRequest);//5
@@ -558,9 +558,7 @@ namespace GameOfRevenge.GameHandlers
             return peer.SendOperation(operationRequest.OperationCode, ReturnCode.InvalidOperation, debuMsg: errMsg);
         }
 
-        private static readonly IAccountManager accountManager = new AccountManager();
-
-        public SendResult HandlPlayerConnectToGameServer(IGorMmoPeer peer, OperationRequest operationRequest)
+        public async Task<SendResult> HandlPlayerConnectToGameServer(IGorMmoPeer peer, OperationRequest operationRequest)
         {
             var operation = new PlayerConnectRequest(peer.Protocol, operationRequest);
             if (!operation.IsValid) return peer.SendOperation(operationRequest.OperationCode, ReturnCode.InvalidOperation, debuMsg: operation.GetErrorMessage());
@@ -575,14 +573,13 @@ namespace GameOfRevenge.GameHandlers
             log.InfoFormat("get Player Data from db {0} ", JsonConvert.SerializeObject(playerData));
 
             var playerId = operation.PlayerId;
-            var playerInfo = accountManager.GetAccountInfo(playerId).Result.Data;
+            var playerInfo = GameService.BAccountManager.GetAccountInfo(playerId).Result.Data;
             log.InfoFormat("get Player Info from db {0} ", JsonConvert.SerializeObject(playerInfo));
 
-//            (Region r, MmoActor actor, IInterestArea interestArea) = this.GridWorld.GetPlayerPosition(playerId, playerInfo);
-            (MmoActor actor, IInterestArea interestArea) = this.GridWorld.GetPlayerPosition(playerId, playerInfo);
+            (MmoActor actor, IInterestArea interestArea) = await GridWorld.GetPlayerPositionAsync(playerId, playerInfo);
             if (actor == null)
             {
-                var dbgMsg = "Player not found in world map";
+                var dbgMsg = "can't locate player in world map";
                 return peer.SendOperation(operationRequest.OperationCode, ReturnCode.InvalidOperation, debuMsg: dbgMsg);
             }
 
