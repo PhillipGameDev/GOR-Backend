@@ -47,6 +47,8 @@ namespace GameOfRevenge.GameApplication
         public static GameLobbyHandler GameLobby { get; private set; }
         public static IWorldHandler WorldHandler { get; private set; }
         public static RealTimeUpdateManagerQuestValidator RealTimeUpdateManagerQuestValidator { get; private set; }
+        public static IAccountManager BAccountManager { get; private set; }
+
 
         public static IChatManager BChatManager { get; private set; }
 
@@ -90,6 +92,7 @@ namespace GameOfRevenge.GameApplication
             BkingdomePvpManager = new KingdomPvPManager();
             BRealTimeUpdateManager = new RealTimeUpdateManager();
             RealTimeUpdateManagerQuestValidator = new RealTimeUpdateManagerQuestValidator();
+            BAccountManager = new AccountManager();
 
             BChatManager = new ChatManager();
 

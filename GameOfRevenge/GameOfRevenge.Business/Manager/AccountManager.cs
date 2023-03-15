@@ -5,7 +5,6 @@ using GameOfRevenge.Common;
 using GameOfRevenge.Business.Manager.UserData;
 using System.Collections.Generic;
 using GameOfRevenge.Business.Manager.Base;
-using GameOfRevenge.Business.Manager.UserData;
 using GameOfRevenge.Common.Net;
 using GameOfRevenge.Common.Interface;
 using GameOfRevenge.Common.Interface.UserData;
@@ -210,7 +209,7 @@ namespace GameOfRevenge.Business.Manager
             }
         }
 
-        public async Task<Response<string[]>> ChangeName(int playerId, string name)
+        public async Task<Response<string[]>> SetProperties(int playerId, string name = null, int? vipPoints = null, bool? terms = null, int? worldTileId = null)
         {
             try
             {
@@ -219,9 +218,12 @@ namespace GameOfRevenge.Business.Manager
 
                 var spParams = new Dictionary<string, object>()
                 {
-                    { "PlayerId", playerId },
-                    { "Name", name }
+                    { "PlayerId", playerId }
                 };
+                if (name != null) spParams.Add("Name", name);
+                if (vipPoints != null) spParams.Add("VIPPoints", vipPoints);
+                if (terms != null) spParams.Add("Terms", (bool)terms ? 1 : 0);
+                if (worldTileId != null) spParams.Add("WorldTileId", worldTileId);
 
                 var response = await Db.ExecuteSPSingleRow<Player>("UpdatePlayerProperties", spParams);
                 if (response.IsSuccess)

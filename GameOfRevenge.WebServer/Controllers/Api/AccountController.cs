@@ -30,7 +30,7 @@ namespace GameOfRevenge.WebServer.Controllers.Api
         [HttpPost]
         public async Task<IActionResult> ChangeName(string name)
         {
-            var response = await accountManager.ChangeName(Token.PlayerId, name);
+            var response = await accountManager.SetProperties(Token.PlayerId, name: name);
             return ReturnResponse(response);
         }
 
