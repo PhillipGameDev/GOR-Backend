@@ -480,6 +480,7 @@ namespace GameOfRevenge.GameHandlers
         public async Task<SendResult> HandleCollectResourceRequest(IGorMmoPeer peer, OperationRequest operationRequest)
         {
             var operation = new CollectResourceRequest(peer.Protocol, operationRequest);
+            log.Info(">>>>>>>>> collect resource >" + JsonConvert.SerializeObject(operation));
 
             var building = peer.Actor.InternalPlayerDataManager.GetPlayerBuilding(operation.StructureType, operation.LocationId);
             if ((building == null) || !(building is ResourceGenerator))
@@ -586,6 +587,7 @@ namespace GameOfRevenge.GameHandlers
             log.InfoFormat("player is added in manager with playerid {0}", playerId);
             log.InfoFormat("player enter in world X {0} Y {1} ", actor.WorldRegion.X, actor.WorldRegion.Y);
 
+            actor.StartOnReal(); //init fiber scheduler class before instantiate any building.
             PlayerSocketDataManager playerDataManager = null;
             try
             {
@@ -597,7 +599,6 @@ namespace GameOfRevenge.GameHandlers
                 return peer.SendOperation(operationRequest.OperationCode, ReturnCode.InvalidOperation, debuMsg: msg);
             }
 
-            actor.StartOnReal();
             actor.PlayerSpawn(interestArea, peer, playerDataManager);
             actor.Peer.Actor = actor;  //vice versa mmoactor into the peer and reverse
             var vipPts = peer.Actor.PlayerData.VIPPoints;//playerInfo.VIPPoints;

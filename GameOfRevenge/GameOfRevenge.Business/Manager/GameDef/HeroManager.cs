@@ -36,8 +36,6 @@ namespace GameOfRevenge.Business.Manager.GameDef
 
             foreach (var hero in heroes.Data)
             {
-                if (hero.HeroId > 10) continue;//TODO: remove this validation or update database to remove unsupported heroes.
-
                 var data = new HeroDataRequirementRel
                 {
                     Info = hero,

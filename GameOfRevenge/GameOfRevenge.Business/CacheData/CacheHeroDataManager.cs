@@ -69,7 +69,7 @@ namespace GameOfRevenge.Business.CacheData
                 foreach (var item in response.Data)
                 {
                     if (string.IsNullOrWhiteSpace(item.Info.Code)) continue;
-                    if (item.Info.Code == "Other") continue;
+                    if (item.Info.Code == HeroType.Unknown.ToString()) continue;
                     if (heroTypes.Contains(item.Info.Code)) continue;
                     heroTypes.Add(item.Info.Code);
                 }
