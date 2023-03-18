@@ -1,6 +1,6 @@
 USE [GameOfRevenge]
 GO
-/****** Object:  StoredProcedure [dbo].[CreateChatMessage]    Script Date: 2/26/2023 3:09:34 AM ******/
+/****** Object:  StoredProcedure [dbo].[CreateChatMessage]    Script Date: 3/18/2023 1:56:31 PM ******/
 SET ANSI_NULLS ON
 GO
 SET QUOTED_IDENTIFIER ON
@@ -30,7 +30,7 @@ BEGIN
 		OUTPUT INSERTED.ChatId INTO @tempTable
 		VALUES (@userId, @tcontent, @time)
 
-		SELECT [ChatId], @userId AS 'PlayerId', @vipPoints AS 'VIPPoints', @tcontent AS 'Content', @time AS 'CreateDate' FROM @tempTable;
+		SELECT [ChatId], @userId AS 'PlayerId', @name AS 'Name', @vipPoints AS 'VIPPoints', @tcontent AS 'Content', @time AS 'CreateDate' FROM @tempTable;
 
 		SET @case = 100;
 		SET @message = 'Saved message succesfully';
