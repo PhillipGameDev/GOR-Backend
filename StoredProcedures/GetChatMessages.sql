@@ -1,6 +1,6 @@
 USE [GameOfRevenge]
 GO
-/****** Object:  StoredProcedure [dbo].[GetChatMessages]    Script Date: 2/26/2023 2:13:45 AM ******/
+/****** Object:  StoredProcedure [dbo].[GetChatMessages]    Script Date: 3/18/2023 3:35:18 PM ******/
 SET ANSI_NULLS ON
 GO
 SET QUOTED_IDENTIFIER ON
@@ -31,9 +31,16 @@ BEGIN
 	SET @case = 100;
 	SET @message = 'Chat Messages';
 
-	SELECT TOP (@tlen) m.[ChatId], m.[PlayerId], p.[Name], p.[VIPPoints], m.[Content], m.[CreateDate] FROM [dbo].[Chat] AS m
+/*	SELECT TOP (@tlen) m.[ChatId], m.[PlayerId], p.[Name], p.[VIPPoints], m.[Content], m.[CreateDate] FROM [dbo].[Chat] AS m
 	INNER JOIN [dbo].[Player] AS p ON m.[PlayerId] = p.[PlayerId]
 	WHERE m.[ChatId] < @tchatId
+	ORDER BY m.[ChatId] DESC;*/
+
+	SELECT TOP (@tlen) m.[ChatId], m.[PlayerId], p.[Name], CAST(JSON_VALUE(pd.Value, '$.Points') AS INT) AS 'VIPPoints', m.[Content], m.[CreateDate] 
+	FROM [dbo].[Chat] AS m
+	INNER JOIN [dbo].[Player] AS p ON m.[PlayerId] = p.[PlayerId]
+	INNER JOIN [dbo].[PlayerData] AS pd ON m.[PlayerId] = pd.[PlayerId] 
+	WHERE m.[ChatId] < @tchatId AND pd.[DataTypeId] = 7 and pd.[ValueId] = 3
 	ORDER BY m.[ChatId] DESC;
 
 	EXEC [dbo].[GetMessage] NULL, @message, @case, @error, @time, 1, 1;
