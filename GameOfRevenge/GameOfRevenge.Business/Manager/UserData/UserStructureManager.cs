@@ -599,7 +599,7 @@ namespace GameOfRevenge.Business.Manager.UserData
                 if ((boost != null) && (boost.TimeLeft > 0))
                 {
                     var specBoostData = CacheBoostDataManager.SpecNewBoostDatas.FirstOrDefault(x => (x.Type == boost.Type));
-                    if (specBoostData.Table > 0)
+                    if ((specBoostData != null) && (specBoostData.Table > 0))
                     {
                         float.TryParse(specBoostData.Levels[boost.Level].ToString(), out float levelVal);
                         percentage += levelVal;

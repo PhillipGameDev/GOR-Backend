@@ -81,7 +81,7 @@ namespace GameOfRevenge.Common.Models
         public List<UnavaliableTroopInfo> InRecovery { get; set; }
     }
 
-    [DataContract]
+    [DataContract, Serializable]
     public class UnavaliableTroopInfo : TimerBase
     {
         [DataMember]

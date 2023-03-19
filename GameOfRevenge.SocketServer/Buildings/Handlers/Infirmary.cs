@@ -65,6 +65,8 @@ namespace GameOfRevenge.Buildings.Handlers
                             foreach (var item in result.Value)
                             {
                                 test = "5";
+                                if (item.InRecovery == null) continue;
+
                                 foreach (var items in item.InRecovery)
                                 {
                                     test = "6";
