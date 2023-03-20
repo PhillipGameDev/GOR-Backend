@@ -1,6 +1,6 @@
 USE [GameOfRevenge]
 GO
-/****** Object:  Trigger [dbo].[TRG_Player_Insert]    Script Date: 2/27/2023 11:29:06 AM ******/
+/****** Object:  Trigger [dbo].[TRG_Player_Insert]    Script Date: 3/18/2023 11:41:39 PM ******/
 SET ANSI_NULLS ON
 GO
 SET QUOTED_IDENTIFIER ON
@@ -13,36 +13,36 @@ BEGIN
     SET NOCOUNT ON;
     
 	DECLARE @PlayerIdentifier VARCHAR(1000);
-    DECLARE @RavasAccountId INT;
+    DECLARE @FirebaseId VARCHAR(1000);
 	DECLARE @Name VARCHAR(1000);
-	DECLARE @AcceptedTermAndCondition BIT;
+	DECLARE @Terms BIT;
 	DECLARE @IsAdmin BIT;
 	DECLARE @IsDeveloper BIT;
 	DECLARE @VIPPoints INT;
 	DECLARE @Version INT;
 
-    SELECT @PlayerIdentifier = i.[PlayerIdentifier], @RavasAccountId = i.[RavasAccountId], @Name = i.[Name], 
-			@AcceptedTermAndCondition = i.[AcceptedTermAndCondition], @IsAdmin = i.[IsAdmin], @IsDeveloper = i.[IsDeveloper], 
+    SELECT @PlayerIdentifier = i.[PlayerIdentifier], @FirebaseId = i.[FirebaseId], @Name = i.[Name], 
+			@Terms = i.[AcceptedTermAndCondition], @IsAdmin = i.[IsAdmin], @IsDeveloper = i.[IsDeveloper], 
 			@VIPPoints = i.[VIPPoints], @Version = i.[Version] FROM inserted AS i;
 
-	IF (@RavasAccountId IS NULL)
+	IF (@FirebaseId IS NULL)
 		BEGIN
-			INSERT INTO [dbo].[Player] (PlayerIdentifier, RavasAccountId, Name, AcceptedTermAndCondition, IsAdmin, IsDeveloper, VIPPoints, Version)
-			VALUES (@PlayerIdentifier, @RavasAccountId, @Name, @AcceptedTermAndCondition, @IsAdmin, @IsDeveloper, @VIPPoints, @Version)
+			INSERT INTO [dbo].[Player] (PlayerIdentifier, FirebaseId, Name, AcceptedTermAndCondition, IsAdmin, IsDeveloper, VIPPoints, Version)
+			VALUES (@PlayerIdentifier, @FirebaseId, @Name, @Terms, @IsAdmin, @IsDeveloper, @VIPPoints, @Version)
 		END
 	ELSE
 		BEGIN
 			DECLARE @existingId INT = NULL;
-			SELECT @existingId = p.[PlayerId] FROM [dbo].[Player] AS p WHERE p.[RavasAccountId] = @RavasAccountId;
+			SELECT @existingId = p.[PlayerId] FROM [dbo].[Player] AS p WHERE p.[FirebaseId] = @FirebaseId;
 
 			IF (@existingId IS NULL)
 				BEGIN
-					INSERT INTO [dbo].[Player] (PlayerIdentifier, RavasAccountId, Name, AcceptedTermAndCondition, IsAdmin, IsDeveloper, VIPPoints, Version)
-					VALUES (@PlayerIdentifier, @RavasAccountId, @Name, @AcceptedTermAndCondition, @IsAdmin, @IsDeveloper, @VIPPoints, @Version)
+					INSERT INTO [dbo].[Player] (PlayerIdentifier, FirebaseId, Name, AcceptedTermAndCondition, IsAdmin, IsDeveloper, VIPPoints, Version)
+					VALUES (@PlayerIdentifier, @FirebaseId, @Name, @Terms, @IsAdmin, @IsDeveloper, @VIPPoints, @Version)
 				END
 			ELSE
 				BEGIN
-					RAISERROR('The unique constraint applies on RavasAccountId %d', 16, 1, @RavasAccountId);
+					RAISERROR('The unique constraint applies on FirebaseId %d', 16, 1, @FirebaseId);
 					ROLLBACK TRANSACTION;
 				END
 		END

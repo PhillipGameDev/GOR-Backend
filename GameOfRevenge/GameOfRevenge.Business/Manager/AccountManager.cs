@@ -23,24 +23,23 @@ namespace GameOfRevenge.Business.Manager
         private readonly IUserStructureManager strManager = new UserStructureManager();
         private readonly IUserQuestManager questManager = new UserQuestManager();
 
-        public async Task<Response<Player>> TryLoginOrRegister(string identifier, string name, bool accepted, int version)
+        public async Task<Response<Player>> TryLoginOrRegister(string identifier, bool accepted, int version)
         {
             try
             {
+                if (version < 801) throw new DataNotExistExecption("Update Required");
                 if (string.IsNullOrWhiteSpace(identifier))
                 {
-                    throw new InvalidModelExecption("Invalid identifier was provided");
+                    throw new InvalidModelExecption("Invalid identifier was provided:'"+identifier+"'");
                 }
 
                 identifier = identifier.Trim();
-                name = string.IsNullOrWhiteSpace(name) ? "Guest" : name.Trim();
 
-                if (!accepted) throw new InvalidModelExecption("Kindly accept terms and condition");
+                if (!accepted) throw new RequirementExecption("Kindly accept terms and condition");
 
                 var spParams = new Dictionary<string, object>()
                 {
                     { "Identifier", identifier },
-                    { "Name", name },
                     { "Accepted", accepted },
                     { "Version", version }
                 };
@@ -199,6 +198,14 @@ namespace GameOfRevenge.Business.Manager
 
                 return response;
             }
+            catch (DataNotExistExecption ex)
+            {
+                return new Response<Player>() { Case = 202, Data = null, Message = ex.Message };
+            }
+            catch (RequirementExecption ex)
+            {
+                return new Response<Player>() { Case = 201, Data = null, Message = ex.Message };
+            }
             catch (InvalidModelExecption ex)
             {
                 return new Response<Player>() { Case = 200, Data = null, Message = ex.Message };
@@ -209,7 +216,7 @@ namespace GameOfRevenge.Business.Manager
             }
         }
 
-        public async Task<Response<Player>> SetProperties(int playerId, string name = null, int? vipPoints = null, bool? terms = null, int? worldTileId = null)
+        public async Task<Response<Player>> SetProperties(int playerId, string firebaseId = null, bool? terms = null, int? worldTileId = null, string name = null, int? vipPoints = null)
         {
             try
             {
@@ -223,10 +230,11 @@ namespace GameOfRevenge.Business.Manager
                 {
                     { "PlayerId", playerId }
                 };
-                if (name != null) spParams.Add("Name", name);
-                if (vipPoints != null) spParams.Add("VIPPoints", vipPoints);
+                if (firebaseId != null) spParams.Add("FirebaseId", firebaseId);
                 if (terms != null) spParams.Add("Terms", (bool)terms ? 1 : 0);
                 if (worldTileId != null) spParams.Add("WorldTileId", worldTileId);
+                if (name != null) spParams.Add("Name", name);
+                if (vipPoints != null) spParams.Add("VIPPoints", vipPoints);
 
                 return await Db.ExecuteSPSingleRow<Player>("UpdatePlayerProperties", spParams);
             }

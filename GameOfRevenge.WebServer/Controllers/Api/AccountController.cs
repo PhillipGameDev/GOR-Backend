@@ -19,7 +19,17 @@ namespace GameOfRevenge.WebServer.Controllers.Api
         [AllowAnonymous]
         public async Task<IActionResult> TryLoginOrRegister(string identifier, string name, bool accept, int version = 0)
         {
-            var response = await accountManager.TryLoginOrRegister(identifier, name, accept, version);
+            var response = await accountManager.TryLoginOrRegister(identifier, accept, version);
+            if (response.IsSuccess && response.HasData) response.Data.GenerateToken();
+
+            return ReturnResponse(response);
+        }
+
+        [HttpPost]
+        [AllowAnonymous]
+        public async Task<IActionResult> LoginOrRegister(string identifier, bool accept, int version = 0)
+        {
+            var response = await accountManager.TryLoginOrRegister(identifier, accept, version);
             if (response.IsSuccess && response.HasData) response.Data.GenerateToken();
 
             return ReturnResponse(response);
@@ -29,6 +39,13 @@ namespace GameOfRevenge.WebServer.Controllers.Api
         public async Task<IActionResult> ChangeName(string name)
         {
             var response = await accountManager.ChangeName(Token.PlayerId, name: name);
+            return ReturnResponse(response);
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> LinkAccount(string identifier)
+        {
+            var response = await accountManager.SetProperties(Token.PlayerId, firebaseId: identifier);
             return ReturnResponse(response);
         }
 

@@ -7,8 +7,9 @@ namespace GameOfRevenge.Common.Interface
 {
     public interface IAccountManager
     {
-        Task<Response<Player>> TryLoginOrRegister(string identifier, string name, bool accepted, int version);
-        Task<Response<Player>> SetProperties(int playerId, string name = null, int? vipPoints = null, bool? terms = null, int? worldTileId = null);
+        Task<Response<Player>> TryLoginOrRegister(string identifier, bool accepted, int version);
+        Task<Response<Player>> SetProperties(int playerId, string firebaseId = null, bool? terms = null, int? worldTileId = null, string name = null, int? vipPoints = null);
+
         Task<Response<string[]>> ChangeName(int playerId, string name);
 
         Task<Response> Debug(int playerId, int dip);
