@@ -55,17 +55,14 @@ namespace GameOfRevenge.Business.Manager.UserData
             }
         }
 
-        public async Task<Response<UserRecordNewBoost>> AddBoost(int playerId, NewBoostType type) => await AddBoost(playerId, type, 1);
-        public async Task<Response<UserRecordNewBoost>> AddBoost(int playerId, NewBoostType type, int count)
+        public async Task<Response<UserRecordNewBoost>> AddBoost(int playerId, NewBoostType type)
         {
             try
             {
                 if (playerId < 1) throw new InvalidModelExecption("Invalid player id");
 
 //                BoostType boostType = GetBoostType(type);
-                if (type == NewBoostType.Unknown) throw new DataNotExistExecption("Boost not found");
-
-                if (count < 1) return new Response<UserRecordNewBoost>(CaseType.Success, "Count was zero");
+                if (type == NewBoostType.Unknown) throw new DataNotExistExecption("Boost not supported");
 
                 var timeStamp = DateTime.UtcNow;
 //                int invId = CacheBoostDataManager.GetFullBoostDataByType(type).Info.BoostTypeId;
@@ -78,11 +75,14 @@ namespace GameOfRevenge.Business.Manager.UserData
                 if (!allData.IsSuccess || !allData.HasData) throw new DataNotExistExecption("Player data not found");
 
                 var allPlayerData = allData.Data;
+                var reqGems = 600;//TODO: move this value to a config class
+                var gemsAmount = 0;
                 var gemsData = allPlayerData.Find(x => (x.DataType == DataType.Resource) && (x.ValueId == (int)ResourceType.Gems));
-                if (gemsData == null) throw new RequirementExecption("Not enough gems");
+                if (gemsData != null) int.TryParse(gemsData.Value, out gemsAmount);
+                if (gemsAmount < reqGems) throw new RequirementExecption("Not enough gems");
 
-                int.TryParse(gemsData.Value, out int gemsAmount);
-                if (gemsAmount < count) throw new RequirementExecption("Not enough gems");
+                var gemresp = await manager.SumPlayerData(playerId, gemsData.Id, -reqGems);
+                if (!gemresp.IsSuccess) throw new RequirementExecption("Unable to process your request");
 
 /*                var specBoostData = CacheBoostDataManager.GetNewBoostDataByType(type);
                 specBoostData.Boosts.First(x => x.Tech == NewBoostTech.CityWallDefensePower);
@@ -105,12 +105,11 @@ namespace GameOfRevenge.Business.Manager.UserData
                     boostValue = new UserNewBoost()
                     {
                         Type = type,
-//                        Level = 1,
                         StartTime = timeStamp
                     };
                 }
 
-                byte boostLevel = boostValue.Level;
+/*                byte boostLevel = boostValue.Level;
                 if (Enum.IsDefined(typeof(CityBoostType), (byte)type))
                 {
                     var castle = allPlayerData.Find(x => (x.DataType == DataType.Structure) && (x.ValueId == (int)Common.Models.Structure.StructureType.CityCounsel));
@@ -121,9 +120,9 @@ namespace GameOfRevenge.Business.Manager.UserData
                     if (castleBuilding.TimeLeft > 0) castleLevel--;
                     if (castleLevel < 1) castleLevel = 1;
                     boostLevel = (byte)castleLevel;
-                }
+                }*/
 
-                int levelVal = 0;
+/*                int levelVal = 0;
                 var specBoostData = CacheBoostDataManager.SpecNewBoostDatas.First(x => x.Type == type);
                 if (specBoostData.Table > 0)
                 {
@@ -131,8 +130,10 @@ namespace GameOfRevenge.Business.Manager.UserData
                     {
                         int.TryParse(specBoostData.Levels[boostLevel].ToString(), out levelVal);
                     }
-                }
-                boostValue.Duration += levelVal;// (24 * 60 * 60) * count;
+                }*/
+                boostValue.Duration += (60 * 60) * 6;//levelVal;// (24 * 60 * 60) * count;
+
+
 
                 Response<PlayerDataTableUpdated> resp;
                 var json = JsonConvert.SerializeObject(boostValue);
@@ -147,14 +148,14 @@ namespace GameOfRevenge.Business.Manager.UserData
 
                 if (resp.IsSuccess & resp.HasData)
                 {
-                    var gemresp = await manager.SumPlayerData(playerId, gemsData.Id, -count);
-//                        if (!gemresp.IsSuccess) throw new RequirementExecption("Not enough gems");
-
                     var userNewBoost = new UserRecordNewBoost(resp.Data.Id, boostValue);
                     return new Response<UserRecordNewBoost>(userNewBoost, resp.Case, resp.Message);
                 }
                 else
                 {
+                    //return gems
+                    await manager.SumPlayerData(playerId, gemsData.Id, reqGems);
+
                     return new Response<UserRecordNewBoost>(resp.Case, resp.Message);
                 }
             }
