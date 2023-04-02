@@ -104,11 +104,14 @@ namespace GameOfRevenge.Business.Manager.UserData
         {
             try
             {
-                var structureData = CacheStructureDataManager.GetFullStructureData(structType);
+//                var structureData = CacheStructureDataManager.GetFullStructureData(structType);
                 var structureLevelData = CacheStructureDataManager.GetFullStructureLevelData(structType, level);
 
                 var playerDataResp = await GetFullPlayerData(playerId);
-                if (!playerDataResp.IsSuccess || !playerDataResp.HasData) throw new DataNotExistExecption(playerDataResp.Message);
+                if (!playerDataResp.IsSuccess || !playerDataResp.HasData)
+                {
+                    throw new DataNotExistExecption(playerDataResp.Message);
+                }
 
                 var playerData = playerDataResp.Data;
 /*                if (level > 1)
@@ -140,6 +143,10 @@ namespace GameOfRevenge.Business.Manager.UserData
                         if (playerData.Builders.Count >= 2) return new Response<UserStructureData>(200, "No builder available");
                         cost = 1;
                     }
+                }
+                else//override cost based on remain time. 1minute = 3 gems
+                {
+                    cost = (int)Math.Ceiling(structureLevelData.Data.TimeToBuild / 60f) * 3;
                 }
                 if (cost > 0)
                 {
@@ -173,7 +180,7 @@ namespace GameOfRevenge.Business.Manager.UserData
                 }
 
                 var buildings = createBuildResponse.Data.Value;
-                buildings.Find(x => x.Location == locId).Duration = 0;
+                buildings.Find(x => (x.Location == locId)).Duration = 0;
 
                 var json = JsonConvert.SerializeObject(buildings);
                 var response = await manager.UpdatePlayerDataID(playerId, createBuildResponse.Data.Id, json);
@@ -246,8 +253,9 @@ namespace GameOfRevenge.Business.Manager.UserData
                 if (selectedBuilding == null) return new Response<UserStructureData>(200, "Structure not found");
 
                 var structureData = CacheStructureDataManager.GetFullStructureLevelData(structureGroup.StructureType, selectedBuilding.Level);
-                double multiplier = ((selectedBuilding.TimeLeft / 30f) * 30) / structureData.Data.TimeToBuild;
-                int cost = (int)Math.Ceiling(structureData.Data.InstantBuildCost * multiplier);
+/*                double multiplier = ((selectedBuilding.TimeLeft / 30f) * 30) / structureData.Data.TimeToBuild;
+                int cost = (int)Math.Ceiling(structureData.Data.InstantBuildCost * multiplier);*/
+                int cost = (int)Math.Ceiling(selectedBuilding.TimeLeft / 60f) * 3;
                 if (cost > 0)
                 {
                     var playerGems = playerData.Resources.Gems;
@@ -347,20 +355,23 @@ namespace GameOfRevenge.Business.Manager.UserData
                 var playerData = await GetFullPlayerData(playerId);
                 if (!playerData.IsSuccess || !playerData.HasData) throw new DataNotExistExecption(playerData.Message);
 
-//                var troopData = CacheTroopDataManager.GetFullTroopLevelData(type, troopLevel);
-//                var singleTroopTime = troopData.Data.TraningTime;
-//                var finalTime = singleTroopTime * count;
+                //                var troopData = CacheTroopDataManager.GetFullTroopLevelData(type, troopLevel);
+                //                var singleTroopTime = troopData.Data.TraningTime;
+                //                var finalTime = singleTroopTime * count;
 
+                var speedUpInstant = (count == 0);
                 int trainingCount = count;
                 double multiplier = 1;
-                if (count == 0)//speed up instant
+                var cost = 0;
+                if (speedUpInstant)
                 {
                     var troopInfo = GetTroopTrainingData(locId, type, playerData.Data.Troops);
-                    multiplier = ((troopInfo.TimeLeft / 30f) * 30) / troopInfo.Duration;
+//                    multiplier = (Math.Ceiling(troopInfo.TimeLeft / 30f) * 30) / troopInfo.Duration;
                     trainingCount = troopInfo.Count;
+                    cost = trainingCount * (int)Math.Ceiling(troopInfo.TimeLeft / 60f) * 3;
                 }
 
-                var cost = RecruitCost(type, troopLevel, trainingCount);
+//                var cost = RecruitCost(type, troopLevel, trainingCount);
                 var finalCost = (int)Math.Ceiling(cost * multiplier);
 
 
@@ -383,7 +394,7 @@ namespace GameOfRevenge.Business.Manager.UserData
                     troopDataList = new List<TroopDetails>();
                 }
 
-                if (count > 0)//normal instant
+                if (!speedUpInstant)//normal instant
                 {
                     if (data == null)
                     {
