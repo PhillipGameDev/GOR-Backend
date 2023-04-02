@@ -8,6 +8,7 @@ namespace GameOfRevenge.Common.Models.Technology
 
     }
 
+    [System.Serializable]
     public class TechnologyTable : BaseRefEnumTable<TechnologyType>, IBaseTable, IBaseRefEnumTable<TechnologyType>, IReadOnlyBaseRefEnumTable<TechnologyType>, IReadOnlyTechnologyTable
     {
 

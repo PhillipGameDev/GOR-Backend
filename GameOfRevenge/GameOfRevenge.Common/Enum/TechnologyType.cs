@@ -2,7 +2,7 @@
 
 namespace GameOfRevenge.Common
 {
-    public enum MainTechnologyType
+    public enum GroupTechnologyType
     {
         Unknown = 0,
         KingdomTechnologies = 1,
@@ -20,14 +20,14 @@ namespace GameOfRevenge.Common
     {
         Unknown = 0,
         ConstructionTechnology = NewBoostType.Construction,
-        UpkeepTechnology = NewBoostType.UpkeepReduction,
-        HealSpeedTechnology = NewBoostType.HealingSpeed,
         ResearchSpeedTechnology = NewBoostType.ResearchSpeed,
         TroopLoadTechnology = NewBoostType.TroopLoad,
-        TrainSpeedTechnology = NewBoostType.TrainingSpeed,
-        InfirmaryCapacityTechnology = NewBoostType.InfirmaryCapacity,
-        KingStaminaTechnology = NewBoostType.StaminaRecovery,
         StorageTechnology = NewBoostType.ResourceStorage,
+        InfirmaryCapacityTechnology = NewBoostType.InfirmaryCapacity,
+        KingStaminaRecoveryTechnology = NewBoostType.StaminaRecovery,
+        TrainSpeedTechnology = NewBoostType.TrainingSpeed,
+        HealSpeedTechnology = NewBoostType.HealingSpeed,
+        UpkeepTechnology = NewBoostType.UpkeepReduction,
 
         BarracksAttackTechnology = NewBoostType.InfantryAttack,
         StableAttackTechnology = NewBoostType.CavalryAttack,

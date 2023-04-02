@@ -41,8 +41,28 @@ namespace GameOfRevenge.Common.Models.Technology
     }*/
 
 
+    public interface IReadOnlyTechnologyGroupInfo
+    {
+        GroupTechnologyType GroupType { get; }
+        IReadOnlyList<IReadOnlyTechnologyDataRequirementRel> Technologies { get; }
+    }
 
+    [System.Serializable]
+    public class TechnologyGroupInfo
+    {
+        public GroupTechnologyType GroupType { get; set; }
+        public List<TechnologyDataRequirementRel> Technologies { get; set; }
 
+        public TechnologyGroupInfo()
+        {
+        }
+
+        public TechnologyGroupInfo(GroupTechnologyType group, List<TechnologyDataRequirementRel> list)
+        {
+            GroupType = group;
+            Technologies = list;
+        }
+    }
 
     public interface IReadOnlyTechnologyDataRequirementRel
     {
@@ -56,6 +76,7 @@ namespace GameOfRevenge.Common.Models.Technology
         IReadOnlyList<IReadOnlyDataRequirement> Requirements { get; }
     }
 
+    [System.Serializable]
     public class TechnologyDataRequirementRel : IReadOnlyTechnologyDataRequirementRel
     {
         public TechnologyTable Info { get; set; }
@@ -68,6 +89,7 @@ namespace GameOfRevenge.Common.Models.Technology
         IReadOnlyList<IReadOnlyTechnologyDataRequirement> IReadOnlyTechnologyDataRequirementRel.Levels => Levels;
     }
 
+    [System.Serializable]
     public class TechnologyDataRequirements : IReadOnlyTechnologyDataRequirement
     {
         public TechnologyDataTable Data { get; set; }

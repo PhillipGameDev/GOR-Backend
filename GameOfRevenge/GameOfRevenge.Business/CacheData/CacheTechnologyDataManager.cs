@@ -18,15 +18,17 @@ namespace GameOfRevenge.Business.CacheData
         public const string TechnologyLevelNotExist = "Technology level data does not exist";
 
         private static bool isLoaded = false;
-        private static List<MainTechnologyType> mainTechTypes;
+        private static List<GroupTechnologyType> mainTechTypes;
         private static List<TechnologyType> technologyTypes;
-        private static List<TechnologyDataRequirementRel> technologyInfos;
+        private static List<TechnologyGroupInfo> technologyGroups;
+        private static List<IReadOnlyTechnologyDataRequirementRel> technologyInfos;
         //        private static List<SubTechnologyDataRequirementRel> subTechInfos;
 
         public static bool IsLoaded { get => isLoaded && technologyInfos != null; }
-        public static IReadOnlyList<MainTechnologyType> MainTechnologyTypes { get { CheckLoadCacheMemory(); return mainTechTypes; } }
+        public static IReadOnlyList<GroupTechnologyType> MainTechnologyTypes { get { CheckLoadCacheMemory(); return mainTechTypes; } }
         public static IReadOnlyList<TechnologyType> TechnologyTypes { get { CheckLoadCacheMemory(); return technologyTypes; } }
-        public static IReadOnlyList<IReadOnlyTechnologyDataRequirementRel> TechnologyInfos { get { CheckLoadCacheMemory(); return technologyInfos.ToList(); } }
+        public static IReadOnlyList<TechnologyGroupInfo> TechnologyGroups { get { CheckLoadCacheMemory(); return technologyGroups; } }
+        public static IReadOnlyList<IReadOnlyTechnologyDataRequirementRel> TechnologyInfos { get { CheckLoadCacheMemory(); return technologyInfos; } }
         //        public static IReadOnlyList<IReadOnlySubTechnologyDataRequirementRel> SubTechnologyInfos { get { CheckLoadCacheMemory(); return subTechInfos.ToList(); } }
 
 
@@ -196,8 +198,8 @@ namespace GameOfRevenge.Business.CacheData
         {
             ClearCache();
 
-            mainTechTypes = new List<MainTechnologyType>((MainTechnologyType[])System.Enum.GetValues(typeof(MainTechnologyType)));
-            mainTechTypes.Remove(MainTechnologyType.Unknown);
+            mainTechTypes = new List<GroupTechnologyType>((GroupTechnologyType[])System.Enum.GetValues(typeof(GroupTechnologyType)));
+            mainTechTypes.Remove(GroupTechnologyType.Unknown);
 
             technologyTypes = new List<TechnologyType>((TechnologyType[])System.Enum.GetValues(typeof(TechnologyType)));
             technologyTypes.Remove(TechnologyType.Unknown);
@@ -205,348 +207,357 @@ namespace GameOfRevenge.Business.CacheData
             technologyTypes.Add(TechnologyType.ConstructionTechnology);
 
             var constructionTech = GenerateTechData(TechnologyType.ConstructionTechnology, new LevelRequirements[]
-                {
+            {
                 new LevelRequirements(1, 3 * MINUTES,
                     new List<DataRequirement>()
                     {
-                        new DataRequirement(DataType.Structure, (int)StructureType.Academy, 1),//resource type  //resource amount
                         new DataRequirement(DataType.Resource, (int)ResourceType.Food, 1000),
                         new DataRequirement(DataType.Resource, (int)ResourceType.Wood, 500)
                     }),
                 new LevelRequirements(2, 7 * MINUTES,
                     new List<DataRequirement>()
                     {
+                        new DataRequirement(DataType.Structure, (int)StructureType.Academy, 5),
                         new DataRequirement(DataType.Resource, (int)ResourceType.Food, 5000),
                         new DataRequirement(DataType.Resource, (int)ResourceType.Wood, 2500)
                     }),
                 new LevelRequirements(3, 15 * MINUTES,
                     new List<DataRequirement>()
                     {
-                        new DataRequirement(DataType.Structure, (int)StructureType.Academy, 2),//resource type  //resource amount
+                        new DataRequirement(DataType.Structure, (int)StructureType.Academy, 10),
                         new DataRequirement(DataType.Resource, (int)ResourceType.Food, 10000),
                         new DataRequirement(DataType.Resource, (int)ResourceType.Wood, 5000)
                     }),
                 new LevelRequirements(4, 22 * MINUTES,
                     new List<DataRequirement>()
                     {
+                        new DataRequirement(DataType.Structure, (int)StructureType.Academy, 15),
                         new DataRequirement(DataType.Resource, (int)ResourceType.Food, 50000),
                         new DataRequirement(DataType.Resource, (int)ResourceType.Wood, 25000)
                     }),
                 new LevelRequirements(5, 45 * MINUTES,
                     new List<DataRequirement>()
                     {
-                        new DataRequirement(DataType.Structure, (int)StructureType.Academy, 3),//resource type  //resource amount
+                        new DataRequirement(DataType.Structure, (int)StructureType.Academy, 20),
                         new DataRequirement(DataType.Resource, (int)ResourceType.Food, 100000),
                         new DataRequirement(DataType.Resource, (int)ResourceType.Wood, 50000)
                     })
-                }
-            );
-
-            var upkeepTech = GenerateTechData(TechnologyType.UpkeepTechnology, new LevelRequirements[]
-                {
-                new LevelRequirements(1, 3 * HOURS + 55 * MINUTES,
-                    new List<DataRequirement>()
-                    {
-                        new DataRequirement(DataType.Structure, (int)StructureType.Academy, 15),//resource type  //resource amount
-                        new DataRequirement(DataType.ActiveBoost, (int)NewBoostType.TrainingSpeed, 1),
-                        new DataRequirement(DataType.Resource, (int)ResourceType.Food, 300000),
-                        new DataRequirement(DataType.Resource, (int)ResourceType.Wood, 150000)
-                    }),
-                new LevelRequirements(2, 5 * HOURS + 10 * MINUTES,
-                    new List<DataRequirement>()
-                    {
-                        new DataRequirement(DataType.Resource, (int)ResourceType.Food, 400000),
-                        new DataRequirement(DataType.Resource, (int)ResourceType.Wood, 200000)
-                    }),
-                new LevelRequirements(3, 6 * HOURS + 25 * MINUTES,
-                    new List<DataRequirement>()
-                    {
-                        new DataRequirement(DataType.Structure, (int)StructureType.Academy, 16),//resource type  //resource amount
-                        new DataRequirement(DataType.Resource, (int)ResourceType.Food, 500000),
-                        new DataRequirement(DataType.Resource, (int)ResourceType.Wood, 250000)
-                    }),
-                new LevelRequirements(4, 7 * HOURS + 45 * MINUTES,
-                    new List<DataRequirement>()
-                    {
-                        new DataRequirement(DataType.Resource, (int)ResourceType.Food, 600000),
-                        new DataRequirement(DataType.Resource, (int)ResourceType.Wood, 300000)
-                    }),
-                new LevelRequirements(5, 9 * HOURS + 15 * MINUTES,
-                    new List<DataRequirement>()
-                    {
-                        new DataRequirement(DataType.Resource, (int)ResourceType.Food, 700000),
-                        new DataRequirement(DataType.Resource, (int)ResourceType.Wood, 350000)
-                    })
-                }
-            );
-
-            var fastHealTech = GenerateTechData(TechnologyType.HealSpeedTechnology, new LevelRequirements[]
-            {
-                new LevelRequirements(1, 2 * HOURS + 05 * MINUTES,
-                    new List<DataRequirement>()
-                    {
-                        new DataRequirement(DataType.Structure, (int)StructureType.Academy, 15),//resource type  //resource amount
-                        new DataRequirement(DataType.ActiveBoost, (int)NewBoostType.TrainingSpeed, 1),
-                        new DataRequirement(DataType.Resource, (int)ResourceType.Food, 200000),
-                        new DataRequirement(DataType.Resource, (int)ResourceType.Wood, 100000)
-                    }),
-                new LevelRequirements(2, 3 * HOURS + 55 * MINUTES,
-                    new List<DataRequirement>()
-                    {
-                        new DataRequirement(DataType.Resource, (int)ResourceType.Food, 300000),
-                        new DataRequirement(DataType.Resource, (int)ResourceType.Wood, 150000)
-                    }),
-                new LevelRequirements(3, 5 * HOURS + 10 * MINUTES,
-                    new List<DataRequirement>()
-                    {
-                        new DataRequirement(DataType.Structure, (int)StructureType.Academy, 16),//resource type  //resource amount
-                        new DataRequirement(DataType.Resource, (int)ResourceType.Food, 400000),
-                        new DataRequirement(DataType.Resource, (int)ResourceType.Wood, 200000)
-                    }),
-                new LevelRequirements(4, 6 * HOURS + 25 * MINUTES,
-                    new List<DataRequirement>()
-                    {
-                        new DataRequirement(DataType.Resource, (int)ResourceType.Food, 500000),
-                        new DataRequirement(DataType.Resource, (int)ResourceType.Wood, 250000)
-                    }),
-                new LevelRequirements(5, 7 * HOURS + 45 * MINUTES,
-                    new List<DataRequirement>()
-                    {
-                        new DataRequirement(DataType.Resource, (int)ResourceType.Food, 600000),
-                        new DataRequirement(DataType.Resource, (int)ResourceType.Wood, 300000)
-                    })
-                }
-            );
+            });
 
             var researchTech = GenerateTechData(TechnologyType.ResearchSpeedTechnology, new LevelRequirements[]
             {
                 new LevelRequirements(1, 7 * MINUTES,
                     new List<DataRequirement>()
                     {
-                        new DataRequirement(DataType.Structure, (int)TechnologyType.ConstructionTechnology, 1),
+                        new DataRequirement(DataType.Technology, (int)TechnologyType.ConstructionTechnology, 1),
                         new DataRequirement(DataType.Resource, (int)ResourceType.Food, 10000),
                         new DataRequirement(DataType.Resource, (int)ResourceType.Wood, 5000)
                     }),
                 new LevelRequirements(2, 15 * MINUTES,
                     new List<DataRequirement>()
                     {
+                        new DataRequirement(DataType.Structure, (int)StructureType.Academy, 5),
                         new DataRequirement(DataType.Resource, (int)ResourceType.Food, 50000),
                         new DataRequirement(DataType.Resource, (int)ResourceType.Wood, 25000)
                     }),
                 new LevelRequirements(3, 25 * MINUTES,
                     new List<DataRequirement>()
                     {
+                        new DataRequirement(DataType.Structure, (int)StructureType.Academy, 10),
                         new DataRequirement(DataType.Resource, (int)ResourceType.Food, 100000),
                         new DataRequirement(DataType.Resource, (int)ResourceType.Wood, 50000)
                     }),
                 new LevelRequirements(4, 50 * MINUTES,
                     new List<DataRequirement>()
                     {
+                        new DataRequirement(DataType.Structure, (int)StructureType.Academy, 15),
                         new DataRequirement(DataType.Resource, (int)ResourceType.Food, 200000),
                         new DataRequirement(DataType.Resource, (int)ResourceType.Wood, 100000)
                     }),
                 new LevelRequirements(5, 1 * HOURS + 30 * MINUTES,
                     new List<DataRequirement>()
                     {
+                        new DataRequirement(DataType.Structure, (int)StructureType.Academy, 20),
                         new DataRequirement(DataType.Resource, (int)ResourceType.Food, 300000),
                         new DataRequirement(DataType.Resource, (int)ResourceType.Wood, 150000)
                     })
-                }
-            );
+            });
 
             var loadTech = GenerateTechData(TechnologyType.TroopLoadTechnology, new LevelRequirements[]
             {
                 new LevelRequirements(1, 15 * MINUTES,
                     new List<DataRequirement>()
                     {
-                        new DataRequirement(DataType.Structure, (int)StructureType.Academy, 5),//resource type  //resource amount
-                        new DataRequirement(DataType.ActiveBoost, (int)NewBoostType.ResearchSpeed, 1),
+                        new DataRequirement(DataType.Technology, (int)TechnologyType.ResearchSpeedTechnology, 1),
                         new DataRequirement(DataType.Resource, (int)ResourceType.Food, 50000),
                         new DataRequirement(DataType.Resource, (int)ResourceType.Wood, 25000)
                     }),
                 new LevelRequirements(2, 25 * MINUTES,
                     new List<DataRequirement>()
                     {
+                        new DataRequirement(DataType.Structure, (int)StructureType.Academy, 5),
                         new DataRequirement(DataType.Resource, (int)ResourceType.Food, 100000),
                         new DataRequirement(DataType.Resource, (int)ResourceType.Wood, 50000)
                     }),
                 new LevelRequirements(3, 50 * MINUTES,
                     new List<DataRequirement>()
                     {
+                        new DataRequirement(DataType.Structure, (int)StructureType.Academy, 10),
                         new DataRequirement(DataType.Resource, (int)ResourceType.Food, 200000),
                         new DataRequirement(DataType.Resource, (int)ResourceType.Wood, 100000)
                     }),
                 new LevelRequirements(4, 1 * HOURS + 30 * MINUTES,
                     new List<DataRequirement>()
                     {
-                        new DataRequirement(DataType.Structure, (int)StructureType.Academy, 6),//resource type  //resource amount
+                        new DataRequirement(DataType.Structure, (int)StructureType.Academy, 15),
                         new DataRequirement(DataType.Resource, (int)ResourceType.Food, 300000),
                         new DataRequirement(DataType.Resource, (int)ResourceType.Wood, 150000)
                     }),
                 new LevelRequirements(5, 2 * HOURS + 15 * MINUTES,
                     new List<DataRequirement>()
                     {
+                        new DataRequirement(DataType.Structure, (int)StructureType.Academy, 20),
                         new DataRequirement(DataType.Resource, (int)ResourceType.Food, 400000),
                         new DataRequirement(DataType.Resource, (int)ResourceType.Wood, 200000)
                     })
-                }
-            );
-
-            var trainTech = GenerateTechData(TechnologyType.TrainSpeedTechnology, new LevelRequirements[]
-            {
-                new LevelRequirements(1, 2 * HOURS + 15 * MINUTES,
-                    new List<DataRequirement>()
-                    {
-                        new DataRequirement(DataType.Structure, (int)StructureType.Academy, 12),//resource type  //resource amount
-                        new DataRequirement(DataType.ActiveBoost, (int)NewBoostType.StaminaRecovery, 1),
-                        new DataRequirement(DataType.Resource, (int)ResourceType.Food, 120000),
-                        new DataRequirement(DataType.Resource, (int)ResourceType.Wood, 60000)
-                    }),
-                new LevelRequirements(2, 3 * HOURS + 05 * MINUTES,
-                    new List<DataRequirement>()
-                    {
-                        new DataRequirement(DataType.Resource, (int)ResourceType.Food, 200000),
-                        new DataRequirement(DataType.Resource, (int)ResourceType.Wood, 100000)
-                    }),
-                new LevelRequirements(3, 5 * HOURS + 55 * MINUTES,
-                    new List<DataRequirement>()
-                    {
-                        new DataRequirement(DataType.Resource, (int)ResourceType.Food, 300000),
-                        new DataRequirement(DataType.Resource, (int)ResourceType.Wood, 150000)
-                    }),
-                new LevelRequirements(4, 6 * HOURS + 25 * MINUTES,
-                    new List<DataRequirement>()
-                    {
-                        new DataRequirement(DataType.Structure, (int)StructureType.Academy, 13),//resource type  //resource amount
-                        new DataRequirement(DataType.Resource, (int)ResourceType.Food, 400000),
-                        new DataRequirement(DataType.Resource, (int)ResourceType.Wood, 200000)
-                    }),
-                new LevelRequirements(5, 7 * HOURS + 45 * MINUTES,
-                    new List<DataRequirement>()
-                    {
-                        new DataRequirement(DataType.Structure, (int)StructureType.Academy, 14),//resource type  //resource amount
-                        new DataRequirement(DataType.Resource, (int)ResourceType.Food, 500000),
-                        new DataRequirement(DataType.Resource, (int)ResourceType.Wood, 250000)
-                    })
-                }
-            );
-
-            var infirmaryTech = GenerateTechData(TechnologyType.InfirmaryCapacityTechnology, new LevelRequirements[]
-            {
-                new LevelRequirements(1, 50 * MINUTES,
-                    new List<DataRequirement>()
-                    {
-                        new DataRequirement(DataType.Structure, (int)StructureType.Academy, 7),//resource type  //resource amount
-                        new DataRequirement(DataType.ActiveBoost, (int)NewBoostType.TroopLoad, 1),
-                        new DataRequirement(DataType.ActiveBoost, (int)NewBoostType.ResourceStorage, 1),
-                        new DataRequirement(DataType.Resource, (int)ResourceType.Food, 75000),
-                        new DataRequirement(DataType.Resource, (int)ResourceType.Wood, 40000)
-                    }),
-                new LevelRequirements(2, 1 * HOURS + 30 * MINUTES,
-                    new List<DataRequirement>()
-                    {
-                        new DataRequirement(DataType.Resource, (int)ResourceType.Food, 100000),
-                        new DataRequirement(DataType.Resource, (int)ResourceType.Wood, 50000)
-                    }),
-                new LevelRequirements(3, 2 * HOURS + 15 * MINUTES,
-                    new List<DataRequirement>()
-                    {
-                        new DataRequirement(DataType.Resource, (int)ResourceType.Food, 200000),
-                        new DataRequirement(DataType.Resource, (int)ResourceType.Wood, 100000)
-                    }),
-                new LevelRequirements(4, 3 * HOURS + 05 * MINUTES,
-                    new List<DataRequirement>()
-                    {
-                        new DataRequirement(DataType.Resource, (int)ResourceType.Food, 300000),
-                        new DataRequirement(DataType.Resource, (int)ResourceType.Wood, 150000)
-                    }),
-                new LevelRequirements(5, 3 * HOURS + 55 * MINUTES,
-                    new List<DataRequirement>()
-                    {
-                        new DataRequirement(DataType.Structure, (int)StructureType.Academy, 8),//resource type  //resource amount
-                        new DataRequirement(DataType.Resource, (int)ResourceType.Food, 400000),
-                        new DataRequirement(DataType.Resource, (int)ResourceType.Wood, 200000)
-                    })
-                }
-            );
-
-            var staimnaTech = GenerateTechData(TechnologyType.KingStaminaTechnology, new LevelRequirements[]
-            {
-                new LevelRequirements(1, 1 * HOURS + 30 * MINUTES,
-                    new List<DataRequirement>()
-                    {
-                        new DataRequirement(DataType.Structure, (int)StructureType.Academy, 9),//resource type  //resource amount
-                        new DataRequirement(DataType.ActiveBoost, (int)NewBoostType.InfirmaryCapacity, 1),
-                        new DataRequirement(DataType.Resource, (int)ResourceType.Food, 75000),
-                        new DataRequirement(DataType.Resource, (int)ResourceType.Wood, 40000)
-                    }),
-                new LevelRequirements(2, 2 * HOURS + 15 * MINUTES,
-                    new List<DataRequirement>()
-                    {
-                        new DataRequirement(DataType.Resource, (int)ResourceType.Food, 100000),
-                        new DataRequirement(DataType.Resource, (int)ResourceType.Wood, 50000)
-                    }),
-                new LevelRequirements(3, 3 * HOURS + 05 * MINUTES,
-                    new List<DataRequirement>()
-                    {
-                        new DataRequirement(DataType.Resource, (int)ResourceType.Food, 200000),
-                        new DataRequirement(DataType.Resource, (int)ResourceType.Wood, 100000)
-                    }),
-                new LevelRequirements(4, 3 * HOURS + 55 * MINUTES,
-                    new List<DataRequirement>()
-                    {
-                        new DataRequirement(DataType.Structure, (int)StructureType.Academy, 10),//resource type  //resource amount
-                        new DataRequirement(DataType.Resource, (int)ResourceType.Food, 300000),
-                        new DataRequirement(DataType.Resource, (int)ResourceType.Wood, 150000)
-                    }),
-                new LevelRequirements(5, 5 * HOURS + 10 * MINUTES,
-                    new List<DataRequirement>()
-                    {
-                        new DataRequirement(DataType.Structure, (int)StructureType.Academy, 11),//resource type  //resource amount
-                        new DataRequirement(DataType.Resource, (int)ResourceType.Food, 400000),
-                        new DataRequirement(DataType.Resource, (int)ResourceType.Wood, 200000)
-                    })
-                }
-            );
+            });
 
             var storageTech = GenerateTechData(TechnologyType.StorageTechnology, new LevelRequirements[]
             {
                 new LevelRequirements(1, 25 * MINUTES,
                     new List<DataRequirement>()
                     {
-                        new DataRequirement(DataType.Structure, (int)StructureType.Academy, 5),//resource type  //resource amount
-                        new DataRequirement(DataType.ActiveBoost, (int)NewBoostType.ResearchSpeed, 1),
+                        new DataRequirement(DataType.Technology, (int)TechnologyType.TroopLoadTechnology, 1),
                         new DataRequirement(DataType.Resource, (int)ResourceType.Food, 50000),
                         new DataRequirement(DataType.Resource, (int)ResourceType.Wood, 25000)
                     }),
                 new LevelRequirements(2, 50 * MINUTES,
                     new List<DataRequirement>()
                     {
+                        new DataRequirement(DataType.Structure, (int)StructureType.Academy, 5),
                         new DataRequirement(DataType.Resource, (int)ResourceType.Food, 100000),
                         new DataRequirement(DataType.Resource, (int)ResourceType.Wood, 50000)
                     }),
                 new LevelRequirements(3, 1 * HOURS + 30 * MINUTES,
                     new List<DataRequirement>()
                     {
+                        new DataRequirement(DataType.Structure, (int)StructureType.Academy, 10),
                         new DataRequirement(DataType.Resource, (int)ResourceType.Food, 200000),
                         new DataRequirement(DataType.Resource, (int)ResourceType.Wood, 100000)
                     }),
                 new LevelRequirements(4, 2 * HOURS + 15 * MINUTES,
                     new List<DataRequirement>()
                     {
-                        new DataRequirement(DataType.Structure, (int)StructureType.Academy, 6),//resource type  //resource amount
+                        new DataRequirement(DataType.Structure, (int)StructureType.Academy, 15),
                         new DataRequirement(DataType.Resource, (int)ResourceType.Food, 300000),
                         new DataRequirement(DataType.Resource, (int)ResourceType.Wood, 150000)
                     }),
                 new LevelRequirements(5, 3 * HOURS + 05 * MINUTES,
                     new List<DataRequirement>()
                     {
+                        new DataRequirement(DataType.Structure, (int)StructureType.Academy, 20),
                         new DataRequirement(DataType.Resource, (int)ResourceType.Food, 400000),
                         new DataRequirement(DataType.Resource, (int)ResourceType.Wood, 200000)
                     })
-                }
-            );
+            });
 
+            var infirmaryTech = GenerateTechData(TechnologyType.InfirmaryCapacityTechnology, new LevelRequirements[]
+            {
+                new LevelRequirements(1, 50 * MINUTES,
+                    new List<DataRequirement>()
+                    {
+                        new DataRequirement(DataType.Technology, (int)TechnologyType.TroopLoadTechnology, 1),
+                        new DataRequirement(DataType.Technology, (int)TechnologyType.StorageTechnology, 1),
+                        new DataRequirement(DataType.Resource, (int)ResourceType.Food, 75000),
+                        new DataRequirement(DataType.Resource, (int)ResourceType.Wood, 40000)
+                    }),
+                new LevelRequirements(2, 1 * HOURS + 30 * MINUTES,
+                    new List<DataRequirement>()
+                    {
+                        new DataRequirement(DataType.Structure, (int)StructureType.Academy, 5),
+                        new DataRequirement(DataType.Resource, (int)ResourceType.Food, 100000),
+                        new DataRequirement(DataType.Resource, (int)ResourceType.Wood, 50000)
+                    }),
+                new LevelRequirements(3, 2 * HOURS + 15 * MINUTES,
+                    new List<DataRequirement>()
+                    {
+                        new DataRequirement(DataType.Structure, (int)StructureType.Academy, 10),
+                        new DataRequirement(DataType.Resource, (int)ResourceType.Food, 200000),
+                        new DataRequirement(DataType.Resource, (int)ResourceType.Wood, 100000)
+                    }),
+                new LevelRequirements(4, 3 * HOURS + 05 * MINUTES,
+                    new List<DataRequirement>()
+                    {
+                        new DataRequirement(DataType.Structure, (int)StructureType.Academy, 15),
+                        new DataRequirement(DataType.Resource, (int)ResourceType.Food, 300000),
+                        new DataRequirement(DataType.Resource, (int)ResourceType.Wood, 150000)
+                    }),
+                new LevelRequirements(5, 3 * HOURS + 55 * MINUTES,
+                    new List<DataRequirement>()
+                    {
+                        new DataRequirement(DataType.Structure, (int)StructureType.Academy, 20),
+                        new DataRequirement(DataType.Resource, (int)ResourceType.Food, 400000),
+                        new DataRequirement(DataType.Resource, (int)ResourceType.Wood, 200000)
+                    })
+            });
+
+            var staimnaTech = GenerateTechData(TechnologyType.KingStaminaRecoveryTechnology, new LevelRequirements[]
+            {
+                new LevelRequirements(1, 1 * HOURS + 30 * MINUTES,
+                    new List<DataRequirement>()
+                    {
+                        new DataRequirement(DataType.Technology, (int)TechnologyType.InfirmaryCapacityTechnology, 1),
+                        new DataRequirement(DataType.Resource, (int)ResourceType.Food, 75000),
+                        new DataRequirement(DataType.Resource, (int)ResourceType.Wood, 40000)
+                    }),
+                new LevelRequirements(2, 2 * HOURS + 15 * MINUTES,
+                    new List<DataRequirement>()
+                    {
+                        new DataRequirement(DataType.Structure, (int)StructureType.Academy, 5),
+                        new DataRequirement(DataType.Resource, (int)ResourceType.Food, 100000),
+                        new DataRequirement(DataType.Resource, (int)ResourceType.Wood, 50000)
+                    }),
+                new LevelRequirements(3, 3 * HOURS + 05 * MINUTES,
+                    new List<DataRequirement>()
+                    {
+                        new DataRequirement(DataType.Structure, (int)StructureType.Academy, 10),
+                        new DataRequirement(DataType.Resource, (int)ResourceType.Food, 200000),
+                        new DataRequirement(DataType.Resource, (int)ResourceType.Wood, 100000)
+                    }),
+                new LevelRequirements(4, 3 * HOURS + 55 * MINUTES,
+                    new List<DataRequirement>()
+                    {
+                        new DataRequirement(DataType.Structure, (int)StructureType.Academy, 15),
+                        new DataRequirement(DataType.Resource, (int)ResourceType.Food, 300000),
+                        new DataRequirement(DataType.Resource, (int)ResourceType.Wood, 150000)
+                    }),
+                new LevelRequirements(5, 5 * HOURS + 10 * MINUTES,
+                    new List<DataRequirement>()
+                    {
+                        new DataRequirement(DataType.Structure, (int)StructureType.Academy, 20),
+                        new DataRequirement(DataType.Resource, (int)ResourceType.Food, 400000),
+                        new DataRequirement(DataType.Resource, (int)ResourceType.Wood, 200000)
+                    })
+            });
+
+            var trainTech = GenerateTechData(TechnologyType.TrainSpeedTechnology, new LevelRequirements[]
+            {
+                new LevelRequirements(1, 2 * HOURS + 15 * MINUTES,
+                    new List<DataRequirement>()
+                    {
+                        new DataRequirement(DataType.Technology, (int)TechnologyType.KingStaminaRecoveryTechnology, 1),
+                        new DataRequirement(DataType.Resource, (int)ResourceType.Food, 120000),
+                        new DataRequirement(DataType.Resource, (int)ResourceType.Wood, 60000)
+                    }),
+                new LevelRequirements(2, 3 * HOURS + 05 * MINUTES,
+                    new List<DataRequirement>()
+                    {
+                        new DataRequirement(DataType.Structure, (int)StructureType.Academy, 5),
+                        new DataRequirement(DataType.Resource, (int)ResourceType.Food, 200000),
+                        new DataRequirement(DataType.Resource, (int)ResourceType.Wood, 100000)
+                    }),
+                new LevelRequirements(3, 5 * HOURS + 55 * MINUTES,
+                    new List<DataRequirement>()
+                    {
+                        new DataRequirement(DataType.Structure, (int)StructureType.Academy, 10),
+                        new DataRequirement(DataType.Resource, (int)ResourceType.Food, 300000),
+                        new DataRequirement(DataType.Resource, (int)ResourceType.Wood, 150000)
+                    }),
+                new LevelRequirements(4, 6 * HOURS + 25 * MINUTES,
+                    new List<DataRequirement>()
+                    {
+                        new DataRequirement(DataType.Structure, (int)StructureType.Academy, 15),
+                        new DataRequirement(DataType.Resource, (int)ResourceType.Food, 400000),
+                        new DataRequirement(DataType.Resource, (int)ResourceType.Wood, 200000)
+                    }),
+                new LevelRequirements(5, 7 * HOURS + 45 * MINUTES,
+                    new List<DataRequirement>()
+                    {
+                        new DataRequirement(DataType.Structure, (int)StructureType.Academy, 20),
+                        new DataRequirement(DataType.Resource, (int)ResourceType.Food, 500000),
+                        new DataRequirement(DataType.Resource, (int)ResourceType.Wood, 250000)
+                    })
+            });
+
+            var fastHealTech = GenerateTechData(TechnologyType.HealSpeedTechnology, new LevelRequirements[]
+            {
+                new LevelRequirements(1, 2 * HOURS + 05 * MINUTES,
+                    new List<DataRequirement>()
+                    {
+                        new DataRequirement(DataType.Technology, (int)TechnologyType.TrainSpeedTechnology, 1),
+                        new DataRequirement(DataType.Resource, (int)ResourceType.Food, 200000),
+                        new DataRequirement(DataType.Resource, (int)ResourceType.Wood, 100000)
+                    }),
+                new LevelRequirements(2, 3 * HOURS + 55 * MINUTES,
+                    new List<DataRequirement>()
+                    {
+                        new DataRequirement(DataType.Structure, (int)StructureType.Academy, 5),
+                        new DataRequirement(DataType.Resource, (int)ResourceType.Food, 300000),
+                        new DataRequirement(DataType.Resource, (int)ResourceType.Wood, 150000)
+                    }),
+                new LevelRequirements(3, 5 * HOURS + 10 * MINUTES,
+                    new List<DataRequirement>()
+                    {
+                        new DataRequirement(DataType.Structure, (int)StructureType.Academy, 10),
+                        new DataRequirement(DataType.Resource, (int)ResourceType.Food, 400000),
+                        new DataRequirement(DataType.Resource, (int)ResourceType.Wood, 200000)
+                    }),
+                new LevelRequirements(4, 6 * HOURS + 25 * MINUTES,
+                    new List<DataRequirement>()
+                    {
+                        new DataRequirement(DataType.Structure, (int)StructureType.Academy, 15),
+                        new DataRequirement(DataType.Resource, (int)ResourceType.Food, 500000),
+                        new DataRequirement(DataType.Resource, (int)ResourceType.Wood, 250000)
+                    }),
+                new LevelRequirements(5, 7 * HOURS + 45 * MINUTES,
+                    new List<DataRequirement>()
+                    {
+                        new DataRequirement(DataType.Structure, (int)StructureType.Academy, 20),
+                        new DataRequirement(DataType.Resource, (int)ResourceType.Food, 600000),
+                        new DataRequirement(DataType.Resource, (int)ResourceType.Wood, 300000)
+                    })
+            });
+
+            var upkeepTech = GenerateTechData(TechnologyType.UpkeepTechnology, new LevelRequirements[]
+            {
+                new LevelRequirements(1, 3 * HOURS + 55 * MINUTES,
+                    new List<DataRequirement>()
+                    {
+                        new DataRequirement(DataType.Technology, (int)TechnologyType.TrainSpeedTechnology, 1),
+                        new DataRequirement(DataType.Resource, (int)ResourceType.Food, 300000),
+                        new DataRequirement(DataType.Resource, (int)ResourceType.Wood, 150000)
+                    }),
+                new LevelRequirements(2, 5 * HOURS + 10 * MINUTES,
+                    new List<DataRequirement>()
+                    {
+                        new DataRequirement(DataType.Structure, (int)StructureType.Academy, 5),
+                        new DataRequirement(DataType.Resource, (int)ResourceType.Food, 400000),
+                        new DataRequirement(DataType.Resource, (int)ResourceType.Wood, 200000)
+                    }),
+                new LevelRequirements(3, 6 * HOURS + 25 * MINUTES,
+                    new List<DataRequirement>()
+                    {
+                        new DataRequirement(DataType.Structure, (int)StructureType.Academy, 10),
+                        new DataRequirement(DataType.Resource, (int)ResourceType.Food, 500000),
+                        new DataRequirement(DataType.Resource, (int)ResourceType.Wood, 250000)
+                    }),
+                new LevelRequirements(4, 7 * HOURS + 45 * MINUTES,
+                    new List<DataRequirement>()
+                    {
+                        new DataRequirement(DataType.Structure, (int)StructureType.Academy, 15),
+                        new DataRequirement(DataType.Resource, (int)ResourceType.Food, 600000),
+                        new DataRequirement(DataType.Resource, (int)ResourceType.Wood, 300000)
+                    }),
+                new LevelRequirements(5, 9 * HOURS + 15 * MINUTES,
+                    new List<DataRequirement>()
+                    {
+                        new DataRequirement(DataType.Structure, (int)StructureType.Academy, 20),
+                        new DataRequirement(DataType.Resource, (int)ResourceType.Food, 700000),
+                        new DataRequirement(DataType.Resource, (int)ResourceType.Wood, 350000)
+                    })
+            });
+
+            ///----------------------------------------------
 
             var infantryatkTech = GenerateTechData(TechnologyType.BarracksAttackTechnology, new LevelRequirements[]
             {
@@ -560,96 +571,98 @@ namespace GameOfRevenge.Business.CacheData
                 new LevelRequirements(2, 22 * MINUTES,
                     new List<DataRequirement>()
                     {
+                        new DataRequirement(DataType.Structure, (int)StructureType.Academy, 5),
                         new DataRequirement(DataType.Resource, (int)ResourceType.Food, 4000),
                         new DataRequirement(DataType.Resource, (int)ResourceType.Wood, 2000)
                     }),
                 new LevelRequirements(3, 45 * MINUTES,
                     new List<DataRequirement>()
                     {
+                        new DataRequirement(DataType.Structure, (int)StructureType.Academy, 10),
                         new DataRequirement(DataType.Resource, (int)ResourceType.Food, 6000),
                         new DataRequirement(DataType.Resource, (int)ResourceType.Wood, 2200)
                     })
-                }
-            );
-
-
-            var cavalryatkTech = GenerateTechData(TechnologyType.StableAttackTechnology, new LevelRequirements[]
-            {
-                new LevelRequirements(1, 22 * MINUTES,
-                    new List<DataRequirement>()
-                    {
-                        new DataRequirement(DataType.Structure, (int)StructureType.Academy, 6),//resource type  //resource amount
-//                        new DataRequirement(DataType.ActiveBoost, (int)NewBoostType.MONSTERMARCH, 1),
-                        new DataRequirement(DataType.Resource, (int)ResourceType.Food, 4500),
-                        new DataRequirement(DataType.Resource, (int)ResourceType.Wood, 2200)
-                    }),
-                new LevelRequirements(2, 45 * MINUTES,
-                    new List<DataRequirement>()
-                    {
-                        new DataRequirement(DataType.Resource, (int)ResourceType.Food, 5000),
-                        new DataRequirement(DataType.Resource, (int)ResourceType.Wood, 2500)
-                    }),
-                new LevelRequirements(3, 1 * HOURS + 10 * MINUTES,
-                    new List<DataRequirement>()
-                    {
-                        new DataRequirement(DataType.Resource, (int)ResourceType.Food, 5500),
-                        new DataRequirement(DataType.Resource, (int)ResourceType.Wood, 3000)
-                    })
-                }
-            );
-
-
-            var siegeatkTech = GenerateTechData(TechnologyType.WorkshopAttackTechnology, new LevelRequirements[]
-            {
-                new LevelRequirements(1, 22 * MINUTES,
-                    new List<DataRequirement>()
-                    {
-                        new DataRequirement(DataType.Structure, (int)StructureType.Academy, 6),//resource type  //resource amount
-//                        new DataRequirement(DataType.ActiveBoost, (int)NewBoostType.MONSTERMARCH, 1),
-                        new DataRequirement(DataType.Resource, (int)ResourceType.Food, 4500),
-                        new DataRequirement(DataType.Resource, (int)ResourceType.Wood, 2200)
-                    }),
-                new LevelRequirements(2, 45 * MINUTES,
-                    new List<DataRequirement>()
-                    {
-                        new DataRequirement(DataType.Resource, (int)ResourceType.Food, 5000),
-                        new DataRequirement(DataType.Resource, (int)ResourceType.Wood, 2500)
-                    }),
-                new LevelRequirements(3, 1 * HOURS + 10 * MINUTES,
-                    new List<DataRequirement>()
-                    {
-                        new DataRequirement(DataType.Resource, (int)ResourceType.Food, 5500),
-                        new DataRequirement(DataType.Resource, (int)ResourceType.Wood, 3000)
-                    })
-                }
-            );
+            });
 
             var bowmenatkTech = GenerateTechData(TechnologyType.ShootingRangeAttackTechnology, new LevelRequirements[]
             {
                 new LevelRequirements(1, 22 * MINUTES,
                     new List<DataRequirement>()
                     {
-                        new DataRequirement(DataType.Structure, (int)StructureType.Academy, 6),//resource type  //resource amount
 //                        new DataRequirement(DataType.ActiveBoost, (int)NewBoostType.MONSTERMARCH, 1),
+                        new DataRequirement(DataType.Technology, (int)TechnologyType.BarracksAttackTechnology, 1),
                         new DataRequirement(DataType.Resource, (int)ResourceType.Food, 4500),
                         new DataRequirement(DataType.Resource, (int)ResourceType.Wood, 2200)
                     }),
                 new LevelRequirements(2, 45 * MINUTES,
                     new List<DataRequirement>()
                     {
+                        new DataRequirement(DataType.Structure, (int)StructureType.Academy, 5),
                         new DataRequirement(DataType.Resource, (int)ResourceType.Food, 5000),
                         new DataRequirement(DataType.Resource, (int)ResourceType.Wood, 2500)
                     }),
                 new LevelRequirements(3, 1 * HOURS + 10 * MINUTES,
                     new List<DataRequirement>()
                     {
+                        new DataRequirement(DataType.Structure, (int)StructureType.Academy, 10),
                         new DataRequirement(DataType.Resource, (int)ResourceType.Food, 5500),
                         new DataRequirement(DataType.Resource, (int)ResourceType.Wood, 3000)
                     })
-                }
-            );
+            });
 
+            var cavalryatkTech = GenerateTechData(TechnologyType.StableAttackTechnology, new LevelRequirements[]
+            {
+                new LevelRequirements(1, 22 * MINUTES,
+                    new List<DataRequirement>()
+                    {
+//                        new DataRequirement(DataType.ActiveBoost, (int)NewBoostType.MONSTERMARCH, 1),
+                        new DataRequirement(DataType.Technology, (int)TechnologyType.ShootingRangeAttackTechnology, 1),
+                        new DataRequirement(DataType.Resource, (int)ResourceType.Food, 4500),
+                        new DataRequirement(DataType.Resource, (int)ResourceType.Wood, 2200)
+                    }),
+                new LevelRequirements(2, 45 * MINUTES,
+                    new List<DataRequirement>()
+                    {
+                        new DataRequirement(DataType.Structure, (int)StructureType.Academy, 5),
+                        new DataRequirement(DataType.Resource, (int)ResourceType.Food, 5000),
+                        new DataRequirement(DataType.Resource, (int)ResourceType.Wood, 2500)
+                    }),
+                new LevelRequirements(3, 1 * HOURS + 10 * MINUTES,
+                    new List<DataRequirement>()
+                    {
+                        new DataRequirement(DataType.Structure, (int)StructureType.Academy, 10),
+                        new DataRequirement(DataType.Resource, (int)ResourceType.Food, 5500),
+                        new DataRequirement(DataType.Resource, (int)ResourceType.Wood, 3000)
+                    })
+            });
 
+            var siegeatkTech = GenerateTechData(TechnologyType.WorkshopAttackTechnology, new LevelRequirements[]
+            {
+                new LevelRequirements(1, 22 * MINUTES,
+                    new List<DataRequirement>()
+                    {
+//                        new DataRequirement(DataType.ActiveBoost, (int)NewBoostType.MONSTERMARCH, 1),
+                        new DataRequirement(DataType.Technology, (int)TechnologyType.StableAttackTechnology, 1),
+                        new DataRequirement(DataType.Resource, (int)ResourceType.Food, 4500),
+                        new DataRequirement(DataType.Resource, (int)ResourceType.Wood, 2200)
+                    }),
+                new LevelRequirements(2, 45 * MINUTES,
+                    new List<DataRequirement>()
+                    {
+                        new DataRequirement(DataType.Structure, (int)StructureType.Academy, 5),
+                        new DataRequirement(DataType.Resource, (int)ResourceType.Food, 5000),
+                        new DataRequirement(DataType.Resource, (int)ResourceType.Wood, 2500)
+                    }),
+                new LevelRequirements(3, 1 * HOURS + 10 * MINUTES,
+                    new List<DataRequirement>()
+                    {
+                        new DataRequirement(DataType.Structure, (int)StructureType.Academy, 10),
+                        new DataRequirement(DataType.Resource, (int)ResourceType.Food, 5500),
+                        new DataRequirement(DataType.Resource, (int)ResourceType.Wood, 3000)
+                    })
+            });
+
+            ///----------------------------------------------
 
             var infantrydefTech = GenerateTechData(TechnologyType.BarracksDefenseTechnology, new LevelRequirements[]
             {
@@ -663,109 +676,136 @@ namespace GameOfRevenge.Business.CacheData
                 new LevelRequirements(2, 22 * MINUTES,
                     new List<DataRequirement>()
                     {
+                        new DataRequirement(DataType.Structure, (int)StructureType.Academy, 5),
                         new DataRequirement(DataType.Resource, (int)ResourceType.Food, 4000),
                         new DataRequirement(DataType.Resource, (int)ResourceType.Wood, 2000)
                     }),
                 new LevelRequirements(3, 45 * MINUTES,
                     new List<DataRequirement>()
                     {
+                        new DataRequirement(DataType.Structure, (int)StructureType.Academy, 10),
                         new DataRequirement(DataType.Resource, (int)ResourceType.Food, 6000),
                         new DataRequirement(DataType.Resource, (int)ResourceType.Wood, 2200)
                     })
-                }
-            );
-
-            var cavalrydefTech = GenerateTechData(TechnologyType.StableDefenseTechnology, new LevelRequirements[]
-            {
-                new LevelRequirements(1, 45 * MINUTES,
-                    new List<DataRequirement>()
-                    {
-                        new DataRequirement(DataType.Structure, (int)StructureType.Academy, 7),//resource type  //resource amount
-                        new DataRequirement(DataType.ActiveBoost, (int)NewBoostType.CavalryAttack, 1),
-                        new DataRequirement(DataType.Resource, (int)ResourceType.Food, 5500),
-                        new DataRequirement(DataType.Resource, (int)ResourceType.Wood, 3200)
-                    }),
-                new LevelRequirements(2, 1 * HOURS + 10 * MINUTES,
-                    new List<DataRequirement>()
-                    {
-                        new DataRequirement(DataType.Structure, (int)StructureType.Academy, 8),//resource type  //resource amount
-                        new DataRequirement(DataType.Resource, (int)ResourceType.Food, 5500),
-                        new DataRequirement(DataType.Resource, (int)ResourceType.Wood, 3000)
-                    }),
-                new LevelRequirements(3, 1 * HOURS + 55 * MINUTES,
-                    new List<DataRequirement>()
-                    {
-                        new DataRequirement(DataType.Structure, (int)StructureType.Academy, 9),//resource type  //resource amount
-                        new DataRequirement(DataType.Resource, (int)ResourceType.Food, 5500),
-                        new DataRequirement(DataType.Resource, (int)ResourceType.Wood, 3000)
-                    })
-                }
-            );
-
-
-            var siegedefTech = GenerateTechData(TechnologyType.WorkshopDefenseTechnology, new LevelRequirements[]
-            {
-                new LevelRequirements(1, 45 * MINUTES,
-                    new List<DataRequirement>()
-                    {
-                        new DataRequirement(DataType.Structure, (int)StructureType.Academy, 7),//resource type  //resource amount
-                        new DataRequirement(DataType.ActiveBoost, (int)NewBoostType.SiegeAttack, 1),
-                        new DataRequirement(DataType.Resource, (int)ResourceType.Food, 5500),
-                        new DataRequirement(DataType.Resource, (int)ResourceType.Wood, 3200)
-                    }),
-                new LevelRequirements(2, 1 * HOURS + 10 * MINUTES,
-                    new List<DataRequirement>()
-                    {
-                        new DataRequirement(DataType.Structure, (int)StructureType.Academy, 8),//resource type  //resource amount
-                        new DataRequirement(DataType.Resource, (int)ResourceType.Food, 5500),
-                        new DataRequirement(DataType.Resource, (int)ResourceType.Wood, 3000)
-                    }),
-                new LevelRequirements(3, 1 * HOURS + 55 * MINUTES,
-                    new List<DataRequirement>()
-                    {
-                        new DataRequirement(DataType.Structure, (int)StructureType.Academy, 9),//resource type  //resource amount
-                        new DataRequirement(DataType.Resource, (int)ResourceType.Food, 5500),
-                        new DataRequirement(DataType.Resource, (int)ResourceType.Wood, 3000)
-                    })
-                }
-            );
+            });
 
             var bowmendefTech = GenerateTechData(TechnologyType.ShootingRangeDefenseTechnology, new LevelRequirements[]
             {
                 new LevelRequirements(1, 45 * MINUTES,
                     new List<DataRequirement>()
                     {
-                        new DataRequirement(DataType.Structure, (int)StructureType.Academy, 7),//resource type  //resource amount
-                        new DataRequirement(DataType.ActiveBoost, (int)NewBoostType.BowmenAttack, 1),
+                        new DataRequirement(DataType.Technology, (int)TechnologyType.ShootingRangeAttackTechnology, 1),
                         new DataRequirement(DataType.Resource, (int)ResourceType.Food, 5500),
                         new DataRequirement(DataType.Resource, (int)ResourceType.Wood, 3200)
                     }),
                 new LevelRequirements(2, 1 * HOURS + 10 * MINUTES,
                     new List<DataRequirement>()
                     {
-                        new DataRequirement(DataType.Structure, (int)StructureType.Academy, 8),//resource type  //resource amount
+                        new DataRequirement(DataType.Structure, (int)StructureType.Academy, 5),
                         new DataRequirement(DataType.Resource, (int)ResourceType.Food, 5500),
                         new DataRequirement(DataType.Resource, (int)ResourceType.Wood, 3000)
                     }),
                 new LevelRequirements(3, 1 * HOURS + 55 * MINUTES,
                     new List<DataRequirement>()
                     {
-                        new DataRequirement(DataType.Structure, (int)StructureType.Academy, 9),//resource type  //resource amount
+                        new DataRequirement(DataType.Structure, (int)StructureType.Academy, 10),
                         new DataRequirement(DataType.Resource, (int)ResourceType.Food, 5500),
                         new DataRequirement(DataType.Resource, (int)ResourceType.Wood, 3000)
                     })
-                }
-            );
+            });
 
-
-
-
-            technologyInfos = new List<TechnologyDataRequirementRel>()
+            var cavalrydefTech = GenerateTechData(TechnologyType.StableDefenseTechnology, new LevelRequirements[]
             {
-                constructionTech, upkeepTech, fastHealTech, researchTech, loadTech, trainTech, infirmaryTech, staimnaTech, storageTech,
-                infantryatkTech, cavalryatkTech, siegeatkTech, bowmenatkTech,
-                infantrydefTech, cavalrydefTech, siegedefTech, bowmendefTech
+                new LevelRequirements(1, 45 * MINUTES,
+                    new List<DataRequirement>()
+                    {
+                        new DataRequirement(DataType.Technology, (int)TechnologyType.StableAttackTechnology, 1),
+                        new DataRequirement(DataType.Resource, (int)ResourceType.Food, 5500),
+                        new DataRequirement(DataType.Resource, (int)ResourceType.Wood, 3200)
+                    }),
+                new LevelRequirements(2, 1 * HOURS + 10 * MINUTES,
+                    new List<DataRequirement>()
+                    {
+                        new DataRequirement(DataType.Structure, (int)StructureType.Academy, 5),
+                        new DataRequirement(DataType.Resource, (int)ResourceType.Food, 5500),
+                        new DataRequirement(DataType.Resource, (int)ResourceType.Wood, 3000)
+                    }),
+                new LevelRequirements(3, 1 * HOURS + 55 * MINUTES,
+                    new List<DataRequirement>()
+                    {
+                        new DataRequirement(DataType.Structure, (int)StructureType.Academy, 10),
+                        new DataRequirement(DataType.Resource, (int)ResourceType.Food, 5500),
+                        new DataRequirement(DataType.Resource, (int)ResourceType.Wood, 3000)
+                    })
+            });
+
+            var siegedefTech = GenerateTechData(TechnologyType.WorkshopDefenseTechnology, new LevelRequirements[]
+            {
+                new LevelRequirements(1, 45 * MINUTES,
+                    new List<DataRequirement>()
+                    {
+                        new DataRequirement(DataType.Technology, (int)TechnologyType.WorkshopAttackTechnology, 1),
+                        new DataRequirement(DataType.Resource, (int)ResourceType.Food, 5500),
+                        new DataRequirement(DataType.Resource, (int)ResourceType.Wood, 3200)
+                    }),
+                new LevelRequirements(2, 1 * HOURS + 10 * MINUTES,
+                    new List<DataRequirement>()
+                    {
+                        new DataRequirement(DataType.Structure, (int)StructureType.Academy, 5),
+                        new DataRequirement(DataType.Resource, (int)ResourceType.Food, 5500),
+                        new DataRequirement(DataType.Resource, (int)ResourceType.Wood, 3000)
+                    }),
+                new LevelRequirements(3, 1 * HOURS + 55 * MINUTES,
+                    new List<DataRequirement>()
+                    {
+                        new DataRequirement(DataType.Structure, (int)StructureType.Academy, 10),
+                        new DataRequirement(DataType.Resource, (int)ResourceType.Food, 5500),
+                        new DataRequirement(DataType.Resource, (int)ResourceType.Wood, 3000)
+                    })
+            });
+
+
+
+
+
+//            technologyGroups
+            var techGroups = new List<TechnologyGroupInfo>()
+            {
+                new TechnologyGroupInfo()
+                {
+                    GroupType = GroupTechnologyType.KingdomTechnologies,
+                    Technologies = new List<TechnologyDataRequirementRel>()
+                    {
+                        constructionTech, researchTech, loadTech, storageTech, infirmaryTech,
+                        staimnaTech, trainTech, fastHealTech, upkeepTech
+                    }
+                },
+                new TechnologyGroupInfo()
+                {
+                    GroupType = GroupTechnologyType.AttackTechnologies,
+                    Technologies = new List<TechnologyDataRequirementRel>()
+                    {
+                        infantryatkTech, bowmenatkTech, cavalryatkTech, siegeatkTech
+                    }
+                },
+                new TechnologyGroupInfo()
+                {
+                    GroupType = GroupTechnologyType.DefenseTechnologies,
+                    Technologies = new List<TechnologyDataRequirementRel>()
+                    {
+                        infantrydefTech, bowmendefTech, cavalrydefTech, siegedefTech
+                    }
+                }
             };
+
+            technologyGroups = techGroups;
+
+            var techInfos = new List<IReadOnlyTechnologyDataRequirementRel>();
+            foreach (var techGroup in technologyGroups)
+            {
+                techInfos.AddRange(techGroup.Technologies);
+            }
+            technologyInfos = techInfos;
 
             isLoaded = true;
 /*

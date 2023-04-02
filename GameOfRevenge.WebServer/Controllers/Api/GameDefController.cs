@@ -85,7 +85,7 @@ namespace GameOfRevenge.WebServer.Controllers.Api
         public IActionResult GetAllTechnologies()
         {
 //            var response = new Response<IReadOnlyList<Common.Models.Technology.IReadOnlyTechnologyDataRequirementRel>>(CacheTechnologyDataManager.TechnologyInfos, 100, "Technology list");
-            var response = CacheTechnologyDataManager.TechnologyInfos;
+            var response = CacheTechnologyDataManager.TechnologyGroups;
             return ReturnResponse(response);
         }
 

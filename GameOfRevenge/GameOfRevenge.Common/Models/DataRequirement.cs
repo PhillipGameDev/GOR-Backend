@@ -18,6 +18,7 @@ namespace GameOfRevenge.Common.Models
         new int RequirementId { get; set; }
     }
 
+    [System.Serializable]
     public class DataRequirement : BaseDataTypeTable<int, int>, IBaseTable, IBaseDataTypeTable<int, int>, IReadOnlyBaseDataTypeTable<int, int>, IDataRequirement, IReadOnlyDataRequirement
     {
         public int DataId { get; set; }

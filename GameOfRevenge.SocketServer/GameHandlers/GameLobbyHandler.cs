@@ -147,18 +147,18 @@ namespace GameOfRevenge.GameHandlers
 
             await GameService.RealTimeUpdateManagerQuestValidator.PlayerDataChanged(peer.Actor.PlayerId);
 
-            var building = response.Data.Value.Find(x => x.Location == location);
+            var building = response.Data.Value.Find(x => (x.Location == location));
             if (building == null)
             {
-                return peer.SendOperation(operationRequest.OperationCode, ReturnCode.InvalidOperation, debuMsg: "Structure was null");
+                return peer.SendOperation(operationRequest.OperationCode, ReturnCode.InvalidOperation, debuMsg: "Structure not supported");
             }
 
             if (peer.Actor.InternalPlayerDataManager.PlayerBuildings.ContainsKey(structureType))
             {
-                var buildingManager = peer.Actor.InternalPlayerDataManager.PlayerBuildings[structureType].Find(x => x.Location == location);
+                var buildingManager = peer.Actor.InternalPlayerDataManager.PlayerBuildings[structureType].Find(x => (x.Location == location));
                 if (buildingManager != null)
                 {
-                    var buildingLoc = buildingManager.PlayerStructureData.Value.Find(x => x.Location == location);
+                    var buildingLoc = buildingManager.PlayerStructureData.Value.Find(x => (x.Location == location));
                     buildingLoc.Duration = 0;
                 }
                 else
@@ -248,6 +248,7 @@ namespace GameOfRevenge.GameHandlers
             }
 
             var resp = await GameService.BChatManager.CreateMessage(peer.Actor.PlayerId, operation.ChatMessage);
+            GameLobbyHandler.log.Info("success = "+resp.IsSuccess+"  "+Newtonsoft.Json.JsonConvert.SerializeObject(resp.Data));
             if (resp.IsSuccess && resp.HasData)
             {
                 var response = new ChatMessageRespose()
@@ -508,6 +509,7 @@ namespace GameOfRevenge.GameHandlers
                 LocationId = operation.LocationId,
                 ResourceValue = resourceValue
             };
+            log.Info(">>>>>>>>> data to send >" + JsonConvert.SerializeObject(uresponse));
 
             GameService.RealTimeUpdateManagerQuestValidator.CollectResourceCheckQuestProgress(peer.Actor.PlayerId, resourceType, resourceValue);
 

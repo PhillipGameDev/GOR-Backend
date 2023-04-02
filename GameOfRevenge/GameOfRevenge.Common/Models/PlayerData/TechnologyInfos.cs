@@ -1,10 +1,11 @@
-﻿using System.Runtime.Serialization;
+﻿using System;
+using System.Runtime.Serialization;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Converters;
 
 namespace GameOfRevenge.Common.Models
 {
-    [DataContract]
+    [DataContract, Serializable]
     public class TechnologyInfos : TimerBase
     {
         [DataMember]
