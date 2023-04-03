@@ -858,5 +858,81 @@ namespace GameOfRevenge.Business.Manager.Base
             var cost = timeLeft * baseCostMultiplierPerSec;
             return (int)cost;
         }
+
+        public async Task<Response<RankingElement>> GetRanking(int playerId)
+        {
+            try
+            {
+                var response = await manager.GetRanking(playerId);
+                if (!response.IsSuccess) throw new InvalidModelExecption(response.Message);
+
+                return response;
+            }
+            catch (InvalidModelExecption ex)
+            {
+                return new Response<RankingElement>()
+                {
+                    Case = 200,
+                    Message = ErrorManager.ShowError(ex),
+                    Data = null
+                };
+            }
+            catch (DataNotExistExecption ex)
+            {
+                return new Response<RankingElement>()
+                {
+                    Case = 201,
+                    Message = ErrorManager.ShowError(ex),
+                    Data = null
+                };
+            }
+            catch (Exception ex)
+            {
+                return new Response<RankingElement>()
+                {
+                    Case = 0,
+                    Message = ErrorManager.ShowError(ex),
+                    Data = null
+                };
+            }
+        }
+
+        public async Task<Response<List<RankingElement>>> GetRankings(long rankId = 0)
+        {
+            try
+            {
+                var response = await manager.GetRankings(rankId);
+                if (!response.IsSuccess) throw new InvalidModelExecption(response.Message);
+
+                return response;
+            }
+            catch (InvalidModelExecption ex)
+            {
+                return new Response<List<RankingElement>>()
+                {
+                    Case = 200,
+                    Message = ErrorManager.ShowError(ex),
+                    Data = null
+                };
+            }
+            catch (DataNotExistExecption ex)
+            {
+                return new Response<List<RankingElement>>()
+                {
+                    Case = 201,
+                    Message = ErrorManager.ShowError(ex),
+                    Data = null
+                };
+            }
+            catch (Exception ex)
+            {
+                return new Response<List<RankingElement>>()
+                {
+                    Case = 0,
+                    Message = ErrorManager.ShowError(ex),
+                    Data = null
+                };
+            }
+        }
     }
 }

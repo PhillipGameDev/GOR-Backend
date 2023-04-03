@@ -618,6 +618,64 @@ namespace GameOfRevenge.Business.Manager.UserData
             }
         }
 
+        public async Task<Response<RankingElement>> GetRanking(int playerId)
+        {
+            var spParams = new Dictionary<string, object>()
+            {
+                { "PlayerId", playerId }
+            };
+
+            try
+            {
+                return await Db.ExecuteSPSingleRow<RankingElement>("GetRanking", spParams);
+            }
+            catch (InvalidModelExecption ex)
+            {
+                return new Response<RankingElement>()
+                {
+                    Case = 200,
+                    Message = ex.Message
+                };
+            }
+            catch (Exception ex)
+            {
+                return new Response<RankingElement>()
+                {
+                    Case = 0,
+                    Message = ErrorManager.ShowError(ex)
+                };
+            }
+        }
+
+        public async Task<Response<List<RankingElement>>> GetRankings(long rankId = 0)
+        {
+            var spParams = new Dictionary<string, object>()
+            {
+                { "RankId", rankId }
+            };
+
+            try
+            {
+                return await Db.ExecuteSPMultipleRow<RankingElement>("GetRankings", spParams);
+            }
+            catch (InvalidModelExecption ex)
+            {
+                return new Response<List<RankingElement>>()
+                {
+                    Case = 200,
+                    Message = ex.Message
+                };
+            }
+            catch (Exception ex)
+            {
+                return new Response<List<RankingElement>>()
+                {
+                    Case = 0,
+                    Message = ErrorManager.ShowError(ex)
+                };
+            }
+        }
+
         private static Dictionary<string, object> ResourceUpdateSpParams(int playerId, int food, int wood, int ore, int gem, bool showResult = true)
         {
             if (playerId <= 0) throw new InvalidModelExecption("Invalid player id");

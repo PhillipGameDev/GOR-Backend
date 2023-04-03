@@ -35,5 +35,7 @@ namespace GameOfRevenge.Common.Interface
         Task<Response<List<StoredDataTable>>> GetAllPlayerStoredData(int playerId, int structureLocationId);
 //        Task<Response<PlayerDataTable>> StoreResource(int playerId, int structureLocationId, int resId, int value);
         Task<Response> StoreResource(int playerId, int structureLocationId, int resId, int value);
+        Task<Response<RankingElement>> GetRanking(int playerId);
+        Task<Response<List<RankingElement>>> GetRankings(long rankId);
     }
 }

@@ -23,7 +23,7 @@ namespace GameOfRevenge.WebServer.Controllers.Api
         }
 
         [HttpPost]
-        public async Task<IActionResult> GetMessages(int chatId = 0)
+        public async Task<IActionResult> GetMessages(long chatId = 0)
         {
             var response = await chatManager.GetMessages(chatId);
             return ReturnResponse(response);

@@ -526,13 +526,27 @@ namespace GameOfRevenge.WebServer.Controllers.Api
             return ReturnResponse(response);
         }
 
+        [HttpPost]
+        public async Task<IActionResult> GetRanking()
+        {
+            var response = await userManager.GetRanking(Token.PlayerId);
+            return ReturnResponse(response);
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> GetRankings(long rankId = 0)
+        {
+            var response = await userManager.GetRankings(rankId);
+            return ReturnResponse(response);
+        }
+
         //public async Task<IActionResult> InstantTrainTroops(int buildingLoc)
         //{
         //    var response = await userTroopManager.InstantTrainTroops(Token.PlayerId, buildingLoc);
         //    return ReturnResponse(response);
         //}
 
-#endregion
+        #endregion
         //OBSOLETE, remove later
         [HttpPost]
         public async Task<IActionResult> HelpBuilding(int toPlayerId, StructureType type, int locId, int helpSeconds)

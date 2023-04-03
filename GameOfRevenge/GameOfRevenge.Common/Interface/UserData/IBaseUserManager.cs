@@ -27,5 +27,8 @@ namespace GameOfRevenge.Common.Interface.UserData
         bool HasActiveBoostRequirements(IReadOnlyList<IReadOnlyDataRequirement> requirements, List<UserRecordNewBoost> boosts);
 
         int GetInstantBuildCost(int timeLeft);
+
+        Task<Response<RankingElement>> GetRanking(int playerId);
+        Task<Response<List<RankingElement>>> GetRankings(long rankId = 0);
     }
 }
