@@ -4,6 +4,7 @@ using GameOfRevenge.Business.Manager.Base;
 using GameOfRevenge.Common.Net;
 using GameOfRevenge.Common.Models.Structure;
 using GameOfRevenge.Common.Interface;
+using GameOfRevenge.Business.CacheData;
 
 namespace GameOfRevenge.Business.Manager.UserData
 {
@@ -54,6 +55,30 @@ namespace GameOfRevenge.Business.Manager.UserData
             };
 
             return await Db.ExecuteSPNoData("BuyProduct", spParam);
+        }
+
+        public async Task<Response> RedeemPurchaseProduct(int playerId, string productId)
+        {
+//            if (productId already redeemed) return new Response(201, "Product already redemeed");
+
+            var iapProducts = CacheProductDataManager.GetIAPProducts();
+            var pack = iapProducts.Find(x => (x.ProductId == productId));
+            if (pack != null)
+            {
+                await UserQuestManager.CollectRewards(playerId, pack.Rewards); //TODO:implement response error
+
+                //TODO: register transacton
+/*                var redemeedResp = await Db.ExecuteSPNoData("RedeemChapterReward", new Dictionary<string, object>()
+                {
+                    { "PlayerChapterUserId", chapterData.ChapterUserDataId }
+                });*/
+
+                return new Response(CaseType.Success, "Product redeemed");
+            }
+            else
+            {
+                return new Response(CaseType.Error, "Invalid product");
+            }
         }
     }
 }

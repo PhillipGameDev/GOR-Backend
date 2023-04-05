@@ -434,7 +434,7 @@ namespace GameOfRevenge.Business.Manager.UserData
             return await UpdateQuestData(playerId, questId, isCompleted, dataString);
         }
 
-        public async Task CollectRewards(int playerId, IReadOnlyList<IReadOnlyDataReward> rewards)
+        public static async Task CollectRewards(int playerId, IReadOnlyList<IReadOnlyDataReward> rewards)
         {
             if (rewards.Count == 0) return;
 
@@ -476,7 +476,8 @@ namespace GameOfRevenge.Business.Manager.UserData
             var playerData = resp.Data;
             var rewardId = playerData.ValueId;
             var rewardData = CacheQuestDataManager.AllQuestRewards
-            .SelectMany(x => x.Rewards).FirstOrDefault(y => y.RewardId == rewardId);
+            .SelectMany(x => x.Rewards).FirstOrDefault(y => (y.RewardId == rewardId));
+
             if (rewardData == null) return new Response<PlayerDataTableUpdated>(201, "Reward data not found");
             if (rewardData.Count < 1) return new Response<PlayerDataTableUpdated>(202, "Reward data invalid");
 

@@ -27,7 +27,7 @@ namespace GameOfRevenge.Business.Manager
         {
             try
             {
-                if (version < 801) throw new DataNotExistExecption("Update Required");
+                if (version < 803) throw new DataNotExistExecption("Update Required");
                 if (string.IsNullOrWhiteSpace(identifier))
                 {
                     throw new InvalidModelExecption("Invalid identifier was provided:'"+identifier+"'");

@@ -11,6 +11,7 @@ using GameOfRevenge.Common.Helper;
 using System.Linq;
 using GameOfRevenge.Common.Models.Structure;
 using GameOfRevenge.Common.Interface.UserData;
+using GameOfRevenge.Common.Models.Technology;
 
 namespace GameOfRevenge.WebServer.Controllers.Api
 {

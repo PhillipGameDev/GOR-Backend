@@ -13,8 +13,10 @@ namespace GameOfRevenge.Business.Manager.GameDef
 {
     public class QuestManager : BaseManager
     {
+        public const int CHAPTER_QUEST = 0;
         public const int SIDE_QUEST = 99;
         public const int DAILY_QUEST = -1;
+        public const int PRODUCT_PACK = 200;
 
         public async Task<Response<List<QuestTable>>> GetAllQuests() => await Db.ExecuteSPMultipleRow<QuestTable>("GetAllQuests");
         public async Task<Response<List<ChapterQuestTable>>> GetAllChapterQuests() => await Db.ExecuteSPMultipleRow<ChapterQuestTable>("GetAllChapterQuests");
@@ -62,7 +64,7 @@ namespace GameOfRevenge.Business.Manager.GameDef
                             Rewards = allQuestRewards.Data.Where(x => (x.QuestId == questId)).ToList()
                         };
 
-                        if ((questData.QuestType == QuestType.Custom) && (questData.MilestoneId == 0))
+                        if ((questData.QuestType == QuestType.Custom) && (questData.MilestoneId == CHAPTER_QUEST))
                         {
                             chapterRewardRelData = questRewards;//chapter quest rewards
                         }
@@ -178,6 +180,52 @@ namespace GameOfRevenge.Business.Manager.GameDef
                 }
 
                 return response;
+            }
+            catch (InvalidModelExecption ex)
+            {
+                return new Response<List<QuestRewardRelData>>()
+                {
+                    Case = 200,
+                    Data = null,
+                    Message = ex.Message
+                };
+            }
+            catch (Exception ex)
+            {
+                return new Response<List<QuestRewardRelData>>()
+                {
+                    Case = 0,
+                    Data = null,
+                    Message = ErrorManager.ShowError(ex)
+                };
+            }
+        }
+
+        public async Task<Response<List<QuestRewardRelData>>> GetAllProductPackRelData()
+        {
+            try
+            {
+                var allQuests = await GetAllQuests();
+                if (!allQuests.IsSuccess) return new Response<List<QuestRewardRelData>>(allQuests.Case, allQuests.Message);
+
+                var allQuestRewards = await GetAllQuestRewards();
+                if (!allQuestRewards.IsSuccess) return new Response<List<QuestRewardRelData>>(allQuestRewards.Case, allQuestRewards.Message);
+
+                var productRewards = new List<QuestRewardRelData>();
+                var productPacks = allQuests.Data.Where(x => (x.MilestoneId == PRODUCT_PACK)).ToList();
+                foreach (var data in productPacks)
+                {
+                    if (data == null) continue;
+
+                    var questId = data.QuestId;
+                    productRewards.Add(new QuestRewardRelData()
+                    {
+                        Quest = data,
+                        Rewards = allQuestRewards.Data.Where(x => (x.QuestId == questId)).ToList()
+                    });
+                }
+
+                return new Response<List<QuestRewardRelData>>(productRewards, 100, "All Product Packs");
             }
             catch (InvalidModelExecption ex)
             {
