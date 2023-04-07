@@ -399,7 +399,7 @@ namespace GameOfRevenge.Business.Manager.UserData
                 Username = defenderArmy.PlayerName,
                 Army = GetAvailableTroops(defenderArmy.Troops),
                 Multipliers = GetAtkDefMultiplier(false, defenderArmy),
-                GateHp = gateHitPoints
+                GateHP = gateHitPoints
             };
 
             SetTroopsAlive(attackerPower);
@@ -440,7 +440,7 @@ namespace GameOfRevenge.Business.Manager.UserData
             }
             CalculateTroopLoss(defenderPower, defenderInfirmaryCapacity, defHealingBoost);
 
-            bool attackerWin = attackerPower.HitPoint > defenderPower.HitPoint;
+            bool attackerWin = attackerPower.HitPoints > defenderPower.HitPoints;
 
             var report = new BattleReport()
             {
@@ -485,7 +485,7 @@ namespace GameOfRevenge.Business.Manager.UserData
 
             if (SAVE)
             {
-                var response = await structManager.UpdateGate(defenderArmy.PlayerId, defenderPower.GateHp);
+                var response = await structManager.UpdateGate(defenderArmy.PlayerId, defenderPower.GateHP);
                 if (!response.IsSuccess)
                 {
                     Console.WriteLine(response.Message);
@@ -1066,21 +1066,34 @@ namespace GameOfRevenge.Business.Manager.UserData
         public void Attack(BattlePower attackerPower, BattlePower defenderPower)
         {
             var random = new Random();
-            var damageDifference = attackerPower.Attack - defenderPower.Defense;
-            damageDifference = damageDifference <= 1 ? random.Next(100, 150) : damageDifference;
-            var damageToDefender = damageDifference * random.Next(1, 4) / 10;
+            var atkSoldierHealth = attackerPower.TroopsAlive.Average(x => x.Data.Health);
+            var defSoldierHealth = defenderPower.TroopsAlive.Average(x => x.Data.Health);
+            var atkSoldiersToSacrifice = Math.Max(10, (attackerPower.TroopsAlive.Sum(x => x.InitialCount) * 0.1f));
+            var defSoldiersToSacrifice = Math.Max(20, (defenderPower.TroopsAlive.Sum(x => x.InitialCount) * 0.2f));
 
-            damageDifference = defenderPower.Attack - attackerPower.Defense;
-            damageDifference = damageDifference <= 1 ? random.Next(100, 150) : damageDifference;
-            var damageToAttacker = damageDifference * random.Next(1, 4) / 10;
+            var atkDamage = attackerPower.Attack - defenderPower.Defense;
+            if (atkDamage < (defSoldierHealth * defSoldiersToSacrifice))
+            {
+                atkDamage = (int)(defSoldierHealth * defSoldiersToSacrifice * (random.Next(5, 10) / 10f));
+            }
+            var multiplier = (random.Next(3, 8) / 10f);
+            var damageToDefender = atkDamage * multiplier;
+
+            var defDamage = defenderPower.Attack - attackerPower.Defense;
+            if (defDamage < (atkSoldierHealth * atkSoldiersToSacrifice))
+            {
+                defDamage = (int)(atkSoldierHealth * atkSoldiersToSacrifice * (random.Next(5, 10) / 10f));
+            }
+            multiplier = (random.Next(3, 8) / 10f);
+            var damageToAttacker = defDamage * multiplier;
 
             foreach (var troop in attackerPower.TroopsAlive)
             {
-                var temp = troop.Hp;
-                troop.Hp -= (int)damageToAttacker;
-                if (troop.Hp <= 0)
+                var temp = troop.TotalHP;
+                troop.TotalHP -= (int)damageToAttacker;
+                if (troop.TotalHP <= 0)
                 {
-                    troop.Hp = 0;
+                    troop.TotalHP = 0;
                     damageToAttacker -= temp;
                     if (damageToAttacker < 0) damageToAttacker = 0;
                     continue;
@@ -1089,22 +1102,22 @@ namespace GameOfRevenge.Business.Manager.UserData
                 break;
             }
 
-            if (defenderPower.GateHp > 0)
+            if (defenderPower.GateHP > 0)
             {
-                var temp = defenderPower.GateHp;
-                defenderPower.GateHp -= (int)damageToDefender;
-                if (defenderPower.GateHp < 0) defenderPower.GateHp = 0;
+                var temp = defenderPower.GateHP;
+                defenderPower.GateHP -= (int)damageToDefender;
+                if (defenderPower.GateHP < 0) defenderPower.GateHP = 0;
                 damageToDefender -= temp;
             }
             if (damageToDefender > 0)
             {
                 foreach (var troop in defenderPower.TroopsAlive)
                 {
-                    var temp = troop.Hp;
-                    troop.Hp -= (int)damageToDefender;
-                    if (troop.Hp <= 0)
+                    var temp = troop.TotalHP;
+                    troop.TotalHP -= (int)damageToDefender;
+                    if (troop.TotalHP <= 0)
                     {
-                        troop.Hp = 0;
+                        troop.TotalHP = 0;
                         damageToDefender -= temp;
                         if (damageToDefender < 0) damageToDefender = 0;
                         continue;
@@ -1145,27 +1158,28 @@ namespace GameOfRevenge.Business.Manager.UserData
         private List<TroopInfos> GetAvailableTroops(List<TroopInfos> troopCollection)
         {
             var validTroops = new List<TroopInfos>();
-            if ((troopCollection == null) || (troopCollection.Count == 0)) return validTroops;
-
-            foreach (var troops in troopCollection)
+            if ((troopCollection != null) && (troopCollection.Count > 0))
             {
-                if ((troops == null) || (troops.TroopData == null) || (troops.TroopData.Count == 0)) continue;
-
-                List<TroopDetails> troopDatas = null;
-                foreach (var troopData in troops.TroopData)
+                foreach (var troops in troopCollection)
                 {
-                    if ((troopData == null) || (troopData.Count < 1)) continue;
+                    if ((troops == null) || (troops.TroopData == null) || (troops.TroopData.Count == 0)) continue;
 
-                    if (troopDatas == null)
+                    List<TroopDetails> troopDatas = null;
+                    foreach (var troopData in troops.TroopData)
                     {
-                        troopDatas = new List<TroopDetails>();
-                        validTroops.Add(new TroopInfos(troops.Id, troops.TroopType, troopDatas));
+                        if ((troopData == null) || (troopData.Count < 1)) continue;
+
+                        if (troopDatas == null)
+                        {
+                            troopDatas = new List<TroopDetails>();
+                            validTroops.Add(new TroopInfos(troops.Id, troops.TroopType, troopDatas));
+                        }
+                        troopDatas.Add(new TroopDetails()
+                        {
+                            Level = troopData.Level,
+                            Count = troopData.FinalCount//AVAILABLE SOLDIERS
+                        });
                     }
-                    troopDatas.Add(new TroopDetails()
-                    {
-                        Level = troopData.Level,
-                        Count = troopData.FinalCount//AVAILABLE SOLDIERS
-                    });
                 }
             }
 

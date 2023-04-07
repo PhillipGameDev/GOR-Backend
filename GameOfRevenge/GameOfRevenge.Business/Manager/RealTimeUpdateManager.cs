@@ -89,15 +89,15 @@ namespace GameOfRevenge.Business.Manager
                                     item.initialDefenderAtkPower = defPower.Attack;
                                     item.initialDefenderDefPower = defPower.Defense;
 
-                                    log.Debug("atk pwr= " + atkPower.HitPoint + " vs def pwr=" + defPower.HitPoint);
+                                    log.Debug("atk pwr= " + atkPower.HitPoints + " vs def pwr=" + defPower.HitPoints);
                                     item.State++;
                                     break;
 
                                 case 2://battle simulation
-                                    if ((item.DefenderPower.HitPoint > 0) && (item.AttackerPower.HitPoint > 0))
+                                    if ((item.DefenderPower.HitPoints > 0) && (item.AttackerPower.HitPoints > 0))
                                     {
                                         pvpManager.Attack(item.AttackerPower, item.DefenderPower);
-                                        log.Debug("atk pwr= " + item.AttackerPower.HitPoint + " xx def pwr=" + item.DefenderPower.HitPoint);
+                                        log.Debug("atk pwr= " + item.AttackerPower.HitPoints + " xx def pwr=" + item.DefenderPower.HitPoints);
                                     }
                                     else
                                     {

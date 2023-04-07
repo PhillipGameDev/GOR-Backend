@@ -8,10 +8,10 @@ namespace GameOfRevenge.Common.Models.Kingdom
 {
     public class BattlePower : ClientBattleReport
     {
-        public int HitPoint { get; set; }
+        public int HitPoints { get; set; }
 
         public List<AttackDefenseMultiplier> Multipliers { get; set; }
-        public int GateHp { get; set; }
+        public int GateHP { get; set; }
 
 //        public new List<HeroType> Heroes { get; set; }
         public List<TroopInfos> Army { get; set; }
@@ -29,7 +29,7 @@ namespace GameOfRevenge.Common.Models.Kingdom
 
             foreach (var troops in TroopsAlive)
             {
-                if (troops.Hp <= 0) continue;
+                if (troops.TotalHP <= 0) continue;
 
                 float attackMultiplier = 1;
                 float defenseMultiplier = 1;
@@ -50,7 +50,7 @@ namespace GameOfRevenge.Common.Models.Kingdom
                 defense *= globalMulti.DefenseMultiplier;
             }
 
-            HitPoint = (int)points;
+            HitPoints = (int)points;
             Attack = (int)attack;
             Defense = (int)defense;
         }
@@ -98,11 +98,10 @@ namespace GameOfRevenge.Common.Models.Kingdom
     {
         public TroopInfos Troop { get; set; }
         public int Level => Data.Level;
-        public int Hp { get; set; }
-//        public int UnitHp { get; set; }
-        public float RemainUnits => (Data.Health > 0)? (Hp / (float)Data.Health) : 0;
+        public int TotalHP { get; set; }
+        public float RemainUnits => (Data.Health > 0)? (TotalHP / Data.Health) : 0;
         public int InitialCount { get; set; }
-        public int LoadPerUnit { get; set; }
+        public int LoadPerUnit => Data.WeightLoad;
         public int Dead { get; set; }
         public int Wounded { get; set; }
 
@@ -113,10 +112,7 @@ namespace GameOfRevenge.Common.Models.Kingdom
             Troop = troop;
             Data = data;
             InitialCount = count;
-            LoadPerUnit = data.WeightLoad;
-            Hp = (int)data.Health * count;
-
-//            UnitHp = (int)data.Health;
+            TotalHP = (int)(data.Health * count);
         }
     }
 }
