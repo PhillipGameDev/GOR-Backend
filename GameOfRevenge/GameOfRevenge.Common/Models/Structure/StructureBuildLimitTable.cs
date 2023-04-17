@@ -17,7 +17,7 @@ namespace GameOfRevenge.Common.Models.Structure
             int index = 0;
             StructureBuildDataId = reader.GetValue(index) == DBNull.Value ? 0 : reader.GetInt32(index); index++;
             TownHallLevel = reader.GetValue(index) == DBNull.Value ? 0 : reader.GetInt32(index); index++;
-            BuildStructure = reader.GetValue(index) == DBNull.Value ? StructureType.Other : reader.GetString(index).ToEnum<StructureType>(); index++;
+            BuildStructure = reader.GetValue(index) == DBNull.Value ? StructureType.Unknown : reader.GetString(index).ToEnum<StructureType>(); index++;
             MaxBuildCount = reader.GetValue(index) == DBNull.Value ? 0 : reader.GetInt32(index);
         }
     }

@@ -214,21 +214,28 @@ namespace GameOfRevenge.GameHandlers
 
         public async Task<(MmoActor actor, IInterestArea iA)> GetPlayerPositionAsync(int playerId, PlayerInfo playerInfo)
         {
+            log.Info("GetPlayerPositionAsync START");
             IInterestArea interestArea = null;
             var actor = PlayersManager.GetPlayer(playerId);
+            log.Info("actor =" + (actor != null));
             var data = WorldData.Find(d => (d.TileData.PlayerId == playerId));
             if (data == null)
             {
+                log.Info("data null");
+
                 var region = FindFreeRegion();
                 if (region != null)
                 {
+                    log.Info("region ok");
                     var tileData = new WorldTileData(playerId);
                     var resp = await GameService.BKingdomManager.UpdateWorldTileData(WorldId, region.X, region.Y, tileData);
                     if (resp.IsSuccess && resp.HasData)
                     {
+                        log.Info("ok set properties tile="+resp.Data.Id);
                         var setResp = await GameService.BAccountManager.SetProperties(playerId, worldTileId: resp.Data.Id);
                         if (setResp.IsSuccess)
                         {
+                            log.Info("ok!!");
                             data = new WorldDataTable()
                             {
                                 WorldId = WorldId,
@@ -241,7 +248,9 @@ namespace GameOfRevenge.GameHandlers
                             var worldRegion = WorldRegions[region.X][region.Y];
                             actor = new MmoActor(playerId, playerInfo, this, worldRegion);
                             worldRegion.SetPlayerInRegion(actor);
+                            log.Info("ok!! 1");
                             PlayersManager.AddPlayer(playerId, actor);
+                            log.Info("ok!! 2");
 
                             interestArea = new InterestArea(worldRegion, actor, true);
                         }
@@ -250,10 +259,12 @@ namespace GameOfRevenge.GameHandlers
             }
             else
             {
+                log.Info("data found x="+data.X+"  "+data.Y);
                 var worldRegion = WorldRegions[data.X][data.Y];
                 interestArea = new InterestArea(worldRegion, actor, false);
             }
 
+            log.Info("GetPlayerPositionAsync END");
             return (actor, interestArea);
         }
 

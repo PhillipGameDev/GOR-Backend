@@ -25,29 +25,6 @@ namespace GameOfRevenge.GameApplication
             log.Debug($"Client connected from: {RemoteIP}, with connection state: {ConnectionState}");
         }
 
-        public void OnQuestUpdate(UserQuestProgressData obj)
-        {
-            QuestUpdateResponse objResp = null;
-
-            if (obj != null)
-            {
-                objResp = new QuestUpdateResponse()
-                {
-                    Completed = obj.Completed,
-                    InitialData = obj.InitialData,
-                    IsSuccess = true,
-                    Message = "Update quest data",
-                    MilestoneId = obj.MilestoneId,
-                    //                Name = obj.Name,
-                    ProgressData = obj.ProgressData,
-                    QuestId = obj.QuestId,
-                    QuestType = obj.QuestType
-                };
-            }
-
-            Actor.SendEvent(EventCode.UpdateQuest, objResp);
-        }
-
         protected override void OnDisconnect(DisconnectReason reasonCode, string reasonDetail)
         {
 #if DEBUG

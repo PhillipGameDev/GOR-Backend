@@ -83,9 +83,16 @@ namespace GameOfRevenge.WebServer.Controllers.Api
         }
 
         [HttpPost]
-        public async Task<IActionResult> CollectResources(int locId)
+        public async Task<IActionResult> CollectResource(int locationId, StructureType structureType = StructureType.Unknown)
         {
-            return ReturnResponse(await userStructureManager.CollectResource(Token.PlayerId, locId));
+            var response = await userStructureManager.CollectResource(Token.PlayerId, locationId, structureType);
+            return ReturnResponse(response);
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> GetUserResources()
+        {
+            return ReturnResponse(await userResourceManager.GetResources(Token.PlayerId));
         }
 
         [HttpPost]

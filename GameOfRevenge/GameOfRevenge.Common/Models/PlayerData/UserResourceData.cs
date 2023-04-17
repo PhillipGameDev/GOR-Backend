@@ -1,12 +1,14 @@
-﻿using GameOfRevenge.Common.Interface.Model.Table;
+﻿using System.Collections.Generic;
+using System.Runtime.Serialization;
+using Newtonsoft.Json;
+using Newtonsoft.Json.Converters;
+using GameOfRevenge.Common.Interface.Model.Table;
 using GameOfRevenge.Common.Models.Inventory;
 using GameOfRevenge.Common.Models.Boost;
 using GameOfRevenge.Common.Models.Structure;
 using GameOfRevenge.Common.Models.Table;
-using System.Collections.Generic;
-using Newtonsoft.Json;
 using GameOfRevenge.Common.Models.Hero;
-using System.Runtime.Serialization;
+using GameOfRevenge.Common.Models.Quest;
 
 namespace GameOfRevenge.Common.Models.PlayerData
 {
@@ -100,4 +102,76 @@ namespace GameOfRevenge.Common.Models.PlayerData
         public int Value { get; set; }
     }
 
+    [DataContract]
+    public class ResourceData
+    {
+        [DataMember, JsonProperty(Order = -2)]
+        public long Id { get; set; }
+        [DataMember, JsonProperty(Order = -2), JsonConverter(typeof(StringEnumConverter))]
+        public ResourceType ResourceType { get; set; }
+        [DataMember, JsonProperty(Order = -2)]
+        public long Value { get; set; }
+
+        public ResourceData()
+        {
+        }
+
+        public ResourceData(PlayerDataTable data)
+        {
+            Id = data.Id;
+            ResourceType = (ResourceType)data.ValueId;
+            Value = long.Parse(data.Value);
+        }
+    }
+
+    [DataContract]
+    public class CollectedResourceResponse
+    {
+        [DataMember]
+        public CollectedResourceData CollectedResource { get; set; }
+//        [DataMember(EmitDefaultValue = false)]
+//        public int LocationId { get; set; }
+        [DataMember(EmitDefaultValue = false)]
+        public List<PlayerQuestDataTable> UpdatedQuests { get; set; }
+
+        public CollectedResourceResponse()
+        {
+        }
+
+        public CollectedResourceResponse(CollectedResourceData collected, List<PlayerQuestDataTable> updatedQuests)
+        {
+            CollectedResource = collected;
+            if ((updatedQuests != null) && (updatedQuests.Count > 0)) UpdatedQuests = updatedQuests;
+        }
+    }
+
+    [DataContract]
+    public class CollectedResourceData : ResourceData
+    {
+        [DataMember]
+        public int Collected { get; set; }
+        [DataMember(EmitDefaultValue = false)]
+        public int LocationId { get; set; }
+//        [DataMember(EmitDefaultValue = false)]
+//        public List<UserQuestProgressData> UpdatedQuests { get; set; }
+
+        public CollectedResourceData()
+        {
+        }
+
+        public CollectedResourceData(int collected, UserResourceData data, int locationId = 0)
+        {
+            Id = data.Id;
+            ResourceType = data.ValueId;
+            Value = data.Value;
+
+            Collected = collected;
+            LocationId = locationId;
+        }
+
+        public CollectedResourceData(int collected, PlayerDataTable data) : base(data)
+        {
+            Collected = collected;
+        }
+    }
 }

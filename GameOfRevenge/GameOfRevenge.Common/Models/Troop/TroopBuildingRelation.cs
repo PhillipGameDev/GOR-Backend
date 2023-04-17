@@ -22,7 +22,7 @@ namespace GameOfRevenge.Common.Models.Troop
         [DebuggerBrowsable(DebuggerBrowsableState.Never)]
         IReadOnlyList<TroopType> IReadOnlyTroopBuildingRelation.Troops => Troops;
 
-        public TroopBuildingRelation() : this(StructureType.Other, new List<TroopType>()) { }
+        public TroopBuildingRelation() : this(StructureType.Unknown, new List<TroopType>()) { }
         public TroopBuildingRelation(StructureType structure, List<TroopType> troops)
         {
             Structure = structure;

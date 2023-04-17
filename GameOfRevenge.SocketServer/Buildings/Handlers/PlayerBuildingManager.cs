@@ -35,7 +35,7 @@ namespace GameOfRevenge.Buildings.Handlers
         public StructureDetails StructureDetails => PlayerStructureData.Value[0];
 
         public int CurrentLevel => StructureDetails.Level;
-        public int Location => StructureDetails.Location;
+        public int Location => StructureDetails.LocationId;
 
 //        public int StructureId => PlayerStructureData.StructureId;
 
@@ -45,12 +45,22 @@ namespace GameOfRevenge.Buildings.Handlers
 
         public PlayerBuildingManager(UserStructureData structureData, MmoActor player, IGameBuildingManager buildingManager)
         {
-            Troops = new Dictionary<TroopType, ITroop>();
-            PlayerStructureData = structureData;
-            BaseBuilderManager = buildingManager;
-            Player = player;
-            if (IsConstructing) AddBuildingCallBack();
-//            log.InfoFormat("INIT player Structure info {0}", JsonConvert.SerializeObject(this.PlayerStructureData));
+            this.Troops = new Dictionary<TroopType, ITroop>();
+            this.PlayerStructureData = structureData;
+            log.Info("data =>>> "+Newtonsoft.Json.JsonConvert.SerializeObject(structureData));
+            this.BaseBuilderManager = buildingManager;
+            this.Player = player;
+            try
+            {
+                log.Info("constructing = " + this.IsConstructing);
+                if (this.IsConstructing) AddBuildingCallBack();
+            }
+            catch (System.Exception ex)
+            {
+                log.Info("EXCEPTION! " + ex.Message);
+                throw ex;
+            }
+            log.InfoFormat("INIT player Structure info {0}", JsonConvert.SerializeObject(this.PlayerStructureData));
         }
 
         public void SetStructureData(UserStructureData structureData)
@@ -60,7 +70,10 @@ namespace GameOfRevenge.Buildings.Handlers
 
         public void AddBuildingCallBack()
         {
-            Player.Fiber.Schedule(() => { SendBuildingCompleteToBuild(); }, (long)(1000 * StructureDetails.TimeLeft));
+            log.Info("player = " + (this.Player != null));
+            log.Info("fiber = " + (this.Player.Fiber != null));
+            log.Info("details = " + (this.StructureDetails != null));
+            this.Player.Fiber.Schedule(() => { SendBuildingCompleteToBuild(); }, (long)(1000 * this.StructureDetails.TimeLeft));
         }
 
         public bool HasAvailableRequirement(IReadOnlyDataRequirement values)

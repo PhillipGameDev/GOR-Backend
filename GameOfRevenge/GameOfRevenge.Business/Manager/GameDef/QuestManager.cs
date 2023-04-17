@@ -13,11 +13,6 @@ namespace GameOfRevenge.Business.Manager.GameDef
 {
     public class QuestManager : BaseManager
     {
-        public const int CHAPTER_QUEST = 0;
-        public const int SIDE_QUEST = 99;
-        public const int DAILY_QUEST = -1;
-        public const int PRODUCT_PACK = 200;
-
         public async Task<Response<List<QuestTable>>> GetAllQuests() => await Db.ExecuteSPMultipleRow<QuestTable>("GetAllQuests");
         public async Task<Response<List<ChapterQuestTable>>> GetAllChapterQuests() => await Db.ExecuteSPMultipleRow<ChapterQuestTable>("GetAllChapterQuests");
         public async Task<Response<List<ChapterTable>>> GetAllChapters() => await Db.ExecuteSPMultipleRow<ChapterTable>("GetAllChapters");
@@ -50,8 +45,7 @@ namespace GameOfRevenge.Business.Manager.GameDef
                     var chapterId = chapter.ChapterId;
                     var quests = new List<QuestRewardRelData>();
                     var chapterQuests = allChapterQuests.Data.Where(x => (x.ChapterId == chapterId)).ToList();
-                    QuestRewardRelData chapterRewardRelData = null;// new QuestRewardRelData();
-//                    chapterRewardRelData.Rewards = new List<DataReward>();//TODO: remove this on future builds, we should be able to send null data
+                    QuestRewardRelData chapterRewardRelData = null;
                     foreach (var quest in chapterQuests)
                     {
                         var questId = quest.QuestId;
@@ -64,23 +58,35 @@ namespace GameOfRevenge.Business.Manager.GameDef
                             Rewards = allQuestRewards.Data.Where(x => (x.QuestId == questId)).ToList()
                         };
 
-                        if ((questData.QuestType == QuestType.Custom) && (questData.MilestoneId == CHAPTER_QUEST))
+                        if ((questData.QuestType == QuestType.Custom) && (questData.QuestGroup == QuestGroupType.CHAPTER_QUEST))
                         {
-                            chapterRewardRelData = questRewards;//chapter quest rewards
+                            chapterRewardRelData = questRewards;
                         }
                         else
                         {
                             quests.Add(questRewards);
                         }
                     }
-                    
-                    response.Data.Add(new ChapterQuestRelData()
+
+                    if (quests.Count > 0)
                     {
-                        Chapter = chapter,
-                        Quests = quests,
-                        Rewards = ((chapterRewardRelData != null) && (chapterRewardRelData.Rewards != null)) ? chapterRewardRelData.Rewards : new List<DataReward>(),
-                        QuestRewards = chapterRewardRelData
-                    });
+                        var chapterRewards = new ChapterRewardData()
+                        {
+                            ChapterId = chapter.ChapterId,
+                            Name = chapter.Name,
+                            Description = chapter.Description,
+//                            Quest = (chapterRewardRelData != null) ? new QuestTableQuestId(chapterRewardRelData.Quest.QuestId) : null,
+                            Quest = chapterRewardRelData.Quest,
+                            Rewards = (chapterRewardRelData != null)? chapterRewardRelData.Rewards : null
+                        };
+                        response.Data.Add(new ChapterQuestRelData()
+                        {
+                            Chapter = chapterRewards,
+                            Quests = quests
+//                            Rewards = ((chapterRewardRelData != null) && (chapterRewardRelData.Rewards != null)) ? chapterRewardRelData.Rewards : null
+//                            QuestRewards = chapterRewardRelData
+                        });
+                    }
                 }
 
                 return response;
@@ -117,7 +123,7 @@ namespace GameOfRevenge.Business.Manager.GameDef
 
                 var response = new Response<List<QuestRewardRelData>>(new List<QuestRewardRelData>(), 100, "All Side Quests");
 
-                var sideQuests = allQuests.Data.Where(x => x.MilestoneId == SIDE_QUEST).ToList();
+                var sideQuests = allQuests.Data.Where(x => x.QuestGroup == QuestGroupType.SIDE_QUEST).ToList();
                 foreach (var questData in sideQuests)
                 {
                     var questId = questData.QuestId;
@@ -165,7 +171,7 @@ namespace GameOfRevenge.Business.Manager.GameDef
 
                 var response = new Response<List<QuestRewardRelData>>(new List<QuestRewardRelData>(), 100, "All Daily Quests");
 
-                var dailyQuests = allQuests.Data.Where(x => x.MilestoneId == DAILY_QUEST).ToList();
+                var dailyQuests = allQuests.Data.Where(x => x.QuestGroup == QuestGroupType.DAILY_QUEST).ToList();
                 foreach (var questData in dailyQuests)
                 {
                     var questId = questData.QuestId;
@@ -212,7 +218,7 @@ namespace GameOfRevenge.Business.Manager.GameDef
                 if (!allQuestRewards.IsSuccess) return new Response<List<QuestRewardRelData>>(allQuestRewards.Case, allQuestRewards.Message);
 
                 var productRewards = new List<QuestRewardRelData>();
-                var productPacks = allQuests.Data.Where(x => (x.MilestoneId == PRODUCT_PACK)).ToList();
+                var productPacks = allQuests.Data.Where(x => (x.QuestGroup == QuestGroupType.PRODUCT_PACK)).ToList();
                 foreach (var data in productPacks)
                 {
                     if (data == null) continue;

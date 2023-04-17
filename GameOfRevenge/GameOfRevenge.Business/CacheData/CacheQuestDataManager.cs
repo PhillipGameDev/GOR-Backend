@@ -34,12 +34,12 @@ namespace GameOfRevenge.Business.CacheData
             else return item;
         }
 
-        public static IReadOnlyChapterQuestRelData GetFullChapterData(string code)
+/*        public static IReadOnlyChapterQuestRelData GetFullChapterData(string code)
         {
             var item = ChapterQuests.FirstOrDefault(x => (x.Chapter.Code == code));
             if (item == null) throw new CacheDataNotExistExecption(QuestNotExist);
             else return item;
-        }
+        }*/
 
         public static IReadOnlyQuestRewardRelData GetQuestData(int questId)
         {
@@ -77,16 +77,19 @@ namespace GameOfRevenge.Business.CacheData
                         {
                             productPacks = response4.Data;
 
-                            var all = new List<QuestRewardRelData>();
+                            var list = new List<QuestRewardRelData>();
+                            if (dailyQuests != null) list.AddRange(dailyQuests);
+                            if (sideQuests != null) list.AddRange(sideQuests);
                             foreach (var chapterQuest in chapterQuests)
                             {
-                                all.AddRange(chapterQuest.Quests);
-                                if (chapterQuest.QuestRewards != null) all.Add(chapterQuest.QuestRewards);
+                                if (chapterQuest.Quests != null) list.AddRange(chapterQuest.Quests);
                             }
-                            all.AddRange(sideQuests);
-                            all.AddRange(dailyQuests);
-                            all.AddRange(productPacks);
-                            allQuestRewards = all;
+                            foreach (var chapterQuest in chapterQuests)
+                            {
+                                list.Add(chapterQuest.Chapter);
+                            }
+                            if (productPacks != null) list.AddRange(productPacks);
+                            allQuestRewards = list;
 
                             isLoaded = true;
                         }
@@ -133,6 +136,11 @@ namespace GameOfRevenge.Business.CacheData
             {
                 dailyQuests.Clear();
                 dailyQuests = null;
+            }
+            if (allQuestRewards != null)
+            {
+                allQuestRewards.Clear();
+                allQuestRewards = null;
             }
         }
         #endregion

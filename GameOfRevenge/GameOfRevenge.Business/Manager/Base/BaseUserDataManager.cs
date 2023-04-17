@@ -1,4 +1,5 @@
-﻿using GameOfRevenge.Business.CacheData;
+﻿using ExitGames.Logging;
+using GameOfRevenge.Business.CacheData;
 using GameOfRevenge.Business.Manager.UserData;
 using GameOfRevenge.Common;
 using GameOfRevenge.Common.Helper;
@@ -21,6 +22,8 @@ namespace GameOfRevenge.Business.Manager.Base
 {
     public class BaseUserDataManager : IBaseUserManager
     {
+        private static readonly ILogger log = LogManager.GetCurrentClassLogger();
+
         protected static readonly IAccountManager accountManager = new AccountManager();
         protected static readonly IPlayerDataManager manager = new PlayerDataManager();
 
@@ -30,6 +33,22 @@ namespace GameOfRevenge.Business.Manager.Base
         }
 
         public async Task<Response<List<PlayerDataTable>>> GetAllPlayerData(int playerId) => await manager.GetAllPlayerData(playerId);
+
+        public UserResourceData PlayerDataToUserResourceData(PlayerDataTable playerData)
+        {
+            if (!long.TryParse(playerData.Value, out long value))
+            {
+                log.Info("ERROR parsing resource "+Newtonsoft.Json.JsonConvert.SerializeObject(playerData));
+            }
+
+            return new UserResourceData()
+            {
+                Id = playerData.Id,
+                DataType = DataType.Resource,
+                ValueId = CacheResourceDataManager.GetResourceData(playerData.ValueId).Code,
+                Value = value
+            };
+        }
 
         public async Task<Response<PlayerCompleteData>> GetFullPlayerData(int playerId)
         {
@@ -164,69 +183,51 @@ namespace GameOfRevenge.Business.Manager.Base
                     {
                         if (item == null) continue;
 
-                        resourceList.Add(PlayerData.PlayerDataToUserResourceData(item));
+                        resourceList.Add(PlayerDataToUserResourceData(item));
                     }
-                    finalData.Data.Resources.Food = (long)resourceList.FirstOrDefault(x => x.ValueId == ResourceType.Food)?.Value;
-                    finalData.Data.Resources.Wood = (long)resourceList.FirstOrDefault(x => x.ValueId == ResourceType.Wood)?.Value;
-                    finalData.Data.Resources.Ore = (long)resourceList.FirstOrDefault(x => x.ValueId == ResourceType.Ore)?.Value;
-                    finalData.Data.Resources.Gems = (long)resourceList.FirstOrDefault(x => x.ValueId == ResourceType.Gems)?.Value;
+                    finalData.Data.Resources.Food = (long)resourceList.FirstOrDefault(x => (x.ValueId == ResourceType.Food))?.Value;
+                    finalData.Data.Resources.Wood = (long)resourceList.FirstOrDefault(x => (x.ValueId == ResourceType.Wood))?.Value;
+                    finalData.Data.Resources.Ore = (long)resourceList.FirstOrDefault(x => (x.ValueId == ResourceType.Ore))?.Value;
+                    finalData.Data.Resources.Gems = (long)resourceList.FirstOrDefault(x => (x.ValueId == ResourceType.Gems))?.Value;
                 }
 
                 line = "8";
                 if (userStructures != null)
                 {
-                    var structureList = new List<UserStructureData>();
                     foreach (var item in userStructures)
                     {
-                        if (item == null) continue;
-
-                        structureList.Add(PlayerData.PlayerDataToUserStructureData(item));
-                    }
-
-                    foreach (var item in structureList)
-                    {
-                        finalData.Data.Structures.Add(new StructureInfos()
+                        if (item != null)
                         {
-                            Id = item.Id,
-                            StructureType = item.ValueId,
-                            Buildings = item.Value
-                        });
+                            var data = PlayerData.PlayerDataToUserStructureData(item);
+                            finalData.Data.Structures.Add(new StructureInfos(data));
+                        }
                     }
                 }
 
                 line = "9";
                 if (userTroops != null)
                 {
-                    var troopList = new List<UserTroopData>();
                     foreach (var item in userTroops)
                     {
-                        if (item == null) continue;
+                        if ((item == null) || (item.Value == null)) continue;
 
-                        troopList.Add(PlayerData.PlayerDataToUserTroopData(item));
-                    }
-                    foreach (var userTroop in troopList)
-                    {
-                        //                            var troopData = CacheTroopDataManager.GetFullTroopData(userTroop.ValueId);
-
-                        if (userTroop.Value != null)
+                        var userTroop = PlayerData.PlayerDataToUserTroopData(item);
+                        foreach (TroopDetails troop in userTroop.Value)
                         {
-                            foreach (TroopDetails troop in userTroop.Value)
+                            if (troop.InRecovery != null)
                             {
-                                if (troop.InRecovery != null)
-                                {
-                                    troop.InRecovery = troop.InRecovery.Where(x => x.TimeLeft > 0).ToList();
-                                    if (troop.InRecovery.Count == 0) troop.InRecovery = null;
-                                }
-
-                                if (troop.InTraning != null)
-                                {
-                                    troop.InTraning = troop.InTraning.Where(x => x.TimeLeft > 0).ToList();
-                                    if (troop.InTraning.Count == 0) troop.InTraning = null;
-                                }
+                                troop.InRecovery = troop.InRecovery.Where(x => (x.TimeLeft > 0)).ToList();
+                                if (troop.InRecovery.Count == 0) troop.InRecovery = null;
                             }
 
-                            finalData.Data.Troops.Add(new TroopInfos(userTroop.Id, userTroop.ValueId, userTroop.Value));
+                            if (troop.InTraning != null)
+                            {
+                                troop.InTraning = troop.InTraning.Where(x => (x.TimeLeft > 0)).ToList();
+                                if (troop.InTraning.Count == 0) troop.InTraning = null;
+                            }
                         }
+
+                        finalData.Data.Troops.Add(new TroopInfos(userTroop.Id, userTroop.ValueId, userTroop.Value));
                     }
                 }
 
@@ -500,18 +501,27 @@ namespace GameOfRevenge.Business.Manager.Base
         public Dictionary<int, UserStructureData> GetMultipleBuildings(UserStructureData structure)
         {
             var dict = new Dictionary<int, UserStructureData>();
-            List<int> locId = structure.Value.GroupBy(d => d.Location).Select(d => d.Key).ToList();
-            foreach (var loc in locId)
+            try
             {
-                var u = new UserStructureData()
+                List<int> locId = structure.Value.GroupBy(d => d.LocationId).Select(d => d.Key).ToList();
+                foreach (var loc in locId)
                 {
-                    Id = structure.Id,
-                    DataType = structure.DataType,
-                    Value = structure.Value.Where(d => d.Location == loc).ToList(),
-                    ValueId = structure.ValueId
-//                    StructureId = structure.StructureId
-                };
-                dict.Add(loc, u);
+                    var u = new UserStructureData()
+                    {
+                        Id = structure.Id,
+                        DataType = structure.DataType,
+                        Value = structure.Value.Where(d => d.LocationId == loc).ToList(),
+                        ValueId = structure.ValueId
+                        //                    StructureId = structure.StructureId
+                    };
+                    dict.Add(loc, u);
+                }
+            }
+            catch (Exception ex)
+            {
+                log.Info("EXCEPTION3 " + ex.Message);
+                log.Info(Newtonsoft.Json.JsonConvert.SerializeObject(structure));
+                throw ex;
             }
             return dict;
         }
@@ -810,7 +820,7 @@ namespace GameOfRevenge.Business.Manager.Base
                 {
                     foreach (var structure in structures)
                     {
-                        if (structure != null && structure.StructureType == type && structure.Buildings.Exists(x => x.Location == locId))
+                        if (structure != null && structure.StructureType == type && structure.Buildings.Exists(x => x.LocationId == locId))
                         {
                             if (onExist == null) return true;
 
@@ -828,24 +838,15 @@ namespace GameOfRevenge.Business.Manager.Base
             }
         }
 
-        public StructureInfos GetStructureLocation(int locId, List<StructureInfos> structures)
+        public static StructureInfos GetStructureLocation(int locationId, List<StructureInfos> structures)
         {
-            try
-            {
-                if (structures == null || structures.Count == 0) return null;
+            if ((structures == null) || (structures.Count == 0)) return null;
 
-                foreach (var structure in structures)
-                {
-                    if (structure != null && structure.Buildings.Exists(x => x.Location == locId))
-                        return structure;
-                }
-
-                return null;
-            }
-            catch (Exception)
+            return structures.FirstOrDefault(x =>
             {
-                return null;
-            }
+                return (x != null) && (x.Buildings != null) &&
+                        x.Buildings.Exists(y => (y.LocationId == locationId));
+            });
         }
 
         [Obsolete]

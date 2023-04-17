@@ -1,51 +1,51 @@
-﻿using GameOfRevenge.Common.Models.Quest.Template;
-using Newtonsoft.Json;
-using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
+using System.Runtime.Serialization;
 
 namespace GameOfRevenge.Common.Models.Quest
 {
     public class UserChapterAllQuestProgress
     {
         public List<UserChapterQuestData> ChapterQuests;
-        public List<UserQuestProgressData> SideQuests;
-        public List<UserQuestProgressData> DailyQuests;
+        public List<PlayerQuestDataTable> SideQuests;
+        public List<PlayerQuestDataTable> DailyQuests;
     }
 
+    [DataContract]
     public class UserChapterQuestData : ChapterTable
     {
+        [DataMember]
         public int ChapterUserDataId { get; set; }
+        [DataMember(Order = 10)]
         public bool Redeemed { get; set; }
 
-        public bool Completed()
+        [DataMember(EmitDefaultValue = false)]
+        public new string Name { get; set; }
+        [DataMember(EmitDefaultValue = false)]
+        public new string Description { get; set; }
+
+        private string name;
+        private string desciption;
+        [OnSerializing]
+        void OnSerializing(StreamingContext context)
         {
-            var completed = true;
-            if (Quests != null)
-            {
-                foreach (var quest in Quests)
-                {
-                    if (quest.Completed) continue;
-
-                    completed = false;
-                    break;
-                }
-            }
-
-            return completed;
+            name = Name;
+            Name = null;
+            desciption = Description;
+            Description = null;
+        }
+        [OnSerialized]
+        void OnSerialized(StreamingContext context)
+        {
+            Name = name;
+            Description = desciption;
         }
 
-        public List<UserQuestProgressData> Quests { get; set; }
-    }
+        [DataMember(Order = 11)]
+        public List<PlayerQuestDataTable> Quests { get; set; }
 
-    public class UserQuestProgressData : PlayerQuestDataTable
-    {
-        public int MilestoneId { get; set; }
-        public QuestType QuestType { get; set; }
-        public string InitialData { get; set; }
+        public int TotalQuests { get; set; }
 
-        public string GetName()
-        {
-            return PlayerQuestDataTable.GetName(QuestType, Completed, InitialData, ProgressData);
-        }
+        public bool AllQuestsCompleted => (Quests != null) && (Quests.Count >= TotalQuests) && !Quests.Exists(x => !x.Completed);
+        public bool AllQuestsRedeemed => (Quests != null) && (Quests.Count >= TotalQuests) && !Quests.Exists(x => !x.Redeemed);
     }
 }

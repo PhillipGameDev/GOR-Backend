@@ -10,6 +10,7 @@ using GameOfRevenge.Common.Interface.UserData;
 using GameOfRevenge.Common.Models;
 using GameOfRevenge.Common.Models.Boost;
 using GameOfRevenge.Common.Models.PlayerData;
+using GameOfRevenge.Common.Models.Quest;
 using GameOfRevenge.Common.Models.Structure;
 using GameOfRevenge.Common.Net;
 using Newtonsoft.Json;
@@ -19,11 +20,13 @@ namespace GameOfRevenge.Business.Manager.UserData
     public class UserStructureManager : BaseUserDataManager, IUserStructureManager
     {
         private readonly UserResourceManager userResourceManager;
+//        private readonly UserQuestManager userQuestManager;
         private readonly UserMarketManager marketManager;
 
         public UserStructureManager()
         {
             userResourceManager = new UserResourceManager();
+//            userQuestManager = new UserQuestManager();
             marketManager = new UserMarketManager();
         }
 
@@ -62,7 +65,7 @@ namespace GameOfRevenge.Business.Manager.UserData
                         if (structures == null) continue;
 
                         var userStructureData = PlayerData.PlayerDataToUserStructureData(structures);
-                        if (!userStructureData.Value.Exists(x => (x.Location == location))) continue;
+                        if (!userStructureData.Value.Exists(x => (x.LocationId == location))) continue;
 
                         return new Response<UserStructureData>()
                         {
@@ -139,7 +142,7 @@ namespace GameOfRevenge.Business.Manager.UserData
             if (existing.IsSuccess && existing.HasData)
             {
                 dataList = existing.Data.Value;
-                var structureExists = dataList.Find(x => (x.Location == location));
+                var structureExists = dataList.Find(x => (x.LocationId == location));
                 if (structureExists != null)
                 {
                     return new Response<UserStructureData>(existing.Data, 200, "Structure already exists at location");
@@ -203,7 +206,7 @@ namespace GameOfRevenge.Business.Manager.UserData
             {
                 Level = 1,
                 LastCollected = timestamp,
-                Location = location,
+                LocationId = location,
                 StartTime = timestamp,
                 Duration = secs,
 //                EndTime = timestamp.AddSeconds(totalSec),
@@ -271,7 +274,7 @@ namespace GameOfRevenge.Business.Manager.UserData
             if (existing.IsSuccess && existing.HasData)
             {
                 var dataList = existing.Data.Value;
-                var locData = dataList.Find(x => (x.Location == location));
+                var locData = dataList.Find(x => (x.LocationId == location));
                 if (locData != null)
                 {
                     var structureData = CacheStructureDataManager.GetFullStructureData(type);
@@ -396,7 +399,7 @@ namespace GameOfRevenge.Business.Manager.UserData
             if (targetStructures.IsSuccess && targetStructures.HasData)
             {
                 var dataList = targetStructures.Data.Value;
-                var targetBld = dataList.Find(x => (x.Location == location));
+                var targetBld = dataList.Find(x => (x.LocationId == location));
                 if (targetBld != null)
                 {
                     if ((targetBld.Helped < 10) && (targetBld.TimeLeft > 2))
@@ -492,7 +495,7 @@ namespace GameOfRevenge.Business.Manager.UserData
             if (targetStructures.IsSuccess && targetStructures.HasData)
             {
                 var dataList = targetStructures.Data.Value;
-                var targetBld = dataList.Find(x => (x.Location == location));
+                var targetBld = dataList.Find(x => (x.LocationId == location));
                 if (targetBld != null)
                 {
                     if (targetBld.TimeLeft > 2)
@@ -530,7 +533,7 @@ namespace GameOfRevenge.Business.Manager.UserData
             if (existing.IsSuccess && existing.HasData)
             {
                 var dataList = existing.Data.Value;
-                var locData = dataList.Find(x => (x.Location == location));
+                var locData = dataList.Find(x => (x.LocationId == location));
                 if (locData != null)
                 {
                     dataList.Remove(locData);
@@ -551,51 +554,92 @@ namespace GameOfRevenge.Business.Manager.UserData
             return new Response<UserStructureData>(100, "Structure does not exists");
         }
 
-        public async Task<Response<int>> CollectResource(int playerId, int locId, float multiplier)
+        private static readonly List<StructureType> ValidResourceStructures = new List<StructureType>() { StructureType.Farm, StructureType.Sawmill, StructureType.Mine };
+
+        private static (StructureInfos, StructureDetails, IReadOnlyStructureDataRequirement) FindUserBuilding(List<PlayerDataTable> playerData, List<StructureType> validStructures, int locationId, StructureType structureType = StructureType.Unknown)
+        {
+            var filter = validStructures;
+            if (structureType != StructureType.Unknown) filter = new List<StructureType>() { structureType };
+
+            var exists = false;
+            StructureInfos userBldGroup = null;
+            StructureDetails userBld = null;
+            foreach (var item in playerData)
+            {
+                if ((item == null) || !filter.Exists(x => ((int)x == item.ValueId))) continue;
+
+                exists = true;
+                var group = new StructureInfos(item);
+                var bld = group.Buildings?.Find(x => (x.LocationId == locationId));
+                if (bld != null)
+                {
+                    userBld = bld;
+                    userBldGroup = group;
+                    break;
+                }
+            }
+            if (userBldGroup == null)
+            {
+                throw new InvalidModelExecption(exists? "Invalid location id was provide" : "Invalid structure type");
+            }
+
+            var cacheData = CacheStructureDataManager.GetFullStructureData(userBldGroup.StructureType);
+            var cacheBuilding = cacheData?.Levels.FirstOrDefault(x => (x.Data.Level == userBld.Level));
+            if (cacheBuilding == null) throw new DataNotExistExecption("Invalid structure details");
+
+            return (userBldGroup, userBld, cacheBuilding);
+        }
+
+        public async Task<Response<CollectedResourceResponse>> CollectResource(int playerId, int locationId, float extraMultiplier = 0)
+        {
+            return await CollectResource(playerId, locationId, StructureType.Unknown, extraMultiplier);
+        }
+
+        public async Task<Response<CollectedResourceResponse>> CollectResource(int playerId, int locationId, StructureType structureType, float extraMultiplier = 0)
         {
             try
             {
-                var compPlayerData = await GetFullPlayerData(playerId);
-                if (!compPlayerData.IsSuccess || !compPlayerData.HasData) throw new DataNotExistExecption(compPlayerData.Message);
+                var allStructures = await manager.GetAllPlayerData(playerId, DataType.Structure);
+                if (!allStructures.IsSuccess || !allStructures.HasData)
+                {
+                    throw new InvalidModelExecption(allStructures.Message);
+                }
 
-                var structureValid = ValidateStructureInLocAndBuild(locId, compPlayerData.Data.Structures, new List<StructureType>() { StructureType.Mine, StructureType.Farm, StructureType.Sawmill });
-                if (!structureValid) throw new DataNotExistExecption("Invalid location id was provided");
-                var structInfo = GetStructureLocation(locId, compPlayerData.Data.Structures);
-                if (structInfo == null) throw new DataNotExistExecption("Invalid structure type");
-                var structDetails = structInfo.Buildings.Find(x => (x.Location == locId));
-                if (structDetails == null) throw new DataNotExistExecption("Invalid location id was provided");
-
-                var structData = CacheStructureDataManager.GetFullStructureData(structInfo.StructureType);
-                if (structData == null) throw new DataNotExistExecption("Invalid structure was provided");
-                var structDataTable = structData.Levels.FirstOrDefault(x => (x.Data.Level == structDetails.Level));
-                if (structDataTable == null) throw new DataNotExistExecption("Invalid structure details");
+                var (userBldGroup, userBld, cacheBuilding) = FindUserBuilding(allStructures.Data, ValidResourceStructures, locationId, structureType);
 
                 int resProduction = 0;
-                ResourceType resId;
-                switch (structInfo.StructureType)
+                ResourceType resType;
+                switch (userBldGroup.StructureType)
                 {
                     case StructureType.Farm:
-                        resProduction = structDataTable.Data.FoodProduction;
-                        resId = ResourceType.Food;
+                        resProduction = cacheBuilding.Data.FoodProduction;
+                        resType = ResourceType.Food;
                         break;
                     case StructureType.Sawmill:
-                        resProduction = structDataTable.Data.WoodProduction;
-                        resId = ResourceType.Wood;
+                        resProduction = cacheBuilding.Data.WoodProduction;
+                        resType = ResourceType.Wood;
                         break;
                     case StructureType.Mine:
-                        resProduction = structDataTable.Data.OreProduction;
-                        resId = ResourceType.Ore;
+                        resProduction = cacheBuilding.Data.OreProduction;
+                        resType = ResourceType.Ore;
                         break;
                     default:
                         throw new DataNotExistExecption("Invalid building type was provided");
                 }
-                var timestamp = DateTime.UtcNow;
-                var timeEscaped = timestamp - structDetails.LastCollected;
-                var productionAmount = timeEscaped.TotalSeconds * resProduction;
+
+                var utcNow = DateTime.UtcNow;
+                var timeElapsed = (utcNow - userBld.LastCollected);
+                var productionAmount = timeElapsed.TotalSeconds * resProduction;
 
                 float percentage = 0;
-                var playerData = await GetFullPlayerData(playerId);
-                var boost = playerData.Data.Boosts.Find(x => (x.Type == (NewBoostType)CityBoostType.ProductionBoost));
+                var resPlayerData = await GetFullPlayerData(playerId);
+                if (!resPlayerData.IsSuccess || !resPlayerData.HasData)
+                {
+                    //error
+                }
+                var playerData = resPlayerData.Data;
+
+                var boost = playerData.Boosts.Find(x => (x.Type == (NewBoostType)CityBoostType.ProductionBoost));
                 if ((boost != null) && (boost.TimeLeft > 0))
                 {
                     var specBoostData = CacheBoostDataManager.SpecNewBoostDatas.FirstOrDefault(x => (x.Type == boost.Type));
@@ -606,41 +650,98 @@ namespace GameOfRevenge.Business.Manager.UserData
                     }
                 }
 
-                var vip = playerData.Data.VIP;
+                var vip = playerData.VIP;
                 if ((vip != null) && (vip.TimeLeft > 0))
                 {
                     var vipBoostData = CacheBoostDataManager.SpecNewBoostDatas.FirstOrDefault(x => (x.Type == (NewBoostType)VIPBoostType.VIP));
                     if (vipBoostData != null)
                     {
                         var vipTech = vipBoostData.Techs.FirstOrDefault(x => (x.Tech == (NewBoostTech)VIPBoostTech.ResourceProductionMultiplier));
-                        if (vipTech != null)
-                        {
-                            percentage += vipTech.GetValue(vip.Level);
-                        }
+                        if (vipTech != null) percentage += vipTech.GetValue(vip.Level);
                     }
                 }
 
-                var finalMultiplier = 1 + (percentage / 100f) + multiplier;
-                int finalValue = (int)(productionAmount * finalMultiplier);
+                extraMultiplier = 0;
+                if (userBld.Boost != null)
+                {
+                    if (userBld.Boost.TimeLeft > 0)
+                    {
+                        //                        BoostUp.StartTime = DateTime.UtcNow;
+                        //                        BoostUp.Duration = 5 * 60;
+                        //                        BoostUp.Percentage = 10;
+                        extraMultiplier = 0.1f;
+                    }
+                    else
+                    {
+                        userBld.Boost = null;
+                    }
+                }
 
-                var resp = await userResourceManager.SumResource(playerId, resId, finalValue);
+                var finalMultiplier = 1 + (percentage / 100f) + extraMultiplier;
+                double amount = (productionAmount * finalMultiplier);
+                int collectedValue = (amount > int.MaxValue) ? int.MaxValue : (int)amount;
+
+                var resp = await userResourceManager.SumResource(playerId, resType, collectedValue);
                 if (!resp.IsSuccess) throw new DataNotExistExecption("Couldnt add resources");
 
-                structDetails.LastCollected = timestamp;
-                var json = JsonConvert.SerializeObject(structInfo.Buildings);
-                var fresponse = await manager.AddOrUpdatePlayerData(playerId, DataType.Structure, structData.Info.Id, json);
+                userBld.LastCollected = utcNow;
+                var json = JsonConvert.SerializeObject(userBldGroup.Buildings);
+                var response = await manager.UpdatePlayerDataID(playerId, userBldGroup.Id, json);
 
-                return new Response<int>(finalValue, resp.Case, resp.Message);
+                var userQuestManager = new UserQuestManager();
+                var list = new List<PlayerQuestDataTable>();
+                var userQuestData = await userQuestManager.GetUserAllQuestProgress(playerId, true);
+                if (!userQuestData.IsSuccess || !userQuestData.HasData)
+                {
+                    //error
+                }
+                var testx = "";
+                var test = "";
+                var playerUserQuestData = new PlayerUserQuestData()
+                {
+                    PlayerId = playerId,
+                    UserData = playerData,
+                    QuestData = userQuestData.Data,
+                    QuestEventAction = (questProgress) =>
+                    {
+                        test += questProgress.ProgressData+" , ";
+                        list.Add(questProgress);
+                    }
+                };
+                await userQuestManager.CheckQuestProgressForCollectResourceAsync(playerUserQuestData, resType, collectedValue, (x)=>
+                {
+                    testx += x;
+                });
+
+                var collected = new CollectedResourceData(collectedValue, resp.Data);
+                var collectedResponse = new CollectedResourceResponse(collected, list);
+                return new Response<CollectedResourceResponse>(collectedResponse, resp.Case,
+                    resp.Message+"  loc="+ locationId + "  quests="+list.Count+"  >"+test+"  >>"+testx);
+            }
+            catch (DataNotExistExecption ex)
+            {
+                return new Response<CollectedResourceResponse>()
+                {
+                    Case = 202,
+                    Message = ex.Message
+                };
+            }
+            catch (InvalidModelExecption ex)
+            {
+                return new Response<CollectedResourceResponse>()
+                {
+                    Case = 201,
+                    Message = ex.Message
+                };
             }
             catch (Exception ex)
             {
-                return new Response<int>()
+                return new Response<CollectedResourceResponse>()
                 {
                     Case = 200,
                     Message = ex.Message
                 };
             }
-           
         }
 
         public async Task<Response<bool>> GiftResource(int playerId, int toPlayerId, int food, int wood, int ore)

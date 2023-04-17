@@ -535,7 +535,7 @@ namespace GameOfRevenge.Business.Manager.UserData
             try
             {
                 var troopBuildingRels = CacheTroopDataManager.TroopBuildingRelation.FirstOrDefault(x => x.Troops.FirstOrDefault(y => y == type) != TroopType.Other);
-                return structures.Exists(x => x.StructureType == troopBuildingRels.Structure && x.Buildings.Exists(y => y.Location == locId));
+                return structures.Exists(x => x.StructureType == troopBuildingRels.Structure && x.Buildings.Exists(y => y.LocationId == locId));
             }
             catch (Exception)
             {

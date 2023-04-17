@@ -46,6 +46,12 @@ namespace GameOfRevenge.GameHandlers
         public void DataContributeAccType(List<PlayerDataTable> playerData)
         {
             var sortedList = playerData.OrderBy(x => x.DataType);
+            log.Info("user data =");
+            foreach (var data in sortedList)
+            {
+                log.Info(data.DataType.ToString()+"  "+data.ValueId+"  = "+data.Value);
+            }
+            log.Info("---------");
             PlayerDataTable currData = null;
             try
             {
@@ -83,8 +89,8 @@ namespace GameOfRevenge.GameHandlers
             }
             catch (Exception ex)
             {
-                log.InfoFormat("Error generating player data {0}: {1} ", currData.DataType, JsonConvert.SerializeObject(currData));
-                log.Info(ex.Message);
+                log.InfoFormat("Error generating player data {0}: {1}", currData.DataType, JsonConvert.SerializeObject(currData));
+                log.Info(ex.GetType().ToString()+"  "+ex.Message);
                 throw ex;
             }
 //            if (King == null) King = new UserKingDetails();
@@ -162,27 +168,68 @@ namespace GameOfRevenge.GameHandlers
 
         public void AddStructureOnPlayer(PlayerDataTable data)
         {
+            log.Info("add structure on player table");
+            try
+            {
             var structure = PlayerData.PlayerDataToUserStructureData(data);
             if (structure != null) AddStructureOnPlayer(structure);
 #if DEBUG
             else
                 log.InfoFormat("Structure not found when convert player data to structure info {0} ", JsonConvert.SerializeObject(data));
 #endif
+            }
+            catch (Exception ex)
+            {
+                log.Info("Exception 1 " + ex.Message);
+                throw ex;
+            }
         }
 
         public void AddStructureOnPlayer(UserStructureData structure)
         {
+            log.Info("add structure on player structure "+structure.ValueId);
+
 #if DEBUG
-//                log.InfoFormat("Player Data Convert to structure {0} playerData {1} ",
-//                    JsonConvert.SerializeObject(structure), JsonConvert.SerializeObject(data));
+            //                log.InfoFormat("Player Data Convert to structure {0} playerData {1} ",
+            //                    JsonConvert.SerializeObject(structure), JsonConvert.SerializeObject(data));
 #endif
             if (!this.PlayerBuildings.ContainsKey(structure.ValueId))
             {
-                var multipleBuildings = GameService.BPlayerStructureManager.GetMultipleBuildings(structure);
-                foreach (var build in multipleBuildings)
+                try
                 {
-                    IGameBuildingManager gameBuilding = GameService.GameBuildingManagerInstances[structure.ValueId];
-                    this.AddStructure(build.Key, build.Value, gameBuilding);
+                    var multipleBuildings = GameService.BPlayerStructureManager.GetMultipleBuildings(structure);
+                    log.Info("multiBuildings ok = "+(multipleBuildings != null));
+                    foreach (var build in multipleBuildings)
+                    {
+                        log.Info("get " + structure.ValueId.ToString());
+                        IGameBuildingManager gameBuilding = null;
+                        try
+                        {
+                            gameBuilding = GameService.GameBuildingManagerInstances[structure.ValueId];
+                        }
+                        catch (Exception exx)
+                        {
+                            log.Info(""+exx.Message);
+                            foreach(var man in GameService.GameBuildingManagerInstances)
+                            {
+                                log.Info("key = " + man.Key + "  "+Newtonsoft.Json.JsonConvert.SerializeObject(man.Value));
+                            }
+                            log.Info("----");
+                            throw exx;
+                        }
+                        foreach (var dicval in GameService.GameBuildingManagerInstances)
+                        {
+                            log.Info("  "+dicval.Key.ToString()+"  val="+(dicval.Value != null));
+                        }
+                        log.Info(".......... "+(gameBuilding != null));
+
+                        this.AddStructure(build.Key, build.Value, gameBuilding);
+                    }
+                }
+                catch (Exception ex)
+                {
+                    log.Info("exception2 " + ex.Message);
+                    throw ex;
                 }
             }
 #if DEBUG
@@ -195,15 +242,31 @@ namespace GameOfRevenge.GameHandlers
         {
             if (!this.PlayerBuildings.ContainsKey(structure.ValueId))
             {
+                log.Info("new list of structures "+structure.ValueId.ToString());
                 this.PlayerBuildings.Add(structure.ValueId, new List<IPlayerBuildingManager>());
+                log.Info("ok");
             }
-            var building = this.PlayerBuildings[structure.ValueId].Find(x => (x.Location == locationId));
+            var building = this.PlayerBuildings[structure.ValueId].Find(x =>
+            {
+                try
+                {
+                    log.Info("x = " + ((x != null) ? JsonConvert.SerializeObject(x) : "null"));
+                }
+                catch (Exception exz)
+                {
+                    log.Info("error serializing x " + exz.Message);
+                }
+                return (x.Location == locationId);
+            });
             if (building != null)
             {
+                log.Info("set structure data");
                 building.SetStructureData(structure);
+                log.Info("end");
                 return;
             }
 
+            log.Info("manager not exist, generate... ");
             IPlayerBuildingManager plyBuilding = null;
             switch (structure.ValueId)
             {
@@ -227,6 +290,7 @@ namespace GameOfRevenge.GameHandlers
 //TRAINING HEROES not requiered, level 1 is max build level
 //                case StructureType.TrainingHeroes: plyBuilding = new TrainingHeroes(gameBuilding, this.player, structure); break;
             }
+            log.Info("generated "+(plyBuilding != null));
             if (plyBuilding != null)
             {
 #if DEBUG
@@ -234,6 +298,12 @@ namespace GameOfRevenge.GameHandlers
 #endif
                 this.PlayerBuildings[structure.ValueId].Add(plyBuilding);
             }
+#if DEBUG
+            else
+            {
+                log.InfoFormat("Structure manager not required for {0} at Location {1}", structure.ValueId.ToString(), locationId);
+            }
+#endif
         }
 
         public (bool succ, string msg) CheckRequirementsAndUpdateValues(IReadOnlyList<IReadOnlyDataRequirement> requirements)

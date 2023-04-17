@@ -17,7 +17,7 @@
         StructureType = 13,
         StructureLevel = 14,
         ResourceId = 15,
-        ResourceValue = 16,
+        ResourceCollected = 16,
         BuildingBuildTime = 17,
         TotalTime = 18,
         TroopCount = 19,
@@ -39,7 +39,7 @@
         Hitpoint = 35,
         HeroIds = 36,
         QuestId = 37,
-        MilestoneId = 38,
+        QuestGroup = 38,
         Name = 39,
         QuestType = 40,
         Completed = 41,
@@ -58,6 +58,7 @@
         CastleLevel = 54,
         VIPPoints = 55,
         TroopsData = 56,
-        HeroesData = 57
+        HeroesData = 57,
+        ResourceTotal = 58
     }
 }

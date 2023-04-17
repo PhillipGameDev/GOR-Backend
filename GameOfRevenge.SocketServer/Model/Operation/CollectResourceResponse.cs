@@ -5,7 +5,9 @@ namespace GameOfRevenge.Model
 {
     public class CollectResourceResponse : NewCommonBuildingResponse
     {
-        [DataMember(Code = (byte)RoomParameterKey.ResourceValue, IsOptional = true)]
-        public int ResourceValue { get; set; }
+        [DataMember(Code = (byte)RoomParameterKey.ResourceCollected, IsOptional = true)]
+        public int ResourceCollected { get; set; }
+        [DataMember(Code = (byte)RoomParameterKey.ResourceTotal, IsOptional = true)]
+        public long ResourceTotal { get; set; }
     }
 }

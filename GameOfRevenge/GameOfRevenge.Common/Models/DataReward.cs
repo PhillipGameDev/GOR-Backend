@@ -1,8 +1,10 @@
 ﻿using GameOfRevenge.Common.Interface.Model;
 using GameOfRevenge.Common.Interface.Model.Table;
 using GameOfRevenge.Common.Models.Table;
+using Newtonsoft.Json;
 using System;
 using System.Data;
+using System.Runtime.Serialization;
 
 namespace GameOfRevenge.Common.Models
 {
@@ -20,10 +22,13 @@ namespace GameOfRevenge.Common.Models
         new int Count { get; set; }
     }
 
+    [DataContract]
     public class DataReward : BaseDataTypeTable<int, int>, IBaseTable, IBaseDataTypeTable<int, int>, IReadOnlyBaseDataTypeTable<int, int>, IDataReward, IReadOnlyDataReward
     {
+        [DataMember]
         public int RewardId { get; set; }
         public int QuestId { get; set; }
+        [DataMember, JsonProperty(Order = 10)]
         public int Count { get; set; }
 
         public override void LoadFromDataReader(IDataReader reader)

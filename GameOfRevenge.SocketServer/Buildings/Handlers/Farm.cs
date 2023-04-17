@@ -8,8 +8,29 @@ namespace GameOfRevenge.Buildings.Handlers
 {
     public class Farm : ResourceGenerator, IPlayerBuildingManager
     {
-        public override IPlayerResources Resource => Player.InternalPlayerDataManager.PlayerResources[ResourceType.Food];
-        public override double ProductionInTime { get => BaseStructureData.Data.FoodProduction; }
+        public override IPlayerResources Resource
+        {
+            get
+            {
+                if ((Player.InternalPlayerDataManager == null) ||
+                    (Player.InternalPlayerDataManager.PlayerResources == null) ||
+                    (!Player.InternalPlayerDataManager.PlayerResources.ContainsKey(ResourceType.Food)))
+                {
+                    return null;
+                }
+
+                return Player.InternalPlayerDataManager.PlayerResources[ResourceType.Food];
+            }
+        }
+        public override double ProductionInTime
+        {
+            get
+            {
+                if ((BaseStructureData == null) || (BaseStructureData.Data == null)) return 0;
+
+                return BaseStructureData.Data.FoodProduction;
+            }
+        }
 
         public Farm(IGameBuildingManager baseBuildingManager, MmoActor player, UserStructureData structureData) : base(structureData, player, baseBuildingManager)
         {

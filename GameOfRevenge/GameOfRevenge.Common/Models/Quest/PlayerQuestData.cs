@@ -1,42 +1,88 @@
 ﻿using System;
 using System.Data;
+using System.Runtime.Serialization;
 using GameOfRevenge.Common.Models.Quest.Template;
 using GameOfRevenge.Common.Models.Table;
 using Newtonsoft.Json;
 
 namespace GameOfRevenge.Common.Models.Quest
 {
+    public interface IReadOnlyUserQuestProgressData
+    {
+//        public QuestType QuestType => QuestInfo.QuestType;
+//        public string InitialData => QuestInfo.DataString;
+
+        IReadOnlyQuestTable QuestInfo { get; }
+        PlayerQuestDataTable UserData { get; }
+
+        string Description { get; }
+    }
+
+    public struct UserQuestProgressData : IReadOnlyUserQuestProgressData
+    {
+        public int QuestUserDataId => (UserData != null)? UserData.QuestUserDataId : 0;
+        public int QuestId => QuestInfo.QuestId;
+        public bool Completed => (UserData != null)? UserData.Completed : false;
+        public bool Redeemed => (UserData != null)? UserData.Redeemed : false;
+        public string ProgressData => UserData?.ProgressData;
+
+        public QuestType QuestType => QuestInfo.QuestType;
+        public string InitialData => QuestInfo.DataString;
+
+        public IReadOnlyQuestTable QuestInfo { get; set; }
+        public PlayerQuestDataTable UserData { get; set; }
+//        public int QuestGroup { get; set; }
+
+        public string Description => PlayerQuestDataTable.GetDescription(QuestType, Completed, InitialData, ProgressData);
+
+        public UserQuestProgressData(IReadOnlyQuestTable questData, PlayerQuestDataTable userQuestData)
+        {
+            QuestInfo = questData;
+            UserData = userQuestData;
+        }
+    }
+
     public interface IReadOnlyPlayerQuestData
     {
         int QuestUserDataId { get; }
         int QuestId { get; }
-        int PlayerId { get; }
+//        int PlayerId { get; }
+
         bool Completed { get; }
-        string ProgressData { get; }
         bool Redeemed { get; }
+        string ProgressData { get; }
     }
 
+    [DataContract]
     public class PlayerQuestDataTable : IBaseTable, IReadOnlyPlayerQuestData
     {
+        [DataMember]
         public int QuestUserDataId { get; set; }
-        public int PlayerId { get; set; }
+        [DataMember(Order = 10)]
         public int QuestId { get; set; }
+//        public int PlayerId { get; set; }
+
+        [DataMember(Order = 20)]
         public bool Completed { get; set; }
-        public string ProgressData { get; set; }
+        [DataMember(Order = 21, EmitDefaultValue = false)]
         public bool Redeemed { get; set; }
+
+        [DataMember(Order = 30, EmitDefaultValue = false)]
+        public string ProgressData { get; set; }
 
         public void LoadFromDataReader(IDataReader reader)
         {
             int index = 0;
             QuestUserDataId = reader.GetValue(index) == DBNull.Value ? 0 : reader.GetInt32(index); index++;
             QuestId = reader.GetValue(index) == DBNull.Value ? 0 : reader.GetInt32(index); index++;
-            PlayerId = reader.GetValue(index) == DBNull.Value ? 0 : reader.GetInt32(index); index++;
+//            PlayerId = reader.GetValue(index) == DBNull.Value ? 0 : reader.GetInt32(index); index++;
             Completed = reader.GetValue(index) == DBNull.Value ? false : reader.GetBoolean(index); index++;
-            ProgressData = reader.GetValue(index) == DBNull.Value ? null : reader.GetString(index); index++;
-            Redeemed = reader.GetValue(index) == DBNull.Value ? false : reader.GetBoolean(index);
+            Redeemed = reader.GetValue(index) == DBNull.Value ? false : reader.GetBoolean(index); index++;
+//            ProgressData = (Completed || (reader.GetValue(index) == DBNull.Value))? null : reader.GetString(index);
+            ProgressData = reader.GetValue(index) == DBNull.Value ? null : reader.GetString(index);
         }
 
-        public static string GetName(QuestType questType, bool completed, string initialData, string progressData)
+        public static string GetDescription(QuestType questType, bool completed, string initialData, string progressData)
         {
             var name = string.Empty;
 

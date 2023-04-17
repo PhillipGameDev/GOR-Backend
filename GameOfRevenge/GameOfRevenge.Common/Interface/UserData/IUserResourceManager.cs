@@ -11,6 +11,7 @@ namespace GameOfRevenge.Common.Interface.UserData
     {
         Task<Response<UserResourceData>> GetResource(int playerId, ResourceType type);
         Task<Response<UserResourceData>> GetResource(int playerId, int resId);
+        Task<Response<List<ResourceData>>> GetResources(int playerId);
         Task<Response<List<UserResourceData>>> GetMainResource(int playerId);
         Task<Response<UserResourceData>> GetGemsResource(int playerId);
         Task<Response<UserResourceData>> GetFoodResource(int playerId);

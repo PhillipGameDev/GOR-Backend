@@ -13,8 +13,30 @@ namespace GameOfRevenge.Buildings.Handlers
 {
     public class Mine : ResourceGenerator, IPlayerBuildingManager
     {
-        public override IPlayerResources Resource => this.Player.InternalPlayerDataManager.PlayerResources[ResourceType.Ore];
-        public override double ProductionInTime { get => this.BaseStructureData.Data.OreProduction; }
+        public override IPlayerResources Resource
+        {
+            get
+            {
+                if ((Player.InternalPlayerDataManager == null) ||
+                    (Player.InternalPlayerDataManager.PlayerResources == null) ||
+                    (!Player.InternalPlayerDataManager.PlayerResources.ContainsKey(ResourceType.Ore)))
+                {
+                    return null;
+                }
+
+                return Player.InternalPlayerDataManager.PlayerResources[ResourceType.Ore];
+            }
+        }
+        public override double ProductionInTime
+        {
+            get
+            {
+                if ((BaseStructureData == null) || (BaseStructureData.Data == null)) return 0;
+
+                return BaseStructureData.Data.OreProduction;
+            }
+        }
+
         public Mine(IGameBuildingManager baseBuildingManager, MmoActor player, UserStructureData structureData) : base(structureData, player, baseBuildingManager)
         {
             this.BaseBuilderManager = baseBuildingManager;

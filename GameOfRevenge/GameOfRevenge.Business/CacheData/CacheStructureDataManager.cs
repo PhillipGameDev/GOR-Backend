@@ -158,7 +158,7 @@ namespace GameOfRevenge.Business.CacheData
                 {
                     if ((structure.Info != null) &&
                         !structureTypes.Contains(structure.Info.Code) &&
-                        (structure.Info.Code != StructureType.Other))
+                        (structure.Info.Code != StructureType.Unknown))
                     {
                         structureTypes.Add(structure.Info.Code);
                     }

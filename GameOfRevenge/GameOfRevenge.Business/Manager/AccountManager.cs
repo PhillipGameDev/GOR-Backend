@@ -30,7 +30,7 @@ namespace GameOfRevenge.Business.Manager
                 if (version < 803) throw new DataNotExistExecption("Update Required");
                 if (string.IsNullOrWhiteSpace(identifier))
                 {
-                    throw new InvalidModelExecption("Invalid identifier was provided:'"+identifier+"'");
+                    throw new InvalidModelExecption("Invalid identifier was provided");
                 }
 
                 identifier = identifier.Trim();
@@ -73,11 +73,11 @@ namespace GameOfRevenge.Business.Manager
                         thHealth = structureData.Levels.OrderBy(x => x.Data.Level).FirstOrDefault().Data.HitPoint;
                         thLoc = structureData.Locations.FirstOrDefault();
                     }
-#if DEBUG
-                    await resManager.SumMainResource(playerId, 100000, 100000, 100000, 10000);
-#else
+//#if DEBUG
+//                    await resManager.SumMainResource(playerId, 100000, 100000, 100000, 10000);
+//#else
                     await resManager.SumMainResource(playerId, 10000, 10000, 10000, 100);
-#endif
+//#endif
                     var dataManager = new PlayerDataManager();
                     var json = JsonConvert.SerializeObject(new UserKingDetails());
                     await dataManager.AddOrUpdatePlayerData(playerId, DataType.Custom, 1, json);
@@ -94,25 +94,25 @@ namespace GameOfRevenge.Business.Manager
                     {
                         Level = 1,
                         StartTime = timestamp,
-                        Location = cityCounselLoc,
+                        LocationId = cityCounselLoc,
                         HitPoints = cityCounselHealth,
                     });
                     json = JsonConvert.SerializeObject(dataList);
                     await dataManager.AddOrUpdatePlayerData(playerId, DataType.Structure, (int)StructureType.CityCounsel, json);
 
-                    dataList[0].Location = gateLoc;
+                    dataList[0].LocationId = gateLoc;
                     dataList[0].HitPoints = gateHealth;
                     json = JsonConvert.SerializeObject(dataList);
                     await dataManager.AddOrUpdatePlayerData(playerId, DataType.Structure, (int)StructureType.Gate, json);
 
-                    dataList[0].Location = wtLoc;
+                    dataList[0].LocationId = wtLoc;
                     dataList[0].HitPoints = wtHealth;
                     json = JsonConvert.SerializeObject(dataList);
                     await dataManager.AddOrUpdatePlayerData(playerId, DataType.Structure, (int)StructureType.WatchTower, json);
 
                     if (version > 0)
                     {
-                        dataList[0].Location = thLoc;
+                        dataList[0].LocationId = thLoc;
                         dataList[0].HitPoints = thHealth;
                         json = JsonConvert.SerializeObject(dataList);
                         await dataManager.AddOrUpdatePlayerData(playerId, DataType.Structure, (int)StructureType.TrainingHeroes, json);
@@ -139,9 +139,9 @@ namespace GameOfRevenge.Business.Manager
                                         var structureData = CacheData.CacheStructureDataManager.GetFullStructureData(StructureType.TrainingHeroes);
                                         int thLoc = structureData.Locations.FirstOrDefault();
 
-                                        if (bld.Location != thLoc)
+                                        if (bld.LocationId != thLoc)
                                         {
-                                            bld.Location = thLoc;
+                                            bld.LocationId = thLoc;
                                             var json = JsonConvert.SerializeObject(structures);
                                             await dataManager.UpdatePlayerDataID(playerId, resp.Data.Id, json);
                                         }
@@ -160,7 +160,7 @@ namespace GameOfRevenge.Business.Manager
                                 dataList.Add(new StructureDetails()
                                 {
                                     Level = 1,
-                                    Location = thLoc,
+                                    LocationId = thLoc,
                                     StartTime = timestamp,
                                     HitPoints = thHealth,
                                 });
@@ -476,14 +476,6 @@ namespace GameOfRevenge.Business.Manager
             }
         }
 
-        private async Task<List<PlayerQuestDataTable>> AllUserQuests(int playerId)
-        {
-            var response = await questManager.GetAllQuestProgress(playerId);
-            if (response.IsSuccess && response.HasData) return response.Data;
-
-            throw new Exception();
-        }
-
         private async Task<bool> CompleteAccountQuest(int playerId, AccountTaskType taskType)
         {
             var quests = CacheData.CacheQuestDataManager.AllQuestRewards
@@ -492,24 +484,30 @@ namespace GameOfRevenge.Business.Manager
 
             var questUpdated = false;
             List<PlayerQuestDataTable> allUserQuests = null;
-            try
+            foreach (var quest in quests)
             {
-                foreach (var quest in quests)
+                QuestAccountData questData = null;
+                try
                 {
-                    QuestAccountData questData = JsonConvert.DeserializeObject<QuestAccountData>(quest.Quest.DataString);
-                    if ((questData == null) || (questData.AccountTaskType != taskType)) continue;
+                    questData = JsonConvert.DeserializeObject<QuestAccountData>(quest.Quest.DataString);
+                }
+                catch { }
+                if ((questData == null) || (questData.AccountTaskType != taskType)) continue;
 
-                    if (allUserQuests == null) allUserQuests = await AllUserQuests(playerId);
-                    var userQuest = allUserQuests.Find(x => (x.QuestId == quest.Quest.QuestId));
+                if (allUserQuests == null)
+                {
+                    var response = await questManager.GetAllQuestProgress(playerId);
+                    if (response.IsSuccess && response.HasData) allUserQuests = response.Data;
+                    else break;
+                }
+                var userQuest = allUserQuests.Find(x => (x.QuestId == quest.Quest.QuestId));
+                if ((userQuest == null) || !userQuest.Completed)
+                {
                     string initialString = (userQuest == null) ? quest.Quest.DataString : null;
-                    if ((userQuest == null) || !userQuest.Completed)
-                    {
-                        var resp = await questManager.UpdateQuestData(playerId, quest.Quest.QuestId, true, initialString);
-                        if (resp.IsSuccess) questUpdated = true;
-                    }
+                    var resp = await questManager.UpdateQuestData(playerId, quest.Quest.QuestId, true, initialString);
+                    if (resp.IsSuccess) questUpdated = true;
                 }
             }
-            catch { }
 
             return questUpdated;
         }

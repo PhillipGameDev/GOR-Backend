@@ -35,8 +35,5 @@ namespace GameOfRevenge.Interface
         SendResult Broadcast(byte opCode, ReturnCode returnCode, Dictionary<byte, object> data, string debuMsg);
 
         SendResult SendEvent(IEventData eventData, SendParameters sendParameters);
-
-
-        void OnQuestUpdate(UserQuestProgressData obj);
     }
 }

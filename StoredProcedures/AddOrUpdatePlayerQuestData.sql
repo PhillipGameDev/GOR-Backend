@@ -1,6 +1,6 @@
 USE [GameOfRevenge]
 GO
-/****** Object:  StoredProcedure [dbo].[AddOrUpdatePlayerQuestData]    Script Date: 11/2/2022 3:44:53 AM ******/
+/****** Object:  StoredProcedure [dbo].[AddOrUpdatePlayerQuestData]    Script Date: 4/15/2023 4:48:00 AM ******/
 SET ANSI_NULLS ON
 GO
 SET QUOTED_IDENTIFIER ON
@@ -72,7 +72,7 @@ BEGIN
 				END
 		END
 
-	SELECT * FROM [dbo].[QuestUserDataRel]
+	SELECT [QuestUserDataRelId], [QuestId], [IsCompleted], [IsRedeemed], [CurrentData] FROM [dbo].[QuestUserDataRel]
 	WHERE [QuestUserDataRelId] = @id;
 
 	EXEC [dbo].[GetMessage] @userId, @message, @case, @error, @time, 1, 1;

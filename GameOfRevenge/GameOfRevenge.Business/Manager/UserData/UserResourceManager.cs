@@ -125,6 +125,52 @@ namespace GameOfRevenge.Business.Manager.UserData
             }
 
         }
+
+        public async Task<Response<List<ResourceData>>> GetResources(int playerId)
+        {
+            try
+            {
+                if (playerId <= 0) throw new InvalidModelExecption("Invalid player id");
+
+                var response = await manager.GetAllPlayerData(playerId, DataType.Resource);
+                if (response.IsSuccess && response.HasData)
+                {
+                    return new Response<List<ResourceData>>()
+                    {
+                        Case = response.Case,
+                        Data = response.Data.ConvertAll(x => new ResourceData(x)),
+                        Message = response.Message
+                    };
+                }
+
+                return new Response<List<ResourceData>>()
+                {
+                    Case = response.Case,
+                    Data = null,
+                    Message = response.Message
+                };
+            }
+            catch (InvalidModelExecption ex)
+            {
+                return new Response<List<ResourceData>>()
+                {
+                    Case = 200,
+                    Data = null,
+                    Message = ex.Message
+                };
+            }
+            catch (Exception ex)
+            {
+                return new Response<List<ResourceData>>()
+                {
+                    Case = 1,
+                    Data = null,
+                    Message = ex.Message
+                };
+            }
+
+        }
+
         public async Task<Response<UserResourceData>> GetResource(int playerId, ResourceType type) => await GetResource(playerId, GetResourceId(type));
         public async Task<Response<UserResourceData>> GetFoodResource(int playerId) => await GetResource(playerId, CacheResourceDataManager.Food.Id);
         public async Task<Response<UserResourceData>> GetGemsResource(int playerId) => await GetResource(playerId, CacheResourceDataManager.Gems.Id);

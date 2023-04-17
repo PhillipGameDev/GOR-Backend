@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Data;
+using System.Runtime.Serialization;
 using GameOfRevenge.Common.Models.Table;
 
 namespace GameOfRevenge.Common.Models.Quest
@@ -7,28 +8,26 @@ namespace GameOfRevenge.Common.Models.Quest
     public interface IReadOnlyChapterTable
     {
         int ChapterId { get; }
-        string Code { get; }
         string Name { get; }
         string Description { get; }
-        int Order { get; }
     }
 
+    [DataContract]
     public class ChapterTable : IBaseTable, IReadOnlyChapterTable
     {
+        [DataMember]
         public int ChapterId { get; set; }
-        public string Code { get; set; }
+        [DataMember]
         public string Name { get; set; }
+        [DataMember]
         public string Description { get; set; }
-        public int Order { get; set; }
 
         public void LoadFromDataReader(IDataReader reader)
         {
             int index = 0;
             ChapterId = reader.GetValue(index) == DBNull.Value ? 0 : reader.GetInt32(index); index++;
-            Name = reader.GetString(index) ?? string.Empty; index++;
-            Description = reader.GetString(index) ?? string.Empty; index++;
-            Code = reader.GetString(index) ?? string.Empty; index++;
-            Order = (int) (reader.GetValue(index) == DBNull.Value ? 0 : reader.GetDouble(index));
+            Name = reader.GetValue(index) == DBNull.Value ? string.Empty : reader.GetString(index); index++;
+            Description = reader.GetValue(index) == DBNull.Value ? string.Empty : reader.GetString(index);
         }
     }
 }

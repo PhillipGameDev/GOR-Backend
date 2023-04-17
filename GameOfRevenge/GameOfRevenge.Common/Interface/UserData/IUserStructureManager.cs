@@ -16,7 +16,8 @@ namespace GameOfRevenge.Common.Interface.UserData
         Task<Response<UserStructureData>> HelpBuilding(int playerId, int toPlayerId, StructureType type, int location, int seconds);
         Task<Response<UserStructureData>> DestroyBuilding(int playerId, StructureType type, int location);
         Task<Response<UserStructureData>> CheckBuildingStatus(int playerId, StructureType type);
-        Task<Response<int>> CollectResource(int playerId, int locId, float multiplier = 0);
+        Task<Response<CollectedResourceResponse>> CollectResource(int playerId, int locationId, float extraMultiplier = 0);
+        Task<Response<CollectedResourceResponse>> CollectResource(int playerId, int locationId, StructureType structureType, float extraMultiplier = 0);
 
         int GetMaxInfirmaryCapacity(IReadOnlyList<StructureInfos> structures);
 

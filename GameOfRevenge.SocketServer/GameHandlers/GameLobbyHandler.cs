@@ -19,6 +19,8 @@ using GameOfRevenge.Buildings.Handlers;
 using GameOfRevenge.Buildings.Interface;
 using GameOfRevenge.Common.Models;
 using GameOfRevenge.Common.Models.PlayerData;
+using GameOfRevenge.Common.Models.Quest;
+using GameOfRevenge.Common.Services;
 
 namespace GameOfRevenge.GameHandlers
 {
@@ -147,7 +149,7 @@ namespace GameOfRevenge.GameHandlers
 
             await GameService.RealTimeUpdateManagerQuestValidator.PlayerDataChanged(peer.Actor.PlayerId);
 
-            var building = response.Data.Value.Find(x => (x.Location == location));
+            var building = response.Data.Value.Find(x => (x.LocationId == location));
             if (building == null)
             {
                 return peer.SendOperation(operationRequest.OperationCode, ReturnCode.InvalidOperation, debuMsg: "Structure not supported");
@@ -158,7 +160,7 @@ namespace GameOfRevenge.GameHandlers
                 var buildingManager = peer.Actor.InternalPlayerDataManager.PlayerBuildings[structureType].Find(x => (x.Location == location));
                 if (buildingManager != null)
                 {
-                    var buildingLoc = buildingManager.PlayerStructureData.Value.Find(x => (x.Location == location));
+                    var buildingLoc = buildingManager.PlayerStructureData.Value.Find(x => (x.LocationId == location));
                     buildingLoc.Duration = 0;
                 }
                 else
@@ -174,7 +176,7 @@ namespace GameOfRevenge.GameHandlers
             var obj = new StructureCreateUpgradeResponse()
             {
                 StructureLevel = building.Level,
-                StructureLocationId = building.Location,
+                StructureLocationId = building.LocationId,
                 StructureType = (int)structureType,
             };
             return peer.SendOperation(operationRequest.OperationCode, ReturnCode.OK, obj.GetDictionary());
@@ -195,7 +197,7 @@ namespace GameOfRevenge.GameHandlers
 
             await GameService.RealTimeUpdateManagerQuestValidator.PlayerDataChanged(peer.Actor.PlayerId);
 
-            var respDetails = response.Data.Value.Find(x => (x.Location == location));
+            var respDetails = response.Data.Value.Find(x => (x.LocationId == location));
             if (respDetails == null)
             {
                 return peer.SendOperation(operationRequest.OperationCode, ReturnCode.InvalidOperation, debuMsg: "Structure was null");
@@ -209,7 +211,7 @@ namespace GameOfRevenge.GameHandlers
                     Id = response.Data.Id,
                     DataType = response.Data.DataType,
                     ValueId = response.Data.ValueId,
-                    Value = response.Data.Value.Where(x => (x.Location == location)).ToList()
+                    Value = response.Data.Value.Where(x => (x.LocationId == location)).ToList()
                 };
 
                 peer.Actor.InternalPlayerDataManager.AddStructureOnPlayer(structure);
@@ -219,7 +221,7 @@ namespace GameOfRevenge.GameHandlers
             if (playerBuildings.ContainsKey(structureType))
             {
                 IPlayerBuildingManager buildingManager = playerBuildings[structureType].Find(x => (x.Location == location));
-                var buildingLoc = buildingManager.PlayerStructureData.Value.Find(x => (x.Location == location));
+                var buildingLoc = buildingManager.PlayerStructureData.Value.Find(x => (x.LocationId == location));
                 buildingLoc.Duration = 0;
             }
 
@@ -386,7 +388,8 @@ namespace GameOfRevenge.GameHandlers
 
             await GameService.RealTimeUpdateManagerQuestValidator.PlayerDataChanged(peer.Actor.PlayerId);
             //update any task that require training troops
-            GameService.RealTimeUpdateManagerQuestValidator.TrainTroopsCheckQuestProgress(peer.Actor.PlayerId, troopType, troopLevel, troopCount);
+            var playerData = GameService.RealTimeUpdateManagerQuestValidator.GetPlayerData(peer.Actor.PlayerId);
+            _ = GameService.BUserQuestManager.CheckQuestProgressForTrainTroops(playerData, troopType, troopLevel, troopCount);
 
             return SendOperationResponse(peer, operationRequest, response, data);
         }
@@ -491,8 +494,8 @@ namespace GameOfRevenge.GameHandlers
             }
 
             var bldResource = (ResourceGenerator)building;
-            var multiplier = (bldResource.BoostUp.Percentage / 100f);
-            var response = await GameService.BPlayerStructureManager.CollectResource(peer.Actor.PlayerId, operation.LocationId, multiplier);
+            var extraMultiplier = (bldResource.BoostUp.Percentage / 100f);
+            var response = await GameService.BPlayerStructureManager.CollectResource(peer.Actor.PlayerId, operation.LocationId, extraMultiplier);
             if (!response.IsSuccess || !response.HasData)
             {
                 var msg = operation.GetErrorMessage();
@@ -502,16 +505,18 @@ namespace GameOfRevenge.GameHandlers
             await GameService.RealTimeUpdateManagerQuestValidator.PlayerDataChanged(peer.Actor.PlayerId);
 
             var resourceType = bldResource.Resource.ResourceInfo.Code;
-            var resourceValue = response.Data;
+            var resourceCollected = response.Data.CollectedResource;
             var uresponse = new CollectResourceResponse()
             {
                 StructureType = operation.StructureType,
                 LocationId = operation.LocationId,
-                ResourceValue = resourceValue
+                ResourceCollected = resourceCollected.Collected,
+                ResourceTotal = resourceCollected.Value
             };
             log.Info(">>>>>>>>> data to send >" + JsonConvert.SerializeObject(uresponse));
 
-            GameService.RealTimeUpdateManagerQuestValidator.CollectResourceCheckQuestProgress(peer.Actor.PlayerId, resourceType, resourceValue);
+            var playerData = GameService.RealTimeUpdateManagerQuestValidator.GetPlayerData(peer.Actor.PlayerId);
+            _ = GameService.BUserQuestManager.CheckQuestProgressForCollectResourceAsync(playerData, resourceType, resourceCollected.Collected);
 
             return peer.SendOperation(operationRequest.OperationCode, ReturnCode.OK, uresponse.GetDictionary(), debuMsg: response.Message);
         }
@@ -595,7 +600,7 @@ namespace GameOfRevenge.GameHandlers
             {
                 playerDataManager = new PlayerSocketDataManager(playerData, actor);
             }
-            catch (Exception ex)
+            catch
             {
                 var msg = "Error generating player data.";
                 return peer.SendOperation(operationRequest.OperationCode, ReturnCode.InvalidOperation, debuMsg: msg);
@@ -618,7 +623,28 @@ namespace GameOfRevenge.GameHandlers
             actor.SendEvent(EventCode.UserProfile, profile);
             log.InfoFormat("Send profile data to client X {0} Y {1} userName {2} castle {3} ", profile.X, profile.Y, profile.UserName, profile.CastleLevel);
 
-            GameService.RealTimeUpdateManagerQuestValidator.TryAddPlayerQuestData(actor.PlayerId, peer.OnQuestUpdate);
+            GameService.RealTimeUpdateManagerQuestValidator.TryAddPlayerQuestData(actor.PlayerId, questUpdated =>
+            {
+                if (questUpdated == null) return;
+
+                var objResp = new QuestUpdateResponse()
+                {
+                    IsSuccess = true,
+                    Message = "Update quest data",
+
+                    QuestId = questUpdated.QuestId,
+//                    QuestGroup = questUpdated.QuestGroup,
+//                    QuestType = questUpdated.QuestType,
+                    Completed = questUpdated.Completed,
+//                    InitialData = questUpdated.InitialData,
+                    ProgressData = questUpdated.Completed? null : questUpdated.ProgressData
+                };
+
+                new DelayedAction().WaitForCallBack(() =>
+                {
+                    actor.SendEvent(EventCode.UpdateQuest, objResp);
+                }, 100);
+            });
 
 
             var attackData = GameService.BRealTimeUpdateManager.GetAttackDataForDefender(actor.PlayerId);
@@ -744,7 +770,7 @@ namespace GameOfRevenge.GameHandlers
                 return peer.SendOperation(operationRequest.OperationCode, ReturnCode.InvalidOperation, debuMsg: response.Message);
             }
 
-            var targetBuilding = response.Data.Value.Find(x => (x.Location == location));
+            var targetBuilding = response.Data.Value.Find(x => (x.LocationId == location));
             var targetActor = peer.Actor.World.PlayersManager.GetPlayer(targetPlayerId);
             if (targetActor != null)
             {
@@ -754,7 +780,7 @@ namespace GameOfRevenge.GameHandlers
                     if (targetInternalBuildings.ContainsKey(structureType))
                     {
                         var structuresManager = targetInternalBuildings[structureType].Find(x => (x.Location == location));
-                        var buildingLoc = structuresManager.PlayerStructureData.Value.Find(x => (x.Location == location));
+                        var buildingLoc = structuresManager.PlayerStructureData.Value.Find(x => (x.LocationId == location));
                         buildingLoc.Duration = targetBuilding.Duration;
 
                         if (targetBuilding.Duration == 0)
@@ -845,11 +871,11 @@ namespace GameOfRevenge.GameHandlers
 
             foreach (var building in playerStructData.Data.Value)
             {
-                if (building.Location != operation.StructureLocationId) continue;
+                if (building.LocationId != operation.StructureLocationId) continue;
 
                 var response = new PlayerBuildingBuildingStatuResponse()
                 {
-                    LocationId = building.Location,
+                    LocationId = building.LocationId,
                     TimeLeft = (int)building.TimeLeft,
                     TotalTime = building.Duration
                 };

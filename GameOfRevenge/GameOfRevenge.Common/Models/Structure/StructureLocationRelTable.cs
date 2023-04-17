@@ -15,7 +15,7 @@ namespace GameOfRevenge.Common.Models.Structure
         {
             int index = 0;
             StructureLocationId = reader.GetValue(index) == DBNull.Value ? 0 : reader.GetInt32(index); index++;
-            StructureType = reader.GetValue(index) == DBNull.Value ? StructureType.Other : reader.GetString(index).ToEnum<StructureType>(); index++;
+            StructureType = reader.GetValue(index) == DBNull.Value ? StructureType.Unknown : reader.GetString(index).ToEnum<StructureType>(); index++;
             Location = reader.GetValue(index) == DBNull.Value ? 0 : reader.GetInt32(index);
         }
     }

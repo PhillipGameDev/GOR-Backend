@@ -2,7 +2,7 @@
 {
     public enum StructureType : int
     {
-        Other = 0,
+        Unknown = 0,
 
         CityCounsel = 1,//1,
         Gate = 2,//4,

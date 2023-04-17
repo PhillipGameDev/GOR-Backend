@@ -35,6 +35,7 @@ namespace GameOfRevenge.GameApplication
         public static IStructureManager BStructureManager { get; private set; }
         public static IUserTroopManager BUsertroopManager { get; private set; }
         public static IUserActiveBoostsManager BUserActiveBoostManager { get; private set; }
+        public static IUserQuestManager BUserQuestManager { get; private set; }
         public static IPlayerDataManager BPlayerManager { get; private set; }
         public static IUserStructureManager BPlayerStructureManager { get; private set; }
         public static IUserResourceManager BPlayerResourceManager { get; private set; }
@@ -88,6 +89,7 @@ namespace GameOfRevenge.GameApplication
             BPlayerResourceManager = new UserResourceManager();
             BUsertroopManager = new UserTroopManager();
             BUserActiveBoostManager = new UserActiveBoostManager();
+            BUserQuestManager = new UserQuestManager();
             BKingdomManager = new KingdomManager();
             BkingdomePvpManager = new KingdomPvPManager();
             BRealTimeUpdateManager = new RealTimeUpdateManager();

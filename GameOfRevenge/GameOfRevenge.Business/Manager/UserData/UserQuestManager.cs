@@ -137,11 +137,11 @@ namespace GameOfRevenge.Business.Manager.UserData
             if (!questData.Completed) return new Response(200, "Quest not completed");
             if (questData.Redeemed) return new Response(201, "Quest reward already redemeed");
 
-            var questRewards = CacheData.CacheQuestDataManager.GetQuestData(questData.QuestId);
+            var questRewards = CacheQuestDataManager.GetQuestData(questData.QuestId);
             await CollectRewards(playerId, questRewards.Rewards); //TODO:implement response error
 
             QuestResourceData quest = null;
-            if (questRewards.Quest.MilestoneId == GameDef.QuestManager.DAILY_QUEST)
+            if (questRewards.Quest.QuestGroup == QuestGroupType.DAILY_QUEST)
             {
                 if (questRewards.Quest.QuestType == QuestType.ResourceCollection)
                 {
@@ -171,17 +171,15 @@ namespace GameOfRevenge.Business.Manager.UserData
 
         public async Task<Response> RedeemChapterReward(int playerId, int chapterId)
         {
-            var chapterProgress = await GetUserAllChapterQuestProgress(playerId);
-            if (!chapterProgress.IsSuccess || !chapterProgress.HasData)
-            {
-                return new Response(200, "Chapter not completed");
-            }
+            var response = await GetUserAllChapterAndQuestProgress(playerId);
+            if (!response.IsSuccess || !response.HasData) return new Response(200, response.Message);
 
-            var chapterData = chapterProgress.Data.Find(x => (x.ChapterId == chapterId));
-            if (chapterData == null) return new Response(200, "Chapter not found");
+            var (userChapterQuests, _) = response.Data;
+            var chapterData = userChapterQuests.Find(x => (x.ChapterId == chapterId));
+            if (chapterData == null) return new Response(201, "Chapter not found");
 
-            if (!chapterData.Completed()) return new Response(200, "Chapter not completed");
-            if (chapterData.Redeemed) return new Response(201, "Quest reward already redemeed");
+            if (!chapterData.AllQuestsCompleted) return new Response(202, "Chapter not completed");
+            if (chapterData.Redeemed) return new Response(203, "Quest reward already redemeed");
 
             //var chapterProgress = await GetAllChapterProgress(playerId);
             //if (!chapterProgress.IsSuccess || !chapterProgress.HasData) return new Response(chapterProgress.Case, chapterProgress.Message);
@@ -193,8 +191,8 @@ namespace GameOfRevenge.Business.Manager.UserData
             //if (!questProgress.IsSuccess || !questProgress.HasData) return new Response(questProgress.Case, questProgress.Message);
             //foreach (var quest in questProgress.Data) if (!quest.Completed) return new Response(200, "Chapter not completed");
 
-            var questRewards = CacheData.CacheQuestDataManager.GetFullChapterData(chapterId);
-            await CollectRewards(playerId, questRewards.Rewards); //TODO:implement response error
+            var questRewards = CacheQuestDataManager.GetFullChapterData(chapterId);
+            await CollectRewards(playerId, questRewards.Chapter.Rewards); //TODO:implement response error
 
             var redemeedResp = await Db.ExecuteSPNoData("RedeemChapterReward", new Dictionary<string, object>()
             {
@@ -249,19 +247,26 @@ namespace GameOfRevenge.Business.Manager.UserData
 
         public async Task<Response<UserChapterAllQuestProgress>> GetUserAllQuestProgress(int playerId, bool fullTree = false)
         {
+            var response = await GetUserAllChapterAndQuestProgress(playerId, fullTree);
+            if (!response.IsSuccess || !response.HasData)
+            {
+                return new Response<UserChapterAllQuestProgress>(200, response.Message);
+            }
+
+            var (userChapterQuests, allUserQuestProgress) = response.Data;
+
             var allQuestRewards = CacheQuestDataManager.AllQuestRewards;
             var allChapterQuests = CacheQuestDataManager.ChapterQuests;
             var allSideQuests = CacheQuestDataManager.SideQuests;
             var allDailyQuests = CacheQuestDataManager.DailyQuests;
 
-            var allUserQuestProgress = await GetAllQuestProgress(playerId);
-            var userChapterQuests = await GetUserAllChapterQuestProgress(playerId, fullTree);
-
-            var sideQuests = new List<UserQuestProgressData>();
-            var dailyQuests = new List<UserQuestProgressData>();
+            var sideQuests = new List<PlayerQuestDataTable>();
+            var dailyQuests = new List<PlayerQuestDataTable>();
             foreach (var questReward in allQuestRewards)
             {
                 var questData = questReward.Quest;
+                if (questData == null) continue;
+
                 var chapterQuest = allChapterQuests.FirstOrDefault(x =>
                 {
                     return (x.Quests.FirstOrDefault(y => (y.Quest.QuestId == questData.QuestId)) != null);
@@ -271,17 +276,10 @@ namespace GameOfRevenge.Business.Manager.UserData
                 var sideQuest = allSideQuests.FirstOrDefault(x => (x.Quest.QuestId == questData.QuestId));
                 if (sideQuest != null)
                 {
-                    UserQuestProgressData questProgress = null;
-                    var userQuest = allUserQuestProgress.Data.Find(x => x.QuestId == questData.QuestId);
-                    if (fullTree || (userQuest != null))
+                    var userQuest = allUserQuestProgress.Find(x => x.QuestId == questData.QuestId);
+                    if (fullTree || ((userQuest != null) && (userQuest.Completed || (userQuest.ProgressData != null))))
                     {
-                        questProgress = new UserQuestProgressData
-                        {
-                            QuestId = questData.QuestId,
-                            QuestType = questData.QuestType,
-                            MilestoneId = questData.MilestoneId,
-                            InitialData = questData.DataString
-                        };
+                        var questProgress = new PlayerQuestDataTable() { QuestId = questData.QuestId };
                         if (userQuest != null)
                         {
                             questProgress.QuestUserDataId = userQuest.QuestUserDataId;
@@ -296,17 +294,10 @@ namespace GameOfRevenge.Business.Manager.UserData
                 var dailyQuest = allDailyQuests.FirstOrDefault(x => (x.Quest.QuestId == questData.QuestId));
                 if (dailyQuest != null)
                 {
-                    UserQuestProgressData questProgress = null;
-                    var userQuest = allUserQuestProgress.Data.Find(x => x.QuestId == questData.QuestId);
-                    if (fullTree || (userQuest != null))
+                    var userQuest = allUserQuestProgress.Find(x => x.QuestId == questData.QuestId);
+                    if (fullTree || ((userQuest != null) && (userQuest.Completed || (userQuest.ProgressData != null))))
                     {
-                        questProgress = new UserQuestProgressData
-                        {
-                            QuestId = questData.QuestId,
-                            QuestType = questData.QuestType,
-                            MilestoneId = questData.MilestoneId,
-                            InitialData = questData.DataString
-                        };
+                        var questProgress = new PlayerQuestDataTable() { QuestId = questData.QuestId };
                         if (userQuest != null)
                         {
                             questProgress.QuestUserDataId = userQuest.QuestUserDataId;
@@ -322,18 +313,26 @@ namespace GameOfRevenge.Business.Manager.UserData
 
             var chapterQuestRels = new UserChapterAllQuestProgress()
             {
-                ChapterQuests = userChapterQuests.Data,
+                ChapterQuests = userChapterQuests,
                 SideQuests = sideQuests,
                 DailyQuests = dailyQuests
             };
 
-            return new Response<UserChapterAllQuestProgress>(chapterQuestRels, userChapterQuests.Case, userChapterQuests.Message);
+            return new Response<UserChapterAllQuestProgress>(chapterQuestRels, response.Case, response.Message);
         }
 
-        public async Task<Response<List<UserChapterQuestData>>> GetUserAllChapterQuestProgress(int playerId, bool fullTree = false)
+        public async Task<Response<(List<UserChapterQuestData>, List<PlayerQuestDataTable>)>> GetUserAllChapterAndQuestProgress(int playerId, bool fullTree = false)
         {
             var userChapterRedeemed = await GetAllChapterRedeemed(playerId);
+            if (!userChapterRedeemed.IsSuccess || !userChapterRedeemed.HasData)
+            {
+                return new Response<(List<UserChapterQuestData>, List<PlayerQuestDataTable>)>(200, userChapterRedeemed.Message);
+            }
             var userQuestData = await GetAllQuestProgress(playerId);
+            if (!userQuestData.IsSuccess || !userQuestData.HasData)
+            {
+                return new Response<(List<UserChapterQuestData>, List<PlayerQuestDataTable>)>(201, userQuestData.Message);
+            }
 
             var chapterQuestRels = new List<UserChapterQuestData>();
             foreach (var chapterQuests in CacheQuestDataManager.ChapterQuests)
@@ -344,11 +343,10 @@ namespace GameOfRevenge.Business.Manager.UserData
                 var userChapter = new UserChapterQuestData()
                 {
                     ChapterId = chapter.ChapterId,
-                    Code = chapter.Code,//obsolete
-                    Name = chapter.Name,//obsolete
-                    Description = chapter.Description,//obsolete
-                    Order = chapter.Order,//obsolete
-                    Quests = new List<UserQuestProgressData>()
+                    Name = chapter.Name,
+                    Description = chapter.Description,
+                    Quests = new List<PlayerQuestDataTable>(),
+                    TotalQuests = questRewards.Count
                 };
                 var chapterRedeemed = userChapterRedeemed.Data.Find(x => (x.ChapterId == chapter.ChapterId));
                 if (chapterRedeemed != null)
@@ -357,35 +355,35 @@ namespace GameOfRevenge.Business.Manager.UserData
                     userChapter.Redeemed = chapterRedeemed.Redemeed;
                 }
 
+                var completed = true;
                 foreach (var quest in questRewards)
                 {
                     var questData = quest.Quest;
-                    var userQuest = new UserQuestProgressData
+                    var userQuest = new PlayerQuestDataTable()
                     {
-                        MilestoneId = questData.MilestoneId,
-                        QuestId = questData.QuestId,
-                        QuestType = questData.QuestType,
-                        InitialData = questData.DataString
-//                        ProgressData = "{}",
-//                        Completed = false
+                        QuestId = questData.QuestId
                     };
                     var questProgress = userQuestData.Data.Find(x => (x.QuestId == questData.QuestId));
                     if (questProgress != null)
                     {
                         userQuest.QuestUserDataId = questProgress.QuestUserDataId;
                         userQuest.Completed = questProgress.Completed;
-                        userQuest.ProgressData = questProgress.ProgressData;
                         userQuest.Redeemed = questProgress.Redeemed;
+                        userQuest.ProgressData = questProgress.ProgressData;
                     }
 
+                    completed = userQuest.Completed;
+                    if (!fullTree && !completed && (userQuest.ProgressData == null)) break;
+
                     userChapter.Quests.Add(userQuest);
+                    if (!fullTree && !completed) break;
                 }
 
                 chapterQuestRels.Add(userChapter);
-                if (!fullTree && !userChapter.Completed()) break;
+                if (!fullTree && !completed) break;
             }
 
-            return new Response<List<UserChapterQuestData>>(chapterQuestRels, userQuestData.Case, userQuestData.Message);
+            return new Response<(List<UserChapterQuestData>, List<PlayerQuestDataTable>)>((chapterQuestRels, userQuestData.Data), userQuestData.Case, userQuestData.Message);
         }
 
         public async Task<Response<PlayerQuestDataTable>> GetQuestProgress(int playerId, int questId)
@@ -395,6 +393,11 @@ namespace GameOfRevenge.Business.Manager.UserData
                 { "PlayerId", playerId },
                 { "QuestId", questId }
             });
+        }
+
+        public async Task<Response<PlayerQuestDataTable>> UpdateQuestData(int playerId, PlayerQuestDataTable currentQuest)
+        {
+            return await UpdateQuestData(playerId, currentQuest.QuestId, currentQuest.Completed, currentQuest.ProgressData);
         }
 
         public async Task<Response<PlayerQuestDataTable>> UpdateQuestData(int playerId, int questId, bool isCompleted, string progress = null)
@@ -407,16 +410,16 @@ namespace GameOfRevenge.Business.Manager.UserData
             };
             if (progress != null) dic.Add("Data", progress);
 
-            return await Db.ExecuteSPSingleRow<Common.Models.Quest.PlayerQuestDataTable>("AddOrUpdatePlayerQuestData", dic);
+            return await Db.ExecuteSPSingleRow<PlayerQuestDataTable>("AddOrUpdatePlayerQuestData", dic);
         }
 
-        public async Task<Response<Common.Models.Quest.PlayerQuestDataTable>> UpdateQuestData<T>(int playerId, int questId, bool isCompleted, T progress) where T : IBaseQuestTemplateData
+/*        public async Task<Response<PlayerQuestDataTable>> UpdateQuestData<T>(int playerId, int questId, bool isCompleted, T progress) where T : IBaseQuestTemplateData
         {
             var dataString = string.Empty;
             if (progress != null) dataString = JsonConvert.SerializeObject(progress);
 
             return await UpdateQuestData(playerId, questId, isCompleted, dataString);
-        }
+        }*/
 
         public async Task<Response<PlayerQuestDataTable>> UpdateQuestData(int playerId, int questId, bool isCompleted, object progress)
         {
@@ -476,7 +479,7 @@ namespace GameOfRevenge.Business.Manager.UserData
             var playerData = resp.Data;
             var rewardId = playerData.ValueId;
             var rewardData = CacheQuestDataManager.AllQuestRewards
-            .SelectMany(x => x.Rewards).FirstOrDefault(y => (y.RewardId == rewardId));
+                            .SelectMany(x => x.Rewards).FirstOrDefault(y => (y.RewardId == rewardId));
 
             if (rewardData == null) return new Response<PlayerDataTableUpdated>(201, "Reward data not found");
             if (rewardData.Count < 1) return new Response<PlayerDataTableUpdated>(202, "Reward data invalid");
@@ -589,7 +592,7 @@ namespace GameOfRevenge.Business.Manager.UserData
                             if (!kingResp.IsSuccess) throw new Exception(kingResp.Message);
                         }
                     }
-                    catch (Exception ex)
+                    catch
                     {
                         return new Response<PlayerDataTableUpdated>(205, "Error consuming reward");
                     }
@@ -605,6 +608,451 @@ namespace GameOfRevenge.Business.Manager.UserData
             {
                 return new Response<PlayerDataTableUpdated>(203, "User reward value corrupted");
             }
+        }
+
+
+        public async Task CheckQuestProgressForCollectResourceAsync(PlayerUserQuestData playerData, ResourceType resourceType, int count)
+        {
+            if ((count <= 0) || (resourceType == ResourceType.Other) || (playerData == null)) return;
+
+            var questsInProgress = GetQuestsInProgress(playerData.QuestData, QuestType.ResourceCollection);
+            foreach (var quest in questsInProgress)
+            {
+                var initialData = JsonConvert.DeserializeObject<QuestResourceData>(quest.InitialData);
+                if ((initialData == null) || (initialData.ResourceType != resourceType)) continue;
+
+                QuestResourceData progressData;
+                if (!string.IsNullOrEmpty(quest.ProgressData))
+                {
+                    progressData = JsonConvert.DeserializeObject<QuestResourceData>(quest.ProgressData);
+                }
+                else
+                {
+                    progressData = initialData;
+                    progressData.Count = 0;
+                }
+                progressData.Count += count;
+                if (progressData.Count >= initialData.Count)
+                {
+                    progressData.Count = initialData.Count;
+//                    quest.Completed = true;
+                    await CheckQuestProgressResourceCollectionAsync(playerData, quest, initialData, progressData);
+                }
+                else
+                {
+                    var progress = JsonConvert.SerializeObject(progressData);
+                    if (quest.UserData != null)
+                    {
+                        quest.UserData.ProgressData = progress;
+//                        CheckQuestProgress(data , quest);
+                        await UpdateQuestDataAsync(playerData, quest.UserData);
+                    }
+                    else
+                    {
+                        await SaveQuestDataAsync(playerData, quest.QuestId, progress);
+                    }
+                }
+            }
+        }
+
+        public async Task CheckQuestProgressForTrainTroops(PlayerUserQuestData playerData, TroopType troopType, int level, int count)
+        {
+            if ((count <= 0) || (troopType == TroopType.Other) || (playerData == null)) return;
+
+            var questsInProgress = GetQuestsInProgress(playerData.QuestData, QuestType.TrainTroops);
+            foreach (var quest in questsInProgress)
+            {
+                var initialData = JsonConvert.DeserializeObject<QuestTroopData>(quest.InitialData);
+                if ((initialData == null) || (initialData.TroopType != troopType)) return;
+
+                if ((initialData.Level == 0) || (level == initialData.Level))
+                {
+                    QuestTroopData progressData;
+                    if (!string.IsNullOrEmpty(quest.ProgressData))
+                    {
+                        progressData = JsonConvert.DeserializeObject<QuestTroopData>(quest.ProgressData);
+                    }
+                    else
+                    {
+                        progressData = initialData;
+                        progressData.Count = 0;
+                    }
+                    progressData.Count += count;
+                    if (progressData.Count >= initialData.Count)
+                    {
+                        progressData.Count = initialData.Count;
+//                        quest.Completed = true;
+                        await CheckQuestProgressTrainTroopsAsync(playerData, quest, initialData, progressData);
+                    }
+                    else
+                    {
+                        var progress = JsonConvert.SerializeObject(progressData);
+                        if (quest.UserData != null)
+                        {
+                            quest.UserData.ProgressData = progress;
+//                            CheckQuestProgress(data , quest);
+                            await UpdateQuestDataAsync(playerData, quest.UserData);
+                        }
+                        else
+                        {
+                            await SaveQuestDataAsync(playerData, quest.QuestId, progress);
+                        }
+                    }
+                }
+            }
+        }
+
+        public List<UserQuestProgressData> GetQuestsInProgress(UserChapterAllQuestProgress userQuests, QuestType questType)
+        {
+            var list = new List<UserQuestProgressData>();
+
+            //check current milestone quest
+/*            var chapQuests = CacheQuestDataManager.ChapterQuests;
+            foreach (var chapterData in chapQuests)
+            {
+                UserChapterQuestData userChap = userQuests.ChapterQuests.Find(x => (x.ChapterId == chapterData.Chapter.ChapterId));
+                if (userChap == null)
+                {
+                    userChap = new UserChapterQuestData();
+                    userChap.ChapterId = chapterData.Chapter.ChapterId;
+                    userChap.Quests = new List<PlayerQuestDataTable>();
+                }
+                userChap.TotalQuests = chapterData.Quests.Count;
+                if (userChap.AllQuestsCompleted) continue;
+
+                foreach (var quest in chapterData.Quests)
+                {
+                    var userQuest = userChap.Quests.Find(x => (x.QuestId == quest.Quest.QuestId));
+                    if ((userQuest != null) && userQuest.Completed) continue;
+
+                    list.Add(new UserQuestProgressData(quest.Quest, userQuest));
+                    break;
+                }
+                break;
+            }*/
+
+            //check side quest
+/*            foreach (var questData in CacheQuestDataManager.SideQuests)
+            {
+                if (questData.Quest.QuestType != questType) continue;
+
+                var userQuest = userQuests.SideQuests.Find(x => (x.QuestId == questData.Quest.QuestId));
+                if ((userQuest != null) && userQuest.Completed) continue;
+
+                list.Add(new UserQuestProgressData(questData.Quest, userQuest));
+            }*/
+
+            //check daily quest
+            foreach (var questData in CacheQuestDataManager.DailyQuests)
+            {
+                if (questData.Quest.QuestType != questType) continue;
+
+                var userQuest = userQuests.DailyQuests.Find(x => (x.QuestId == questData.Quest.QuestId));
+                if ((userQuest != null) && userQuest.Completed) continue;
+
+                list.Add(new UserQuestProgressData(questData.Quest, userQuest));
+            }
+
+            return list;
+        }
+
+
+        private async Task CheckQuestProgress(PlayerUserQuestData data, List<PlayerQuestDataTable> quests)
+        {
+            var showLog = data.UserData.IsAdmin;
+
+            var allQuests = CacheQuestDataManager.AllQuestRewards;
+            int idx = 0;
+            foreach (var userQuest in quests)
+            {
+                idx++;
+                if (showLog) System.Console.WriteLine(idx + "  " + userQuest.QuestId + "   c:" + userQuest.Completed + "   " + userQuest.ProgressData);
+                if (!userQuest.Completed)
+                {
+                    var questData = allQuests.FirstOrDefault(x => (x.Quest.QuestId == userQuest.QuestId));
+                    if (questData != null)
+                    {
+                        await CheckQuestProgressAsync(data, new UserQuestProgressData(questData.Quest, userQuest));
+                    }
+                }
+            }
+        }
+
+        public async Task CheckPlayerQuestDataAsync(PlayerUserQuestData data)
+        {
+            var showLog = data.UserData.IsAdmin;
+
+            //check daily quest
+            System.Console.WriteLine("--check quests for " + data.PlayerId);
+            await CheckQuestProgress(data, data.QuestData.DailyQuests);
+
+
+            //check side quest
+            if (showLog) System.Console.WriteLine("--side quests for " + data.PlayerId);
+            await CheckQuestProgress(data, data.QuestData.SideQuests);
+
+            //check current milestone quest
+            if (showLog) System.Console.WriteLine("--chapter quests for " + data.PlayerId);
+            var currChapterQuest = data.QuestData.ChapterQuests.Find(x => !x.AllQuestsCompleted);
+            if (currChapterQuest != null)
+            {
+                var currQuest = currChapterQuest.Quests.Find(x => !x.Completed);
+                if (currQuest != null)
+                {
+                    var questData = CacheQuestDataManager.AllQuestRewards.FirstOrDefault(x => (x.Quest.QuestId == currQuest.QuestId));
+                    if (questData != null)
+                    {
+                        await CheckQuestProgressAsync(data, new UserQuestProgressData(questData.Quest, currQuest));
+                    }
+                }
+            }
+            if (showLog) System.Console.WriteLine("----");
+        }
+
+
+
+        public async Task CheckQuestProgressAsync(PlayerUserQuestData data, UserQuestProgressData currentQuest)
+        {
+            var showLog = data.UserData.IsAdmin;
+
+            switch (currentQuest.QuestType)
+            {
+                case QuestType.BuildingUpgrade: await CheckQuestProgressBuildingUpgradeAsync(data, currentQuest); break;
+                case QuestType.XBuildingCount: await CheckQuestProgressXBuildingCountAsync(data, currentQuest); break;
+                case QuestType.XTroopCount: await CheckQuestProgressXTroopCountAsync(data, currentQuest); break;
+//                case QuestType.ResourceCollection: CheckQuestProgressResourceCollection(data, currentQuest); break;
+//                case QuestType.TrainTroops: CheckQuestProgressTrainTroops(data, currentQuest); break;
+            }
+            if (showLog) System.Console.WriteLine("end chk");
+        }
+
+        private async Task CheckQuestProgressBuildingUpgradeAsync(PlayerUserQuestData data, UserQuestProgressData quest)
+        {
+            var showLog = data.UserData.IsAdmin;
+
+            if (showLog) System.Console.WriteLine("check building upgrade");
+            try
+            {
+                var questData = CacheQuestDataManager.AllQuestRewards.FirstOrDefault(x => (x.Quest.QuestId == quest.QuestId));
+                var initialData = JsonConvert.DeserializeObject<QuestBuildingData>(questData.Quest.DataString);
+
+                bool completed = false;
+                if (!string.IsNullOrEmpty(quest.ProgressData))
+                {
+                    var progressData = JsonConvert.DeserializeObject<QuestBuildingData>(quest.ProgressData);
+                    completed = (progressData != null) && (progressData.Level >= initialData.Level);
+                }
+
+                if (!completed)
+                {
+                    var bld = data.UserData.Structures.Find(x => (x.StructureType == initialData.StructureType))?
+                                    .Buildings.Find(x =>
+                                    {
+                                        var lvl = (x.TimeLeft > 0) ? (x.Level - 1) : x.Level;
+                                        return lvl >= initialData.Level;
+                                    });
+                    completed = (bld != null);
+                }
+
+                if (completed && !quest.Completed)
+                {
+                    quest.UserData.ProgressData = questData.Quest.DataString;
+                    quest.UserData.Completed = true;
+
+                    await UpdateQuestDataAsync(data, quest.UserData);
+                }
+            }
+            catch { }
+        }
+
+        private async Task CheckQuestProgressXBuildingCountAsync(PlayerUserQuestData data, UserQuestProgressData quest)
+        {
+            var showLog = data.UserData.IsAdmin;
+
+            if (showLog) System.Console.WriteLine("check building count");
+            try
+            {
+                var initialData = JsonConvert.DeserializeObject<QuestBuildingData>(quest.InitialData);
+                QuestBuildingData progressData = null;
+                bool completed = false;
+                if (!string.IsNullOrEmpty(quest.ProgressData))
+                {
+                    progressData = JsonConvert.DeserializeObject<QuestBuildingData>(quest.ProgressData);
+                    completed = (progressData != null) && (progressData.Count >= initialData.Count);
+                }
+
+                if (!completed)
+                {
+                    var blds = data.UserData.Structures.Find(x => (x.StructureType == initialData.StructureType));
+                    if (blds != null)
+                    {
+                        var count = blds.Buildings.Sum(x =>
+                        {
+                            var lvl = (x.TimeLeft > 0) ? (x.Level - 1) : x.Level;
+                            return (lvl >= 1) ? 1 : 0;
+                        });
+
+                        if (count >= initialData.Count)
+                        {
+                            completed = true;
+                        }
+                        else if ((progressData == null) || (count > progressData.Count))
+                        {
+                            progressData = initialData;
+                            progressData.Count = count;
+                            quest.UserData.ProgressData = JsonConvert.SerializeObject(progressData);
+
+                            await UpdateQuestDataAsync(data, quest.UserData);
+                        }
+                    }
+                }
+                if (completed && !quest.Completed)
+                {
+                    progressData = initialData;
+                    progressData.Count = 0;
+                    quest.UserData.ProgressData = JsonConvert.SerializeObject(progressData);
+                    quest.UserData.Completed = true;
+
+                    await UpdateQuestDataAsync(data, quest.UserData);
+                }
+            }
+            catch { }
+        }
+
+        public async Task CheckQuestProgressResourceCollectionAsync(PlayerUserQuestData data, UserQuestProgressData quest, QuestResourceData initialData = null, QuestResourceData progressData = null)
+        {
+            var showLog = data.UserData.IsAdmin;
+
+            if (showLog) System.Console.WriteLine("check resource collection");
+//            if (string.IsNullOrEmpty(quest.ProgressData)) return;
+
+            try
+            {
+                if (progressData == null) progressData = JsonConvert.DeserializeObject<QuestResourceData>(quest.ProgressData);
+                if (progressData != null)
+                {
+                    if (initialData == null) initialData = JsonConvert.DeserializeObject<QuestResourceData>(quest.InitialData);
+                    if (progressData.Count >= initialData.Count)
+                    {
+                        if (progressData.Iteration > 0) progressData.Iteration--;
+                        progressData.Count = 0;//initialData3.Count;
+
+                        var progress = JsonConvert.SerializeObject(progressData);
+                        if (quest.UserData != null)
+                        {
+                            quest.UserData.ProgressData = progress;
+                            quest.UserData.Completed = true;
+
+                            await UpdateQuestDataAsync(data, quest.UserData);
+                        }
+                        else
+                        {
+                            await SaveQuestDataAsync(data, quest.QuestId, progress);
+                        }
+                    }
+                }
+            }
+            catch { }
+        }
+
+        private async Task CheckQuestProgressXTroopCountAsync(PlayerUserQuestData data, UserQuestProgressData quest)
+        {
+            var showLog = data.UserData.IsAdmin;
+
+            if (showLog) System.Console.WriteLine("check troop count");
+            try
+            {
+                var initialData = JsonConvert.DeserializeObject<QuestTroopData>(quest.InitialData);
+                QuestTroopData progressData = null;
+                bool completed = false;
+                if (!string.IsNullOrEmpty(quest.ProgressData))
+                {
+                    progressData = JsonConvert.DeserializeObject<QuestTroopData>(quest.ProgressData);
+                    completed = (progressData != null) && (progressData.Count >= initialData.Count);
+                }
+
+                if (!completed)
+                {
+                    var troops = data.UserData.Troops.Find(x => (x.TroopType == initialData.TroopType));
+                    if (troops != null)
+                    {
+                        var count = troops.TroopData.Sum(x => x.FinalCount);
+
+                        if (count >= initialData.Count)
+                        {
+                            completed = true;
+                        }
+                        else if ((progressData == null) || (count > progressData.Count))
+                        {
+                            progressData = initialData;
+                            progressData.Count = count;
+                            quest.UserData.ProgressData = JsonConvert.SerializeObject(progressData);
+
+                            await UpdateQuestDataAsync(data, quest.UserData);
+                        }
+                    }
+                }
+                if (completed && !quest.Completed)
+                {
+                    if (progressData.Iteration > 0) progressData.Iteration--;
+                    progressData.Count = 0;
+                    quest.UserData.ProgressData = JsonConvert.SerializeObject(progressData);
+                    quest.UserData.Completed = true;
+
+                    await UpdateQuestDataAsync(data, quest.UserData);
+                }
+            }
+            catch { }
+        }
+
+        private async Task CheckQuestProgressTrainTroopsAsync(PlayerUserQuestData data, UserQuestProgressData quest, QuestTroopData initialData = null, QuestTroopData progressData = null)
+        {
+            var showLog = data.UserData.IsAdmin;
+
+            if (showLog) System.Console.WriteLine("check train troops");
+//            if (string.IsNullOrEmpty(quest.ProgressData)) return;
+
+            try
+            {
+                if (progressData == null) progressData = JsonConvert.DeserializeObject<QuestTroopData>(quest.ProgressData);
+                if (progressData != null)
+                {
+                    if (initialData == null) initialData = JsonConvert.DeserializeObject<QuestTroopData>(quest.InitialData);
+                    if ((progressData.Count >= initialData.Count) &&
+                        ((initialData.Level == 0) || (progressData.Level == initialData.Level)))
+                    {
+                        //                            currentQuest.ProgressData = currentQuest.InitialData;
+                        if (progressData.Iteration > 0) progressData.Iteration--;
+                        progressData.Count = 0;
+
+                        var progress = JsonConvert.SerializeObject(progressData);
+                        if (quest.UserData != null)
+                        {
+                            quest.UserData.ProgressData = progress;
+                            quest.UserData.Completed = true;
+
+                            await UpdateQuestDataAsync(data, quest.UserData);
+                        }
+                        else
+                        {
+                            await SaveQuestDataAsync(data, quest.QuestId, progress);
+                        }
+                    }
+                }
+            }
+            catch { }
+        }
+
+        private async Task UpdateQuestDataAsync(PlayerUserQuestData data, PlayerQuestDataTable quest)
+        {
+            var resp = await UpdateQuestData(data.PlayerId, quest);
+            if (resp.IsSuccess && resp.HasData) data.QuestEventAction?.Invoke(quest);
+        }
+
+        private async Task SaveQuestDataAsync(PlayerUserQuestData data, int questId, string progressData)
+        {
+            var resp = await UpdateQuestData(data.PlayerId, questId, false, progressData);
+            if (resp.IsSuccess && resp.HasData) data.QuestEventAction?.Invoke(resp.Data);
         }
     }
 }

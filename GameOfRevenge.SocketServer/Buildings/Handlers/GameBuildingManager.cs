@@ -179,7 +179,7 @@ namespace GameOfRevenge.Buildings.Handlers
                 DataType = response.Data.DataType,
 //                StructureId = response.Data.StructureId,
                 ValueId = response.Data.ValueId,
-                Value = response.Data.Value.Where(d => d.Location == locationId).ToList()
+                Value = response.Data.Value.Where(d => d.LocationId == locationId).ToList()
             };
 
             if (isUpgrade)

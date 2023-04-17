@@ -84,7 +84,7 @@ namespace GameOfRevenge.Business.Manager.UserData
 
                 foreach (var structure in playerData.Data.Structures)
                 {
-                    var structureInfo = structure.Buildings.FirstOrDefault(x => x.Location == locId);
+                    var structureInfo = structure.Buildings.FirstOrDefault(x => x.LocationId == locId);
                     if (structureInfo != null)
                     {
                         if (structureInfo.TimeLeft <= 0) break;
@@ -180,7 +180,7 @@ namespace GameOfRevenge.Business.Manager.UserData
                 }
 
                 var buildings = createBuildResponse.Data.Value;
-                buildings.Find(x => (x.Location == locId)).Duration = 0;
+                buildings.Find(x => (x.LocationId == locId)).Duration = 0;
 
                 var json = JsonConvert.SerializeObject(buildings);
                 var response = await manager.UpdatePlayerDataID(playerId, createBuildResponse.Data.Id, json);
@@ -241,7 +241,7 @@ namespace GameOfRevenge.Business.Manager.UserData
                 StructureDetails selectedBuilding = null;
                 foreach (var structure in playerData.Structures)
                 {
-                    var building = structure.Buildings.Find(x => (x.Location == locId));
+                    var building = structure.Buildings.Find(x => (x.LocationId == locId));
                     if (building == null) continue;
 
                     if (building.TimeLeft <= 0) return new Response<UserStructureData>(101, "Structure already completed");
@@ -278,7 +278,7 @@ namespace GameOfRevenge.Business.Manager.UserData
                     return new Response<UserStructureData>(200, "Structure upgrade could'nt be completed");
                 }
 
-                var builder = playerData.Builders.Find(x => (x.Location == selectedBuilding.Location));
+                var builder = playerData.Builders.Find(x => (x.Location == selectedBuilding.LocationId));
                 if (builder != null)
                 {
                     builder.Duration = 0;

@@ -11,14 +11,12 @@ namespace GameOfRevenge.Common.Models
 
         [DataMember(EmitDefaultValue = false)]
         public int Duration { get; set; }
-//        public DateTime EndTime { get; set; }
 
         public bool HasDuration => Duration > 0;
         public bool Started => (DateTime.UtcNow - StartTime.ToUniversalTime()).TotalSeconds > 0;
 
         public DateTime EndTime => StartTime.AddSeconds(Duration);
 
-//        [DataMember]
         public int TimeLeft
         {
             get
@@ -33,15 +31,5 @@ namespace GameOfRevenge.Common.Models
                 return seconds;
             }
         }
-
-//        [DataMember]
-/*        public double TotalTime
-        {
-            get
-            {
-                double totalSeconds = (EndTime - StartTime).TotalSeconds;
-                return totalSeconds <= 0 ? 0 : totalSeconds;
-            }
-        }*/
     }
 }

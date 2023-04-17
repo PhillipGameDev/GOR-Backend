@@ -64,7 +64,7 @@ namespace GameOfRevenge.Business.CacheData
             var allTaskRewards = CacheQuestDataManager.AllQuestRewards;
             foreach (var product in availableIAPs)
             {
-                var data = allTaskRewards.FirstOrDefault(x => (x.Quest.MilestoneId == 200) && (x.Quest.DataString == product.ProductId));
+                var data = allTaskRewards.FirstOrDefault(x => (x.Quest != null) && (x.Quest.QuestGroup == QuestGroupType.PRODUCT_PACK) && (x.Quest.DataString == product.ProductId));
                 if (data == null) continue;
 
                 var prod = new IAPProduct(product.ProductId, product.Name, product.Description, data.Rewards);
