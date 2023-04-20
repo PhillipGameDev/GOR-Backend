@@ -695,8 +695,6 @@ namespace GameOfRevenge.Business.Manager.UserData
                 {
                     //error
                 }
-                var testx = "";
-                var test = "";
                 var playerUserQuestData = new PlayerUserQuestData()
                 {
                     PlayerId = playerId,
@@ -704,19 +702,14 @@ namespace GameOfRevenge.Business.Manager.UserData
                     QuestData = userQuestData.Data,
                     QuestEventAction = (questProgress) =>
                     {
-                        test += questProgress.ProgressData+" , ";
                         list.Add(questProgress);
                     }
                 };
-                await userQuestManager.CheckQuestProgressForCollectResourceAsync(playerUserQuestData, resType, collectedValue, (x)=>
-                {
-                    testx += x;
-                });
+                await userQuestManager.CheckQuestProgressForCollectResourceAsync(playerUserQuestData, resType, collectedValue);
 
                 var collected = new CollectedResourceData(collectedValue, resp.Data);
                 var collectedResponse = new CollectedResourceResponse(collected, list);
-                return new Response<CollectedResourceResponse>(collectedResponse, resp.Case,
-                    resp.Message+"  loc="+ locationId + "  quests="+list.Count+"  >"+test+"  >>"+testx);
+                return new Response<CollectedResourceResponse>(collectedResponse, resp.Case, resp.Message);
             }
             catch (DataNotExistExecption ex)
             {

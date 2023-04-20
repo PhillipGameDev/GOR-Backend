@@ -507,7 +507,7 @@ namespace GameOfRevenge.Business.Manager.UserData
                 string json = JsonConvert.SerializeObject(report);
                 log.Debug("------------REPORT " + json);
 
-                var msg = attackerWin ? "You failed to defend against enemy raid" : "You succesfully defended against enemy seige";
+                var msg = attackerWin ? "You failed to defend against enemy raid" : "You successfully defended against enemy siege";
                 msg = json.Replace("INSERTMESSAGEHERE", msg);
                 try
                 {
@@ -627,7 +627,7 @@ namespace GameOfRevenge.Business.Manager.UserData
                 }
 
                 string json = JsonConvert.SerializeObject(report);
-                var msg = attackerWin? "You succesfully raided enemy city" : "You failed to raid the enemy city";
+                var msg = attackerWin? "You successfully raided enemy city" : "You failed to raid the enemy city";
                 msg = json.Replace("INSERTMESSAGEHERE", msg);
                 try
                 {
