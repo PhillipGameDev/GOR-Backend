@@ -11,25 +11,44 @@ namespace GameOfRevenge.Common.Email
         public void LoadFromDataReader(IDataReader reader)
         {
             var index = 0;
-            PrimaryId = reader.GetValue(index) == DBNull.Value ? 0 : reader.GetInt32(index); index++;
-            PlayerId = reader.GetValue(index) == DBNull.Value ? 0 : reader.GetInt32(index); index++;
-            MailType = reader.GetValue(index) == DBNull.Value ? default : reader.GetString(index).ToEnum<MailType>(); index++;
+            MailId = reader.GetValue(index) == DBNull.Value ? 0 : reader.GetInt32(index); index++;
+//            PlayerId = reader.GetValue(index) == DBNull.Value ? 0 : reader.GetInt32(index); index++;
+            MailType = reader.GetValue(index) == DBNull.Value ? MailType.Unknown : (MailType)reader.GetByte(index); index++;
             Content = reader.GetValue(index) == DBNull.Value ? string.Empty : reader.GetString(index); index++;
             Read = reader.GetValue(index) != DBNull.Value && reader.GetBoolean(index); index++;
             Date = reader.GetValue(index) == DBNull.Value ? DateTime.MinValue : reader.GetDateTime(index);
         }
 
-        public BaseMailType<T> GetType<T>()
+        public T GetContent<T>() where T : new()
         {
-            return new BaseMailType<T>()
+            try
             {
-                PrimaryId = PrimaryId,
-                PlayerId = PlayerId,
-                MailType = MailType,
-                Read = Read,
-                Date = Date,
-                Content = JsonConvert.DeserializeObject<T>(Content)
-            };
+                return JsonConvert.DeserializeObject<T>(Content);
+            }
+            catch (System.Exception)
+            {
+                return default;
+            }
         }
+
+/*        public BaseMailType<T> GetType<T>()
+        {
+            try
+            {
+                var content = JsonConvert.DeserializeObject<T>(Content);
+                return new BaseMailType<T>()
+                {
+                    MailId = MailId,
+    //                PlayerId = PlayerId,
+                    MailType = MailType,
+                    Read = Read,
+                    Date = Date,
+                    Content = content
+                };
+            }
+            catch {}
+
+            return null;
+        }*/
     }
 }
