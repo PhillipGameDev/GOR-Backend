@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Runtime.Serialization;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Converters;
@@ -102,14 +103,18 @@ namespace GameOfRevenge.Common.Models.PlayerData
         public int Value { get; set; }
     }
 
-    [DataContract]
+    [DataContract, Serializable]
     public class ResourceData
     {
-        [DataMember, JsonProperty(Order = -2)]
+        [DataMember]//, JsonProperty(Order = -2)]
         public long Id { get; set; }
-        [DataMember, JsonProperty(Order = -2), JsonConverter(typeof(StringEnumConverter))]
+
+        [DataMember(EmitDefaultValue = false)]//, Order = -2)]
+        public int LocationId { get; set; }
+
+        [DataMember(EmitDefaultValue = false), JsonConverter(typeof(StringEnumConverter))]//JsonProperty(Order = -2), JsonConverter(typeof(StringEnumConverter))]
         public ResourceType ResourceType { get; set; }
-        [DataMember, JsonProperty(Order = -2)]
+        [DataMember]//, JsonProperty(Order = -2)]
         public long Value { get; set; }
 
         public ResourceData()
@@ -121,6 +126,14 @@ namespace GameOfRevenge.Common.Models.PlayerData
             Id = data.Id;
             ResourceType = (ResourceType)data.ValueId;
             Value = long.Parse(data.Value);
+        }
+
+        public ResourceData(StoredDataTable data)
+        {
+            Id = data.DataId;
+            LocationId = data.LocationId;
+            ResourceType = (ResourceType)data.ValueId;
+            Value = data.Value;
         }
     }
 
@@ -148,10 +161,10 @@ namespace GameOfRevenge.Common.Models.PlayerData
     [DataContract]
     public class CollectedResourceData : ResourceData
     {
-        [DataMember]
+        [DataMember(Order = 2)]
         public int Collected { get; set; }
-        [DataMember(EmitDefaultValue = false)]
-        public int LocationId { get; set; }
+//        [DataMember(EmitDefaultValue = false)]
+//        public int LocationId { get; set; }
 //        [DataMember(EmitDefaultValue = false)]
 //        public List<UserQuestProgressData> UpdatedQuests { get; set; }
 
@@ -172,6 +185,22 @@ namespace GameOfRevenge.Common.Models.PlayerData
         public CollectedResourceData(int collected, PlayerDataTable data) : base(data)
         {
             Collected = collected;
+        }
+    }
+
+    public class StoredResourceData
+    {
+        public ResourceData Stored { get; set; }
+        public ResourceData Resource { get; set; }
+
+        public StoredResourceData()
+        {
+        }
+
+        public StoredResourceData(ResourceData stored, ResourceData resource)
+        {
+            Stored = stored;
+            Resource = resource;
         }
     }
 }

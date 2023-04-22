@@ -32,9 +32,9 @@ namespace GameOfRevenge.Common.Interface
         Task<Response<List<PlayerDataTable>>> RemovePlayerResourceData(int playerId, int food, int wood, int ore, int gem);
         Task<Response<List<PlayerDataTable>>> UpdatePlayerResourceData(int playerId, int food, int wood, int ore, int gem);
 
-        Task<Response<List<StoredDataTable>>> GetAllPlayerStoredData(int playerId, int structureLocationId);
+        Task<Response<List<StoredDataTable>>> GetAllPlayerStoredData(int playerId, int? locationId = null);
 //        Task<Response<PlayerDataTable>> StoreResource(int playerId, int structureLocationId, int resId, int value);
-        Task<Response> StoreResource(int playerId, int structureLocationId, int resId, int value);
+        Task<Response<StoredPlayerDataTable>> StoreResource(int playerId, int locationId, int resId, int value);
         Task<Response<RankingElement>> GetRanking(int playerId);
         Task<Response<List<RankingElement>>> GetRankings(long rankId);
     }

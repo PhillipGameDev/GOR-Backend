@@ -192,87 +192,62 @@ namespace GameOfRevenge.Business.Manager.UserData
             };
         }
 
-        public async Task<Response<List<StoredDataTable>>> GetAllPlayerStoredData(int playerId, int structureLocationId = -1)
+        public async Task<Response<List<ResourceData>>> GetAllPlayerStoredResource(int playerId, int? locationId = null)
         {
-            return await manager.GetAllPlayerStoredData(playerId, structureLocationId);
-/*            if (response.IsSuccess)
-            {
-                return new Response(<StoredDataTable>()
-                {
-                    Case = response.Case,
-                    Data = response.Data,
-                    Message = response.Message
-                };
-            }
-            else
-            {
-                return new Response()//<UserResourceData>()
-                {
-                    Case = response.Case,
-                    //                    Data = null,
-                    Message = response.Message
-                };
-            }*/
-        }
-
-        public async Task<Response> StoreResource(int playerId, int structureLocationId, ResourceType type, int value)
-        {
-            return await manager.StoreResource(playerId, structureLocationId, GetResourceId(type), value);
-/*            var response = await manager.StoreResource(playerId, structureLocationId, resId, value);
+            var response = await manager.GetAllPlayerStoredData(playerId, locationId);
             if (response.IsSuccess)
             {
-                return new Response()//<UserResourceData>()
+                return new Response<List<ResourceData>>()
                 {
                     Case = response.Case,
-//                    Data = PlayerDataToUserResourceData(response.Data),
+                    Data = response.Data.ConvertAll(x => new ResourceData(x)),
                     Message = response.Message
                 };
             }
             else
             {
-                return new Response()//<UserResourceData>()
+                return new Response<List<ResourceData>>()
                 {
                     Case = response.Case,
-//                    Data = null,
+                    Data = null,
                     Message = response.Message
                 };
-            }*/
+            }
         }
 
-/*        public async Task<Response> StoreResource(int playerId, int structureLocationId, int resId, int value)
+        public async Task<Response<StoredResourceData>> SetStoredResource(int playerId, int locationId, ResourceType resourceType, int value)
         {
-            //            var response = await manager.TransferResource(playerId, structureLocationId, DataType.Resource, resId, value);
-
-            try
+            var response = await manager.StoreResource(playerId, locationId, GetResourceId(resourceType), value);
+            if (response.IsSuccess)
             {
-                var spParams = new Dictionary<string, object>()
+                var stored = new ResourceData()
                 {
-                    { "PlayerId", playerId },
-                    { "StructureLocationId", structureLocationId },
-                    { "DataTypeId", DataType.Resource },
-                    { "ObjectId", resId },
-                    { "Value", value }
+                    Id = response.Data.StoreId,
+                    Value = response.Data.Value
                 };
-
-                return await Db.ExecuteSPNoData("AddOrUpdatePlayerStoredData", spParams);
-            }
-            catch (InvalidModelExecption ex)
-            {
-                return new Response()
+                long.TryParse(response.Data.DataValue, out long dataVal);
+                var resource = new ResourceData()
                 {
-                    Case = 200,
-                    Message = ex.Message
+                    Id = response.Data.DataId,
+                    Value = dataVal
+                };
+                return new Response<StoredResourceData>()
+                {
+                    Case = response.Case,
+                    Data = new StoredResourceData(stored, resource),
+                    Message = response.Message
                 };
             }
-            catch (Exception ex)
+            else
             {
-                return new Response()
+                return new Response<StoredResourceData>()
                 {
-                    Case = 0,
-                    Message = ErrorManager.ShowError(ex)
+                    Case = response.Case,
+                    Data = null,
+                    Message = response.Message
                 };
             }
-        }*/
+        }
 
         public async Task<Response<UserResourceData>> UpdateResource(int playerId, int resId, long value)
         {

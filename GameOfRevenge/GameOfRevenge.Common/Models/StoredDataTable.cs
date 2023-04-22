@@ -1,35 +1,39 @@
 ﻿using System;
 using System.Data;
+using System.Runtime.Serialization;
 using GameOfRevenge.Common.Models.Table;
 
 namespace GameOfRevenge.Common.Models
 {
     public interface IReadOnlyStoredDataTable
     {
-//        long StoredDataId { get; }
-//        int PlayerId { get; }
-        int StructureLocationId { get; }
-        int DataTypeId { get; }
+        long DataId { get; }
+        int LocationId { get; }
+        DataType DataType { get; }
         int ValueId { get; }
         int Value { get; }
     }
 
+    [DataContract]
     public class StoredDataTable : IBaseTable, IReadOnlyStoredDataTable
     {
-//        public long StoredDataId { get; set; }
-//        public int PlayerId { get; set; }
-        public int StructureLocationId { get; set; }
-        public int DataTypeId { get; set; }
+        [DataMember]
+        public long DataId { get; set; }
+        [DataMember(EmitDefaultValue = false)]
+        public int LocationId { get; set; }
+        [DataMember]
+        public DataType DataType { get; set; }
+        [DataMember]
         public int ValueId { get; set; }
+        [DataMember]
         public int Value { get; set; }
 
         public void LoadFromDataReader(IDataReader reader)
         {
             int index = 0;
-//            StoredDataId = reader.GetValue(index) == DBNull.Value ? 0 : reader.GetInt64(index); index++;
-//            PlayerId = reader.GetValue(index) == DBNull.Value ? 0 : reader.GetInt32(index); index++;
-            StructureLocationId = reader.GetValue(index) == DBNull.Value ? 0 : reader.GetInt32(index); index++;
-            DataTypeId = reader.GetValue(index) == DBNull.Value ? 0 : reader.GetInt32(index); index++;
+            DataId = reader.GetValue(index) == DBNull.Value ? 0 : reader.GetInt64(index); index++;
+            LocationId = reader.GetValue(index) == DBNull.Value ? 0 : reader.GetInt32(index); index++;
+            DataType = reader.GetValue(index) == DBNull.Value ? DataType.Unknown : (DataType)reader.GetInt32(index); index++;
             ValueId = reader.GetValue(index) == DBNull.Value ? 0 : reader.GetInt32(index); index++;
             Value = reader.GetValue(index) == DBNull.Value ? 0 : reader.GetInt32(index);
         }

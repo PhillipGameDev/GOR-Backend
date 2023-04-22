@@ -24,13 +24,9 @@ BEGIN
 	SELECT @name = p.[Name], @vipPoints = p.[VIPPoints] FROM [dbo].[Player] AS p WHERE p.[PlayerId] = @userId;
 
 	BEGIN TRY
-		DECLARE @tempTable table (ChatId BIGINT);
-
-		INSERT INTO [dbo].[Chat] 
-		OUTPUT INSERTED.ChatId INTO @tempTable
+		INSERT INTO [dbo].[Chat] ([PlayerId], [Content], [CreateDate])
+		OUTPUT INSERTED.ChatId, @userId AS 'PlayerId', @name AS 'Name', @vipPoints AS 'VIPPoints', INSERTED.Content, INSERTED.CreateDate
 		VALUES (@userId, @tcontent, @time)
-
-		SELECT [ChatId], @userId AS 'PlayerId', @name AS 'Name', @vipPoints AS 'VIPPoints', @tcontent AS 'Content', @time AS 'CreateDate' FROM @tempTable;
 
 		SET @case = 100;
 		SET @message = 'Saved message succesfully';

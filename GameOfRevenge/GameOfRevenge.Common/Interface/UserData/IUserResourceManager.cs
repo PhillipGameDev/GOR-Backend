@@ -42,7 +42,7 @@ namespace GameOfRevenge.Common.Interface.UserData
         Task<bool> RefundResourceByRequirement(int playerId, IReadOnlyDataRequirement gems, int count);
 
 
-        Task<Response<List<StoredDataTable>>> GetAllPlayerStoredData(int playerId, int structureLocationId);
-        Task<Response> StoreResource(int playerId, int structureLocationId, ResourceType type, int value);
+        Task<Response<List<ResourceData>>> GetAllPlayerStoredResource(int playerId, int? locationId = null);
+        Task<Response<StoredResourceData>> SetStoredResource(int playerId, int locationId, ResourceType resourceType, int value);
     }
 }

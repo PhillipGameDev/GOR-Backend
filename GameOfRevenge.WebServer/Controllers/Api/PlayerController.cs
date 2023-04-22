@@ -96,21 +96,24 @@ namespace GameOfRevenge.WebServer.Controllers.Api
         }
 
         [HttpPost]
-        public async Task<IActionResult> GetAllPlayerStoredData(int structureLocationId = -1)
+        public async Task<IActionResult> GetAllPlayerStoredResource(int? locationId = null)
         {
-            return ReturnResponse(await userResourceManager.GetAllPlayerStoredData(Token.PlayerId, structureLocationId));
+            var response = await userResourceManager.GetAllPlayerStoredResource(Token.PlayerId, locationId);
+            if (response.HasData && (locationId != null))
+            {
+                foreach (var element in response.Data)
+                {
+                    element.LocationId = 0;
+                }
+            }
+
+            return ReturnResponse(response);
         }
 
         [HttpPost]
-        public async Task<IActionResult> StoreResource2(int structureLocationId, ResourceType type, int value)
+        public async Task<IActionResult> SetStoredResource(int locationId, ResourceType resourceType, int value)
         {
-            return ReturnResponse(await userResourceManager.StoreResource(Token.PlayerId, structureLocationId, type, value));
-        }
-        //TODO: METHOD OBSOLETE (REMOVE)
-        [HttpPost]
-        public async Task<IActionResult> StoreResource(int structureLocationId, ResourceType valueId, int value)
-        {
-            return ReturnResponse(await userResourceManager.StoreResource(Token.PlayerId, structureLocationId, valueId, value));
+            return ReturnResponse(await userResourceManager.SetStoredResource(Token.PlayerId, locationId, resourceType, value));
         }
 #endregion
 
