@@ -108,6 +108,8 @@ namespace GameOfRevenge.Buildings.Handlers
                     BuildingLocationId = request.BuildingLocationId
                 };
 
+//                response.StartTime = res.StartTime.ToUniversalTime().ToString("s") + "Z";
+
                 foreach (var item in RecoverList)
                 {
                     response.TotalHealTime += item.TimeLeft;

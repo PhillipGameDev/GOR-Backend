@@ -11,10 +11,10 @@ namespace GameOfRevenge.Common.Models.Boost
         Blessing = NewBoostType.Blessing,//Blessing_constructionSpeed
         LifeSaver = NewBoostType.LifeSaver,//LifeSaver_traningSpeed
         ProductionBoost = NewBoostType.ProductionBoost,//ProductionBoost_recoverySpeed
-//        SpeedGathering = 5,//SpeedGathering_armyAttack
+                                                       //        SpeedGathering = 5,//SpeedGathering_armyAttack
         TechBoost = NewBoostType.TechBoost,
         Fog = NewBoostType.Fog//Fog_armyDefence
-//        ConstructionBoost = NewBoostType.Construction
+                              //        ConstructionBoost = NewBoostType.Construction
     }
 
     public enum VIPBoostType : byte
@@ -27,12 +27,12 @@ namespace GameOfRevenge.Common.Models.Boost
     public enum NewBoostType : byte
     {
         Unknown = 0,
-        Shield,
+        Shield,//=NewBoostTech.ProtectionShield
         Blessing,
-        LifeSaver,
-        ProductionBoost,
-        TechBoost,
-        Fog,
+        LifeSaver,//=NewBoostTech.TroopHealingSpeedMultiplier
+        ProductionBoost,//=NewBoostTech.ResourceProductionMultiplier
+        TechBoost,//=NewBoostTech.AcademyResearchSpeedMultiplier
+        Fog,//=NewBoostTech.ProtectionFog
 
         VIP = 15,
         //SVIP
@@ -88,8 +88,14 @@ namespace GameOfRevenge.Common.Models.Boost
         TroopLoadMultiplier,
         TroopTrainingSpeedMultiplier,
         TroopHealingSpeedMultiplier,
+        TroopMarchingSpeedMultiplier,
         TroopUpkeepReductionMultiplier,
         BuildingTimeBonus,
+        KingPowerMultiplier,
+        InfantryPowerMultiplier,
+        SiegePowerMultiplier,
+        CavalryPowerMultiplier,
+        BowmenPowerMultiplier,
 
         AttackPower = 40,
         TroopAttackMultiplier,
@@ -102,6 +108,7 @@ namespace GameOfRevenge.Common.Models.Boost
         BowmenAttackMultiplier,
         BowmenAttackPower,
 
+
         DefensePower = 70,
         TroopDefenseMultiplier,
         InfantryDefenseMultiplier,
@@ -113,38 +120,38 @@ namespace GameOfRevenge.Common.Models.Boost
         BowmenDefenseMultiplier,
         BowmenDefensePower
 
-/*        public const int KING_STAMINA_RECOVERY_SPEED_MULTIPLIER = 1;
-        public const int BUILDING_SPEED_MULTIPLIER = 2;
-        public const int RESOURCE_STORAGE_MULTIPLIER = 4;
-        public const int ACADEMY_RESEARCH_SPEED_MULTIPLIER = 8;
-        public const int INFIRMARY_CAPACITY_MULTIPLIER = 16;
-32 TROOP_LOAD_MULTIPLIER float
-64 TROOP_TRAINING_SPEED_MULTIPLIER float
-128 TROOP_HEALING_SPEED_MULTIPLIER float
-256 TROOP_UPKEEP_REDUCTION_MULTIPLIER float
-        }
-        ----------KT
+        /*        public const int KING_STAMINA_RECOVERY_SPEED_MULTIPLIER = 1;
+                public const int BUILDING_SPEED_MULTIPLIER = 2;
+                public const int RESOURCE_STORAGE_MULTIPLIER = 4;
+                public const int ACADEMY_RESEARCH_SPEED_MULTIPLIER = 8;
+                public const int INFIRMARY_CAPACITY_MULTIPLIER = 16;
+        32 TROOP_LOAD_MULTIPLIER float
+        64 TROOP_TRAINING_SPEED_MULTIPLIER float
+        128 TROOP_HEALING_SPEED_MULTIPLIER float
+        256 TROOP_UPKEEP_REDUCTION_MULTIPLIER float
+                }
+                ----------KT
 
------------AT
-1 ATTACK_POWER int
-2 INFANTRY_ATTACK_MULTIPLIER float
-4 INFANTRY_ATTACK_POWER int
-8 *SIEGE_ATTACK_MULTIPLIER float
-16 *SIEGE_ATTACK_POWER int
-32 CAVALRY_ATTACK_MULTIPLIER float
-64 CAVALRY_ATTACK_POWER int
-128 BOWMEN_ATTACK_MULTIPLIER float
-256 BOWMEN_ATTACK_POWER int
+        -----------AT
+        1 ATTACK_POWER int
+        2 INFANTRY_ATTACK_MULTIPLIER float
+        4 INFANTRY_ATTACK_POWER int
+        8 *SIEGE_ATTACK_MULTIPLIER float
+        16 *SIEGE_ATTACK_POWER int
+        32 CAVALRY_ATTACK_MULTIPLIER float
+        64 CAVALRY_ATTACK_POWER int
+        128 BOWMEN_ATTACK_MULTIPLIER float
+        256 BOWMEN_ATTACK_POWER int
 
-------------DT
-1 DEFENSE_POWER int
-2 INFANTRY_DEFENSE_MULTIPLIER float
-4 INFANTRY_DEFENSE_POWER int
-8 *SIEGE_DEFENSE_MULTIPLIER float
-16 *SIEGE_DEFENSE_POWER int
-32 CAVALRY_DEFENSE_MULTIPLIER float
-64 CAVALRY_DEFENSE_POWER int
-128 BOWMEN_DEFENSE_MULTIPLIER float
-256 BOWMEN_DEFENSE_POWER int*/
+        ------------DT
+        1 DEFENSE_POWER int
+        2 INFANTRY_DEFENSE_MULTIPLIER float
+        4 INFANTRY_DEFENSE_POWER int
+        8 *SIEGE_DEFENSE_MULTIPLIER float
+        16 *SIEGE_DEFENSE_POWER int
+        32 CAVALRY_DEFENSE_MULTIPLIER float
+        64 CAVALRY_DEFENSE_POWER int
+        128 BOWMEN_DEFENSE_MULTIPLIER float
+        256 BOWMEN_DEFENSE_POWER int*/
     }
 }
