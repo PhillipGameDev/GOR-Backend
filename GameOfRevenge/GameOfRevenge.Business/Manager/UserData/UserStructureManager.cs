@@ -607,20 +607,21 @@ namespace GameOfRevenge.Business.Manager.UserData
 
                 var (userBldGroup, userBld, cacheBuilding) = FindUserBuilding(allStructures.Data, ValidResourceStructures, locationId, structureType);
 
-                int resProduction = 0;
+                int resHourlyProduction = 0;
+                int resMaxAmount = cacheBuilding.Data.ResourceCapacity;
                 ResourceType resType;
                 switch (userBldGroup.StructureType)
                 {
                     case StructureType.Farm:
-                        resProduction = cacheBuilding.Data.FoodProduction;
+                        resHourlyProduction = cacheBuilding.Data.FoodProduction;
                         resType = ResourceType.Food;
                         break;
                     case StructureType.Sawmill:
-                        resProduction = cacheBuilding.Data.WoodProduction;
+                        resHourlyProduction = cacheBuilding.Data.WoodProduction;
                         resType = ResourceType.Wood;
                         break;
                     case StructureType.Mine:
-                        resProduction = cacheBuilding.Data.OreProduction;
+                        resHourlyProduction = cacheBuilding.Data.OreProduction;
                         resType = ResourceType.Ore;
                         break;
                     default:
@@ -629,7 +630,7 @@ namespace GameOfRevenge.Business.Manager.UserData
 
                 var utcNow = DateTime.UtcNow;
                 var timeElapsed = (utcNow - userBld.LastCollected);
-                var productionAmount = timeElapsed.TotalSeconds * resProduction;
+                var productionAmount = timeElapsed.TotalSeconds * (resHourlyProduction / 3600f);
 
                 float percentage = 0;
                 var resPlayerData = await GetFullPlayerData(playerId);
@@ -679,7 +680,7 @@ namespace GameOfRevenge.Business.Manager.UserData
 
                 var finalMultiplier = 1 + (percentage / 100f) + extraMultiplier;
                 double amount = (productionAmount * finalMultiplier);
-                int collectedValue = (amount > int.MaxValue) ? int.MaxValue : (int)amount;
+                int collectedValue = (amount > resMaxAmount) ? resMaxAmount : (int)amount;
 
                 var resp = await userResourceManager.SumResource(playerId, resType, collectedValue);
                 if (!resp.IsSuccess) throw new DataNotExistExecption("Couldnt add resources");
