@@ -355,10 +355,18 @@ namespace GameOfRevenge.Business.Manager.UserData
                     userChapter.Redeemed = chapterRedeemed.Redemeed;
                 }
 
-                var completed = true;
-                foreach (var quest in questRewards)
+                var completedIdx = 0;
+                int len = questRewards.Count;
+                for (var num = 0; num < len; num++)
                 {
-                    var questData = quest.Quest;
+                    var questData = questRewards[num].Quest;
+                    var questProgress = userQuestData.Data.Find(x => (x.QuestId == questData.QuestId));
+                    if ((questProgress != null) && questProgress.Completed) completedIdx = num;
+                }
+                var completed = true;
+                for (var num = 0; num < len; num++)
+                {
+                    var questData = questRewards[num].Quest;
                     var userQuest = new PlayerQuestDataTable()
                     {
                         QuestId = questData.QuestId
@@ -372,11 +380,12 @@ namespace GameOfRevenge.Business.Manager.UserData
                         userQuest.ProgressData = questProgress.ProgressData;
                     }
 
-                    completed = userQuest.Completed;
-                    if (!fullTree && !completed && (userQuest.ProgressData == null)) break;
+                    if (completed) completed = userQuest.Completed;
+//                    if (!fullTree && !completed && (questProgress == null)) break;
 
                     userChapter.Quests.Add(userQuest);
-                    if (!fullTree && !completed) break;
+//                    if (!fullTree && !completed) break;
+                    if (!fullTree && (num == completedIdx)) break;
                 }
 
                 chapterQuestRels.Add(userChapter);
@@ -759,7 +768,7 @@ namespace GameOfRevenge.Business.Manager.UserData
 
         private async Task CheckQuestProgress(PlayerUserQuestData data, List<PlayerQuestDataTable> quests)
         {
-            var showLog = data.UserData.IsAdmin;
+            var showLog = true;// data.UserData.IsAdmin;
 
             var allQuests = CacheQuestDataManager.AllQuestRewards;
             int idx = 0;
@@ -780,7 +789,7 @@ namespace GameOfRevenge.Business.Manager.UserData
 
         public async Task CheckPlayerQuestDataAsync(PlayerUserQuestData data)
         {
-            var showLog = data.UserData.IsAdmin;
+            var showLog = true;// data.UserData.IsAdmin;
 
             //check daily quest
             System.Console.WriteLine("--check quests for " + data.PlayerId);
@@ -813,7 +822,7 @@ namespace GameOfRevenge.Business.Manager.UserData
 
         public async Task CheckQuestProgressAsync(PlayerUserQuestData data, UserQuestProgressData currentQuest)
         {
-            var showLog = data.UserData.IsAdmin;
+            var showLog = true;// data.UserData.IsAdmin;
 
             switch (currentQuest.QuestType)
             {
@@ -828,7 +837,7 @@ namespace GameOfRevenge.Business.Manager.UserData
 
         private async Task CheckQuestProgressBuildingUpgradeAsync(PlayerUserQuestData data, UserQuestProgressData quest)
         {
-            var showLog = data.UserData.IsAdmin;
+            var showLog = true;// data.UserData.IsAdmin;
 
             if (showLog) System.Console.WriteLine("check building upgrade");
             try
@@ -867,7 +876,7 @@ namespace GameOfRevenge.Business.Manager.UserData
 
         private async Task CheckQuestProgressXBuildingCountAsync(PlayerUserQuestData data, UserQuestProgressData quest)
         {
-            var showLog = data.UserData.IsAdmin;
+            var showLog = true;// data.UserData.IsAdmin;
 
             if (showLog) System.Console.WriteLine("check building count");
             try
@@ -921,7 +930,7 @@ namespace GameOfRevenge.Business.Manager.UserData
 
         public async Task CheckQuestProgressResourceCollectionAsync(PlayerUserQuestData data, UserQuestProgressData quest, QuestResourceData initialData = null, QuestResourceData progressData = null)
         {
-            var showLog = data.UserData.IsAdmin;
+            var showLog = true;// data.UserData.IsAdmin;
 
             if (showLog) System.Console.WriteLine("check resource collection");
 //            if (string.IsNullOrEmpty(quest.ProgressData)) return;
@@ -957,7 +966,7 @@ namespace GameOfRevenge.Business.Manager.UserData
 
         private async Task CheckQuestProgressXTroopCountAsync(PlayerUserQuestData data, UserQuestProgressData quest)
         {
-            var showLog = data.UserData.IsAdmin;
+            var showLog = true;// data.UserData.IsAdmin;
 
             if (showLog) System.Console.WriteLine("check troop count");
             try
@@ -1007,7 +1016,7 @@ namespace GameOfRevenge.Business.Manager.UserData
 
         private async Task CheckQuestProgressTrainTroopsAsync(PlayerUserQuestData data, UserQuestProgressData quest, QuestTroopData initialData = null, QuestTroopData progressData = null)
         {
-            var showLog = data.UserData.IsAdmin;
+            var showLog = true;// data.UserData.IsAdmin;
 
             if (showLog) System.Console.WriteLine("check train troops");
 //            if (string.IsNullOrEmpty(quest.ProgressData)) return;

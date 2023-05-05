@@ -1,15 +1,13 @@
 ﻿using GameOfRevenge.Buildings.Interface;
-using GameOfRevenge.Common.Models.PlayerData;
+using GameOfRevenge.Common.Models;
 using GameOfRevenge.GameHandlers;
-
 
 namespace GameOfRevenge.Buildings.Handlers
 {
     public class CityCounsilBuilding : PlayerBuildingManager, IPlayerBuildingManager
     {
-        public CityCounsilBuilding(IGameBuildingManager baseBuildingManager, MmoActor player, UserStructureData structureData) : base(structureData, player, baseBuildingManager)
+        public CityCounsilBuilding(MmoActor player, StructureDetails structureData, IGameBuildingManager baseBuildingManager) : base(player, structureData, baseBuildingManager)
         {
-            BaseBuilderManager = baseBuildingManager;
         }
     }
 }

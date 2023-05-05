@@ -149,7 +149,7 @@ namespace GameOfRevenge.Business.Manager.Base
                         });
                     }
                 }
-                finalData.Data.Builders = builders;
+                finalData.Data.Workers = builders;
 
                 line = "5";
 
@@ -503,16 +503,15 @@ namespace GameOfRevenge.Business.Manager.Base
             var dict = new Dictionary<int, UserStructureData>();
             try
             {
-                List<int> locId = structure.Value.GroupBy(d => d.LocationId).Select(d => d.Key).ToList();
+                List<int> locId = structure.Value.GroupBy(d => d.Location).Select(d => d.Key).ToList();
                 foreach (var loc in locId)
                 {
                     var u = new UserStructureData()
                     {
                         Id = structure.Id,
                         DataType = structure.DataType,
-                        Value = structure.Value.Where(d => d.LocationId == loc).ToList(),
-                        ValueId = structure.ValueId
-                        //                    StructureId = structure.StructureId
+                        ValueId = structure.ValueId,
+                        Value = structure.Value.Where(d => d.Location == loc).ToList()
                     };
                     dict.Add(loc, u);
                 }
@@ -807,9 +806,9 @@ namespace GameOfRevenge.Business.Manager.Base
             if (!compPlayerData.IsSuccess || !compPlayerData.HasData) return false;
             return ValidateStructureInLocAndBuild(locId, compPlayerData.Data.Structures, null, null);
         }
-        public bool ValidateStructureInLocAndBuild(int locId, IReadOnlyList<StructureInfos> structures) => ValidateStructureInLocAndBuild(locId, structures, null, null);
-        public bool ValidateStructureInLocAndBuild(int locId, IReadOnlyList<StructureInfos> structures, IReadOnlyList<StructureType> allowedType) => ValidateStructureInLocAndBuild(locId, structures, allowedType, null);
-        public bool ValidateStructureInLocAndBuild(int locId, IReadOnlyList<StructureInfos> structures, IReadOnlyList<StructureType> allowedType, Func<bool> onExist)
+        public bool ValidateStructureInLocAndBuild(int location, IReadOnlyList<StructureInfos> structures) => ValidateStructureInLocAndBuild(location, structures, null, null);
+        public bool ValidateStructureInLocAndBuild(int location, IReadOnlyList<StructureInfos> structures, IReadOnlyList<StructureType> allowedType) => ValidateStructureInLocAndBuild(location, structures, allowedType, null);
+        public bool ValidateStructureInLocAndBuild(int location, IReadOnlyList<StructureInfos> structures, IReadOnlyList<StructureType> allowedType, Func<bool> onExist)
         {
             try
             {
@@ -820,7 +819,7 @@ namespace GameOfRevenge.Business.Manager.Base
                 {
                     foreach (var structure in structures)
                     {
-                        if (structure != null && structure.StructureType == type && structure.Buildings.Exists(x => x.LocationId == locId))
+                        if (structure != null && structure.StructureType == type && structure.Buildings.Exists(x => x.Location == location))
                         {
                             if (onExist == null) return true;
 
@@ -838,14 +837,14 @@ namespace GameOfRevenge.Business.Manager.Base
             }
         }
 
-        public static StructureInfos GetStructureLocation(int locationId, List<StructureInfos> structures)
+        public static StructureInfos GetStructureLocation(int location, List<StructureInfos> structures)
         {
             if ((structures == null) || (structures.Count == 0)) return null;
 
             return structures.FirstOrDefault(x =>
             {
                 return (x != null) && (x.Buildings != null) &&
-                        x.Buildings.Exists(y => (y.LocationId == locationId));
+                        x.Buildings.Exists(y => (y.Location == location));
             });
         }
 

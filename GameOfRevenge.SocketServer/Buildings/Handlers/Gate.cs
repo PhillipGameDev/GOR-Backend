@@ -2,7 +2,6 @@
 using System.Collections.Generic;
 using System.Linq;
 using GameOfRevenge.Common.Models;
-using GameOfRevenge.Common.Models.PlayerData;
 using GameOfRevenge.Common.Net;
 using GameOfRevenge.Buildings.Interface;
 using GameOfRevenge.Model;
@@ -15,9 +14,8 @@ namespace GameOfRevenge.Buildings.Handlers
 {
     public class Gate : PlayerBuildingManager, IPlayerBuildingManager
     {
-        public Gate(IGameBuildingManager baseBuildingManager, MmoActor player, UserStructureData structureData) : base(structureData, player, baseBuildingManager)
+        public Gate(MmoActor player, StructureDetails structureData, IGameBuildingManager baseBuildingManager) : base(player, structureData, baseBuildingManager)
         {
-            BaseBuilderManager = baseBuildingManager;
         }
 
         public override void GateHp(GateRequest operation)

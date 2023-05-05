@@ -1,15 +1,13 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Runtime.Serialization;
-using GameOfRevenge.Common.Interface.Model.Table;
 using GameOfRevenge.Common.Models.Boost;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Converters;
 
 namespace GameOfRevenge.Common.Models
 {
-    [Serializable]
-    [DataContract]
+    [DataContract, Serializable]
     public class UserNewBoost : TimerBase
     {
         //        [DataMember]
@@ -17,6 +15,7 @@ namespace GameOfRevenge.Common.Models
 
         [DataMember(EmitDefaultValue = false)]
         public byte Level { get; set; }
+
         /*#if UNITY_2019_1_OR_NEWER
                 [DataMember]
                 public string StartTime { get; set; }
@@ -52,8 +51,7 @@ namespace GameOfRevenge.Common.Models
                 }*/
     }
 
-    [Serializable]
-    [DataContract]
+    [DataContract, Serializable]
     public class UserRecordNewBoost : UserNewBoost
     {
         [DataMember]
@@ -96,8 +94,7 @@ namespace GameOfRevenge.Common.Models
         }
     }*/
 
-    [Serializable]
-    [DataContract]
+    [DataContract, Serializable]
     public class SpecNewBoostDataTable
     {
         [DataMember]
@@ -413,4 +410,14 @@ namespace GameOfRevenge.Common.Models
             int TimeTaken { get; }
         }*/
 
+
+    public class BoostActivatedResponse
+    {
+        public UserRecordNewBoost Boost { get; set; }
+        public List<PlayerDataTable> Changes { get; set; }
+
+        public BoostActivatedResponse()
+        {
+        }
+    }
 }

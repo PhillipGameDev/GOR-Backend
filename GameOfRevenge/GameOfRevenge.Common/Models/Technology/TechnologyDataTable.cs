@@ -19,7 +19,7 @@ namespace GameOfRevenge.Common.Models.Technology
         {
             int index = 0;
             DataId = reader.GetValue(index) == DBNull.Value ? 0 : reader.GetInt32(index); index++;
-            Id = reader.GetValue(index) == DBNull.Value ? 0 : reader.GetInt32(index); index++;
+            InfoId = reader.GetValue(index) == DBNull.Value ? 0 : reader.GetInt32(index); index++;
             Level = reader.GetValue(index) == DBNull.Value ? 0 : reader.GetInt32(index); index++;
             Value = reader.GetValue(index) == DBNull.Value ? 0 : reader.GetInt32(index); index++;
             TimeTaken = reader.GetValue(index) == DBNull.Value ? 0 : reader.GetInt32(index);
@@ -43,7 +43,7 @@ namespace GameOfRevenge.Common.Models.Technology
         {
             int index = 0;
             DataId = reader.GetValue(index) == DBNull.Value ? 0 : reader.GetInt32(index); index++;
-            Id = reader.GetValue(index) == DBNull.Value ? 0 : reader.GetInt32(index); index++;
+            InfoId = reader.GetValue(index) == DBNull.Value ? 0 : reader.GetInt32(index); index++;
             Level = reader.GetValue(index) == DBNull.Value ? 0 : reader.GetInt32(index); index++;
             Value = reader.GetValue(index) == DBNull.Value ? 0 : reader.GetInt32(index); index++;
             TimeTaken = reader.GetValue(index) == DBNull.Value ? 0 : reader.GetInt32(index); 

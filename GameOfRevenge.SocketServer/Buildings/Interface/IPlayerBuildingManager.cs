@@ -17,7 +17,7 @@ namespace GameOfRevenge.Buildings.Interface
         //structure data of this type. We should just store the data for this building
         //the core base of this class was build to support multiple buildings, but we
         //should remove it to improve the process
-        UserStructureData PlayerStructureData { get; }
+        StructureDetails PlayerStructureData { get; }
 
         int Location { get; }
 //        int StructureId { get; }
@@ -26,9 +26,9 @@ namespace GameOfRevenge.Buildings.Interface
         StructureType StructureType { get; }
         Dictionary<TroopType, ITroop> Troops {get;}
 
-        void SetStructureData(UserStructureData structureData);
+        void SetStructureData(StructureDetails structureData);
         void AddOrUpdateTroop(ITroop troop);
-        void AddBuildingUpgrading(UserStructureData data);
+        void AddBuildingUpgrading(StructureDetails data);
         bool HasAvailableRequirement(IReadOnlyDataRequirement values);
        // void SendBuildTimerToClient();
 

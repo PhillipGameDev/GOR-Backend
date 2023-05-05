@@ -1,19 +1,13 @@
 ﻿using GameOfRevenge.Buildings.Interface;
-using GameOfRevenge.Common.Models.PlayerData;
+using GameOfRevenge.Common.Models;
 using GameOfRevenge.GameHandlers;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace GameOfRevenge.Buildings.Handlers
 {
     public class ShootingRange : PlayerBuildingManager,IPlayerBuildingManager
     {
-        public ShootingRange(IGameBuildingManager baseBuildingManager, MmoActor player, UserStructureData structureData) : base(structureData, player, baseBuildingManager)
+        public ShootingRange(MmoActor player, StructureDetails structureData, IGameBuildingManager baseBuildingManager) : base(player, structureData, baseBuildingManager)
         {
-            //this.BaseBuilderManager = baseBuildingManager;
         }
 
     }

@@ -1,14 +1,12 @@
-﻿using GameOfRevenge.Buildings.Interface;
+﻿using System;
+using System.Collections.Generic;
+using GameOfRevenge.Buildings.Interface;
 using GameOfRevenge.Common;
 using GameOfRevenge.Common.Models;
-using GameOfRevenge.Common.Models.PlayerData;
 using GameOfRevenge.Common.Models.Troop;
 using GameOfRevenge.GameApplication;
 using GameOfRevenge.GameHandlers;
 using GameOfRevenge.Model;
-using System;
-using System.Collections.Generic;
-using System.Linq;
 
 namespace GameOfRevenge.Buildings.Handlers
 {
@@ -16,9 +14,8 @@ namespace GameOfRevenge.Buildings.Handlers
     {
         public List<UnavaliableTroopInfo> RecoverList = new List<UnavaliableTroopInfo>();
 
-        public Infirmary(IGameBuildingManager baseBuildingManager, MmoActor player, UserStructureData structureData) : base(structureData, player, baseBuildingManager)
+        public Infirmary(MmoActor player, StructureDetails structureData, IGameBuildingManager baseBuildingManager) : base(player, structureData, baseBuildingManager)
         {
-            BaseBuilderManager = baseBuildingManager;
         }
 
         public override void HandleWoundedTroops(WoundedTroopHealRequest request)

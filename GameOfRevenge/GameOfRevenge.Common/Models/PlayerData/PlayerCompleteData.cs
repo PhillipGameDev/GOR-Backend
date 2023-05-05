@@ -14,7 +14,7 @@ namespace GameOfRevenge.Common.Models
         public UserVIPDetails VIP { get; set; }
         public int VIPPoints { get; set; }
         public int VIPLevel => UserVIPDetails.VIPLevel(VIPPoints);
-        public List<UserRecordBuilderDetails> Builders { get; set; }
+        public List<UserRecordBuilderDetails> Workers { get; set; }
 
         public ResourcesList Resources { get; set; }
         public MarchingArmy MarchingArmy { get; set; }

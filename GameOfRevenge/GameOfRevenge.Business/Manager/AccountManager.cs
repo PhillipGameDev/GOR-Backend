@@ -94,25 +94,25 @@ namespace GameOfRevenge.Business.Manager
                     {
                         Level = 1,
                         StartTime = timestamp,
-                        LocationId = cityCounselLoc,
+                        Location = cityCounselLoc,
                         HitPoints = cityCounselHealth,
                     });
                     json = JsonConvert.SerializeObject(dataList);
                     await dataManager.AddOrUpdatePlayerData(playerId, DataType.Structure, (int)StructureType.CityCounsel, json);
 
-                    dataList[0].LocationId = gateLoc;
+                    dataList[0].Location = gateLoc;
                     dataList[0].HitPoints = gateHealth;
                     json = JsonConvert.SerializeObject(dataList);
                     await dataManager.AddOrUpdatePlayerData(playerId, DataType.Structure, (int)StructureType.Gate, json);
 
-                    dataList[0].LocationId = wtLoc;
+                    dataList[0].Location = wtLoc;
                     dataList[0].HitPoints = wtHealth;
                     json = JsonConvert.SerializeObject(dataList);
                     await dataManager.AddOrUpdatePlayerData(playerId, DataType.Structure, (int)StructureType.WatchTower, json);
 
                     if (version > 0)
                     {
-                        dataList[0].LocationId = thLoc;
+                        dataList[0].Location = thLoc;
                         dataList[0].HitPoints = thHealth;
                         json = JsonConvert.SerializeObject(dataList);
                         await dataManager.AddOrUpdatePlayerData(playerId, DataType.Structure, (int)StructureType.TrainingHeroes, json);
@@ -139,9 +139,9 @@ namespace GameOfRevenge.Business.Manager
                                         var structureData = CacheData.CacheStructureDataManager.GetFullStructureData(StructureType.TrainingHeroes);
                                         int thLoc = structureData.Locations.FirstOrDefault();
 
-                                        if (bld.LocationId != thLoc)
+                                        if (bld.Location != thLoc)
                                         {
-                                            bld.LocationId = thLoc;
+                                            bld.Location = thLoc;
                                             var json = JsonConvert.SerializeObject(structures);
                                             await dataManager.UpdatePlayerDataID(playerId, resp.Data.Id, json);
                                         }
@@ -160,7 +160,7 @@ namespace GameOfRevenge.Business.Manager
                                 dataList.Add(new StructureDetails()
                                 {
                                     Level = 1,
-                                    LocationId = thLoc,
+                                    Location = thLoc,
                                     StartTime = timestamp,
                                     HitPoints = thHealth,
                                 });

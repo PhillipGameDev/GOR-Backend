@@ -1,15 +1,9 @@
-﻿using GameOfRevenge.Buildings.Interface;
-using GameOfRevenge.Common.Models.PlayerData;
-using GameOfRevenge.GameApplication;
+﻿using System;
+using GameOfRevenge.Buildings.Interface;
+using GameOfRevenge.Common.Models;
 using GameOfRevenge.GameHandlers;
 using GameOfRevenge.Model;
 using GameOfRevenge.ResourcesHandler;
-using Newtonsoft.Json;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace GameOfRevenge.Buildings.Handlers
 {
@@ -26,26 +20,26 @@ namespace GameOfRevenge.Buildings.Handlers
         public abstract double ProductionInTime { get; }  // that production is hourly
         public abstract IPlayerResources Resource { get; }
         public BoostUpResource BoostUp { get; set; }
-        public ResourceGenerator(UserStructureData structureData, MmoActor player, IGameBuildingManager buildingManager) : base(structureData, player, buildingManager)
+        public ResourceGenerator(MmoActor player, StructureDetails structureData, IGameBuildingManager buildingManager) : base(player, structureData, buildingManager)
         {
             BoostUp = new BoostUpResource();
         }
 
-        public void BoostResourceGenerationTime(int boostTime)
+        public void BoostResourceGenerationTime()//int boostTime)
         {
-            if (BoostUp.TimeLeft <= 0)
+/*            if (BoostUp.TimeLeft <= 0)
             {
                 BoostUp.StartTime = DateTime.UtcNow;
                 BoostUp.Duration = 0;
             }
             BoostUp.Duration += boostTime;
-            BoostUp.Percentage = 2;
+            BoostUp.Percentage = 2;*/
 
             BoostUp.StartTime = DateTime.UtcNow;
             BoostUp.Duration = 5 * 60;
             BoostUp.Percentage = 10;
 
-            log.InfoFormat("Boost Resource boostup= {0} ", JsonConvert.SerializeObject(this.BoostUp));
+            log.InfoFormat("Boost Resource boostup= {0} ", Newtonsoft.Json.JsonConvert.SerializeObject(this.BoostUp));
         }
     }
 }

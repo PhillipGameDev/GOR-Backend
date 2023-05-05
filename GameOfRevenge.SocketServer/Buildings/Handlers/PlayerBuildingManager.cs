@@ -29,27 +29,28 @@ namespace GameOfRevenge.Buildings.Handlers
         public MmoActor Player { get; private set; }
 
 
-        public UserStructureData PlayerStructureData { get; set; }
-        public StructureType StructureType => PlayerStructureData.ValueId;
+        public StructureDetails PlayerStructureData { get; set; }
+        public StructureType StructureType { get; private set; }//=> BaseBuilderManager.//PlayerStructureData.ValueId;
 
-        public StructureDetails StructureDetails => PlayerStructureData.Value[0];
+//        public StructureDetails StructureDetails => PlayerStructureData.Value[0];
 
-        public int CurrentLevel => StructureDetails.Level;
-        public int Location => StructureDetails.LocationId;
+        public int CurrentLevel => PlayerStructureData.Level;
+        public int Location => PlayerStructureData.Location;
 
 //        public int StructureId => PlayerStructureData.StructureId;
 
-        public bool IsConstructing => (StructureDetails.TimeLeft > 0);
+        public bool IsConstructing => (PlayerStructureData.TimeLeft > 0);
 
         public Dictionary<TroopType, ITroop> Troops { get; set; }
 
-        public PlayerBuildingManager(UserStructureData structureData, MmoActor player, IGameBuildingManager buildingManager)
+        public PlayerBuildingManager(MmoActor player, StructureDetails structureData, IGameBuildingManager buildingManager)
         {
-            this.Troops = new Dictionary<TroopType, ITroop>();
-            this.PlayerStructureData = structureData;
-            log.Info("data =>>> "+Newtonsoft.Json.JsonConvert.SerializeObject(structureData));
-            this.BaseBuilderManager = buildingManager;
-            this.Player = player;
+            Troops = new Dictionary<TroopType, ITroop>();
+
+            Player = player;
+            BaseBuilderManager = buildingManager;
+            PlayerStructureData = structureData;
+            log.Info("data =>>> " + Newtonsoft.Json.JsonConvert.SerializeObject(structureData));
             try
             {
                 log.Info("constructing = " + this.IsConstructing);
@@ -63,31 +64,32 @@ namespace GameOfRevenge.Buildings.Handlers
             log.InfoFormat("INIT player Structure info {0}", JsonConvert.SerializeObject(this.PlayerStructureData));
         }
 
-        public void SetStructureData(UserStructureData structureData)
+        public void SetStructureData(StructureDetails structureData)
         {
-            this.PlayerStructureData = structureData;
+            PlayerStructureData = structureData;
         }
 
         public void AddBuildingCallBack()
         {
-            log.Info("player = " + (this.Player != null));
-            log.Info("fiber = " + (this.Player.Fiber != null));
-            log.Info("details = " + (this.StructureDetails != null));
-            this.Player.Fiber.Schedule(() => { SendBuildingCompleteToBuild(); }, (long)(1000 * this.StructureDetails.TimeLeft));
+            log.Info("player = " + (Player != null));
+            log.Info("fiber = " + (Player.Fiber != null));
+            log.Info("data = " + (PlayerStructureData != null));
+//            Player.Fiber.Schedule(SendBuildingCompleteToBuild, PlayerStructureData.TimeLeft * 1000);
         }
 
         public bool HasAvailableRequirement(IReadOnlyDataRequirement values)
         {
             log.InfoFormat("check structure level is available structureData {0} reuirmentLevel {1} ",
-                JsonConvert.SerializeObject(PlayerStructureData.Value), values.Value);
-            return PlayerStructureData.Value.Any(d => d.Level >= values.Value) && ((CurrentLevel == values.Value && !IsConstructing) || CurrentLevel != values.Value);
+                JsonConvert.SerializeObject(PlayerStructureData), values.Value);
+            return (PlayerStructureData.Level >= values.Value) && ((CurrentLevel == values.Value && !IsConstructing) || CurrentLevel != values.Value);
+//            return PlayerStructureData.(d => d.Level >= values.Value) && ((CurrentLevel == values.Value && !IsConstructing) || CurrentLevel != values.Value);
         }
 
-        public void AddBuildingUpgrading(UserStructureData data)
+        public void AddBuildingUpgrading(StructureDetails data)
         {
-            log.InfoFormat("Upgrade Building CurrentBuilding {0} Data {1} ", this.PlayerStructureData.DataType.ToString(), JsonConvert.SerializeObject(data));
+            log.InfoFormat("Upgrade Building CurrentBuilding {0} Data {1} ", StructureType.ToString(), JsonConvert.SerializeObject(data));
             this.PlayerStructureData = data;
-            if (IsConstructing) this.AddBuildingCallBack();
+//            if (IsConstructing) AddBuildingCallBack();
         }
 
         //public void SendBuildTimerToClient()
@@ -108,19 +110,19 @@ namespace GameOfRevenge.Buildings.Handlers
         {
             var timer = new TimerCompleteResponse
             {
-                LocationId = this.Location,
-                Level = this.CurrentLevel,
-                StructureType = (int)this.PlayerStructureData.ValueId
+                LocationId = Location,
+                Level = CurrentLevel,
+                StructureType = (int)StructureType
             };
-            this.Player.SendEvent(EventCode.CompleteTimer, timer);
+            Player.SendEvent(EventCode.CompleteTimer, timer);
         }
 
         public void AddOrUpdateTroop(ITroop troop)
         {
-            if (this.Troops.ContainsKey(troop.TroopType))
-                this.Troops[troop.TroopType] = troop;
+            if (Troops.ContainsKey(troop.TroopType))
+                Troops[troop.TroopType] = troop;
             else
-                this.Troops.Add(troop.TroopType, troop);
+                Troops.Add(troop.TroopType, troop);
         }
 
         public ITroop IsAnyTroopInTraining()

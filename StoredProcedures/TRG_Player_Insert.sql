@@ -1,6 +1,6 @@
 USE [GameOfRevenge]
 GO
-/****** Object:  Trigger [dbo].[TRG_Player_Insert]    Script Date: 3/18/2023 11:41:39 PM ******/
+/****** Object:  Trigger [dbo].[TRG_Player_Insert]    Script Date: 5/1/2023 8:58:22 AM ******/
 SET ANSI_NULLS ON
 GO
 SET QUOTED_IDENTIFIER ON
@@ -14,7 +14,7 @@ BEGIN
     
 	DECLARE @PlayerIdentifier VARCHAR(1000);
     DECLARE @FirebaseId VARCHAR(1000);
-	DECLARE @Name VARCHAR(1000);
+	DECLARE @Name NVARCHAR(200);
 	DECLARE @Terms BIT;
 	DECLARE @IsAdmin BIT;
 	DECLARE @IsDeveloper BIT;

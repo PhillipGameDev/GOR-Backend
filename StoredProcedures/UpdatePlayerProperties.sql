@@ -1,6 +1,6 @@
 USE [GameOfRevenge]
 GO
-/****** Object:  StoredProcedure [dbo].[UpdatePlayerProperties]    Script Date: 3/19/2023 2:42:51 AM ******/
+/****** Object:  StoredProcedure [dbo].[UpdatePlayerProperties]    Script Date: 5/1/2023 9:08:33 AM ******/
 SET ANSI_NULLS ON
 GO
 SET QUOTED_IDENTIFIER ON
@@ -12,7 +12,7 @@ ALTER   PROCEDURE [dbo].[UpdatePlayerProperties]
 	@FirebaseId VARCHAR(1000) = NULL,
 	@Terms BIT = NULL,
 	@WorldTileId INT = NULL,
-	@Name VARCHAR(1000) = NULL,
+	@Name NVARCHAR(200) = NULL,
 	@VIPPoints INT = NULL
 AS
 BEGIN
@@ -24,7 +24,7 @@ BEGIN
 	DECLARE @tFirebaseId VARCHAR(1000) = NULL;
 	DECLARE @tTerms BIT = NULL;
 	DECLARE @tTileId INT = NULL;
-	DECLARE @tName VARCHAR(1000) = NULL;
+	DECLARE @tName NVARCHAR(200) = NULL;
 	DECLARE @tPts INT = NULL;
 
 	DECLARE @validUserId INT = NULL;

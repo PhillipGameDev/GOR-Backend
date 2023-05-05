@@ -59,6 +59,8 @@
         VIPPoints = 55,
         TroopsData = 56,
         HeroesData = 57,
-        ResourceTotal = 58
+        ResourceTotal = 58,
+        WorkerId = 59,
+        SetBoost = 60
     }
 }

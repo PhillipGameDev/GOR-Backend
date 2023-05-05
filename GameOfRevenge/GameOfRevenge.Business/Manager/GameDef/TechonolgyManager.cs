@@ -35,7 +35,7 @@ namespace GameOfRevenge.Business.Manager.GameDef
 
                         var lvls = new List<TechnologyDataRequirements>();
 
-                        foreach (var itemData in techDatas.Where(x => x.Id == item.Id))
+                        foreach (var itemData in techDatas.Where(x => x.InfoId == item.Id))
                         {
                             var requirements = techReqs.Where(x => x.DataId == itemData.DataId).ToList();
                             lvls.Add(new TechnologyDataRequirements(itemData, requirements));

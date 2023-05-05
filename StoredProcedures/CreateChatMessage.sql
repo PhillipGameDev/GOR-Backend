@@ -1,6 +1,6 @@
 USE [GameOfRevenge]
 GO
-/****** Object:  StoredProcedure [dbo].[CreateChatMessage]    Script Date: 3/18/2023 1:56:31 PM ******/
+/****** Object:  StoredProcedure [dbo].[CreateChatMessage]    Script Date: 5/1/2023 8:28:12 AM ******/
 SET ANSI_NULLS ON
 GO
 SET QUOTED_IDENTIFIER ON
@@ -8,7 +8,7 @@ GO
 
 ALTER   PROCEDURE [dbo].[CreateChatMessage]
 	@PlayerId INT,
-	@Content VARCHAR(MAX)
+	@Content NVARCHAR(1000)
 AS
 BEGIN
 	DECLARE @case INT = 1, @error INT = 0;
@@ -16,9 +16,9 @@ BEGIN
 	DECLARE @time DATETIME = GETUTCDATE();
 
 	DECLARE @userId INT = @PlayerId;
-	DECLARE @tcontent VARCHAR(MAX) = LTRIM(RTRIM(@Content));
+	DECLARE @tcontent NVARCHAR(1000) = LTRIM(RTRIM(@Content));
 
-	DECLARE @name VARCHAR(1000) = NULL;
+	DECLARE @name NVARCHAR(200) = NULL;
 	DECLARE @vipPoints INT = NULL;
 
 	SELECT @name = p.[Name], @vipPoints = p.[VIPPoints] FROM [dbo].[Player] AS p WHERE p.[PlayerId] = @userId;

@@ -51,7 +51,7 @@ namespace GameOfRevenge.Business.Manager.GameDef
                         {
                             if (buildings.Data.DataId == req.StructureDataId)
                             {
-                                req.StructureId = buildings.Data.Id;
+                                req.StructureId = buildings.Data.InfoId;
                             }
                         }
                     }

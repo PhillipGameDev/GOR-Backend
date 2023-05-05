@@ -38,7 +38,7 @@ namespace GameOfRevenge.Common.Models.Troop
         {
             int index = 0;
             DataId = reader.GetValue(index) == DBNull.Value ? 0 : reader.GetInt32(index); index++;
-            Id = reader.GetValue(index) == DBNull.Value ? 0 : reader.GetInt32(index); index++;
+            InfoId = reader.GetValue(index) == DBNull.Value ? 0 : reader.GetInt32(index); index++;
             Level = reader.GetValue(index) == DBNull.Value ? 0 : reader.GetInt32(index); index++;
 
             Health = reader.GetValue(index) == DBNull.Value ? 0 : (float)reader.GetDouble(index); index++;

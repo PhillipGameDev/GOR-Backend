@@ -181,7 +181,7 @@ namespace GameOfRevenge.Business.CacheData
                 {
                     Data = new TechnologyDataTable()
                     {
-                        Id = data.Info.Id,
+                        InfoId = data.Info.Id,
                         Level = req.Level,
                         TimeTaken = req.TimeTaken
                     },

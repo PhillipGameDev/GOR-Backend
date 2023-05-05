@@ -9,10 +9,10 @@ namespace GameOfRevenge.Common.Interface.UserData
 {
     public interface IUserStructureManager : IBaseUserManager
     {
-        Task<Response<UserStructureData>> CreateBuilding(int playerId, StructureType type, int location);
-        Task<Response<UserStructureData>> CreateBuilding(int playerId, StructureType type, int location, bool removeRes, bool createBuilder, bool instantBuild);
-        Task<Response<UserStructureData>> UpgradeBuilding(int playerId, StructureType type, int location);
-        Task<Response<UserStructureData>> UpgradeBuilding(int playerId, StructureType type, int location, bool removeRes, bool createBuilder);
+        Task<Response<BuildingStructureData>> CreateBuilding(int playerId, StructureType type, int location);
+        Task<Response<BuildingStructureData>> CreateBuilding(int playerId, StructureType type, int location, bool removeRes, bool createBuilder, bool instantBuild);
+        Task<Response<BuildingStructureData>> UpgradeBuilding(int playerId, StructureType type, int location);
+        Task<Response<BuildingStructureData>> UpgradeBuilding(int playerId, StructureType type, int location, bool removeRes, bool createBuilder);
         Task<Response<UserStructureData>> HelpBuilding(int playerId, int toPlayerId, StructureType type, int location, int seconds);
         Task<Response<UserStructureData>> DestroyBuilding(int playerId, StructureType type, int location);
         Task<Response<UserStructureData>> CheckBuildingStatus(int playerId, StructureType type);

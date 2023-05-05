@@ -92,7 +92,7 @@ namespace GameOfRevenge.Business.Manager.GameDef
                             BuildLimit = new Dictionary<string, int>()
                         };
 
-                        foreach (var itemData in structDatas.Where(x => x.Id == structure.Id))
+                        foreach (var itemData in structDatas.Where(x => x.InfoId == structure.Id))
                         {
                             var structDataReq = new StructureDataRequirement
                             {

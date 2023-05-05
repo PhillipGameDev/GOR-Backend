@@ -55,21 +55,15 @@ namespace GameOfRevenge.Business.Manager.UserData
             }
         }
 
-        public async Task<Response<UserRecordNewBoost>> AddBoost(int playerId, NewBoostType type)
+        public async Task<Response<BoostActivatedResponse>> ActivateBoost(int playerId, NewBoostType type)
         {
             try
             {
                 if (playerId < 1) throw new InvalidModelExecption("Invalid player id");
 
-//                BoostType boostType = GetBoostType(type);
                 if (type == NewBoostType.Unknown) throw new DataNotExistExecption("Boost not supported");
 
                 var timeStamp = DateTime.UtcNow;
-//                int invId = CacheBoostDataManager.GetFullBoostDataByType(type).Info.BoostTypeId;
-//                int valueId = CacheBoostDataManager.GetNewBoostDataByType(type).; //GetFullBoostDataByType(type).BoostTypeId;//CacheBoostDataManager.GetFullBoostDataByType(type).Info.BoostTypeId;
-
-//                var playerData = await GetFullPlayerData(playerId);
-//                if (!playerData.IsSuccess || !playerData.HasData) throw new DataNotExistExecption(playerData.Message);
 
                 var allData = await GetAllPlayerData(playerId);
                 if (!allData.IsSuccess || !allData.HasData) throw new DataNotExistExecption("Player data not found");
@@ -84,19 +78,12 @@ namespace GameOfRevenge.Business.Manager.UserData
                 var gemresp = await manager.SumPlayerData(playerId, gemsData.Id, -reqGems);
                 if (!gemresp.IsSuccess) throw new RequirementExecption("Unable to process your request");
 
-/*                var specBoostData = CacheBoostDataManager.GetNewBoostDataByType(type);
-                specBoostData.Boosts.First(x => x.Tech == NewBoostTech.CityWallDefensePower);
-
-                var boostSpec = specBoostData.Levels.First(x => x.Level == castleLevel);
-*/
-
                 var boostRespData = allPlayerData.Find(x => (x.DataType == DataType.ActiveBoost) && (x.ValueId == (int)type));
                 UserNewBoostData boostData = null;
                 if (boostRespData != null)
                 {
                     boostData = PlayerData.PlayerDataToUserNewBoostData(boostRespData);
                 }
-//                if (boostData.Value.Level == 0) throw new DataNotExistExecption("Boost not available");
 
                 UserNewBoost boostValue = boostData?.Value;
                 if (boostValue?.TimeLeft <= 0) boostValue = null;
@@ -131,12 +118,11 @@ namespace GameOfRevenge.Business.Manager.UserData
                         int.TryParse(specBoostData.Levels[boostLevel].ToString(), out levelVal);
                     }
                 }*/
-                boostValue.Duration += (60 * 60) * 6;//levelVal;// (24 * 60 * 60) * count;
+                boostValue.Duration += 3600 * 6;
 
 
-
-                Response<PlayerDataTableUpdated> resp;
                 var json = JsonConvert.SerializeObject(boostValue);
+                Response<PlayerDataTableUpdated> resp;
                 if (boostData != null)
                 {
                     resp = await manager.UpdatePlayerDataID(playerId, boostData.Id, json);
@@ -146,34 +132,36 @@ namespace GameOfRevenge.Business.Manager.UserData
                     resp = await manager.AddOrUpdatePlayerData(playerId, DataType.ActiveBoost, (int)type, json);
                 }
 
-                if (resp.IsSuccess & resp.HasData)
-                {
-                    var userNewBoost = new UserRecordNewBoost(resp.Data.Id, boostValue);
-                    return new Response<UserRecordNewBoost>(userNewBoost, resp.Case, resp.Message);
-                }
-                else
+                if (!resp.IsSuccess)
                 {
                     //return gems
                     await manager.SumPlayerData(playerId, gemsData.Id, reqGems);
 
-                    return new Response<UserRecordNewBoost>(resp.Case, resp.Message);
+                    return new Response<BoostActivatedResponse>(resp.Case, resp.Message);
                 }
+
+                var response = new BoostActivatedResponse()
+                {
+                    Boost = new UserRecordNewBoost(resp.Data.Id, boostValue),
+                    Changes = new List<PlayerDataTable>() { gemresp.Data.ToPlayerDataTable }
+                };
+                return new Response<BoostActivatedResponse>(response, resp.Case, resp.Message);
             }
             catch (InvalidModelExecption ex)
             {
-                return new Response<UserRecordNewBoost>() { Case = 200, Message = ErrorManager.ShowError(ex) };
+                return new Response<BoostActivatedResponse>() { Case = 200, Message = ErrorManager.ShowError(ex) };
             }
             catch (DataNotExistExecption ex)
             {
-                return new Response<UserRecordNewBoost>() { Case = 201, Message = ErrorManager.ShowError(ex) };
+                return new Response<BoostActivatedResponse>() { Case = 201, Message = ErrorManager.ShowError(ex) };
             }
             catch (RequirementExecption ex)
             {
-                return new Response<UserRecordNewBoost>() { Case = 202, Message = ErrorManager.ShowError(ex) };
+                return new Response<BoostActivatedResponse>() { Case = 202, Message = ErrorManager.ShowError(ex) };
             }
             catch (Exception ex)
             {
-                return new Response<UserRecordNewBoost>() { Case = 0, Message = ErrorManager.ShowError(ex) };
+                return new Response<BoostActivatedResponse>() { Case = 0, Message = ErrorManager.ShowError(ex) };
             }
         }
 

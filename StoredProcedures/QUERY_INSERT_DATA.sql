@@ -229,3 +229,111 @@ INSERT INTO [GameOfRevenge].[dbo].[StructureRequirement] (StructureDataId, DataT
 INSERT INTO [GameOfRevenge].[dbo].[StructureRequirement] (StructureDataId, DataTypeId, ReqValueId, Value) VALUES (89, 1, 3, 23005000);
 INSERT INTO [GameOfRevenge].[dbo].[StructureRequirement] (StructureDataId, DataTypeId, ReqValueId, Value) VALUES (90, 1, 3, 25000000);
 
+
+
+
+DECLARE @ResourceCapacityLevels TABLE (
+    StructureLevel INT,
+    ResourceCapacity INT
+)
+
+INSERT INTO @ResourceCapacityLevels (StructureLevel, ResourceCapacity)
+VALUES 
+    (1, 1800),
+    (2, 3000),
+    (3, 4200),
+    (4, 5600),
+	(5, 7000),
+	(6, 8600),
+	(7, 10200),
+	(8, 12000),
+	(9, 13800),
+	(10, 15800),
+	(11, 17800),
+	(12, 20000),
+	(13, 22200),
+	(14, 24500),
+	(15, 26800),
+	(16, 29200),
+	(17, 31600),
+	(18, 34000),
+	(19, 36400),
+	(20, 38900),
+	(21, 41400),
+	(22, 43900),
+	(23, 46400),
+	(24, 49100),
+	(25, 51800),
+	(26, 54500),
+	(27, 57200),
+	(28, 60000),
+	(29, 63000),
+	(30, 65000);
+
+DECLARE @i INT = 1, @max INT = 30;
+WHILE @i <= @max
+BEGIN
+    UPDATE [GameOfRevenge].[dbo].[StructureData]
+    SET ResourceCapicity = (SELECT ResourceCapacity FROM @ResourceCapacityLevels WHERE (StructureLevel = @i) AND 
+	((FoodProduction IS NOT NULL) OR (WoodProduction IS NOT NULL) OR (OreProduction IS NOT NULL)) )
+    WHERE StructureLevel = @i;
+    SET @i = @i + 1;
+END
+
+SELECT [StructureDataId]
+      ,[StructureId]
+      ,[StructureLevel]
+      ,[HitPoint]
+      ,[FoodProduction]
+      ,[WoodProduction]
+      ,[OreProduction]
+      ,[PopulationSupport]
+      ,[StructureSupport]
+      ,[SafeDeposit]
+      ,[TimeToBuild]
+      ,[ResourceCapicity]
+      ,[WoundedCapacity]
+      ,[GiftCapacity]
+      ,[InstantBuildCost]
+FROM [GameOfRevenge].[dbo].[StructureData] WHERE ResourceCapicity IS NOT NULL;
+
+//-----------------------------------------
+
+MERGE [dbo].[StructureRequirement] AS target
+USING (
+  SELECT d.[StructureDataId], d.[StructureLevel], d.[StructureId]
+  FROM [dbo].[StructureData] as d
+  INNER JOIN [dbo].[Structure] as n ON n.[StructureId] = d.[StructureId]
+  WHERE n.[Code] = 'WatchTower'
+) AS source
+ON (target.[StructureDataId] = source.[StructureDataId] AND target.[DataTypeId] = 2 AND target.[ReqValueId] = 1)
+WHEN NOT MATCHED THEN
+  INSERT ([StructureDataId], [DataTypeId], [ReqValueId], [Value])
+  VALUES (source.[StructureDataId], 2, 1, source.[StructureLevel])
+WHEN MATCHED THEN
+  UPDATE SET target.[Value] = COALESCE(source.[StructureLevel], target.[Value]);
+
+//----------------------------------------
+
+DECLARE @startingValue INT = 3;
+
+UPDATE s
+SET s.[Value] = CASE
+WHEN @startingValue + (d.[StructureLevel] - 1) > 30 THEN 30
+ELSE @startingValue + (d.[StructureLevel] - 1)
+END
+FROM [dbo].[StructureData] as d
+INNER JOIN [dbo].[Structure] as n ON n.[StructureId] = d.[StructureId]
+LEFT JOIN [dbo].[StructureRequirement] AS s ON d.[StructureDataId] = s.[StructureDataId] AND s.[DataTypeId] = 2 AND s.[ReqValueId] = 1
+WHERE n.[Code] = 'Embassy';
+
+
+SELECT s.[StructureRequirementId], d.[StructureDataId], n.[Name], d.[StructureLevel], s.[DataTypeId], s.[ReqValueId], s.[Value]
+FROM [dbo].[StructureData] as d
+INNER JOIN [dbo].[Structure] as n ON n.[StructureId] = d.[StructureId]
+LEFT JOIN [dbo].[StructureRequirement] AS s ON d.[StructureDataId] = s.[StructureDataId] AND s.[DataTypeId] = 2 AND s.[ReqValueId] = 1
+WHERE n.[Code] = 'Embassy'
+ORDER BY d.[StructureLevel];
+
+
+

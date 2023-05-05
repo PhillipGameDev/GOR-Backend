@@ -57,9 +57,45 @@ namespace GameOfRevenge.WebServer.Controllers.Api
 
         [HttpPost]
         public async Task<IActionResult> RepairGate() => ReturnResponse(await userStructureManager.RepairGate(Token.PlayerId));
-#endregion
+        #endregion
 
-#region Resource
+        #region Structure
+        [HttpPost]
+        public async Task<IActionResult> BuildStructure(StructureType type, int location)
+        {
+            //(200, "Structure does not exists");
+            //(201, "Structure does not exist at location");
+            var response = await userStructureManager.UpgradeBuilding(Token.PlayerId, type, location);
+            if ((response.Case == 200) || (response.Case == 201))
+            {
+                response = await userStructureManager.CreateBuilding(Token.PlayerId, type, location);
+            }
+            if (response.IsSuccess && response.HasData)
+            {
+                var data = new BuildingStructure()
+                {
+                    WorkerId = response.Data.WorkerId,
+                    Structure = response.Data.StructureData.Value.Find(x => (x.Location == location))
+                };
+                return ReturnResponse(new Response<BuildingStructure>()
+                {
+                    Case = response.Case,
+                    Data = data,
+                    Message = response.Message
+                });
+            }
+
+            return ReturnResponse(new Response<BuildingStructure>()
+            {
+                Case = response.Case,
+                Data = null,
+                Message = response.Message
+            });
+        }
+        #endregion
+
+
+        #region Resource
         [HttpPost]
         public async Task<IActionResult> AddResources(int food, int wood, int ore, int gems)
         {
@@ -367,10 +403,10 @@ namespace GameOfRevenge.WebServer.Controllers.Api
         }
 
         [HttpPost]
-        public async Task<IActionResult> AddBoost(NewBoostType type)
+        public async Task<IActionResult> ActivateBoost(NewBoostType type)
         {
 //            if (!Token.IsAdmin) return StatusCode(401);
-            return ReturnResponse(await userActiveBuffsManager.AddBoost(Token.PlayerId, type));
+            return ReturnResponse(await userActiveBuffsManager.ActivateBoost(Token.PlayerId, type));
         }
 
         [HttpPost]

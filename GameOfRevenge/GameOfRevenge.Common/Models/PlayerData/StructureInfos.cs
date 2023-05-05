@@ -7,11 +7,16 @@ using Newtonsoft.Json;
 
 namespace GameOfRevenge.Common.Models
 {
+    [Serializable]
     public class StructureInfos
     {
         public long Id { get; set; }
         public StructureType StructureType { get; set; }
         public List<StructureDetails> Buildings { get; set; }
+
+        public StructureInfos()
+        {
+        }
 
         public StructureInfos(PlayerDataTable userDataTable)
         {
@@ -28,11 +33,44 @@ namespace GameOfRevenge.Common.Models
         }
     }
 
+    public class BuildingStructure
+    {
+        public long WorkerId { get; set; }
+//        public StructureType StructureType { get; set; }
+        public StructureDetails Structure { get; set; }
+
+        public BuildingStructure()
+        {
+        }
+
+        public BuildingStructure(StructureDetails structure, UserRecordBuilderDetails worker)
+        {
+            WorkerId = worker.Id;
+            Structure = structure;
+        }
+    }
+
+    public class BuildingStructureData
+    {
+        public long WorkerId { get; set; }
+        public UserStructureData StructureData { get; set; }
+
+        public BuildingStructureData()
+        {
+        }
+
+        public BuildingStructureData(UserStructureData structureData, UserRecordBuilderDetails worker = null)
+        {
+            if (worker != null) WorkerId = worker.Id;
+            StructureData = structureData;
+        }
+    }
+
     [Serializable, DataContract]
     public class StructureDetails : TimerBase
     {
-        [DataMember(Name = "Location")]
-        public int LocationId { get; set; }
+        [DataMember]//(Name = "Location")]
+        public int Location { get; set; }
         [DataMember]
         public int Level { get; set; }
         [DataMember]

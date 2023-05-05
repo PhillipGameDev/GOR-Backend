@@ -75,7 +75,7 @@ namespace GameOfRevenge.Business.Manager.UserData
 
         public Response<int> GetInstantRecruitCost(TroopType type, int troopLevel, int count) => new Response<int>(RecruitCost(type, troopLevel, count), 100, "Cost");
 
-        public async Task<Response<int>> GetBuildingSpeedUpCost(int playerId, int locId)
+        public async Task<Response<int>> GetBuildingSpeedUpCost(int playerId, int location)
         {
             try
             {
@@ -84,7 +84,7 @@ namespace GameOfRevenge.Business.Manager.UserData
 
                 foreach (var structure in playerData.Data.Structures)
                 {
-                    var structureInfo = structure.Buildings.FirstOrDefault(x => x.LocationId == locId);
+                    var structureInfo = structure.Buildings.FirstOrDefault(x => x.Location == location);
                     if (structureInfo != null)
                     {
                         if (structureInfo.TimeLeft <= 0) break;
@@ -100,12 +100,12 @@ namespace GameOfRevenge.Business.Manager.UserData
             catch (Exception ex) { return new Response<int>(0, ErrorManager.ShowError(ex)); }
         }
 
-        public async Task<Response<UserStructureData>> InstantBuildStructure(int playerId, StructureType structType, int level, int locId)
+        public async Task<Response<BuildingStructureData>> InstantBuildStructure(int playerId, StructureType structureType, int level, int location)
         {
             try
             {
 //                var structureData = CacheStructureDataManager.GetFullStructureData(structType);
-                var structureLevelData = CacheStructureDataManager.GetFullStructureLevelData(structType, level);
+                var structureLevelData = CacheStructureDataManager.GetFullStructureLevelData(structureType, level);
 
                 var playerDataResp = await GetFullPlayerData(playerId);
                 if (!playerDataResp.IsSuccess || !playerDataResp.HasData)
@@ -126,22 +126,16 @@ namespace GameOfRevenge.Business.Manager.UserData
                     }
                 }*/
 
+                bool createWorker = false;
                 var cost = structureLevelData.Data.InstantBuildCost;
                 if (cost == 0)
                 {
-                    UserRecordBuilderDetails currBuilder = null;
-                    foreach (var builder in playerData.Builders)
+                    var freeWorkerFound = playerData.Workers.Exists(x => (x.TimeLeft(playerData.Structures) == 0));
+                    if (!freeWorkerFound)
                     {
-                        if (builder.TimeLeft > 0) continue;
-
-                        currBuilder = builder;
-                        break;
-                    }
-
-                    if (currBuilder == null)
-                    {
-                        if (playerData.Builders.Count >= 2) return new Response<UserStructureData>(200, "No builder available");
+                        if (playerData.Workers.Count >= 2) return new Response<BuildingStructureData>(200, "No worker available");
                         cost = 1;
+                        createWorker = true;
                     }
                 }
                 else//override cost based on remain time. 1minute = 3 gems
@@ -158,19 +152,18 @@ namespace GameOfRevenge.Business.Manager.UserData
                 }
 
                 bool removeResources = true;
-                bool createBuilder = true;
-                Response<UserStructureData> createBuildResponse = null;
+                Response<BuildingStructureData> createBuildResponse = null;
                 if (level > 1)
                 {
-                    createBuildResponse = await _userStructureManager.UpgradeBuilding(playerId, structType, locId, removeResources, createBuilder);
+                    createBuildResponse = await _userStructureManager.UpgradeBuilding(playerId, structureType, location, removeResources, createWorker);
                 }
                 else
                 {
-                    createBuildResponse = await _userStructureManager.CreateBuilding(playerId, structType, locId, removeResources, createBuilder, false);
+                    createBuildResponse = await _userStructureManager.CreateBuilding(playerId, structureType, location, removeResources, createWorker, true);
                 }
                 if (createBuildResponse == null)
                 {
-                    createBuildResponse = new Response<UserStructureData>(200, ErrorManager.ShowError());
+                    createBuildResponse = new Response<BuildingStructureData>(200, ErrorManager.ShowError());
                 }
 
                 if (!createBuildResponse.IsSuccess)
@@ -179,48 +172,33 @@ namespace GameOfRevenge.Business.Manager.UserData
                     return createBuildResponse;// new Response<UserStructureData>(createBuildResponse.Case, createBuildResponse.Message);
                 }
 
-                var buildings = createBuildResponse.Data.Value;
-                buildings.Find(x => (x.LocationId == locId)).Duration = 0;
+                var buildings = createBuildResponse.Data.StructureData.Value;
+                buildings.Find(x => (x.Location == location)).Duration = 0;
 
                 var json = JsonConvert.SerializeObject(buildings);
-                var response = await manager.UpdatePlayerDataID(playerId, createBuildResponse.Data.Id, json);
+                var response = await manager.UpdatePlayerDataID(playerId, createBuildResponse.Data.StructureData.Id, json);
 
                     //AddOrUpdatePlayerData(playerId, DataType.Structure, structureData.Info.Id, json);
                 if (response.IsSuccess)
                 {
-                    var builderResp = await manager.GetAllPlayerData(playerId, DataType.Custom, 2);
-                    if (builderResp.IsSuccess && builderResp.HasData)
-                    {
-                        foreach (var builderData in builderResp.Data)
-                        {
-                            var builder = JsonConvert.DeserializeObject<UserBuilderDetails>(builderData.Value);
-                            if (builder.Location != locId) continue;
-
-                            builder.Duration = 0;
-                            json = JsonConvert.SerializeObject(builder);
-                            var respBuilder = await manager.UpdatePlayerDataID(playerId, builderData.Id, json);
-                            break;
-                        }
-                    }
-
-                    var userData = PlayerData.PlayerDataToUserStructureData(response.Data);
-                    return new Response<UserStructureData>(userData, 100, "Structure upgrade completed");
+                    createBuildResponse.Data.StructureData = PlayerData.PlayerDataToUserStructureData(response.Data);
+                    return new Response<BuildingStructureData>(createBuildResponse.Data, 100, "Structure upgrade completed");
                 }
 
                 if (cost > 0) await _userResourceManager.SumGemsResource(playerId, cost);
-                return new Response<UserStructureData>(200, "Structure upgrade could'nt be completed");
+                return new Response<BuildingStructureData>(200, "Structure upgrade could'nt be completed");
             }
             catch (CacheDataNotExistExecption ex)
             {
-                return new Response<UserStructureData>(200, ErrorManager.ShowError(ex));
+                return new Response<BuildingStructureData>(200, ErrorManager.ShowError(ex));
             }
             catch (RequirementExecption ex)
             {
-                return new Response<UserStructureData>(202, ErrorManager.ShowError(ex));
+                return new Response<BuildingStructureData>(202, ErrorManager.ShowError(ex));
             }
             catch (Exception ex)
             {
-                return new Response<UserStructureData>(0, ErrorManager.ShowError(ex));
+                return new Response<BuildingStructureData>(0, ErrorManager.ShowError(ex));
             }
         }
         public static readonly ILogger log = LogManager.GetCurrentClassLogger();
@@ -241,7 +219,7 @@ namespace GameOfRevenge.Business.Manager.UserData
                 StructureDetails selectedBuilding = null;
                 foreach (var structure in playerData.Structures)
                 {
-                    var building = structure.Buildings.Find(x => (x.LocationId == locId));
+                    var building = structure.Buildings.Find(x => (x.Location == locId));
                     if (building == null) continue;
 
                     if (building.TimeLeft <= 0) return new Response<UserStructureData>(101, "Structure already completed");
@@ -276,14 +254,6 @@ namespace GameOfRevenge.Business.Manager.UserData
                     if (cost > 0) await _userResourceManager.SumGemsResource(playerId, cost);
 
                     return new Response<UserStructureData>(200, "Structure upgrade could'nt be completed");
-                }
-
-                var builder = playerData.Builders.Find(x => (x.Location == selectedBuilding.LocationId));
-                if (builder != null)
-                {
-                    builder.Duration = 0;
-                    json = JsonConvert.SerializeObject((UserBuilderDetails)builder);
-                    var builderResp = await manager.UpdatePlayerDataID(playerId, builder.Id, json);
                 }
 
                 var userStructure = PlayerData.PlayerDataToUserStructureData(response.Data);

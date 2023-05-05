@@ -3,7 +3,7 @@
     public interface IReadOnlyBaseRefEnumLevelDataTable
     {
         int DataId { get; }
-        int Id { get; }
+        int InfoId { get; }
         int Level { get; }
     }
 }

@@ -1,13 +1,8 @@
 ﻿using GameOfRevenge.Buildings.Interface;
 using GameOfRevenge.Common;
-using GameOfRevenge.Common.Models.PlayerData;
+using GameOfRevenge.Common.Models;
 using GameOfRevenge.GameHandlers;
 using GameOfRevenge.ResourcesHandler;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace GameOfRevenge.Buildings.Handlers
 {
@@ -37,9 +32,8 @@ namespace GameOfRevenge.Buildings.Handlers
             }
         }
 
-        public Mine(IGameBuildingManager baseBuildingManager, MmoActor player, UserStructureData structureData) : base(structureData, player, baseBuildingManager)
+        public Mine(MmoActor player, StructureDetails structureData, IGameBuildingManager baseBuildingManager) : base(player, structureData, baseBuildingManager)
         {
-            this.BaseBuilderManager = baseBuildingManager;
         }
     }
 }

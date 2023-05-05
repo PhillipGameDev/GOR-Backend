@@ -1,6 +1,6 @@
 ﻿using GameOfRevenge.Buildings.Interface;
 using GameOfRevenge.Common;
-using GameOfRevenge.Common.Models.PlayerData;
+using GameOfRevenge.Common.Models;
 using GameOfRevenge.GameHandlers;
 using GameOfRevenge.ResourcesHandler;
 
@@ -32,9 +32,8 @@ namespace GameOfRevenge.Buildings.Handlers
             }
         }
 
-        public Farm(IGameBuildingManager baseBuildingManager, MmoActor player, UserStructureData structureData) : base(structureData, player, baseBuildingManager)
+        public Farm(MmoActor player, StructureDetails structureData, IGameBuildingManager baseBuildingManager) : base(player, structureData, baseBuildingManager)
         {
-
         }
     }
 }

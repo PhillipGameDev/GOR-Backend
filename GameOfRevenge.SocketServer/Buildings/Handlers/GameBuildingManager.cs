@@ -151,7 +151,7 @@ namespace GameOfRevenge.Buildings.Handlers
             return success;
         }
         
-        private Response<UserStructureData> CreateOrUpgradeStructure(MmoActor player, IReadOnlyList<IReadOnlyDataRequirement> requirments, int locationId, bool isUpgrade = false)
+        private Response<UserStructureData> CreateOrUpgradeStructure(MmoActor player, IReadOnlyList<IReadOnlyDataRequirement> requirments, int location, bool isUpgrade = false)
         {
             if (requirments.Count > 0)
             {
@@ -159,40 +159,47 @@ namespace GameOfRevenge.Buildings.Handlers
                 if (!rsucc) new Response<UserStructureData>(rsucc ? 100 : 200, rmsg);
             }
             
-            Response<UserStructureData> response;
+            Response<BuildingStructureData> response;
             if (isUpgrade)
             {
-                response = GameService.BPlayerStructureManager.UpgradeBuilding(player.PlayerId, this.StructureType, locationId).Result;
+                response = GameService.BPlayerStructureManager.UpgradeBuilding(player.PlayerId, this.StructureType, location).Result;
             }
             else
             {
-                response = GameService.BPlayerStructureManager.CreateBuilding(player.PlayerId, this.StructureType, locationId).Result;
+                response = GameService.BPlayerStructureManager.CreateBuilding(player.PlayerId, this.StructureType, location).Result;
             }
             if ((response.Case < 100) || (response.Data == null)) return new Response<UserStructureData>(200, response.Message);
 
 #if DEBUG
             log.InfoFormat("Response Of Create/Upgrade Structure Manager DATA {0} ", JsonConvert.SerializeObject(response.Data));
 #endif
-            var structure = new UserStructureData()
+            var workerBuildingData = response.Data;
+            var structureType = workerBuildingData.StructureData.ValueId;
+            var bld = workerBuildingData.StructureData.Value.Find(x => x.Location == location);
+/*            var structure = new UserStructureData()
             {
-                Id = response.Data.Id,
-                DataType = response.Data.DataType,
-//                StructureId = response.Data.StructureId,
-                ValueId = response.Data.ValueId,
-                Value = response.Data.Value.Where(d => d.LocationId == locationId).ToList()
-            };
+                Id = workerBuildingData.StructureData.Id,
+                DataType = workerBuildingData.StructureData.DataType,
+                ValueId = workerBuildingData.StructureData.ValueId,
+                Value = workerBuildingData.StructureData.Value.Where(d => d.Location == location).ToList()
+            };*/
 
             if (isUpgrade)
             {
-                var building = player.InternalPlayerDataManager.GetPlayerBuilding(structure.ValueId, locationId);
-                if (building != null) building.AddBuildingUpgrading(structure);
+                var building = player.InternalPlayerDataManager.GetPlayerBuilding(structureType, location);
+                if (building != null) building.AddBuildingUpgrading(bld);
             }
             else
             {
-                player.InternalPlayerDataManager.AddStructure(locationId, structure, this);
+                player.InternalPlayerDataManager.AddStructure(location, structureType, bld, this);
             }
 
-            return response;
+            return new Response<UserStructureData>()
+            {
+                Case = response.Case,
+                Data = workerBuildingData.StructureData,
+                Message = response.Message
+            };
         }
 
 /*        private Response<UserStructureData> HelpBuildStructure(MmoActor player, int locationId, int helpValue = 1)

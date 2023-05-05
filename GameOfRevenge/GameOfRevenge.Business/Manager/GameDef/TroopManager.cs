@@ -37,7 +37,7 @@ namespace GameOfRevenge.Business.Manager.GameDef
                             Levels = new List<TroopDataRequirements>()
                         };
 
-                        foreach (var itemData in troopDatas.Where(x => x.Id == item.Id))
+                        foreach (var itemData in troopDatas.Where(x => x.InfoId == item.Id))
                         {
                             var structDataReq = new TroopDataRequirements
                             {

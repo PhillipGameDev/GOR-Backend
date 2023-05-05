@@ -1,14 +1,13 @@
 ﻿using GameOfRevenge.Buildings.Interface;
-using GameOfRevenge.Common.Models.PlayerData;
+using GameOfRevenge.Common.Models;
 using GameOfRevenge.GameHandlers;
 
 namespace GameOfRevenge.Buildings.Handlers
 {
     public class WatchTower : PlayerBuildingManager, IPlayerBuildingManager
     {
-        public WatchTower(IGameBuildingManager baseBuildingManager, MmoActor player, UserStructureData structureData) : base(structureData, player, baseBuildingManager)
+        public WatchTower(MmoActor player, StructureDetails structureData, IGameBuildingManager baseBuildingManager) : base(player, structureData, baseBuildingManager)
         {
-            BaseBuilderManager = baseBuildingManager;
         }
     }
 }

@@ -1,21 +1,18 @@
-﻿using GameOfRevenge.Common.Models.PlayerData;
+﻿using System;
+using System.Collections.Generic;
+using GameOfRevenge.Common.Models;
 using GameOfRevenge.Model;
 using GameOfRevenge.Buildings.Interface;
 using GameOfRevenge.GameHandlers;
-using System.Threading.Tasks;
 using GameOfRevenge.Common;
-using System;
-using Newtonsoft.Json;
-using System.Collections.Generic;
 using GameOfRevenge.GameApplication;
 
 namespace GameOfRevenge.Buildings.Handlers
 {
     public class Academy : PlayerBuildingManager, IPlayerBuildingManager
     {
-        public Academy(IGameBuildingManager baseBuildingManager, MmoActor player, UserStructureData structureData) : base(structureData, player, baseBuildingManager)
+        public Academy(MmoActor player, StructureDetails structureData, IGameBuildingManager baseBuildingManager) : base(player, structureData, baseBuildingManager)
         {
-            BaseBuilderManager = baseBuildingManager;
         }
 
         public override void HandleUpgradeTechnology(UpgradeTechnologyRequest operation)
@@ -39,7 +36,7 @@ namespace GameOfRevenge.Buildings.Handlers
                 }
                 
                 else Player.SendOperation(OperationCode.UpgradeTechnology, ReturnCode.Failed, null, result.Message);
-                log.Debug(JsonConvert.SerializeObject(result));
+                log.Debug(Newtonsoft.Json.JsonConvert.SerializeObject(result));
                 log.Debug("****************************************HandleUpgradeTechnology END**********************************************");
             }
             catch (Exception ex)

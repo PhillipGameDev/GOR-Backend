@@ -54,14 +54,14 @@ namespace GameOfRevenge.Business.Manager
             }
         }
 
-        public async Task PlayerDataChanged(int playerId)
+        public async Task<PlayerCompleteData> PlayerDataChanged(int playerId)
         {
             log.Info("player " + playerId + " data changed ENTER");
             allPlayerDatas.TryGetValue(playerId, out var data);
             if (data == null)
             {
                 log.Info("player " + playerId + " data null RETURN");
-                return;
+                return null;
             }
 
             //TODO: use internal data reference instead of pulling data from server
@@ -78,6 +78,7 @@ namespace GameOfRevenge.Business.Manager
                 if (userQuestData.IsSuccess) data.QuestData = userQuestData.Data;
             }
             log.Info("player " + playerId + " data changed EXIT");
+            return userData.Data;
         }
 
 
@@ -158,6 +159,7 @@ namespace GameOfRevenge.Business.Manager
             lastUpdate = DateTime.UtcNow;
             if (allPlayerDatas.Count > 0)
             {
+                log.Info("player datas = " + allPlayerDatas.Count);
                 foreach (var data in allPlayerDatas)
                 {
                     await questManager.CheckPlayerQuestDataAsync(data.Value);

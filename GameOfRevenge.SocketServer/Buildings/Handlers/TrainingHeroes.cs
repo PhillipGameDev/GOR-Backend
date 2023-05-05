@@ -1,12 +1,12 @@
 ﻿using GameOfRevenge.Buildings.Interface;
-using GameOfRevenge.Common.Models.PlayerData;
+using GameOfRevenge.Common.Models;
 using GameOfRevenge.GameHandlers;
 
 namespace GameOfRevenge.Buildings.Handlers
 {
     public class TrainingHeroes : PlayerBuildingManager
     {
-        public TrainingHeroes(IGameBuildingManager baseBuildingManager, MmoActor player, UserStructureData structureData) : base(structureData, player, baseBuildingManager)
+        public TrainingHeroes(MmoActor player, StructureDetails structureData, IGameBuildingManager baseBuildingManager) : base(player, structureData, baseBuildingManager)
         {
 
         }

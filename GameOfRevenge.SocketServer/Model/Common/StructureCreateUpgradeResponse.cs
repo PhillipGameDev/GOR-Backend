@@ -5,6 +5,9 @@ namespace GameOfRevenge.Model
 {
     public class StructureCreateUpgradeResponse : DictionaryEncode
     {
+        [DataMember(Code = (byte)RoomParameterKey.WorkerId, IsOptional = false)]
+        public long WorkerId { get; set; }
+
         [DataMember(Code = (byte)RoomParameterKey.StructureLocationId, IsOptional = false)]
         public int StructureLocationId { get; set; }
 
