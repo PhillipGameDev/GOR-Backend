@@ -11,7 +11,7 @@ namespace GameOfRevenge.Common.Models
         [DataMember]
         public int Location { get; set; }
 
-        public int TimeLeft(List<StructureInfos> structures)
+        public float TimeLeft(List<StructureInfos> structures)
         {
             var bld = structures.SelectMany(x => x.Buildings).FirstOrDefault(x => (x.Location == Location));
 

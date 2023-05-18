@@ -15,6 +15,8 @@ namespace GameOfRevenge.Common.Models
         public int Level { get; set; }
         [DataMember]
         public string Code { get => TechnologyType.ToString(); }
+
+        public int CurrentLevel => (TimeLeft == 0)? Level : (Level - 1);
     }
 
 /*    [DataContract]

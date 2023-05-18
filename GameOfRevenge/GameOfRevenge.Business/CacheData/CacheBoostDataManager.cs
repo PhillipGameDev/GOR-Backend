@@ -329,7 +329,7 @@ namespace GameOfRevenge.Business.CacheData
         {
             var techs = new List<NewBoostTechSpec>
             {
-                new NewBoostTechSpec(NewBoostTech.AcademyResearchSpeedMultiplier, 11, Table11, "+{0:F0}%")
+                new NewBoostTechSpec(NewBoostTech.ResearchSpeedMultiplier, 11, Table11, "+{0:F0}%")
             };
 
             return new SpecNewBoostData(NewBoostType.TechBoost, techs, 1, Table1);
@@ -356,7 +356,7 @@ namespace GameOfRevenge.Business.CacheData
                 new NewBoostTechSpec().VIPBoostTechSpec((NewBoostTech)VIPBoostTech.ResourceProductionMultiplier, 71, Table71, 1, "+{0:N0}%"),
                 new NewBoostTechSpec().VIPBoostTechSpec((NewBoostTech)VIPBoostTech.BuildingTimeBonus, 72, Table72, 1, "{T1}"),
                 //vip 2~
-                new NewBoostTechSpec().VIPBoostTechSpec((NewBoostTech)VIPBoostTech.TroopHealingSpeedMultiplier, 73, Table73, 2, "+{0:N0}%"),
+                new NewBoostTechSpec().VIPBoostTechSpec((NewBoostTech)VIPBoostTech.TroopRecoverySpeedMultiplier, 73, Table73, 2, "+{0:N0}%"),
                 //vip 9~
                 new NewBoostTechSpec().VIPBoostTechSpec((NewBoostTech)VIPBoostTech.TroopAttackMultiplier, 74, Table74, 9, "Atk+{0:N0}%"),
                 new NewBoostTechSpec().VIPBoostTechSpec((NewBoostTech)VIPBoostTech.TroopDefenseMultiplier, 75, Table75, 9, "Def+{0:N0}%"),
@@ -398,7 +398,7 @@ namespace GameOfRevenge.Business.CacheData
         {
             var techs = new List<NewBoostTechSpec>
             {
-                new NewBoostTechSpec(NewBoostTech.TroopHealingSpeedMultiplier, 61, Table61, "+{0:F0}%")
+                new NewBoostTechSpec(NewBoostTech.TroopRecoverySpeedMultiplier, 61, Table61, "+{0:F0}%")
             };
 
             return new SpecNewBoostData(NewBoostType.HealingSpeed, techs);
@@ -408,7 +408,7 @@ namespace GameOfRevenge.Business.CacheData
         {
             var techs = new List<NewBoostTechSpec>
             {
-                new NewBoostTechSpec(NewBoostTech.AcademyResearchSpeedMultiplier, 61, Table61, "+{0:F0}%")
+                new NewBoostTechSpec(NewBoostTech.ResearchSpeedMultiplier, 61, Table61, "+{0:F0}%")
             };
 
             return new SpecNewBoostData(NewBoostType.ResearchSpeed, techs);

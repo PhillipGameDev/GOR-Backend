@@ -19,14 +19,14 @@ namespace GameOfRevenge.WebServer.Controllers.Api
         private readonly IUserResourceManager userResourceManager;
         private readonly IUserStructureManager userStructureManager;
         private readonly IUserInventoryManager userInventoryManager;
-        private readonly IUserActiveBoostsManager userActiveBuffsManager;
+        private readonly IUserActiveBoostsManager userActiveBoostManager;
         private readonly IUserTroopManager userTroopManager;
         private readonly IUserTechnologyManager userTechnologyManager;
         private readonly IInstantProgressManager instantProgressManager;
         private readonly IUserHeroManager userHeroManager;
 
         public PlayerController(IUserResourceManager userResourceManager, IUserStructureManager userStructureManager,
-                                IUserInventoryManager userInventoryManager, IUserActiveBoostsManager userActiveBuffsManager,
+                                IUserInventoryManager userInventoryManager, IUserActiveBoostsManager userActiveBoostManager,
                                 IUserTechnologyManager userTechnologyManager, IUserTroopManager userTroopManager,
                                 IInstantProgressManager instantProgressManager, IUserHeroManager userHeroManager)
         {
@@ -34,7 +34,7 @@ namespace GameOfRevenge.WebServer.Controllers.Api
             this.userResourceManager = userResourceManager;
             this.userStructureManager = userStructureManager;
             this.userInventoryManager = userInventoryManager;
-            this.userActiveBuffsManager = userActiveBuffsManager;
+            this.userActiveBoostManager = userActiveBoostManager;
             this.userTechnologyManager = userTechnologyManager;
             this.userTroopManager = userTroopManager;
             this.instantProgressManager = instantProgressManager;
@@ -403,17 +403,19 @@ namespace GameOfRevenge.WebServer.Controllers.Api
         }
 
         [HttpPost]
-        public async Task<IActionResult> ActivateBoost(NewBoostType type)
+        public async Task<IActionResult> ActivateBoost(CityBoostType type)
         {
 //            if (!Token.IsAdmin) return StatusCode(401);
-            return ReturnResponse(await userActiveBuffsManager.ActivateBoost(Token.PlayerId, type));
+            var seconds = 3600 * 6;//TODO: move this value to a config class
+            var gems = (int)(seconds * (100 / 3600f));
+            return ReturnResponse(await userActiveBoostManager.ActivateBoost(Token.PlayerId, type, seconds, gems));
         }
 
         [HttpPost]
         public async Task<IActionResult> RemoveBoost(NewBoostType itemId, int count)
         {
 //            if (!Token.IsAdmin) return StatusCode(401);
-            return ReturnResponse(await userActiveBuffsManager.RemoveBoost(Token.PlayerId, itemId, count));
+            return ReturnResponse(await userActiveBoostManager.RemoveBoost(Token.PlayerId, itemId, count));
         }
 
         [HttpGet]

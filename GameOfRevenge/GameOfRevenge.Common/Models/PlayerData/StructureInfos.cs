@@ -36,7 +36,7 @@ namespace GameOfRevenge.Common.Models
     public class BuildingStructure
     {
         public long WorkerId { get; set; }
-//        public StructureType StructureType { get; set; }
+        //        public StructureType StructureType { get; set; }
         public StructureDetails Structure { get; set; }
 
         public BuildingStructure()
@@ -69,7 +69,7 @@ namespace GameOfRevenge.Common.Models
     [Serializable, DataContract]
     public class StructureDetails : TimerBase
     {
-        [DataMember]//(Name = "Location")]
+        [DataMember]
         public int Location { get; set; }
         [DataMember]
         public int Level { get; set; }
@@ -83,5 +83,7 @@ namespace GameOfRevenge.Common.Models
 
         [DataMember(EmitDefaultValue = false)]
         public TimerBase Boost { get; set; }
+
+        public int CurrentLevel => (TimeLeft == 0) ? Level : (Level - 1);
     }
 }

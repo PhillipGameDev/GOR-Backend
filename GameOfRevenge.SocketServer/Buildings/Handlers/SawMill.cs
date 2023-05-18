@@ -26,9 +26,14 @@ namespace GameOfRevenge.Buildings.Handlers
         {
             get
             {
-                if ((BaseStructureData == null) || (BaseStructureData.Data == null)) return 0;
+                var resp = 0;
+                var structureData = BaseStructureData;
+                if ((structureData != null) && (structureData.Data != null))
+                {
+                    resp = structureData.Data.WoodProduction;
+                }
 
-                return BaseStructureData.Data.WoodProduction;
+                return resp;
             }
         }
 

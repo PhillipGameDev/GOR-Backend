@@ -55,13 +55,13 @@ namespace GameOfRevenge.Business.Manager.UserData
             }
         }
 
-        public async Task<Response<BoostActivatedResponse>> ActivateBoost(int playerId, NewBoostType type)
+        public async Task<Response<BoostActivatedResponse>> ActivateBoost(int playerId, CityBoostType type, int seconds, int reqGems)
         {
             try
             {
                 if (playerId < 1) throw new InvalidModelExecption("Invalid player id");
 
-                if (type == NewBoostType.Unknown) throw new DataNotExistExecption("Boost not supported");
+                if (type == CityBoostType.Unknown) throw new DataNotExistExecption("Boost not supported");
 
                 var timeStamp = DateTime.UtcNow;
 
@@ -69,14 +69,19 @@ namespace GameOfRevenge.Business.Manager.UserData
                 if (!allData.IsSuccess || !allData.HasData) throw new DataNotExistExecption("Player data not found");
 
                 var allPlayerData = allData.Data;
-                var reqGems = 600;//TODO: move this value to a config class
-                var gemsAmount = 0;
-                var gemsData = allPlayerData.Find(x => (x.DataType == DataType.Resource) && (x.ValueId == (int)ResourceType.Gems));
-                if (gemsData != null) int.TryParse(gemsData.Value, out gemsAmount);
-                if (gemsAmount < reqGems) throw new RequirementExecption("Not enough gems");
+                PlayerDataTable gemsData = null;
+                List<PlayerDataTable> changes = null;
+                if (reqGems > 0)
+                {
+                    var gemsAmount = 0;
+                    gemsData = allPlayerData.Find(x => (x.DataType == DataType.Resource) && (x.ValueId == (int)ResourceType.Gems));
+                    if (gemsData != null) int.TryParse(gemsData.Value, out gemsAmount);
+                    if (gemsAmount < reqGems) throw new RequirementExecption("Not enough gems");
 
-                var gemresp = await manager.SumPlayerData(playerId, gemsData.Id, -reqGems);
-                if (!gemresp.IsSuccess) throw new RequirementExecption("Unable to process your request");
+                    var gemresp = await manager.SumPlayerData(playerId, gemsData.Id, -reqGems);
+                    if (!gemresp.IsSuccess) throw new RequirementExecption("Unable to process your request");
+                    changes = new List<PlayerDataTable>() { gemresp.Data.ToPlayerDataTable };
+                }
 
                 var boostRespData = allPlayerData.Find(x => (x.DataType == DataType.ActiveBoost) && (x.ValueId == (int)type));
                 UserNewBoostData boostData = null;
@@ -91,7 +96,7 @@ namespace GameOfRevenge.Business.Manager.UserData
                 {
                     boostValue = new UserNewBoost()
                     {
-                        Type = type,
+                        Type = (NewBoostType)type,
                         StartTime = timeStamp
                     };
                 }
@@ -118,7 +123,7 @@ namespace GameOfRevenge.Business.Manager.UserData
                         int.TryParse(specBoostData.Levels[boostLevel].ToString(), out levelVal);
                     }
                 }*/
-                boostValue.Duration += 3600 * 6;
+                boostValue.Duration += seconds;
 
 
                 var json = JsonConvert.SerializeObject(boostValue);
@@ -132,7 +137,7 @@ namespace GameOfRevenge.Business.Manager.UserData
                     resp = await manager.AddOrUpdatePlayerData(playerId, DataType.ActiveBoost, (int)type, json);
                 }
 
-                if (!resp.IsSuccess)
+                if (!resp.IsSuccess && (reqGems > 0))
                 {
                     //return gems
                     await manager.SumPlayerData(playerId, gemsData.Id, reqGems);
@@ -143,7 +148,7 @@ namespace GameOfRevenge.Business.Manager.UserData
                 var response = new BoostActivatedResponse()
                 {
                     Boost = new UserRecordNewBoost(resp.Data.Id, boostValue),
-                    Changes = new List<PlayerDataTable>() { gemresp.Data.ToPlayerDataTable }
+                    Changes = changes
                 };
                 return new Response<BoostActivatedResponse>(response, resp.Case, resp.Message);
             }

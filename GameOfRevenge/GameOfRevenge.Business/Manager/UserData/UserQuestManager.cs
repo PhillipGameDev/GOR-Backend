@@ -1,8 +1,10 @@
-﻿using GameOfRevenge.Business.CacheData;
+﻿using ExitGames.Logging;
+using GameOfRevenge.Business.CacheData;
 using GameOfRevenge.Business.Manager.Base;
 using GameOfRevenge.Common;
 using GameOfRevenge.Common.Interface;
 using GameOfRevenge.Common.Models;
+using GameOfRevenge.Common.Models.Boost;
 using GameOfRevenge.Common.Models.Quest;
 using GameOfRevenge.Common.Models.Quest.Template;
 using GameOfRevenge.Common.Net;
@@ -17,10 +19,13 @@ namespace GameOfRevenge.Business.Manager.UserData
 {
     public class UserQuestManager : BaseManager, IUserQuestManager
     {
+        public static readonly ILogger log = LogManager.GetCurrentClassLogger();
+
         private readonly UserHeroManager userHeroManager = new UserHeroManager();
         private readonly UserStructureManager userStructureManager = new UserStructureManager();
         private readonly UserTroopManager userTroopManager = new UserTroopManager();
         private readonly UserResourceManager resmanager = new UserResourceManager();
+        private readonly UserActiveBoostManager boostManager = new UserActiveBoostManager();
         protected static readonly IPlayerDataManager manager = new PlayerDataManager();
 
         public async Task<Response> ResetAllDailyQuests()
@@ -480,7 +485,7 @@ namespace GameOfRevenge.Business.Manager.UserData
             }
         }
 
-        public async Task<Response<PlayerDataTableUpdated>> ConsumeReward(int playerId, long playerDataId, string contextId = null)
+        public async Task<Response<PlayerDataTableUpdated>> ConsumeReward(int playerId, long playerDataId, string context = null)
         {
             var resp = await manager.GetPlayerDataById(playerDataId);
             if (!resp.IsSuccess || !resp.HasData) return new Response<PlayerDataTableUpdated>(200, "User reward not found");
@@ -502,7 +507,7 @@ namespace GameOfRevenge.Business.Manager.UserData
                     {
                         long kingDetailsId = 0;
                         UserKingDetails kingDetails = null;
-                        if ((rewardData.DataType == DataType.Custom) || (rewardData.DataType == DataType.Hero))
+                        if ((rewardData.DataType == DataType.Custom) && (rewardData.ValueId < 3))
                         {
                             var kingresp = await manager.GetPlayerData(playerId, DataType.Custom, 1);
                             if (kingresp.IsSuccess && kingresp.HasData)
@@ -519,27 +524,162 @@ namespace GameOfRevenge.Business.Manager.UserData
                             case DataType.Custom:
                                 switch (rewardData.ValueId)
                                 {
-                                    case 1: kingDetails.Experience += rewardData.Value; break; //king exp
-                                    case 2: kingDetails.MaxStamina += rewardData.Value; break; //king stamina
+                                    case 1: kingDetails.Experience += rewardData.Value; updateKing = true; break; //king exp
+                                    case 2: kingDetails.MaxStamina += rewardData.Value; updateKing = true; break; //king stamina
+                                    case 3: //vip points
+                                        var vipresp = await manager.GetPlayerData(playerId, DataType.Custom, 1);
+                                        if (!vipresp.IsSuccess) throw new Exception(vipresp.Message);
+
+                                        var vipdata = vipresp.Data;
+                                        if (vipdata == null) throw new Exception("VIP data missing");
+
+                                        var vipdetails = JsonConvert.DeserializeObject<UserVIPDetails>(vipdata.Value);
+                                        vipdetails.Points += rewardData.Value;//TODO: add vippoints to player info
+                                        var json = JsonConvert.SerializeObject(vipdetails);
+                                        var saveResp = await manager.UpdatePlayerDataID(playerId, vipdata.Id, json);
+                                        if (!saveResp.IsSuccess) throw new Exception(saveResp.Message);
+                                        break;
+                                    case 4: //hero points
+                                        var heroResp = await userHeroManager.AddHeroPoints(playerId, context, rewardData.Value);
+                                        if (!heroResp.IsSuccess) throw new Exception(heroResp.Message);
+                                        break;
                                 }
-                                updateKing = true;
+                                
                                 break;
                             case DataType.Resource:
                                 var sumResp = await resmanager.SumResource(playerId, rewardData.ValueId, rewardData.Value);
                                 if (!sumResp.IsSuccess) throw new Exception(sumResp.Message);
                                 break;
-                            case DataType.Hero:
+                            case DataType.Technology:
+                                int location = 0;
+                                TroopType troopType = TroopType.Other;
+                                List<TroopDetails> listTroops = null;
+                                Response<PlayerCompleteData> fullPlayerData;
+                                switch ((NewBoostTech)rewardData.ValueId)
+                                {
+//                                    case NewBoostTech.TroopTrainingSpeedMultiplier:/*14*/
+                                    case NewBoostTech.TroopTrainingTimeBonus:/*18*/
+                                        int.TryParse(context, out location);
+                                        if (location <= 0) throw new Exception("Invalid Troop location");
+
+                                        fullPlayerData = await userTroopManager.GetFullPlayerData(playerId);
+                                        if (!fullPlayerData.IsSuccess) throw new Exception(fullPlayerData.Message);
+
+                                        List<UnavaliableTroopInfo> listInTraining = null;
+                                        UnavaliableTroopInfo troopTraining = null;
+                                        fullPlayerData.Data.Troops.Find(troop =>
+                                        {
+                                            TroopDetails troopDetails = null;
+                                            if (troop.TroopData != null)
+                                            {
+                                                troopType = troop.TroopType;
+                                                listTroops = troop.TroopData;
+                                                troopDetails = listTroops?.Find((data) =>
+                                                {
+                                                    listInTraining = data.InTraning;
+                                                    troopTraining = listInTraining?.Find((info) => (info.BuildingLocId == location));
+                                                    return troopTraining != null;
+                                                });
+                                            }
+
+                                            return troopDetails != null;
+                                        });
+                                        if (troopTraining == null) throw new Exception("Training troop not found");
+
+                                        troopTraining.Duration -= rewardData.Value;
+                                        if (troopTraining.Duration < 0)
+                                        {
+                                            listInTraining.Remove(troopTraining);
+                                        }
+                                        await userTroopManager.UpdateTroops(playerId, troopType, listTroops);
+                                        break;
+
+                                    case NewBoostTech.TroopRecoverySpeedMultiplier:/*15*/
+                                        var boostResp2 = await boostManager.ActivateBoost(playerId, CityBoostType.LifeSaver, rewardData.Value, 0);
+                                        if (!boostResp2.IsSuccess) throw new Exception(boostResp2.Message);
+                                        break;
+
+                                    case NewBoostTech.TroopRecoveryTimeBonus:/*19*/
+                                        int.TryParse(context, out location);
+                                        if (location <= 0) throw new Exception("Invalid Troop location");
+
+                                        fullPlayerData = await userTroopManager.GetFullPlayerData(playerId);
+                                        if (!fullPlayerData.IsSuccess) throw new Exception(fullPlayerData.Message);
+
+                                        List<UnavaliableTroopInfo> listInRecovery = null;
+                                        UnavaliableTroopInfo troopRecovery = null;
+                                        fullPlayerData.Data.Troops.Find(troop =>
+                                        {
+                                            TroopDetails troopDetails = null;
+                                            if (troop.TroopData != null)
+                                            {
+                                                troopType = troop.TroopType;
+                                                listTroops = troop.TroopData;
+                                                troopDetails = listTroops?.Find((data) =>
+                                                {
+                                                    listInRecovery = data.InRecovery;
+                                                    troopRecovery = listInRecovery?.Find((info) => (info.BuildingLocId == location));
+                                                    return troopRecovery != null;
+                                                });
+                                            }
+
+                                            return troopDetails != null;
+                                        });
+                                        if (troopRecovery == null) throw new Exception("Injured troop not found");
+
+                                        troopRecovery.Duration -= rewardData.Value;
+                                        if (troopRecovery.Duration < 0)
+                                        {
+                                            listInRecovery.Remove(troopRecovery);
+                                        }
+                                        await userTroopManager.UpdateTroops(playerId, troopType, listTroops);
+                                        break;
+
+                                    case NewBoostTech.ResearchSpeedMultiplier:/*10*/
+                                        var boostResp3 = await boostManager.ActivateBoost(playerId, CityBoostType.TechBoost, rewardData.Value, 0);
+                                        if (!boostResp3.IsSuccess) throw new Exception(boostResp3.Message);
+                                        break;
+                                    case NewBoostTech.ResearchTimeBonus:/*21*/
+                                        int.TryParse(context, out location);
+                                        if (location <= 0) throw new Exception("Invalid building location");
+
+                                        fullPlayerData = await userTroopManager.GetFullPlayerData(playerId);
+                                        if (!fullPlayerData.IsSuccess) throw new Exception(fullPlayerData.Message);
+
+                                        var userTech = fullPlayerData.Data.Technologies.Find(x => (x.TimeLeft > 0));
+                                        if (userTech != null) throw new Exception("There are no active researches");
+
+                                        userTech.Duration -= rewardData.Value;
+                                        if (userTech.Duration < 0) userTech.Duration = 0;
+
+                                        var json = JsonConvert.SerializeObject(userTech);
+                                        var tech = CacheTechnologyDataManager.GetFullTechnologyData(userTech.TechnologyType);
+                                        await manager.AddOrUpdatePlayerData(playerId, DataType.Technology, tech.Info.Id, json);
+                                        break;
+
+//                                    case NewBoostTech.BuildingSpeedMultiplier:/*7*/
+                                    case NewBoostTech.BuildingTimeBonus:/*20*/
+                                        int.TryParse(context, out location);
+                                        if (location <= 0) throw new Exception("Invalid Building location");
+
+                                        var speedupResp = await userStructureManager.SpeedupBuilding(playerId, location, rewardData.Value);
+                                        if (speedupResp.IsSuccess) throw new Exception(speedupResp.Message);
+                                        break;
+                                    default:
+                                        throw new Exception("Can't consume the reward on this place");
+                                }
+                                break;
+/*                            case DataType.Hero://DEPRECATED
                                 switch (rewardData.ValueId)
                                 {
                                     case 1: //hero points
-                                        var heroResp = await userHeroManager.AddHeroPoints(playerId, contextId, rewardData.Value);
+                                        var heroResp = await userHeroManager.AddHeroPoints(playerId, context, rewardData.Value);
                                         if (!heroResp.IsSuccess) throw new Exception(heroResp.Message);
                                         break;
                                 }
-//                                updateKing = true;
                                 break;
-                            case DataType.Structure:
-                                int.TryParse(contextId, out int locationId);
+                            case DataType.Structure://DEPRECATED
+                                int.TryParse(context, out int locationId);
                                 if (locationId > 0)
                                 {
                                     var speedupResp = await userStructureManager.SpeedupBuilding(playerId, locationId, rewardData.Value);
@@ -550,15 +690,13 @@ namespace GameOfRevenge.Business.Manager.UserData
                                     throw new Exception("Invalid Building location");
                                 }
                                 break;
-                            case DataType.Troop:
-                                int.TryParse(contextId, out int placementId);
+                            case DataType.Troop://DEPRECATED
+                                int.TryParse(context, out int placementId);
                                 if (placementId > 0)
                                 {
-                                    var fullPlayerData = await userTroopManager.GetFullPlayerData(playerId);
+                                    fullPlayerData = await userTroopManager.GetFullPlayerData(playerId);
                                     if (!fullPlayerData.IsSuccess) throw new Exception(fullPlayerData.Message);
 
-                                    TroopType troopType = TroopType.Other;
-                                    List<TroopDetails> listTroops = null;
                                     List<UnavaliableTroopInfo> listInTraining = null;
                                     UnavaliableTroopInfo troopTraining = null;
                                     fullPlayerData.Data.Troops.Find(troop =>
@@ -591,7 +729,7 @@ namespace GameOfRevenge.Business.Manager.UserData
                                 {
                                     throw new Exception("Invalid Troop location");
                                 }
-                                break;
+                                break;*/
                         }
 
                         if (updateKing)
@@ -668,6 +806,7 @@ namespace GameOfRevenge.Business.Manager.UserData
         {
             if ((count <= 0) || (troopType == TroopType.Other) || (playerData == null)) return;
 
+            log.Info("CHECK QUESTS START");
             var questsInProgress = GetQuestsInProgress(playerData.QuestData, QuestType.TrainTroops);
             foreach (var quest in questsInProgress)
             {
@@ -709,6 +848,56 @@ namespace GameOfRevenge.Business.Manager.UserData
                     }
                 }
             }
+            log.Info("CHECK QUESTS END");
+        }
+
+        public async Task CheckQuestProgressForGroupTechnologyAsync(PlayerUserQuestData playerData, GroupTechnologyType groupTechnologyType)
+        {
+            if (playerData == null) return;
+
+            log.Info("CHECK QUESTS START");
+            var questsInProgress = GetQuestsInProgress(playerData.QuestData, QuestType.Alliance);
+            foreach (var quest in questsInProgress)
+            {
+                var initialData = JsonConvert.DeserializeObject<QuestGroupTechnologyData>(quest.InitialData);
+                if ((initialData == null) || (initialData.GroupTechnologyType != groupTechnologyType)) return;
+
+//                if ((initialData.Level == 0) || (level == initialData.Level))
+                {
+                    QuestGroupTechnologyData progressData;
+                    if (!string.IsNullOrEmpty(quest.ProgressData))
+                    {
+                        progressData = JsonConvert.DeserializeObject<QuestGroupTechnologyData>(quest.ProgressData);
+                    }
+                    else
+                    {
+                        progressData = initialData;
+//                        progressData.Count = 0;
+                    }
+//                    progressData.Count += count;
+                    if (progressData.Count >= initialData.Count)
+                    {
+                        progressData.Count = initialData.Count;
+//                        quest.Completed = true;
+                        await CheckQuestProgressGroupTechnologyAsync(playerData, quest, initialData, progressData);
+                    }
+                    else
+                    {
+                        var progress = JsonConvert.SerializeObject(progressData);
+                        if (quest.UserData != null)
+                        {
+                            quest.UserData.ProgressData = progress;
+//                            CheckQuestProgress(data , quest);
+                            await UpdateQuestDataAsync(playerData, quest.UserData);
+                        }
+                        else
+                        {
+                            await SaveQuestDataAsync(playerData, quest.QuestId, progress);
+                        }
+                    }
+                }
+            }
+            log.Info("CHECK QUESTS END");
         }
 
         public List<UserQuestProgressData> GetQuestsInProgress(UserChapterAllQuestProgress userQuests, QuestType questType)
@@ -1032,6 +1221,43 @@ namespace GameOfRevenge.Business.Manager.UserData
                     {
                         //                            currentQuest.ProgressData = currentQuest.InitialData;
                         if (progressData.Iteration > 0) progressData.Iteration--;
+                        progressData.Count = 0;
+
+                        var progress = JsonConvert.SerializeObject(progressData);
+                        if (quest.UserData != null)
+                        {
+                            quest.UserData.ProgressData = progress;
+                            quest.UserData.Completed = true;
+
+                            await UpdateQuestDataAsync(data, quest.UserData);
+                        }
+                        else
+                        {
+                            await SaveQuestDataAsync(data, quest.QuestId, progress);
+                        }
+                    }
+                }
+            }
+            catch { }
+        }
+
+        private async Task CheckQuestProgressGroupTechnologyAsync(PlayerUserQuestData data, UserQuestProgressData quest, QuestGroupTechnologyData initialData = null, QuestGroupTechnologyData progressData = null)
+        {
+            var showLog = true;// data.UserData.IsAdmin;
+
+            if (showLog) System.Console.WriteLine("check group technology");
+//            if (string.IsNullOrEmpty(quest.ProgressData)) return;
+
+            try
+            {
+                if (progressData == null) progressData = JsonConvert.DeserializeObject<QuestGroupTechnologyData>(quest.ProgressData);
+                if (progressData != null)
+                {
+                    if (initialData == null) initialData = JsonConvert.DeserializeObject<QuestGroupTechnologyData>(quest.InitialData);
+                    if (progressData.Count >= initialData.Count)
+                    {
+                        //                            currentQuest.ProgressData = currentQuest.InitialData;
+//                        if (progressData.Iteration > 0) progressData.Iteration--;
                         progressData.Count = 0;
 
                         var progress = JsonConvert.SerializeObject(progressData);

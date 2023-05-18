@@ -15,11 +15,13 @@ using GameOfRevenge.Model;
 using GameOfRevenge.Common.Interface;
 using GameOfRevenge.Business.Manager;
 using GameOfRevenge.Business.CacheData;
+using GameOfRevenge.Business.Manager.UserData;
 using GameOfRevenge.Buildings.Handlers;
 using GameOfRevenge.Buildings.Interface;
 using GameOfRevenge.Common.Models;
 using GameOfRevenge.Common.Models.PlayerData;
 using GameOfRevenge.Common.Models.Quest;
+using GameOfRevenge.Common.Models.Quest.Template;
 using GameOfRevenge.Common.Services;
 
 namespace GameOfRevenge.GameHandlers
@@ -29,6 +31,8 @@ namespace GameOfRevenge.GameHandlers
         public static readonly ILogger log = LogManager.GetCurrentClassLogger();
 
         public IWorld GridWorld => GameService.WorldHandler.DefaultWorld;
+
+        private readonly IUserQuestManager questManager = new UserQuestManager();
 
         public async Task<SendResult> OnLobbyMessageRecived(IGorMmoPeer peer, OperationRequest operationRequest, SendParameters sendParameters)
         {
@@ -281,6 +285,8 @@ namespace GameOfRevenge.GameHandlers
                 var data = response.GetDictionary();
                 GameLobbyHandler.log.Info(">>>>>data =" + data);
 
+                await CompleteCustomTaskQuest(peer.Actor.PlayerId, CustomTaskType.SendGlobalChat);
+
                 return peer.Broadcast(OperationCode.GlobalChat, ReturnCode.OK, data);
             }
 
@@ -377,6 +383,7 @@ namespace GameOfRevenge.GameHandlers
             log.Info("============== HandleRecruitToopRequest >" + JsonConvert.SerializeObject(operation));
             if (!operation.IsValid)
             {
+                log.Info("INVALID OPERATION : " + operation.GetErrorMessage());
                 return SendOperationResponse(peer, operationRequest, new Response(CaseType.Error, operation.GetErrorMessage()));
             }
 
@@ -385,8 +392,9 @@ namespace GameOfRevenge.GameHandlers
             var troopCount = operation.TroopCount;
             var locationId = operation.LocationId;
             var resp = await GameService.BUsertroopManager.TrainTroops(peer.Actor.PlayerId, troopType, troopLevel, troopCount, locationId);
-            if (!resp.IsSuccess || !resp.HasData)
+            if (!resp.IsSuccess)
             {
+                log.Info("TRAIN TROOP FAIL " + resp.Message);
                 return SendOperationResponse(peer, operationRequest, resp);
             }
 
@@ -582,7 +590,11 @@ namespace GameOfRevenge.GameHandlers
             if (operation.IsValid)
             {
                 var success = await peer.Actor.PlayerAttackHandler.AttackRequestAsync(operation);
-                return success? SendResult.Ok : SendResult.Failed;
+                if (!success) return SendResult.Failed;
+
+                await CompleteCustomTaskQuest(peer.Actor.PlayerId, CustomTaskType.AttackPlayer);
+
+                return SendResult.Ok;
             }
             if (errMsg == null) errMsg = operation.GetErrorMessage();
 
@@ -870,9 +882,16 @@ namespace GameOfRevenge.GameHandlers
             log.Debug("@@@@@@@ HANDLE UPGRADE STRUCTURE REQUEST FROM " + peer.Actor.PlayerId);
 
             var operation = new UpgradeStructureRequest(peer.Protocol, operationRequest);
-            if (!operation.IsValid) return peer.SendOperation(operationRequest.OperationCode, ReturnCode.InvalidOperation, debuMsg: operation.GetErrorMessage());
+            if (!operation.IsValid)
+            {
+                return peer.SendOperation(operationRequest.OperationCode, ReturnCode.InvalidOperation, debuMsg: operation.GetErrorMessage());
+            }
 
-            var success = GameService.GameBuildingManagerInstances[(StructureType)operation.StructureType].UpgradeStructureForPlayer(operation, peer.Actor);
+            var success = false;
+            if (GameService.GameBuildingManagerInstances.ContainsKey((StructureType)operation.StructureType))
+            {
+                success = GameService.GameBuildingManagerInstances[(StructureType)operation.StructureType].UpgradeStructureForPlayer(operation, peer.Actor);
+            }
             log.Debug(success ? "@@@@ UPGRADE OK!!" : "@@@@ UPGRADE FAIL!");
 
             if (success) await GameService.RealTimeUpdateManagerQuestValidator.PlayerDataChanged(peer.Actor.PlayerId);
@@ -931,6 +950,41 @@ namespace GameOfRevenge.GameHandlers
             return peer.SendOperation(operationRequest.OperationCode, ReturnCode.OK, dic, debuMsg: playerStructData.Message);
         }
 
+        private async Task<bool> CompleteCustomTaskQuest(int playerId, CustomTaskType taskType)
+        {
+            var quests = CacheQuestDataManager.AllQuestRewards
+                                .Where(x => (x.Quest.QuestType == QuestType.Custom))?.ToList();
+            if (quests == null) return false;
+
+            var questUpdated = false;
+            List<PlayerQuestDataTable> allUserQuests = null;
+            foreach (var quest in quests)
+            {
+                QuestCustomData questData = null;
+                try
+                {
+                    questData = JsonConvert.DeserializeObject<QuestCustomData>(quest.Quest.DataString);
+                }
+                catch { }
+                if ((questData == null) || (questData.CustomTaskType != taskType)) continue;
+
+                if (allUserQuests == null)
+                {
+                    var response = await questManager.GetAllQuestProgress(playerId);
+                    if (response.IsSuccess && response.HasData) allUserQuests = response.Data;
+                    else break;
+                }
+                var userQuest = allUserQuests.Find(x => (x.QuestId == quest.Quest.QuestId));
+                if ((userQuest == null) || !userQuest.Completed)
+                {
+                    string initialString = (userQuest == null) ? quest.Quest.DataString : null;
+                    var resp = await questManager.UpdateQuestData(playerId, quest.Quest.QuestId, true, initialString);
+                    if (resp.IsSuccess) questUpdated = true;
+                }
+            }
+
+            return questUpdated;
+        }
 
         private void SendBuildingCompleteToBuild(IGorMmoPeer peer, StructureType type, int currentLevel, int location)
         {

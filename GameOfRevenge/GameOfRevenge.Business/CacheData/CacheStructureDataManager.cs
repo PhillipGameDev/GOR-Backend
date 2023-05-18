@@ -270,7 +270,7 @@ namespace GameOfRevenge.Business.CacheData
             switch (type)
             {
                 case StructureType.CityCounsel: return new List<string>() { "Level", "Power" };
-                case StructureType.Gate: return new List<string>() { "Level", "Traps", "Defence" };
+                case StructureType.Gate: return new List<string>() { "Level", "Traps", "Defense" };
                 case StructureType.WatchTower: return new List<string>() { "Level", "Spying" };
                 case StructureType.Blacksmith: return new List<string>() { "Level" };
                 case StructureType.Embassy: return new List<string>() { "Level" };
@@ -281,7 +281,7 @@ namespace GameOfRevenge.Business.CacheData
                 case StructureType.Sawmill: return new List<string>() { "Level", "Hourly Yeild", "Capacity", "Total Collect" };
                 case StructureType.Mine: return new List<string>() { "Level", "Hourly Yeild", "Capacity", "Total Collect" };
 
-                case StructureType.InfantryCamp: return new List<string>() { "Level", "Population", "Traning Speed" };
+                case StructureType.InfantryCamp: return new List<string>() { "Level", "Population", "Training Speed" };
                 case StructureType.Infirmary: return new List<string>() { "Level", "Wounded Capacity" };
 
                 case StructureType.Barracks:
@@ -289,7 +289,7 @@ namespace GameOfRevenge.Business.CacheData
                 case StructureType.Stable:
                 case StructureType.Workshop: return new List<string>() { "Level", "Troop", "Health", "Attack" };
 
-                case StructureType.Market: return new List<string>() { "Level", "Max caravan Load" };
+                case StructureType.Market: return new List<string>() { "Level", "Max Caravan Load" };
                 case StructureType.TrainingHeroes: return new List<string>() { "Level" };
 
                 default: return null;

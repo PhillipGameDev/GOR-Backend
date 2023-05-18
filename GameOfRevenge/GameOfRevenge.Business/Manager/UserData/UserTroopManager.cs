@@ -81,7 +81,7 @@ namespace GameOfRevenge.Business.Manager.UserData
                     if ((vip != null) && (vip.TimeLeft > 0))
                     {
                         var vipBoostData = CacheBoostDataManager.SpecNewBoostDatas.FirstOrDefault(x => (x.Type == (NewBoostType)VIPBoostType.VIP));
-                        var vipTech = vipBoostData.Techs.FirstOrDefault(x => (x.Tech == (NewBoostTech)VIPBoostTech.TroopHealingSpeedMultiplier));
+                        var vipTech = vipBoostData.Techs.FirstOrDefault(x => (x.Tech == (NewBoostTech)VIPBoostTech.TroopRecoverySpeedMultiplier));
                         if (vipTech != null)
                         {
                             percentage += vipTech.GetValue(vip.Level);

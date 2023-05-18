@@ -1,6 +1,6 @@
 USE [GameOfRevenge]
 GO
-/****** Object:  StoredProcedure [dbo].[GetPlayerDetailsById]    Script Date: 2/26/2023 1:58:06 AM ******/
+/****** Object:  StoredProcedure [dbo].[GetPlayerDetailsById]    Script Date: 5/18/2023 8:19:24 AM ******/
 SET ANSI_NULLS ON
 GO
 SET QUOTED_IDENTIFIER ON
@@ -18,7 +18,7 @@ BEGIN
 	DECLARE @userId INT = @PlayerId;
 
 	DECLARE @existingId INT = NULL;
-	DECLARE @name VARCHAR(1000) = NULL;
+	DECLARE @name NVARCHAR(1000) = NULL;
 	DECLARE @isAdmin BIT = NULL;
 	DECLARE @isDeveloper BIT = NULL;
 	DECLARE @kingLevel TINYINT = NULL;

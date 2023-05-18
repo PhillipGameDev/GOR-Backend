@@ -19,6 +19,9 @@ namespace GameOfRevenge.Buildings.Handlers
         protected static readonly ILogger log = LogManager.GetCurrentClassLogger();
 
         public IGameBuildingManager BaseBuilderManager { get; set; }
+        public MmoActor Player { get; private set; }
+        public StructureDetails PlayerStructureData { get; set; }
+
         public IReadOnlyStructureDataRequirement BaseStructureData
         {
             get
@@ -26,29 +29,17 @@ namespace GameOfRevenge.Buildings.Handlers
                 return BaseBuilderManager.CacheBuildingData.GetStructureLevelById(CurrentLevel);
             }
         }
-        public MmoActor Player { get; private set; }
-
-
-        public StructureDetails PlayerStructureData { get; set; }
-        public StructureType StructureType { get; private set; }//=> BaseBuilderManager.//PlayerStructureData.ValueId;
-
-//        public StructureDetails StructureDetails => PlayerStructureData.Value[0];
-
-        public int CurrentLevel => PlayerStructureData.Level;
+        public int CurrentLevel => PlayerStructureData.CurrentLevel;
         public int Location => PlayerStructureData.Location;
-
-//        public int StructureId => PlayerStructureData.StructureId;
-
         public bool IsConstructing => (PlayerStructureData.TimeLeft > 0);
+        public StructureType StructureType => BaseBuilderManager.CacheBuildingData.Info.Code;
 
-        public Dictionary<TroopType, ITroop> Troops { get; set; }
+        public Dictionary<TroopType, ITroop> Troops { get; set; } = new Dictionary<TroopType, ITroop>();
 
         public PlayerBuildingManager(MmoActor player, StructureDetails structureData, IGameBuildingManager buildingManager)
         {
-            Troops = new Dictionary<TroopType, ITroop>();
-
-            Player = player;
             BaseBuilderManager = buildingManager;
+            Player = player;
             PlayerStructureData = structureData;
             log.Info("data =>>> " + Newtonsoft.Json.JsonConvert.SerializeObject(structureData));
             try
@@ -79,10 +70,12 @@ namespace GameOfRevenge.Buildings.Handlers
 
         public bool HasAvailableRequirement(IReadOnlyDataRequirement values)
         {
+            var reqLvl = values.Value;
             log.InfoFormat("check structure level is available structureData {0} reuirmentLevel {1} ",
-                JsonConvert.SerializeObject(PlayerStructureData), values.Value);
-            return (PlayerStructureData.Level >= values.Value) && ((CurrentLevel == values.Value && !IsConstructing) || CurrentLevel != values.Value);
-//            return PlayerStructureData.(d => d.Level >= values.Value) && ((CurrentLevel == values.Value && !IsConstructing) || CurrentLevel != values.Value);
+                JsonConvert.SerializeObject(PlayerStructureData), reqLvl);
+            return CurrentLevel >= reqLvl;
+//            return (PlayerStructureData.Level >= reqLvl) && ((CurrentLevel == reqLvl && !IsConstructing) || CurrentLevel != reqLvl);
+//            return PlayerStructureData.(d => d.Level >= reqLvl) && ((CurrentLevel == reqLvl && !IsConstructing) || CurrentLevel != reqLvl);
         }
 
         public void AddBuildingUpgrading(StructureDetails data)

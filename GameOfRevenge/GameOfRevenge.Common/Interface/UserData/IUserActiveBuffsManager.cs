@@ -11,7 +11,7 @@ namespace GameOfRevenge.Common.Interface.UserData
     {
         Task<Response<List<UserRecordNewBoost>>> GetAllPlayerActiveBoostData(int playerId);
 
-        Task<Response<BoostActivatedResponse>> ActivateBoost(int playerId, NewBoostType type);
+        Task<Response<BoostActivatedResponse>> ActivateBoost(int playerId, CityBoostType type, int seconds, int gems);
         Task<Response<UserBoostData>> RemoveBoost(int playerId, NewBoostType itemId);
         Task<Response<UserBoostData>> RemoveBoost(int playerId, NewBoostType itemId, int count);
     }

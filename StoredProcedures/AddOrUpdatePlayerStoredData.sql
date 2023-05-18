@@ -98,14 +98,11 @@ BEGIN
                         BEGIN
                             IF (@prevStoredId IS NULL)
                                 BEGIN
-                                    SET NOCOUNT ON;
-
                                     INSERT INTO [dbo].[StoredData]
-                                    OUTPUT INSERTED.StoredDataId
+                                    OUTPUT INSERTED.* INTO @tempDataTable
                                     VALUES (@vPlayerId, @vPlaceId, @dTypeId, @vValId, @val);
 
                                     SET @prevStoredId = SCOPE_IDENTITY();
-                                    SET NOCOUNT OFF;
                                 END
                             ELSE
                                 UPDATE [dbo].[StoredData] SET [Value] = @val WHERE [StoredDataId] = @prevStoredId;

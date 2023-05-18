@@ -151,7 +151,7 @@ namespace GameOfRevenge.GameApplication
                 switch (item.Info.Code)
                 {
                     case StructureType.Barracks:
-                        gtroops = Troops.Where(d => d.Value.TroopType == TroopType.Swordsman).ToDictionary(f => f.Key, s => s.Value);
+                        gtroops = Troops.Where(x => (x.Value.TroopType == TroopType.Swordsman)).ToDictionary(f => f.Key, s => s.Value);
                         break;
                     case StructureType.InfantryCamp:
                         gtroops = Troops;
@@ -160,10 +160,10 @@ namespace GameOfRevenge.GameApplication
                         gtroops = Troops.Where(x => (x.Value.TroopType == TroopType.Slingshot)).ToDictionary(x => x.Key, s => s.Value);
                         break;
                     case StructureType.ShootingRange:
-                        gtroops = Troops.Where(f => f.Value.TroopType == TroopType.Archer).ToDictionary(f => f.Key, s => s.Value);
+                        gtroops = Troops.Where(x => (x.Value.TroopType == TroopType.Archer)).ToDictionary(f => f.Key, s => s.Value);
                         break;
                     case StructureType.Stable:
-                        gtroops = Troops.Where(f => f.Value.TroopType == TroopType.Knight).ToDictionary(f => f.Key, s => s.Value);
+                        gtroops = Troops.Where(x => (x.Value.TroopType == TroopType.Knight)).ToDictionary(f => f.Key, s => s.Value);
                         break;
                 }
 

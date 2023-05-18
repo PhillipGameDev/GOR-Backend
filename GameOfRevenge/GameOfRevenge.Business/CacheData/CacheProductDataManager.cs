@@ -31,8 +31,9 @@ namespace GameOfRevenge.Business.CacheData
 
         private static IAPProduct[] availableIAPs = new IAPProduct[]
         {
-            new IAPProduct("p_a001", "Pack 1", "Pack 1 description", null),
-            new IAPProduct("r_a001", "Resource Pack 1", "Resource Pack 1 description", null)
+            new IAPProduct("p_a001"), new IAPProduct("p_a002"), new IAPProduct("p_a003"),
+            new IAPProduct("p_a004"), new IAPProduct("p_a005"), new IAPProduct("p_a006"),
+            new IAPProduct("r_a001"), new IAPProduct("r_a002"), new IAPProduct("r_a003")
         };
 
         public static List<IAPProduct> GetIAPProducts(int playerId = 0)
@@ -120,6 +121,11 @@ namespace GameOfRevenge.Business.CacheData
         public string Name { get; private set; }
         public string Description { get; private set; }
         public IReadOnlyList<IReadOnlyDataReward> Rewards { get; private set; }
+
+        public IAPProduct(string productId)
+        {
+            ProductId = productId;
+        }
 
         public IAPProduct(string productId, string name, string description, IReadOnlyList<IReadOnlyDataReward> rewards)
         {

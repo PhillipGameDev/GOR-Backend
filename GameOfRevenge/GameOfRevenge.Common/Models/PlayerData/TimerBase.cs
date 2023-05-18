@@ -17,14 +17,14 @@ namespace GameOfRevenge.Common.Models
 
         public DateTime EndTime => StartTime.AddSeconds(Duration);
 
-        public int TimeLeft
+        public float TimeLeft
         {
             get
             {
-                int seconds = 0;
+                float seconds = 0;
                 if (Duration > 0)
                 {
-                    seconds = Duration - (int)(DateTime.UtcNow - StartTime.ToUniversalTime()).TotalSeconds;
+                    seconds = Duration - (float)(DateTime.UtcNow - StartTime.ToUniversalTime()).TotalSeconds;
                     if (seconds < 0) seconds = 0;
                 }
 

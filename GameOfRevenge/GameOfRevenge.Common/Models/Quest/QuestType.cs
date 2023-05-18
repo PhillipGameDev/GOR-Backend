@@ -17,7 +17,9 @@
 
         Custom = 8,
 
-        Account = 9
+        Account = 9,
+        Alliance = 10,
+        ResearchTechnology = 11
 //      MarketQuest
 //        Custom = 11
     }

@@ -7,11 +7,13 @@ using GameOfRevenge.Common.Models.Structure;
 using GameOfRevenge.GameHandlers;
 using GameOfRevenge.Model;
 using GameOfRevenge.Troops;
+using Newtonsoft.Json;
 
 namespace GameOfRevenge.Buildings.Interface
 {
     public interface IPlayerBuildingManager 
     {
+        [JsonIgnore]
         MmoActor Player { get; }
         //TODO: we should remove userstructuredata, this implementation store all the user
         //structure data of this type. We should just store the data for this building

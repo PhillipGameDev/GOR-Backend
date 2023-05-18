@@ -592,7 +592,7 @@ namespace GameOfRevenge.Business.Manager.UserData
             var spParams = new Dictionary<string, object>()
             {
                 { "PlayerId", playerId },
-                { "locationId", locationId },
+                { "LocationId", locationId },
                 { "DataTypeId", DataType.Resource },
                 { "ValueId", valueId },
                 { "Value", value }

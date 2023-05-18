@@ -130,6 +130,7 @@ namespace GameOfRevenge.GameHandlers
 
         public void AddTroopOnPlayerBuilding(UserTroopData troops)
         {
+            log.Info("AddTroopOnPlayerBuilding: "+JsonConvert.SerializeObject(troops));
             if (troops == null)
             {
 #if DEBUG
@@ -150,6 +151,12 @@ namespace GameOfRevenge.GameHandlers
 #if DEBUG
                         log.InfoFormat("User building not found {0} ", JsonConvert.SerializeObject(trainer));
 #endif
+                    }
+
+                    if (!GameService.GameBuildingManagerInstances.ContainsKey(building.StructureType))
+                    {
+                        log.Info("STRUCTURE NOT SUPPORTED> "+building.StructureType.ToString()+" (loc="+trainer.BuildingLocId+")");
+                        continue;
                     }
 
                     var bldManager = GameService.GameBuildingManagerInstances[building.StructureType];
@@ -218,22 +225,13 @@ namespace GameOfRevenge.GameHandlers
 //                log.Info("multiBuildings ok = "+(multipleBuildings != null));
                 foreach (var structure in structureDetails)
                 {
-                    log.Info("get " + structureType.ToString());
-                    IGameBuildingManager gameBuilding = null;
-                    try
+                    if (!GameService.GameBuildingManagerInstances.ContainsKey(structureType))
                     {
-                        gameBuilding = GameService.GameBuildingManagerInstances[structureType];
+                        log.Info("STRUCTURE NOT SUPPORTED: " + structureType.ToString());
+                        continue;
                     }
-                    catch (Exception exx)
-                    {
-                        log.Info(""+exx.Message);
-//                        foreach(var man in GameService.GameBuildingManagerInstances)
-//                        {
-//                            log.Info("key = " + man.Key + "  "+Newtonsoft.Json.JsonConvert.SerializeObject(man.Value));
-//                        }
-//                        log.Info("----");
-                        throw exx;
-                    }
+
+                    var gameBuilding = GameService.GameBuildingManagerInstances[structureType];
 /*                    foreach (var dicval in GameService.GameBuildingManagerInstances)
                     {
                         log.Info("  "+dicval.Key.ToString()+"  val="+(dicval.Value != null));
@@ -264,18 +262,15 @@ namespace GameOfRevenge.GameHandlers
             {
                 log.Info("new list of structures "+structureType.ToString());
                 PlayerBuildings.Add(structureType, new List<IPlayerBuildingManager>());
-                log.Info("ok");
             }
             var building = PlayerBuildings[structureType].Find(x => (x.Location == locationId));
             if (building != null)
             {
-                log.Info("set structure data");
+                log.Info("set structure data for location "+locationId);
                 building.SetStructureData(structure);
-                log.Info("end");
                 return;
             }
 
-            log.Info("manager not exist, generate... ");
             IPlayerBuildingManager plyBuilding = null;
             switch (structureType)
             {
@@ -302,16 +297,10 @@ namespace GameOfRevenge.GameHandlers
             if (plyBuilding != null)
             {
 #if DEBUG
-                log.Info($"Add New Structure On Player Account {structureType} at Location {locationId}");
+                log.Info($"Added New Structure {structureType} at Location {locationId}");
 #endif
                 PlayerBuildings[structureType].Add(plyBuilding);
             }
-#if DEBUG
-            else
-            {
-                log.Info($"Structure manager not required for {structureType} at Location {locationId}");
-            }
-#endif
         }
 
         public (bool succ, string msg) CheckRequirementsAndUpdateValues(IReadOnlyList<IReadOnlyDataRequirement> requirements)
@@ -372,9 +361,11 @@ namespace GameOfRevenge.GameHandlers
 
             foreach (var buildings in this.PlayerBuildings)
             {
-                var building = buildings.Value.FirstOrDefault(x => (x.Location == location));
+                var building = buildings.Value.Find(x => (x.Location == location));
                 if (building == null) continue;
 
+//                log.Info("found bld at location "+location+"  bld="+JsonConvert.SerializeObject(building));
+//                log.Info("raw data = " + JsonConvert.SerializeObject(buildings.Value));
                 resp = building;
                 break;
             }

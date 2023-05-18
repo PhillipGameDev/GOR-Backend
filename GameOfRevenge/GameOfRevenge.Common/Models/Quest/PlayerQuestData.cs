@@ -90,8 +90,8 @@ namespace GameOfRevenge.Common.Models.Quest
             {
                 switch (questType)
                 {
-                    case QuestType.BuildingUpgrade:
-                    case QuestType.XBuildingCount:
+                    case QuestType.BuildingUpgrade://1
+                    case QuestType.XBuildingCount://2
                         var data1 = JsonConvert.DeserializeObject<QuestBuildingData>(initialData);
                         string format = null;
                         if (questType == QuestType.BuildingUpgrade)
@@ -100,15 +100,17 @@ namespace GameOfRevenge.Common.Models.Quest
                         }
                         else
                         {
-                            format = "Have {0:n0} {1}";
+                            format = "Have {0:N0} {1}";
                         }
-                        name = string.Format(format, data1.Count, data1.StructureType, data1.Level);
+                        var bldStr = data1.StructureType.ToString();
+                        name = string.Format(format, data1.Count, bldStr, data1.Level);
                         break;
-                    case QuestType.ResourceCollection:
+                    case QuestType.ResourceCollection://3
                         var data2 = JsonConvert.DeserializeObject<QuestResourceData>(initialData);
                         string format2 = null;
-                        format2 = (data2.Iteration > 0)? "Collect {1}" : "Collect {0:n0} {1}";
-                        name = string.Format(format2, data2.Count, data2.ResourceType);
+                        format2 = (data2.Iteration > 0)? "Collect {1}" : "Collect {0:N0} {1}";
+                        var resStr = data2.ResourceType.ToString();
+                        name = string.Format(format2, data2.Count, resStr);
                         var iteration2 = 0;
                         if (progressData != null)
                         {
@@ -121,19 +123,20 @@ namespace GameOfRevenge.Common.Models.Quest
                         }
                         if (iteration2 > 1) name += $" ({iteration2})";
                         break;
-                    case QuestType.TrainTroops:
-                    case QuestType.XTroopCount:
+                    case QuestType.TrainTroops://4
+                    case QuestType.XTroopCount://5
                         var data3 = JsonConvert.DeserializeObject<QuestTroopData>(initialData);
                         string format3 = null;
                         if (questType == QuestType.TrainTroops)
                         {
-                            format3 = (data3.Level > 0) ? "Train {0:n0} {1} Lvl.{2}" : "Train {0:n0} {1}";
+                            format3 = (data3.Level > 0) ? "Train {0:N0} {1} {2}" : "Train {0:N0} {1}";
                         }
                         else
                         {
-                            format3 = "Have {0:n0} {1}";
+                            format3 = "Have {0:N0} {1}";
                         }
-                        name = string.Format(format3, data3.Count, data3.TroopType, data3.Level);
+                        var troopStr = data3.TroopType.ToString();
+                        name = string.Format(format3, data3.Count, troopStr, ("Lvl." + data3.Level));
                         var iteration3 = 0;
                         if (progressData != null)
                         {
@@ -146,25 +149,50 @@ namespace GameOfRevenge.Common.Models.Quest
                         }
                         if (iteration3 > 1) name += $" ({iteration3})";
                         break;
-                    case QuestType.Account:
-                        var data4 = JsonConvert.DeserializeObject<QuestAccountData>(initialData);
-                        switch (data4.AccountTaskType)
-                        {
-                            case AccountTaskType.SignIn: name = "Sign In 1 time"; break;
-                            case AccountTaskType.ChangeName: name = "Change user name"; break;
-                        }
-                        break;
-                    case QuestType.TrainHero:
-                    case QuestType.XHeroCount:
-                        var data5 = JsonConvert.DeserializeObject<QuestTroopData>(initialData);
+                    case QuestType.TrainHero://6
+                    case QuestType.XHeroCount://7
+                        var data4 = JsonConvert.DeserializeObject<QuestTroopData>(initialData);
                         if (questType == QuestType.TrainHero)
                         {
-                            name = string.Format("Train {0:n0} {1} {2}", data5.Count, data5.TroopType, data5.Level);
+                            name = string.Format("Train {0:N0} {1} {2}", data4.Count, data4.TroopType, data4.Level);
                         }
                         else
                         {
-                            name = string.Format("Have {0:n0} {1}", data5.Count, data5.TroopType);
+                            name = string.Format("Have {0:N0} {1}", data4.Count, data4.TroopType);
                         }
+                        break;
+                    case QuestType.Custom://8
+                        var data5 = JsonConvert.DeserializeObject<QuestCustomData>(initialData);
+                        switch (data5.CustomTaskType)
+                        {
+                            case CustomTaskType.SendGlobalChat: name = "Send global chat"; break;
+                            case CustomTaskType.AttackPlayer: name = "Attack enemy player"; break;
+                        }
+                        break;
+                    case QuestType.Account://9
+                        var data6 = JsonConvert.DeserializeObject<QuestAccountData>(initialData);
+                        switch (data6.AccountTaskType)
+                        {
+                            case AccountTaskType.SignIn: name = "Daily Sign In"; break;
+                            case AccountTaskType.ChangeName: name = "Change username"; break;
+                        }
+                        break;
+                    case QuestType.Alliance://10
+                        var data7 = JsonConvert.DeserializeObject<QuestAllianceData>(initialData);
+                        switch (data7.AllianceTaskType)
+                        {
+                            case AllianceTaskType.JoinOrCreate: name = "Join or create an alliance"; break;
+                        }
+                        break;
+                    case QuestType.ResearchTechnology://11
+                        var data8 = JsonConvert.DeserializeObject<QuestGroupTechnologyData>(initialData);
+                        switch (data8.GroupTechnologyType)
+                        {
+                            case GroupTechnologyType.KingdomTechnologies: name = "Research kingdom technology {0:N0} times"; break;
+                            case GroupTechnologyType.AttackTechnologies: name = "Research attack technology {0:N0} times"; break;
+                            case GroupTechnologyType.DefenseTechnologies: name = "Research defense technology {0:N0} times"; break;
+                        }
+                        name = string.Format(name, data8.Count);
                         break;
                 }
             }

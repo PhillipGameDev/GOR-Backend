@@ -36,8 +36,15 @@ namespace GameOfRevenge.Buildings.Handlers
 
         public void RecruitTroops(RecruitTroopRequest request, MmoActor actor)
         {
-            if (Troops.ContainsKey((TroopType)request.TroopType)) Troops[(TroopType)request.TroopType].TroopTraining(request, actor);
-            else actor.Peer.SendOperation(OperationCode.RecruitTroopRequest, ReturnCode.Failed, null, "Troops not found in game building.");
+            if (Troops.ContainsKey((TroopType)request.TroopType))
+            {
+                Troops[(TroopType)request.TroopType].TroopTraining(request, actor);
+            }
+            else
+            {
+                var msg = "Troops not found in game building.";
+                actor.Peer.SendOperation(OperationCode.RecruitTroopRequest, ReturnCode.Failed, null, msg);
+            }
         }
 
         public void CreateStructureForPlayer(CreateStructureRequest request, MmoActor actor)
@@ -85,67 +92,54 @@ namespace GameOfRevenge.Buildings.Handlers
             log.InfoFormat("Upgrade Structure Request CurrentBuilding {0} Data {1} ", this.CacheBuildingData.Info.Code.ToString(),
                 JsonConvert.SerializeObject(request));
 #endif
-            bool success = true;
-            var buildings = actor.InternalPlayerDataManager.PlayerBuildings;
-            if (buildings.ContainsKey((this.StructureType)))
+            bool success = false;
+            var locationId = request.StructureLocationId;
+            var building = actor.InternalPlayerDataManager.GetPlayerBuilding(StructureType, locationId);
+            if (building != null)
             {
-                var locationId = request.StructureLocationId;
-                var building = buildings[this.StructureType].Find(d => (d.Location == locationId));
-                if (building != null)
+                if (!building.IsConstructing)
                 {
-                    if (!building.IsConstructing)
-                    {
-                        int upgradeLevel = building.CurrentLevel + 1;
+                    int upgradeLevel = building.CurrentLevel + 1;
 #if DEBUG
-                        log.InfoFormat("Upgrade Structure Request Upgrade Level {0} ", upgradeLevel);
+                    log.InfoFormat("Upgrade Structure Request Level {0} ", upgradeLevel);
 #endif
-                        var structureData = CacheBuildingData.GetStructureLevelById(upgradeLevel);
-                        if (structureData != null)
+                    var structureData = CacheBuildingData.GetStructureLevelById(upgradeLevel);
+                    if (structureData != null)
+                    {
+                        var response = CreateOrUpgradeStructure(actor, structureData.Requirements, locationId, true);
+                        if (response.IsSuccess)
                         {
-                            var response = CreateOrUpgradeStructure(actor, structureData.Requirements, locationId, true);
-                            if (response.IsSuccess)
+                            var obj = new StructureCreateUpgradeResponse
                             {
-                                var obj = new StructureCreateUpgradeResponse
-                                {
-                                    StructureLocationId = locationId,
-                                    StructureType = request.StructureType,
-                                    StructureLevel = upgradeLevel
-                                };
+                                StructureLocationId = locationId,
+                                StructureType = request.StructureType,
+                                StructureLevel = upgradeLevel
+                            };
 
-                                actor.Peer.SendOperation(OperationCode.UpgradeStructure, ReturnCode.OK, obj.GetDictionary());
-                            }
-                            else
-                            {
-                                actor.Peer.SendOperation(OperationCode.UpgradeStructure, ReturnCode.Failed, debuMsg: response.Message);
-                                success = false;
-                            }
+                            actor.Peer.SendOperation(OperationCode.UpgradeStructure, ReturnCode.OK, obj.GetDictionary());
+                            success = true;
                         }
                         else
                         {
-                            var dbgMsg = "Structure data not found.";
-                            actor.Peer.SendOperation(OperationCode.UpgradeStructure, ReturnCode.Failed, debuMsg: dbgMsg);
-                            success = false;
+                            actor.Peer.SendOperation(OperationCode.UpgradeStructure, ReturnCode.Failed, debuMsg: response.Message);
                         }
                     }
                     else
                     {
-                        var dbgMsg = "Building is already in constructing mode for current level. please try after some time.";
+                        var dbgMsg = "Structure data not found.";
                         actor.Peer.SendOperation(OperationCode.UpgradeStructure, ReturnCode.Failed, debuMsg: dbgMsg);
-                        success = false;
                     }
                 }
                 else
                 {
-                    var dbgMsg = "Structure not found.";
+                    var dbgMsg = "Building is already in constructing mode for current level. please try after some time.";
                     actor.Peer.SendOperation(OperationCode.UpgradeStructure, ReturnCode.Failed, debuMsg: dbgMsg);
-                    success = false;
                 }
             }
             else
             {
                 var dbgMsg = "Structure not found.";
                 actor.Peer.SendOperation(OperationCode.UpgradeStructure, ReturnCode.Failed, debuMsg: dbgMsg);
-                success = false;
             }
 
             return success;

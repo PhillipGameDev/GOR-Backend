@@ -11,7 +11,7 @@ namespace GameOfRevenge
             return ("popWorld", 1, bounding, tile);
         }
 
-        public const float worldArea = 500;   //(1000*1000)/10*10 = 10000; tils
+        public const float worldArea = 1000;   //(1000*1000)/10*10 = 10000; tils
         public const float tileArea = 1;
         public const float TilesIaX = 10;
         public const float TilesIaY = 10;
