@@ -25,6 +25,7 @@
 
         GlobalChat = 21,
         AllianceChat = 29,
+        DeleteChat = 32,
 
         CheckUnderAttack = 22,
 

@@ -15,8 +15,9 @@ namespace GameOfRevenge.Common.Models.Chat
             PlayerId = reader.GetValue(index) == DBNull.Value ? 0 : reader.GetInt32(index); index++;
             Username = reader.GetValue(index) == DBNull.Value ? string.Empty : reader.GetString(index); index++;
             VIPPoints = reader.GetValue(index) == DBNull.Value ? 0 : reader.GetInt32(index); index++;
-            Content = reader.GetValue(index) == DBNull.Value ? string.Empty : reader.GetString(index); index++;
-            Date = reader.GetValue(index) == DBNull.Value ? DateTime.MinValue : reader.GetDateTime(index);
+            Content = reader.GetValue(index) == DBNull.Value ? null : reader.GetString(index); index++;
+            Date = reader.GetValue(index) == DBNull.Value ? DateTime.MinValue : reader.GetDateTime(index); index++;
+            Flags = reader.GetValue(index) == DBNull.Value ? (byte)0 : reader.GetByte(index);
         }
     }
 
@@ -29,6 +30,7 @@ namespace GameOfRevenge.Common.Models.Chat
         int VIPPoints { get; }
 //        int AllianceId { get; }
         DateTime Date { get; }
+        byte Flags { get; }
     }
 
     public interface IChatEntry<T> : IChatEntry
@@ -44,6 +46,7 @@ namespace GameOfRevenge.Common.Models.Chat
         public int VIPPoints { get; set; }
 //        public int AllianceId { get; set; }
         public DateTime Date { get; set; }
+        public byte Flags { get; set; }
         public T Content { get; set; }
 
         public ChatEntry()
@@ -63,11 +66,18 @@ namespace GameOfRevenge.Common.Models.Chat
         public List<ChatMessage> Messages;
     }
 
+    [DataContract]
     public class ChatMessage
     {
+        [DataMember]
         public long ChatId { get; set; }
+        [DataMember]
         public int PlayerId { get; set; }
+        [DataMember]
         public DateTime Date { get; set; }
+        [DataMember(EmitDefaultValue = false)]
+        public byte Flags { get; set; }
+        [DataMember(EmitDefaultValue = false)]
         public string Content { get; set; }
     }
 

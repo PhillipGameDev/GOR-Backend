@@ -23,6 +23,7 @@ using GameOfRevenge.Common.Models.PlayerData;
 using GameOfRevenge.Common.Models.Quest;
 using GameOfRevenge.Common.Models.Quest.Template;
 using GameOfRevenge.Common.Services;
+using System.Text.RegularExpressions;
 
 namespace GameOfRevenge.GameHandlers
 {
@@ -33,6 +34,14 @@ namespace GameOfRevenge.GameHandlers
         public IWorld GridWorld => GameService.WorldHandler.DefaultWorld;
 
         private readonly IUserQuestManager questManager = new UserQuestManager();
+
+        private readonly string[][] badWords = new string[][]{
+new string[]{
+"anal","anus","arse","ass","balls","ballsack","bastard","biatch","bitch","bloody","blow job","blowjob","bollock","bollok","boner","boob","bugger","bum","butt","buttplug","clitoris","cock","coon","crap","cunt","damn","dick","dildo","dyke","f u c k","fag","feck","felching","fellate","fellatio","flange","fuck","fudge packer","fudgepacker","God damn","Goddamn","hell","homo","jerk","jizz","knob end","knobend","labia","lmao","lmfao","muff","nigga","nigger","omg","penis","piss","poop","prick","pube","pussy","queer","s hit","scrotum","sex","sh1t","shit","slut","smegma","spunk","tit","tosser","turd","twat","vagina","wank","whore","wtf"
+},
+new string[]{
+"سكس","طيز","شرج","لعق","لحس","مص","تمص","بيضان","ثدي","بز","بزاز","حلمة","مفلقسة","بظر","كس","فرج","شهوة","شاذ","مبادل","عاهرة","جماع","قضيب","زب","لوطي","لواط","سحاق","سحاقية","اغتصاب","خنثي","احتلام","نيك","متناك","متناكة","شرموطة","عرص","خول","قحبة","لبوة"
+}};
 
         public async Task<SendResult> OnLobbyMessageRecived(IGorMmoPeer peer, OperationRequest operationRequest, SendParameters sendParameters)
         {
@@ -61,8 +70,11 @@ namespace GameOfRevenge.GameHandlers
                     case OperationCode.UpgradeTechnology: return UpgradeTechnologyRequest(peer, operationRequest);//18
                     case OperationCode.RepairGate: return RepairGateRequest(peer, operationRequest);//19
                     case OperationCode.GateHp: return GetGateHpRequest(peer, operationRequest);//20
+
                     case OperationCode.GlobalChat: return await GlobalChat(peer, operationRequest);//21
                     case OperationCode.AllianceChat: return AllianceChat(peer, operationRequest);//29
+                    case OperationCode.DeleteChat: return await DeleteChat(peer, operationRequest);
+
                     case OperationCode.Ping: return peer.SendOperation(operationRequest.OperationCode, ReturnCode.OK);//2
                     case OperationCode.GetInstantBuildCost: return GetInstantBuildCost(peer, operationRequest);//26
                     case OperationCode.InstantBuild: return await HandleInstantBuild(peer, operationRequest);//23
@@ -258,6 +270,32 @@ namespace GameOfRevenge.GameHandlers
             return result;
         }
 
+        private async Task<SendResult> DeleteChat(IGorMmoPeer peer, OperationRequest operationRequest)
+        {
+            GameLobbyHandler.log.Info(">>>>>DELETE CHAT");
+            var operation = new DeleteChatMessageRequest(peer.Protocol, operationRequest);
+            if (!operation.IsValid)
+            {
+                var msg = operation.GetErrorMessage();
+                return peer.SendOperation(operationRequest.OperationCode, ReturnCode.InvalidOperation, debuMsg: msg);
+            }
+
+            var resp = await GameService.BChatManager.DeleteMessage(peer.Actor.PlayerId, operation.ChatId);
+            if (!resp.IsSuccess || !resp.HasData)
+            {
+                var dbgMsg = "Failed to delete message";
+                return peer.SendOperation(operationRequest.OperationCode, ReturnCode.Failed, debuMsg: dbgMsg);
+            }
+
+            var obj = new DeleteChatMessageRespose()
+            {
+                ChatId = operation.ChatId,
+                Flags = resp.Data.Flags
+            };
+
+            return peer.Broadcast(operationRequest.OperationCode, ReturnCode.OK, obj.GetDictionary());
+        }
+
         private async Task<SendResult> GlobalChat(IGorMmoPeer peer, OperationRequest operationRequest)
         {
             GameLobbyHandler.log.Info(">>>>>GLOBAL CHAT");
@@ -268,7 +306,20 @@ namespace GameOfRevenge.GameHandlers
                 return peer.SendOperation(operationRequest.OperationCode, ReturnCode.InvalidOperation, debuMsg: msg);
             }
 
-            var resp = await GameService.BChatManager.CreateMessage(peer.Actor.PlayerId, operation.ChatMessage);
+            var message = operation.ChatMessage;
+            foreach (var group in badWords)
+            {
+                foreach (var word in group)
+                {
+                    string pattern = @"\b" + Regex.Escape(word) + @"\b";
+                    if (Regex.IsMatch(message, pattern, RegexOptions.IgnoreCase))
+                    {
+                        message = Regex.Replace(message, pattern, new string('*', word.Length), RegexOptions.IgnoreCase);
+                    }
+                }
+            }
+
+            var resp = await GameService.BChatManager.CreateMessage(peer.Actor.PlayerId, message);
             GameLobbyHandler.log.Info("success = "+resp.IsSuccess+"  "+Newtonsoft.Json.JsonConvert.SerializeObject(resp.Data));
             if (resp.IsSuccess && resp.HasData)
             {
@@ -280,7 +331,7 @@ namespace GameOfRevenge.GameHandlers
                     VIPPoints = peer.Actor.PlayerData.VIPPoints,
                     AllianceId = 0,//global chat alliance is zero. //operation.AllianceId,
                     Timestamp = DateTimeOffset.Now.ToUnixTimeSeconds(), //ToString("dd/MM/yyyy HH:mm:ss"),
-                    ChatMessage = operation.ChatMessage
+                    ChatMessage = message
                 };
                 var data = response.GetDictionary();
                 GameLobbyHandler.log.Info(">>>>>data =" + data);
@@ -290,8 +341,8 @@ namespace GameOfRevenge.GameHandlers
                 return peer.Broadcast(OperationCode.GlobalChat, ReturnCode.OK, data);
             }
 
-            var msg2 = "Failed delivery message";
-            return peer.SendOperation(operationRequest.OperationCode, ReturnCode.Failed, debuMsg: msg2);
+            var dbgMsg = "Failed delivery message";
+            return peer.SendOperation(operationRequest.OperationCode, ReturnCode.Failed, debuMsg: dbgMsg);
         }
 
         private SendResult AllianceChat(IGorMmoPeer peer, OperationRequest operationRequest)

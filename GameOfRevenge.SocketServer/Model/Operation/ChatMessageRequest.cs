@@ -7,8 +7,8 @@ namespace GameOfRevenge.Model
     {
         public ChatMessageRequest(IRpcProtocol protocol, OperationRequest request) : base(protocol, request) { }
 
-        [DataMember(Code = (byte)RoomParameterKey.PlayerId, IsOptional = true)]
-        public int PlayerId { get; set; }
+//        [DataMember(Code = (byte)RoomParameterKey.PlayerId, IsOptional = true)]
+//        public int PlayerId { get; set; }
 
         [DataMember(Code = (byte)RoomParameterKey.Username, IsOptional = true)]
         public string Username { get; set; }

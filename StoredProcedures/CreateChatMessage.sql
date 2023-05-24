@@ -24,16 +24,16 @@ BEGIN
 	SELECT @name = p.[Name], @vipPoints = p.[VIPPoints] FROM [dbo].[Player] AS p WHERE p.[PlayerId] = @userId;
 
 	BEGIN TRY
-		INSERT INTO [dbo].[Chat] ([PlayerId], [Content], [CreateDate])
-		OUTPUT INSERTED.ChatId, @userId AS 'PlayerId', @name AS 'Name', @vipPoints AS 'VIPPoints', INSERTED.Content, INSERTED.CreateDate
-		VALUES (@userId, @tcontent, @time)
+		INSERT INTO [dbo].[Chat] ([PlayerId], [Content], [CreateDate], [Flags])
+		OUTPUT INSERTED.ChatId, @userId AS 'PlayerId', @name AS 'Name', @vipPoints AS 'VIPPoints', INSERTED.Content, INSERTED.CreateDate, CAST(0 AS TINYINT) AS 'Flags'
+		VALUES (@userId, @tcontent, @time, 0)
 
 		SET @case = 100;
 		SET @message = 'Saved message succesfully';
 	END TRY
 	BEGIN CATCH
 		SET @case = 200;
-		SET @message = 'Account does not exist'
+		SET @message = 'Account does not exist';
 	END CATCH
 
 	EXEC [dbo].[GetMessage] @userId, @message, @case, @error, @time, 1, 1;

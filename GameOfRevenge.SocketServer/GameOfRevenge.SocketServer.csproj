@@ -152,7 +152,7 @@
     <Compile Include="Model\OperationCode.cs" />
     <Compile Include="Model\Operation\AttackRequest.cs" />
     <Compile Include="Model\Operation\CameraMoveRequest.cs" />
-    <Compile Include="Model\Operation\ChatMessage.cs" />
+    <Compile Include="Model\Operation\ChatMessageRequest.cs" />
     <Compile Include="Model\Operation\CollectResourceRequest.cs" />
     <Compile Include="Model\Operation\CollectResourceResponse.cs" />
     <Compile Include="Model\Operation\CreateStructureRequest.cs" />
@@ -197,6 +197,8 @@
     <Compile Include="Model\Operation\ResourceBoostUpResponse.cs" />
     <Compile Include="Model\Common\AttackResponse.cs" />
     <Compile Include="Model\Common\JoinKingdomResponse.cs" />
+    <Compile Include="Model\Operation\DeleteChatMessageRequest.cs" />
+    <Compile Include="Model\Common\DeleteChatMessageRespose.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="GameOfRevenge.dll.config">

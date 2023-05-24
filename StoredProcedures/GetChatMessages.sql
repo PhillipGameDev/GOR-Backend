@@ -36,7 +36,8 @@ BEGIN
 	WHERE m.[ChatId] < @tchatId
 	ORDER BY m.[ChatId] DESC;*/
 
-	SELECT TOP (@tlen) m.[ChatId], m.[PlayerId], p.[Name], CAST(JSON_VALUE(pd.Value, '$.Points') AS INT) AS 'VIPPoints', m.[Content], m.[CreateDate] 
+	SELECT TOP (@tlen) m.[ChatId], m.[PlayerId], p.[Name], CAST(JSON_VALUE(pd.Value, '$.Points') AS INT) AS 'VIPPoints', 
+				CASE WHEN (m.[Flags] & 128) = 128 THEN NULL ELSE m.[Content] END AS 'Content', m.[CreateDate], m.[Flags] 
 	FROM [dbo].[Chat] AS m
 	INNER JOIN [dbo].[Player] AS p ON m.[PlayerId] = p.[PlayerId]
 	INNER JOIN [dbo].[PlayerData] AS pd ON m.[PlayerId] = pd.[PlayerId] 

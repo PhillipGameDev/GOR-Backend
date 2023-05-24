@@ -61,6 +61,7 @@
         HeroesData = 57,
         ResourceTotal = 58,
         WorkerId = 59,
-        SetBoost = 60
+        SetBoost = 60,
+        Flags = 61
     }
 }

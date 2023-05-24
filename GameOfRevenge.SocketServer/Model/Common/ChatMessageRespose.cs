@@ -26,5 +26,8 @@ namespace GameOfRevenge.Model
 
         [DataMember(Code = (byte)RoomParameterKey.ChatMessage, IsOptional = true)]
         public string ChatMessage { get; set; }
+
+        [DataMember(Code = (byte)RoomParameterKey.Flags, IsOptional = true)]
+        public byte Flags { get; set; }
     }
 }

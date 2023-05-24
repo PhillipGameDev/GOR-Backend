@@ -79,6 +79,7 @@ namespace GameOfRevenge.Business.Manager.Kingdom
                             ChatId = msg.ChatId,
                             PlayerId = msg.PlayerId,
                             Date = msg.Date,
+                            Flags = msg.Flags,
                             Content = msg.Content
                         });
                     }
@@ -97,6 +98,142 @@ namespace GameOfRevenge.Business.Manager.Kingdom
             catch (Exception ex)
             {
                 return new Response<ChatMessages>()
+                {
+                    Case = 0,
+                    Data = null,
+                    Message = ErrorManager.ShowError(ex)
+                };
+            }
+        }
+
+        public async Task<Response<ChatMessageFlagTable>> DeleteMessage(int playerId, long chatId)
+        {
+            try
+            {
+                var spParams = new Dictionary<string, object>()
+                {
+                    { "PlayerId", playerId },
+                    { "ChatId", chatId }
+                };
+
+                return await Db.ExecuteSPSingleRow<ChatMessageFlagTable>("DeleteChatMessage", spParams);
+            }
+            catch (InvalidModelExecption ex)
+            {
+                return new Response<ChatMessageFlagTable>()
+                {
+                    Case = 200,
+                    Data = null,
+                    Message = ex.Message
+                };
+            }
+            catch (Exception ex)
+            {
+                return new Response<ChatMessageFlagTable>()
+                {
+                    Case = 0,
+                    Data = null,
+                    Message = ErrorManager.ShowError(ex)
+                };
+            }
+        }
+
+        public async Task<Response> ReportMessage(int playerId, long chatId, byte reportType)
+        {
+            try
+            {
+                var spParams = new Dictionary<string, object>()
+                {
+                    { "PlayerId", playerId },
+                    { "ChatId", chatId },
+                    { "ReportType", reportType }
+                };
+
+                return await Db.ExecuteSPNoData("ReportChatMessage", spParams);
+            }
+            catch (InvalidModelExecption ex)
+            {
+                return new Response<ChatMessageTable>()
+                {
+                    Case = 200,
+                    Data = null,
+                    Message = ex.Message
+                };
+            }
+            catch (Exception ex)
+            {
+                return new Response<ChatMessageTable>()
+                {
+                    Case = 0,
+                    Data = null,
+                    Message = ErrorManager.ShowError(ex)
+                };
+            }
+        }
+
+        public async Task<Response> BlockPlayer(int playerId, int blockPlayerId)
+        {
+            try
+            {
+                var spParams = new Dictionary<string, object>()
+                {
+                    { "PlayerId", playerId },
+                    { "BlockPlayerId", blockPlayerId }
+                };
+
+                return await Db.ExecuteSPNoData("BlockPlayer", spParams);
+            }
+            catch (InvalidModelExecption ex)
+            {
+                return new Response<ChatMessageTable>()
+                {
+                    Case = 200,
+                    Data = null,
+                    Message = ex.Message
+                };
+            }
+            catch (Exception ex)
+            {
+                return new Response<ChatMessageTable>()
+                {
+                    Case = 0,
+                    Data = null,
+                    Message = ErrorManager.ShowError(ex)
+                };
+            }
+        }
+
+        public async Task<Response<List<int>>> GetBlockedPlayers(int playerId)
+        {
+            try
+            {
+                var spParams = new Dictionary<string, object>()
+                {
+                    { "PlayerId", playerId }
+                };
+
+                var response = await Db.ExecuteSPMultipleRow<BlockedPlayerTable>("GetBlockedPlayers", spParams);
+                if (!response.IsSuccess || !response.HasData) throw new InvalidModelExecption(response.Message);
+
+                return new Response<List<int>>()
+                {
+                    Case = response.Case,
+                    Data = response.Data.ConvertAll(x => x.PlayerId),
+                    Message = response.Message
+                };
+            }
+            catch (InvalidModelExecption ex)
+            {
+                return new Response<List<int>>()
+                {
+                    Case = 200,
+                    Data = null,
+                    Message = ex.Message
+                };
+            }
+            catch (Exception ex)
+            {
+                return new Response<List<int>>()
                 {
                     Case = 0,
                     Data = null,
