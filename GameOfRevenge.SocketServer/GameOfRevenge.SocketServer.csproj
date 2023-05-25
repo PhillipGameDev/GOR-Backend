@@ -199,6 +199,7 @@
     <Compile Include="Model\Common\JoinKingdomResponse.cs" />
     <Compile Include="Model\Operation\DeleteChatMessageRequest.cs" />
     <Compile Include="Model\Common\DeleteChatMessageRespose.cs" />
+    <Compile Include="Model\Common\ReinforcementsResponse.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="GameOfRevenge.dll.config">

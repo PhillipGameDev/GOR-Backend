@@ -183,7 +183,7 @@ namespace GameOfRevenge.GameHandlers
             if (attackData != null)
             {
                 var attackResponse = new AttackResponse(attackData.AttackData);
-                this.Owner.SendEvent(EventCode.AttackResponse, attackResponse);
+                this.Owner.SendEvent(EventCode.AttackEvent, attackResponse);
             }
             else
             {
@@ -212,7 +212,7 @@ namespace GameOfRevenge.GameHandlers
                 if (attackData != null)
                 {
                     var attackResponse = new AttackResponse(attackData.AttackData);
-                    this.Owner.SendEvent(EventCode.AttackResponse, attackResponse);
+                    this.Owner.SendEvent(EventCode.AttackEvent, attackResponse);
                 }
             }
         }

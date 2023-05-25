@@ -7,10 +7,10 @@
         IaExit = 3,
         UpdateResource = 4,
         CompleteTimer = 5,
-        AttackResponse = 6,
+        AttackEvent = 6,
         AttackResult = 7,
         UpdateQuest = 8,
         UnderAttack = 9,
-        GlobalChat = OperationCode.GlobalChat
+        ReinforcementsEvent = 10
     }
 }

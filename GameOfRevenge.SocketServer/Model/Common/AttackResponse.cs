@@ -14,7 +14,7 @@ namespace GameOfRevenge.Model
         [DataMember(Code = (byte)RoomParameterKey.TargetPlayerId, IsOptional = true)]
         public int EnemyId { get; set; }
 
-        [DataMember(Code = (byte)RoomParameterKey.EnemyUsername, IsOptional = true)]
+        [DataMember(Code = (byte)RoomParameterKey.TargetUsername, IsOptional = true)]
         public string EnemyUsername { get; set; }
 
         [DataMember(Code = (byte)RoomParameterKey.StartTime, IsOptional = true)]

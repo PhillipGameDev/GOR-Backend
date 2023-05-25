@@ -51,7 +51,7 @@
         AllianceId = 47,
         KingLevel = 48,
         StartTime = 49,
-        EnemyUsername = 50,
+        TargetUsername = 50,
         ChatId = 51,
         ChatMessage = 52,
         Duration = 53,

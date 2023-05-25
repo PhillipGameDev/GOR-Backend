@@ -240,7 +240,8 @@ namespace GameOfRevenge.Business.Manager.UserData
 
                 try
                 {
-                    ApplyPlayerArmyToMarch(attackerData, army);
+                    RemoveArmyFromPlayerData(army, attackerData);
+                    attackerData.MarchingArmy = army;
                 }
                 catch (DataNotExistExecption ex)
                 {
@@ -1207,25 +1208,28 @@ namespace GameOfRevenge.Business.Manager.UserData
             return heroes;
         }
 
-        public void ApplyPlayerArmyToMarch(PlayerCompleteData data, MarchingArmy army, bool applyChanges = true)
+        public static void RemoveArmyFromPlayerData(MarchingArmy army, PlayerCompleteData data, bool applyChanges = true)
         {
             var playerTroops = data.Troops;
             if (playerTroops == null) throw new DataNotExistExecption("User does not have troops");
 
-//            var heroesToUpdate = new List<UserHeroDetails>();
-            foreach (var heroId in army.Heroes)
+            if (army.Heroes != null)
             {
-                var heroClass = CacheHeroDataManager.GetFullHeroDataID((int)heroId);
-                var userHero = data.Heroes.Find(x => (x.HeroType.ToString() == heroClass.Info.Code));
-                if ((userHero == null) || userHero.IsMarching)
+//            var heroesToUpdate = new List<UserHeroDetails>();
+                foreach (var heroId in army.Heroes)
                 {
-                    throw new DataNotExistExecption("User hero " + heroClass.Info.Code + " is not available");
-                }
+                    var heroClass = CacheHeroDataManager.GetFullHeroDataID((int)heroId);
+                    var userHero = data.Heroes.Find(x => (x.HeroType.ToString() == heroClass.Info.Code));
+                    if ((userHero == null) || userHero.IsMarching)
+                    {
+                        throw new DataNotExistExecption("User hero " + heroClass.Info.Code + " is not available");
+                    }
 
 //                if (applyChanges) heroesToUpdate.Add(userHero);
+                }
             }
 
-            var troopsToUpdate = new List<KeyValuePair<TroopDetails, int>>();
+            List<KeyValuePair<TroopDetails, int>> troopsToUpdate = null;
             foreach (var troopClass in army.Troops)
             {
                 var troopType = troopClass.TroopType;
@@ -1245,7 +1249,11 @@ namespace GameOfRevenge.Business.Manager.UserData
                         throw new DataNotExistExecption("User does not have enough soldiers for troop " + troopType.ToString());
                     }
 
-                    if (applyChanges) troopsToUpdate.Add(new KeyValuePair<TroopDetails, int>(troopData, item.Count));
+                    if (applyChanges)
+                    {
+                        if (troopsToUpdate == null) troopsToUpdate = new List<KeyValuePair<TroopDetails, int>>();
+                        troopsToUpdate.Add(new KeyValuePair<TroopDetails, int>(troopData, item.Count));
+                    }
                 }
             }
             if (applyChanges)
@@ -1259,8 +1267,6 @@ namespace GameOfRevenge.Business.Manager.UserData
                     troop.Key.Count -= troop.Value;
                 }
             }
-
-            data.MarchingArmy = army;
         }
 
         public static List<int> Split2(int amount, int maxPerGroup)

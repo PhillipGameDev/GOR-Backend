@@ -73,7 +73,7 @@ namespace GameOfRevenge.GameHandlers
                 if (attackData != null)
                 {
                     var attackResponse = new AttackResponse(attackData.AttackData);
-                    Owner.SendEvent(EventCode.AttackResponse, attackResponse);
+                    Owner.SendEvent(EventCode.AttackEvent, attackResponse);
                 }
             }
         }

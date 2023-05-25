@@ -31,7 +31,7 @@ namespace GameOfRevenge.GameHandlers
             this.attacker = attacker;
         }
 
-        public async Task<bool> AttackRequestAsync(AttackRequest request)
+        public async Task<bool> AttackRequestAsync(SendArmyRequest request)
         {
             log.Debug("@@@@@@@@!!! Attack Request " + JsonConvert.SerializeObject(request));
             if (GameService.BRealTimeUpdateManager.GetAttackerData(this.attacker.PlayerId) != null)
@@ -42,7 +42,7 @@ namespace GameOfRevenge.GameHandlers
                 return false;
             }
 
-            Enemy = attacker.World.PlayersManager.GetPlayer(request.EnemyId);
+            Enemy = attacker.World.PlayersManager.GetPlayer(request.TargetPlayerId);
             if (Enemy == null)
             {
                 attacker.SendOperation(OperationCode.AttackRequest, ReturnCode.Failed, null, "Enemy not found.");
@@ -73,9 +73,8 @@ namespace GameOfRevenge.GameHandlers
                     Troops = new List<TroopInfos>()
                 };
                 float delay = 0;
-                var idx = 0;
-                var len = request.Troops.Length / 3;
-                for (var num = 0; num < len; num++)
+                var len = request.Troops.Length;
+                for (var idx = 0; idx < len; idx += 3)
                 {
                     var troopType = (TroopType)request.Troops[idx];
                     TroopInfos troopInfo = marchingRequest.Troops.Find(x => (x.TroopType == troopType));
@@ -96,7 +95,6 @@ namespace GameOfRevenge.GameHandlers
                     troopInfo.TroopData.Add(troop);
 
                     delay += troop.Count / (float)((troop.Level > 0)? troop.Level : 1);
-                    idx += 3;
                 }
                 if (request.HeroIds != null)
                 {
@@ -142,7 +140,7 @@ namespace GameOfRevenge.GameHandlers
 
                     if (attackStatus.Report.Heroes != null)
                     {
-                        idx = 0;
+                        var idx = 0;
                         len = request.HeroIds.Length;
                         var heroes = new int[len * 2];
                         for (int num = 0; num < len; num++)
@@ -156,7 +154,7 @@ namespace GameOfRevenge.GameHandlers
                     attackStatus.AttackData = response;
 
                     var attackResponse = new AttackResponse(response);
-                    attacker.SendEvent(EventCode.AttackResponse, attackResponse);
+                    attacker.SendEvent(EventCode.AttackEvent, attackResponse);
 
                     Enemy.SendEvent(EventCode.UnderAttack, attackResponse);
 

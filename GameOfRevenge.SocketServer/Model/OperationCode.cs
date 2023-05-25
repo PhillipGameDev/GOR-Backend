@@ -38,5 +38,6 @@
         HelpStructure = 28,
         UpdatePlayerData = 30,
         HelpStructureRequest = 31,
+        SendReinforcementsRequest = 33
     }
 }
