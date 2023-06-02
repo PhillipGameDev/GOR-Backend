@@ -1,6 +1,6 @@
 USE [GameOfRevenge]
 GO
-/****** Object:  StoredProcedure [dbo].[GetAllMail]    Script Date: 4/20/2023 1:28:01 AM ******/
+/****** Object:  StoredProcedure [dbo].[GetAllMail]    Script Date: 6/1/2023 2:37:57 AM ******/
 SET ANSI_NULLS ON
 GO
 SET QUOTED_IDENTIFIER ON
@@ -30,7 +30,7 @@ BEGIN
 		END
 
 /*	SELECT e.[MailId], c.[Code] AS 'MailContentType', e.[Content], e.[IsRead], e.[CreateDate]*/
-	SELECT e.[MailId], CAST(e.[MailContentTypeId] AS TINYINT) AS 'MailType', e.[Content], e.[IsRead], e.[CreateDate]
+	SELECT e.[MailId], CAST(e.[MailContentTypeId] AS TINYINT) AS 'MailType', e.[Content], e.[IsRead], e.[IsSaved], e.[CreateDate]
 	FROM [dbo].[Mail] AS e
 /*	INNER JOIN [dbo].[MailContentType] AS c ON c.[MailContentTypeId] = e.[MailContentTypeId]*/
 	WHERE e.[PlayerId] = @cId;

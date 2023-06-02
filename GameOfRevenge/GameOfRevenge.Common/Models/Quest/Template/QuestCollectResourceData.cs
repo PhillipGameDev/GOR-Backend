@@ -17,5 +17,17 @@ namespace GameOfRevenge.Common.Models.Quest.Template
 
         [DataMember(EmitDefaultValue = false)]
         public int Iteration { get; set; }
+
+
+        public QuestResourceData()
+        {
+        }
+
+        public QuestResourceData(QuestResourceData data)
+        {
+            ResourceType = data.ResourceType;
+            Count = data.Count;
+            Iteration = data.Iteration;
+        }
     }
 }

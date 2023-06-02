@@ -34,14 +34,24 @@ namespace GameOfRevenge.Business.Manager.UserData
             });
         }
 
-        public async Task<Response> SaveMail(int playerId, MailType type, string content)
+        public async Task<Response> SaveMail(int mailId, bool saved)
         {
-            return await Db.ExecuteSPNoData("CreateMail", new Dictionary<string, object>()
+            return await Db.ExecuteSPNoData("SaveMail", new Dictionary<string, object>()
+            {
+                { "MailId", mailId },
+                { "Saved", saved }
+            });
+        }
+
+        public async Task<Response> SendMail(int playerId, MailType type, string content)
+        {
+            var resp = await Db.ExecuteSPNoData("CreateMail", new Dictionary<string, object>()
             {
                 { "PlayerId", playerId },
                 { "ContentType", type.ToString() },
                 { "Content", content },
             });
+            return resp;
         }
     }
 }

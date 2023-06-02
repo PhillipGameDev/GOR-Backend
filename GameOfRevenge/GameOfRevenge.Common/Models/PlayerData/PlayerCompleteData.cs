@@ -10,6 +10,7 @@ namespace GameOfRevenge.Common.Models
         public bool IsAdmin { get; set; }
 
         public int HelpedBuild { get; set; }
+        public int ClanId { get; set; }
         public UserKingDetails King { get; set; }
         public UserVIPDetails VIP { get; set; }
         public int VIPPoints { get; set; }

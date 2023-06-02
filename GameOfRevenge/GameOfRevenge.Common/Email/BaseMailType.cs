@@ -8,6 +8,7 @@ namespace GameOfRevenge.Common.Email
 //        public int PlayerId { get; set; }
         public MailType MailType { get; set; }
         public bool Read { get; set; }
+        public bool Saved { get; set; }
         public DateTime Date { get; set; }
         public T Content { get; set; }
     }

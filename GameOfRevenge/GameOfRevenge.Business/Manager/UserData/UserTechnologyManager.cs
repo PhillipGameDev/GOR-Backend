@@ -1,12 +1,15 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using GameOfRevenge.Business.CacheData;
 using GameOfRevenge.Business.Manager.Base;
 using GameOfRevenge.Common;
+using GameOfRevenge.Common.Interface;
 using GameOfRevenge.Common.Interface.UserData;
 using GameOfRevenge.Common.Models;
 using GameOfRevenge.Common.Models.PlayerData;
+using GameOfRevenge.Common.Models.Quest;
 using GameOfRevenge.Common.Net;
 using GameOfRevenge.Common.Services;
 using Newtonsoft.Json;
@@ -16,6 +19,7 @@ namespace GameOfRevenge.Business.Manager.UserData
     public class UserTechnologyManager : BaseUserDataManager, IUserTechnologyManager
     {
         private readonly IUserResourceManager userResourceManager;
+        private readonly IUserQuestManager userQuestManager;
 
         public UserTechnologyManager()
         {
@@ -193,6 +197,26 @@ namespace GameOfRevenge.Business.Manager.UserData
                 json = JsonConvert.SerializeObject(currentUserTech);
                 var response = await manager.AddOrUpdatePlayerData(playerId, DataType.Technology, tech.Info.Id, json);
                 var data = PlayerData.PlayerDataToUserTechnologyData(response.Data)?.Value;
+
+                var userQuestManager = new UserQuestManager();
+                var list = new List<PlayerQuestDataTable>();
+                var userQuestData = await userQuestManager.GetUserAllQuestProgress(playerId, true);
+                if (!userQuestData.IsSuccess || !userQuestData.HasData)
+                {
+                    //error
+                }
+                var playerUserQuestData = new PlayerUserQuestData()
+                {
+                    PlayerId = playerId,
+                    UserData = compPlayerData.Data,
+                    QuestData = userQuestData.Data,
+                    QuestEventAction = (questProgress) =>
+                    {
+                        list.Add(questProgress);
+                    }
+                };
+                var groupTech = CacheTechnologyDataManager.GetGroupTechnologyType(type);
+                await userQuestManager.CheckQuestProgressForGroupTechnologyAsync(playerUserQuestData, groupTech);
 
                 return new Response<TechnologyInfos>(data, response.Case, response.Message);
             }

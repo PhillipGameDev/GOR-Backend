@@ -13,5 +13,16 @@ namespace GameOfRevenge.Common.Models.Quest.Template
 
         [DataMember(EmitDefaultValue = false)]
         public int Count { get; set; }
+
+
+        public QuestGroupTechnologyData()
+        {
+        }
+
+        public QuestGroupTechnologyData(QuestGroupTechnologyData data)
+        {
+            GroupTechnologyType = data.GroupTechnologyType;
+            Count = data.Count;
+        }
     }
 }

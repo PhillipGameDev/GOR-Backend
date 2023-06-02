@@ -28,7 +28,7 @@ BEGIN
 		END
 	ELSE
 		BEGIN TRY
-			INSERT INTO [dbo].[Mail] VALUES (@userId, @cId, @tcontent, 0, @time)
+			INSERT INTO [dbo].[Mail] VALUES (@userId, @cId, @tcontent, 0, @time, 0)
 			SET @case = 100;
 			SET @message = 'Sended Mail request succesfully';
 		END TRY

@@ -57,7 +57,7 @@ BEGIN
     GROUP BY pd.[PlayerId]
   )
 
-  SELECT p1.PlayerId, p1.Name,
+  SELECT TOP 50 p1.PlayerId, p1.Name,
        CAST(p1.Rank1 AS INT) AS Rank1, CAST(ISNULL(p1.Overall, 0) AS BIGINT) AS Overall,
        CAST(p2.Rank2 AS INT) AS Rank2, CAST(ISNULL(p1.Attack, 0) AS BIGINT) AS Attack,
        CAST(p3.Rank3 AS INT) AS Rank3, CAST(ISNULL(p1.Defense, 0) AS BIGINT) AS Defense

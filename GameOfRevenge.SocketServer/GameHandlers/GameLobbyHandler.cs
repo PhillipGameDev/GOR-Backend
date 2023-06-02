@@ -103,10 +103,25 @@ new string[]{
             }
         }
 
+        async Task<PlayerUserQuestData> UpdatePlayerData(MmoActor actor)
+        {
+            log.Info("player " + actor.PlayerId + " data changed - ENTER");
+            var plyData = GameService.RealTimeUpdateManagerQuestValidator.GetPlayerData(actor.PlayerId);
+            if (plyData == null)
+            {
+                log.Info("player " + actor.PlayerId + " offline - EXIT");
+                return null;
+            }
+
+            var data = await GameService.RealTimeUpdateManagerQuestValidator.PlayerDataChanged(plyData);
+            if (data != null) actor.InternalPlayerDataManager.UpdateData(data);
+
+            return plyData;
+        }
+
         private async Task<SendResult> HandleUpdatePlayerData(IGorMmoPeer peer, OperationRequest operationRequest)
         {
-            var data = await GameService.RealTimeUpdateManagerQuestValidator.PlayerDataChanged(peer.Actor.PlayerId);
-            if (data != null) peer.Actor.InternalPlayerDataManager.UpdateData(data);
+            await UpdatePlayerData(peer.Actor);
 
             return peer.SendOperation(operationRequest.OperationCode, ReturnCode.OK);
         }
@@ -114,19 +129,29 @@ new string[]{
         private async Task<SendResult> HandleInstantRecruit(IGorMmoPeer peer, OperationRequest operationRequest)
         {
             var operation = new RecruitTroopRequest(peer.Protocol, operationRequest);
-            var recruitResp = await GameService.InstantProgressManager.InstantRecruitTroops(peer.Actor.PlayerId, operation.LocationId, (TroopType)operation.TroopType, operation.TroopLevel, operation.TroopCount);
+            var troopType = (TroopType)operation.TroopType;
+            var troopLevel = operation.TroopLevel;
+            var troopCount = operation.TroopCount;
+            var recruitResp = await GameService.InstantProgressManager.InstantRecruitTroops(peer.Actor.PlayerId,
+                                                    operation.LocationId, troopType, troopLevel, troopCount);
 
             string msg = null;
-            if (recruitResp == null) msg = "player not found";
-            else if (!recruitResp.IsSuccess) msg = recruitResp.Message;
-            else if (!recruitResp.HasData) msg = "player data not found";
+            if (!recruitResp.IsSuccess)
+            {
+                msg = recruitResp.Message;
+            }
+            else if (!recruitResp.HasData)
+            {
+                msg = "player data not found";
+            }
 
             if (msg != null)
             {
                 return peer.SendOperation(operationRequest.OperationCode, ReturnCode.InvalidOperation, debuMsg: msg);
             }
 
-            await GameService.RealTimeUpdateManagerQuestValidator.PlayerDataChanged(peer.Actor.PlayerId);
+            var playerQuestData = await UpdatePlayerData(peer.Actor);
+            _ = GameService.BUserQuestManager.CheckQuestProgressForTrainTroops(playerQuestData, troopType, troopLevel, troopCount);
 
             return SendOperationResponse(peer, operationRequest, recruitResp);
         }
@@ -171,7 +196,7 @@ new string[]{
                 return peer.SendOperation(operationRequest.OperationCode, ReturnCode.InvalidOperation, debuMsg: response.Message);
             }
 
-            await GameService.RealTimeUpdateManagerQuestValidator.PlayerDataChanged(peer.Actor.PlayerId);
+            await UpdatePlayerData(peer.Actor);
 
             var building = response.Data.StructureData.Value.Find(x => (x.Location == location));
             if (building == null)
@@ -179,7 +204,7 @@ new string[]{
                 return peer.SendOperation(operationRequest.OperationCode, ReturnCode.InvalidOperation, debuMsg: "Structure not supported");
             }
 
-            IPlayerBuildingManager buildingManager = null;
+/*            IPlayerBuildingManager buildingManager = null;
             var internalDataManager = peer.Actor.InternalPlayerDataManager;
             if (internalDataManager.PlayerBuildings.ContainsKey(structureType))
             {
@@ -201,7 +226,7 @@ new string[]{
                 };
 
                 internalDataManager.AddStructureOnPlayer(structure);
-            }
+            }*/
 
             log.Info("**************** HandleInstantBuild End************************");
 
@@ -230,7 +255,7 @@ new string[]{
                 return peer.SendOperation(operationRequest.OperationCode, ReturnCode.InvalidOperation, debuMsg: response.Message);
             }
 
-            await GameService.RealTimeUpdateManagerQuestValidator.PlayerDataChanged(peer.Actor.PlayerId);
+            await UpdatePlayerData(peer.Actor);
 
             var respDetails = response.Data.Value.Find(x => (x.Location == location));
             if (respDetails == null)
@@ -238,7 +263,7 @@ new string[]{
                 return peer.SendOperation(operationRequest.OperationCode, ReturnCode.InvalidOperation, debuMsg: "Structure was null");
             }
 
-            IPlayerBuildingManager buildingManager = null;
+/*            IPlayerBuildingManager buildingManager = null;
             var internalDataManager = peer.Actor.InternalPlayerDataManager;
             if (internalDataManager.PlayerBuildings.ContainsKey(structureType))
             {
@@ -260,7 +285,7 @@ new string[]{
                 };
 
                 internalDataManager.AddStructureOnPlayer(structure);
-            }
+            }*/
 
             log.Info("**************** HandleSpeedUpBuild End************************");
 
@@ -343,7 +368,11 @@ new string[]{
                 var data = response.GetDictionary();
                 GameLobbyHandler.log.Info(">>>>>data =" + data);
 
-                await CompleteCustomTaskQuest(peer.Actor.PlayerId, CustomTaskType.SendGlobalChat);
+                var questUpdated = await CompleteCustomTaskQuest(peer.Actor.PlayerId, CustomTaskType.SendGlobalChat);
+                if (questUpdated)
+                {
+                    peer.Actor.SendEvent(EventCode.UpdateQuest, new Dictionary<byte, object>());
+                }
 
                 return peer.Broadcast(OperationCode.GlobalChat, ReturnCode.OK, data);
             }
@@ -467,10 +496,8 @@ new string[]{
                 data = trainingTroopResp.GetDictionary();
             }
 
-            await GameService.RealTimeUpdateManagerQuestValidator.PlayerDataChanged(peer.Actor.PlayerId);
-            //update any task that require training troops
-            var playerData = GameService.RealTimeUpdateManagerQuestValidator.GetPlayerData(peer.Actor.PlayerId);
-            _ = GameService.BUserQuestManager.CheckQuestProgressForTrainTroops(playerData, troopType, troopLevel, troopCount);
+            var playerQuestData = await UpdatePlayerData(peer.Actor);
+            _ = GameService.BUserQuestManager.CheckQuestProgressForTrainTroops(playerQuestData, troopType, troopLevel, troopCount);
 
             return SendOperationResponse(peer, operationRequest, response, data);
         }
@@ -583,7 +610,7 @@ new string[]{
                 return peer.SendOperation(operationRequest.OperationCode, ReturnCode.InvalidOperation, debuMsg: msg);
             }
 
-            await GameService.RealTimeUpdateManagerQuestValidator.PlayerDataChanged(peer.Actor.PlayerId);
+            await UpdatePlayerData(peer.Actor);
 
             var resourceType = bldResource.Resource.ResourceInfo.Code;
             var resourceCollected = response.Data.CollectedResource;
@@ -650,7 +677,11 @@ new string[]{
                 var success = await peer.Actor.PlayerAttackHandler.AttackRequestAsync(operation);
                 if (!success) return SendResult.Failed;
 
-                await CompleteCustomTaskQuest(peer.Actor.PlayerId, CustomTaskType.AttackPlayer);
+                var questUpdated = await CompleteCustomTaskQuest(peer.Actor.PlayerId, CustomTaskType.AttackPlayer);
+                if (questUpdated)
+                {
+                    peer.Actor.SendEvent(EventCode.UpdateQuest, new Dictionary<byte, object>());
+                }
 
                 return SendResult.Ok;
             }
@@ -811,11 +842,8 @@ new string[]{
                 }
                 if (errorTransfering) throw new Exception();
 
-                var data = await GameService.RealTimeUpdateManagerQuestValidator.PlayerDataChanged(player.PlayerId);
-                if (data != null) peer.Actor.InternalPlayerDataManager.UpdateData(data);
-
-                data = await GameService.RealTimeUpdateManagerQuestValidator.PlayerDataChanged(targetPlayerData.PlayerId);
-                if (data != null) peer.Actor.InternalPlayerDataManager.UpdateData(data);
+                await UpdatePlayerData(player);
+                await UpdatePlayerData(targetPlayer);
 
                 var reinforcementResponse = new ReinforcementsResponse()
                 {
@@ -858,7 +886,7 @@ new string[]{
                     Message = message
                 };
                 var json = JsonConvert.SerializeObject(mail);
-                await mailManager.SaveMail(targetPlayerId, MailType.Message, json);
+                await mailManager.SendMail(targetPlayerId, MailType.Message, json);
             }
             catch { }
         }
@@ -1076,7 +1104,8 @@ new string[]{
             var targetActor = peer.Actor.World.PlayersManager.GetPlayer(targetPlayerId);
             if (targetActor != null)
             {
-                try
+                await UpdatePlayerData(targetActor);
+/*                try
                 {
                     var targetInternalBuildings = targetActor.InternalPlayerDataManager.PlayerBuildings;
                     if (targetInternalBuildings.ContainsKey(structureType))
@@ -1091,7 +1120,7 @@ new string[]{
                         }
                     }
                 }
-                catch { }
+                catch { }*/
             }
 
             var resp = new HelpStructureRespose()
@@ -1103,12 +1132,8 @@ new string[]{
                 Duration = targetBuilding.Duration,
                 TotalTime = seconds
             };
-            //TODO:broadcast to alliance
+            //TODO:broadcast to alliance only
             peer.Broadcast(OperationCode.HelpStructure, ReturnCode.OK, resp.GetDictionary());
-
-            //required only if we decide to remove resources from player
-            //await GameService.RealTimeUpdateManagerQuestValidator.PlayerDataChanged(peer.Actor.PlayerId);
-            await GameService.RealTimeUpdateManagerQuestValidator.PlayerDataChanged(targetPlayerId);
 
             log.Info("**************** HandleHelpStructure End************************");
 
@@ -1134,7 +1159,7 @@ new string[]{
 
             GameService.GameBuildingManagerInstances[structureType].CreateStructureForPlayer(operation, peer.Actor);
 
-            await GameService.RealTimeUpdateManagerQuestValidator.PlayerDataChanged(peer.Actor.PlayerId);
+            await UpdatePlayerData(peer.Actor);
 
             log.Info("**************** HandleCreateStructure End************************");
             return SendResult.Ok;
@@ -1157,7 +1182,7 @@ new string[]{
             }
             log.Debug(success ? "@@@@ UPGRADE OK!!" : "@@@@ UPGRADE FAIL!");
 
-            if (success) await GameService.RealTimeUpdateManagerQuestValidator.PlayerDataChanged(peer.Actor.PlayerId);
+            if (success) await UpdatePlayerData(peer.Actor);
 
             return success ? SendResult.Ok : SendResult.Failed;
         }
@@ -1170,18 +1195,24 @@ new string[]{
             var playerStructData = await GameService.BPlayerStructureManager.CheckBuildingStatus(peer.Actor.PlayerId, (StructureType)operation.StructureType);
 
             string msg = null;
-            if (playerStructData == null) msg = "player not found";
-            else if (!playerStructData.IsSuccess) msg = playerStructData.Message;
-            else if (!playerStructData.HasData) msg = "player data not found";
+            StructureDetails building = null;
+            if (!playerStructData.IsSuccess)
+            {
+                msg = playerStructData.Message;
+            }
+            else if (!playerStructData.HasData)
+            {
+                msg = "player data not found";
+            }
+            else
+            {
+                building = playerStructData.Data.Value.Find(x => (x.Location == operation.StructureLocationId));
+                if (building == null) msg = "structure not found";
+            }
+
             if (msg != null)
             {
                 return peer.SendOperation(operationRequest.OperationCode, ReturnCode.InvalidOperation, debuMsg: msg);
-            }
-
-            var building = playerStructData.Data.Value.Find(x => (x.Location == operation.StructureLocationId));
-            if (building == null)
-            {
-                return peer.SendOperation(operationRequest.OperationCode, ReturnCode.InvalidOperation, debuMsg: "structure not found");
             }
 
 /*            var bld = peer.Actor.InternalPlayerDataManager.GetPlayerBuilding((StructureType)operation.StructureType, operation.StructureLocationId);

@@ -193,6 +193,38 @@ namespace GameOfRevenge.Business.CacheData
             return data;
         }
 
+        public static GroupTechnologyType GetGroupTechnologyType(TechnologyType technologyType)
+        {
+            GroupTechnologyType groupTech = GroupTechnologyType.Unknown;
+            switch (technologyType)
+            {
+                case TechnologyType.ConstructionTechnology:
+                case TechnologyType.ResearchSpeedTechnology:
+                case TechnologyType.TroopLoadTechnology:
+                case TechnologyType.StorageTechnology:
+                case TechnologyType.InfirmaryCapacityTechnology:
+                case TechnologyType.KingStaminaRecoveryTechnology:
+                case TechnologyType.TrainSpeedTechnology:
+                case TechnologyType.HealSpeedTechnology:
+                case TechnologyType.UpkeepTechnology:
+                    groupTech = GroupTechnologyType.KingdomTechnologies;
+                    break;
+                case TechnologyType.BarracksAttackTechnology:
+                case TechnologyType.ShootingRangeAttackTechnology:
+                case TechnologyType.StableAttackTechnology:
+                case TechnologyType.WorkshopAttackTechnology:
+                    groupTech = GroupTechnologyType.AttackTechnologies;
+                    break;
+                case TechnologyType.BarracksDefenseTechnology:
+                case TechnologyType.ShootingRangeDefenseTechnology:
+                case TechnologyType.StableDefenseTechnology:
+                case TechnologyType.WorkshopDefenseTechnology:
+                    groupTech = GroupTechnologyType.DefenseTechnologies;
+                    break;
+            }
+            return groupTech;
+        }
+
         #region Cache Check, Load and Clear
         public static async Task LoadCacheMemoryAsync()
         {

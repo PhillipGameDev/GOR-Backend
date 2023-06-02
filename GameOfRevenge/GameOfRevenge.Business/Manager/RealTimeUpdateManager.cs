@@ -61,6 +61,7 @@ namespace GameOfRevenge.Business.Manager
                 }
                 if (list != null)
                 {
+                    double timeleft = double.MaxValue;
                     log.Debug("****** UPDATE BATTLE START ****** x " + list.Count);
                     foreach (AttackStatusData item in list)
                     {
@@ -137,6 +138,7 @@ namespace GameOfRevenge.Business.Manager
                                     lock (SyncRoot) attackPlayerData.Remove(item);
                                     break;
                             }
+                            if (item.Attacker.MarchingArmy.TimeLeft < timeleft) timeleft = item.Attacker.MarchingArmy.TimeLeft;
                         }
                         catch (Exception ex)
                         {
@@ -144,7 +146,7 @@ namespace GameOfRevenge.Business.Manager
                             lock (SyncRoot) attackPlayerData.Remove(item);
                         }
                     }
-                    log.Debug("****** UPDATE BATTLE END ******");
+                    log.Debug("****** UPDATE BATTLE END ****** " + timeleft);
                 }
             }
 

@@ -16,6 +16,7 @@ namespace GameOfRevenge.Common.Email
             MailType = reader.GetValue(index) == DBNull.Value ? MailType.Unknown : (MailType)reader.GetByte(index); index++;
             Content = reader.GetValue(index) == DBNull.Value ? string.Empty : reader.GetString(index); index++;
             Read = reader.GetValue(index) != DBNull.Value && reader.GetBoolean(index); index++;
+            Saved = reader.GetValue(index) != DBNull.Value && reader.GetBoolean(index); index++;
             Date = reader.GetValue(index) == DBNull.Value ? DateTime.MinValue : reader.GetDateTime(index);
         }
 

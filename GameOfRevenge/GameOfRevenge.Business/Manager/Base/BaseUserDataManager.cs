@@ -1,5 +1,6 @@
 ﻿using ExitGames.Logging;
 using GameOfRevenge.Business.CacheData;
+using GameOfRevenge.Business.Manager.Kingdom;
 using GameOfRevenge.Business.Manager.UserData;
 using GameOfRevenge.Common;
 using GameOfRevenge.Common.Helper;
@@ -26,6 +27,7 @@ namespace GameOfRevenge.Business.Manager.Base
 
         protected static readonly IAccountManager accountManager = new AccountManager();
         protected static readonly IPlayerDataManager manager = new PlayerDataManager();
+        protected static readonly IClanManager clanManager = new ClanManager();
 
         protected IReadOnlyDataRequirement GetGemReq(int value)
         {
@@ -77,6 +79,7 @@ namespace GameOfRevenge.Business.Manager.Base
                         IsDeveloper = isDeveloper,
                         IsAdmin = isAdmin,
                         HelpedBuild = 0,
+                        ClanId = 0,
 
                         Resources = new ResourcesList(),
                         Structures = new List<StructureInfos>(),
@@ -88,6 +91,9 @@ namespace GameOfRevenge.Business.Manager.Base
                         Heroes = new List<UserHeroDetails>()
                     }
                 };
+
+                var clanData = await clanManager.GetPlayerClanData(playerId);
+                if (clanData.IsSuccess && clanData.HasData) finalData.Data.ClanId = clanData.Data.Id;
 
                 line = "2";
                 var customs = response.Data.Where(x => x.DataType == DataType.Custom)?.ToList();

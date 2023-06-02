@@ -54,21 +54,9 @@ namespace GameOfRevenge.Business.Manager
             }
         }
 
-        public async Task<PlayerCompleteData> PlayerDataChanged(int playerId)
+        public async Task<PlayerCompleteData> PlayerDataChanged(PlayerUserQuestData data)
         {
-            log.Info("player " + playerId + " data changed ENTER");
-            allPlayerDatas.TryGetValue(playerId, out var data);
-            if (data == null)
-            {
-                log.Info("player " + playerId + " data null RETURN");
-                return null;
-            }
-
-            //TODO: use internal data reference instead of pulling data from server
-            //peer.Actor.InternalPlayerDataManager
-            //TODO2: method used to pull fresh data from server after a change was done in server
-            //we should improve the update request to reduce the pull data
-
+            var playerId = data.PlayerId;
             var userData = await userManager.GetFullPlayerData(playerId);
             var userQuestData = await questManager.GetUserAllQuestProgress(playerId, true);
 

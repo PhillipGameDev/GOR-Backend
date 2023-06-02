@@ -30,24 +30,14 @@ namespace GameOfRevenge.Business.Manager.UserData
             marketManager = new UserMarketManager();
         }
 
-        public async Task<Response<UserStructureData>> CheckBuildingStatus(int playerId, StructureType type)
+        public async Task<Response<UserStructureData>> CheckBuildingStatus(int playerId, StructureType structureType)
         {
-            var structId = CacheStructureDataManager.GetFullStructureData(type).Info.Id;
-            var playerData = await manager.GetPlayerData(playerId, DataType.Structure, structId);
-            if (playerData.IsSuccess && playerData.HasData)
-            {
-                return new Response<UserStructureData>()
-                {
-                    Case = playerData.Case,
-                    Data = PlayerData.PlayerDataToUserStructureData(playerData.Data),
-                    Message = playerData.Message
-                };
-            }
-
+//            var structId = CacheStructureDataManager.GetFullStructureData(structureType).Info.Id;
+            var playerData = await manager.GetPlayerData(playerId, DataType.Structure, (int)structureType);
             return new Response<UserStructureData>()
             {
                 Case = playerData.Case,
-                Data = null,
+                Data = playerData.HasData? PlayerData.PlayerDataToUserStructureData(playerData.Data) : null,
                 Message = playerData.Message
             };
         }
@@ -78,7 +68,7 @@ namespace GameOfRevenge.Business.Manager.UserData
 
             return new Response<UserStructureData>()
             {
-                Case = 200,
+                Case = allPlayerData.Case,
                 Data = null,
                 Message = allPlayerData.Message
             };
@@ -191,25 +181,35 @@ namespace GameOfRevenge.Business.Manager.UserData
             return new Response<UserRecordBuilderDetails>(200, response.Message);
         }*/
 
-        public async Task<Response<BuildingStructureData>> CreateBuilding(int playerId, StructureType type, int location) => await CreateBuilding(playerId, type, location, true, false, false);
-        public async Task<Response<BuildingStructureData>> CreateBuilding(int playerId, StructureType type, int location, bool removeRes, bool createWorker, bool instantBuild)
+        public async Task<Response<BuildingStructureData>> CreateBuilding(int playerId, StructureType structureType, int location) => await CreateBuilding(playerId, structureType, location, true, false, false);
+        public async Task<Response<BuildingStructureData>> CreateBuilding(int playerId, StructureType structureType, int location, bool removeRes, bool createWorker, bool instantBuild)
         {
             var timestamp = DateTime.UtcNow;
-            var existing = await CheckBuildingStatus(playerId, type);
+            var existing = await CheckBuildingStatus(playerId, location);
             List<StructureDetails> dataList = null;
+            var foundAtLocation = false;
             if (existing.IsSuccess && existing.HasData)
             {
-                dataList = existing.Data.Value;
-                var structureExists = dataList.Find(x => (x.Location == location));
-                if (structureExists != null)
+                foundAtLocation = true;
+            }
+            else
+            {
+                existing = await CheckBuildingStatus(playerId, structureType);
+                if (existing.IsSuccess && existing.HasData)
                 {
-                    return new Response<BuildingStructureData>(new BuildingStructureData(existing.Data), 200, "Structure already exists at location");
+                    dataList = existing.Data.Value;
+                    foundAtLocation = dataList.Exists(x => (x.Location == location));
                 }
             }
+            if (foundAtLocation)
+            {
+                return new Response<BuildingStructureData>(new BuildingStructureData(existing.Data), 200, "Structure already exists at location");
+            }
+
             if (dataList == null) dataList = new List<StructureDetails>();
 
             int limit = 0;
-            var structureInfo = CacheStructureDataManager.StructureInfos.FirstOrDefault(x => (x.Info.Code == type));
+            var structureInfo = CacheStructureDataManager.StructureInfos.FirstOrDefault(x => (x.Info.Code == structureType));
             if (structureInfo != null)
             {
                 int castleLvl = 0;
@@ -227,8 +227,14 @@ namespace GameOfRevenge.Business.Manager.UserData
             }
             if (dataList.Count >= limit)
             {
-                if (limit == 0) return new Response<BuildingStructureData>(201, "Structure not available, upgrade castle");
-                else return new Response<BuildingStructureData>(202, "Structure max limit reached");
+                if (limit == 0)
+                {
+                    return new Response<BuildingStructureData>(201, "Structure not available, upgrade castle");
+                }
+                else
+                {
+                    return new Response<BuildingStructureData>(202, "Structure max limit reached");
+                }
             }
 
             float timeReduced = 0;
@@ -248,7 +254,7 @@ namespace GameOfRevenge.Business.Manager.UserData
                 }
             }
 
-            var structureData = CacheStructureDataManager.GetFullStructureData(type);
+            var structureData = CacheStructureDataManager.GetFullStructureData(structureType);
             var firstLevel = structureData.Levels.Min(x => x.Data.Level);
             if (firstLevel != 1) throw new CacheDataNotExistExecption("Structure level data does not exist");
 
@@ -299,7 +305,7 @@ namespace GameOfRevenge.Business.Manager.UserData
                 {
                     Id = respModel.Data.Id,
                     DataType = DataType.Structure,
-                    ValueId = type,
+                    ValueId = structureType,
                     Value = dataList
                 };
                 return new Response<BuildingStructureData>(new BuildingStructureData(userStructure, (currWorker != null)? currWorker.Data : null), 100, "Structure added succesfully");

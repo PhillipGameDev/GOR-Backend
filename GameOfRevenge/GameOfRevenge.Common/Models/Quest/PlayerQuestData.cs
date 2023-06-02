@@ -188,9 +188,9 @@ namespace GameOfRevenge.Common.Models.Quest
                         var data8 = JsonConvert.DeserializeObject<QuestGroupTechnologyData>(initialData);
                         switch (data8.GroupTechnologyType)
                         {
-                            case GroupTechnologyType.KingdomTechnologies: name = "Research kingdom technology {0:N0} times"; break;
-                            case GroupTechnologyType.AttackTechnologies: name = "Research attack technology {0:N0} times"; break;
-                            case GroupTechnologyType.DefenseTechnologies: name = "Research defense technology {0:N0} times"; break;
+                            case GroupTechnologyType.KingdomTechnologies: name = "Research kingdom technology {0} times"; break;
+                            case GroupTechnologyType.AttackTechnologies: name = "Research attack technology {0} times"; break;
+                            case GroupTechnologyType.DefenseTechnologies: name = "Research defense technology {0} times"; break;
                         }
                         name = string.Format(name, data8.Count);
                         break;

@@ -261,7 +261,7 @@ namespace GameOfRevenge.Business.Manager.UserData
                     try
                     {
                         var json = JsonConvert.SerializeObject(report);
-                        await mailManager.SaveMail(defenderId, MailType.UnderAttack, json);
+                        await mailManager.SendMail(defenderId, MailType.UnderAttack, json);
                     }
                     catch { }
 
@@ -512,7 +512,7 @@ namespace GameOfRevenge.Business.Manager.UserData
                 msg = json.Replace("INSERTMESSAGEHERE", msg);
                 try
                 {
-                    var respMail = await mailManager.SaveMail(defenderArmy.PlayerId, MailType.BattleReport, msg);
+                    var respMail = await mailManager.SendMail(defenderArmy.PlayerId, MailType.BattleReport, msg);
                     if (!respMail.IsSuccess)
                     {
                         Console.WriteLine(respMail.Message);
@@ -632,7 +632,7 @@ namespace GameOfRevenge.Business.Manager.UserData
                 msg = json.Replace("INSERTMESSAGEHERE", msg);
                 try
                 {
-                    var respMail = await mailManager.SaveMail(attackerArmy.PlayerId, MailType.BattleReport, msg);
+                    var respMail = await mailManager.SendMail(attackerArmy.PlayerId, MailType.BattleReport, msg);
                     if (!respMail.IsSuccess)
                     {
                         Console.WriteLine(respMail.Message);
