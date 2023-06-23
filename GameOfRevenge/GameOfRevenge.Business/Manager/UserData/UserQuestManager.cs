@@ -576,7 +576,7 @@ namespace GameOfRevenge.Business.Manager.UserData
                                         int.TryParse(context, out location);
                                         if (location <= 0) throw new Exception("Invalid Troop location");
 
-                                        fullPlayerData = await userTroopManager.GetFullPlayerData(playerId);
+                                        fullPlayerData = await BaseUserDataManager.GetFullPlayerData(playerId);
                                         if (!fullPlayerData.IsSuccess) throw new Exception(fullPlayerData.Message);
 
                                         List<UnavaliableTroopInfo> listInTraining = null;
@@ -617,7 +617,7 @@ namespace GameOfRevenge.Business.Manager.UserData
                                         int.TryParse(context, out location);
                                         if (location <= 0) throw new Exception("Invalid Troop location");
 
-                                        fullPlayerData = await userTroopManager.GetFullPlayerData(playerId);
+                                        fullPlayerData = await BaseUserDataManager.GetFullPlayerData(playerId);
                                         if (!fullPlayerData.IsSuccess) throw new Exception(fullPlayerData.Message);
 
                                         List<UnavaliableTroopInfo> listInRecovery = null;
@@ -657,7 +657,7 @@ namespace GameOfRevenge.Business.Manager.UserData
                                         int.TryParse(context, out location);
                                         if (location <= 0) throw new Exception("Invalid building location");
 
-                                        fullPlayerData = await userTroopManager.GetFullPlayerData(playerId);
+                                        fullPlayerData = await BaseUserDataManager.GetFullPlayerData(playerId);
                                         if (!fullPlayerData.IsSuccess) throw new Exception(fullPlayerData.Message);
 
                                         var userTech = fullPlayerData.Data.Technologies.Find(x => (x.TimeLeft > 0));

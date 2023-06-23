@@ -1,4 +1,5 @@
-﻿using Photon.SocketServer.Rpc;
+﻿using System;
+using Photon.SocketServer.Rpc;
 using GameOfRevenge.GameHandlers;
 
 namespace GameOfRevenge.Model
@@ -23,6 +24,9 @@ namespace GameOfRevenge.Model
         [DataMember(Code = (byte)RoomParameterKey.CastleLevel, IsOptional = false)]
         public byte CastleLevel { get; set; }
 
+        [DataMember(Code = (byte)RoomParameterKey.Timestamp, IsOptional = false)]
+        public string LastLogin { get; set; }
+
         public IaEnterResponse(MmoActor actor)
         {
             X = actor.WorldRegion.X;
@@ -33,6 +37,7 @@ namespace GameOfRevenge.Model
             VIPPoints = actor.PlayerData.VIPPoints;
             KingLevel = actor.PlayerData.KingLevel;
             CastleLevel = actor.PlayerData.CastleLevel;
+            LastLogin = actor.PlayerData.LastLogin.ToUniversalTime().ToString("s") + "Z";
         }
     }
 }

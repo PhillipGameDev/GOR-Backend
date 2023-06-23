@@ -27,7 +27,7 @@ namespace GameOfRevenge.Model
         {
         }
 
-        public ReinforcementsResponse(AttackSocketResponse res)
+        public ReinforcementsResponse(AttackResponseData res)
         {
             PlayerId = res.AttackerId;
             PlayerUsername = res.AttackerUsername;

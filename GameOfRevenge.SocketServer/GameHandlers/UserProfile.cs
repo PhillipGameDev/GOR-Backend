@@ -1,35 +1,30 @@
-﻿using ExitGames.Concurrency.Fibers;
-using ExitGames.Logging;
-using GameOfRevenge.Common;
-using GameOfRevenge.Common.Models;
-using GameOfRevenge.GameApplication;
-using GameOfRevenge.Interface;
-using GameOfRevenge.Model;
-using Newtonsoft.Json;
-using Photon.SocketServer;
-using System;
-using System.Collections.Concurrent;
+﻿using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+using Newtonsoft.Json;
+using ExitGames.Concurrency.Fibers;
+using ExitGames.Logging;
+using Photon.SocketServer;
+using GameOfRevenge.Common.Models;
+using GameOfRevenge.Interface;
+using GameOfRevenge.Model;
 
 namespace GameOfRevenge.GameHandlers
 {
     public abstract class UserProfile 
     {
-        public UserProfile(int playerId, PlayerInfo playerInfo)
-        {
-            PlayerId = playerId;
-            PlayerData = playerInfo;
-        }
-
         private static readonly ILogger log = LogManager.GetCurrentClassLogger();
+
         public ConcurrentDictionary<int, MmoActor> InterestUsers { get; protected set; } = new ConcurrentDictionary<int, MmoActor>();
-        public List<IGorMmoPeer> IntrestedPeers { get { return InterestUsers.Where(d => d.Value.Peer != null && d.Value.IsInKingdomView).Select(f => f.Value.Peer).ToList(); } }
+        public List<IGorMmoPeer> IntrestedPeers
+        {
+            get
+            {
+                return InterestUsers.Where(d => d.Value.Peer != null && d.Value.IsInKingdomView).Select(f => f.Value.Peer).ToList();
+            }
+        }
         public int PlayerId { get; private set; }
         public PlayerInfo PlayerData { get; private set; }
-//        public int UserId { get { return Convert.ToInt32(this.UserId); } }
         public string Email { get; set; }
         public string FullName { get; set; }
         public IGorMmoPeer Peer { get; set; }
@@ -37,7 +32,17 @@ namespace GameOfRevenge.GameHandlers
         public double Health { get; protected set; }
         public bool IsInKingdomView { get; protected set; }
 
-     
+        public UserProfile(int playerId, PlayerInfo playerInfo)
+        {
+            PlayerId = playerId;
+            PlayerData = playerInfo;
+        }
+
+        public void UpdatePlayerInfo(PlayerInfo info)
+        {
+            PlayerData = info;
+        }
+
         public void SendOperation(byte opCode, ReturnCode returnCode, Dictionary<byte, object> data = null, string debuMsg = "")
         {
             if (Peer != null)

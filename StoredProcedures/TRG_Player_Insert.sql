@@ -1,6 +1,6 @@
 USE [GameOfRevenge]
 GO
-/****** Object:  Trigger [dbo].[TRG_Player_Insert]    Script Date: 5/1/2023 8:58:22 AM ******/
+/****** Object:  Trigger [dbo].[TRG_Player_Insert]    Script Date: 6/13/2023 6:51:09 AM ******/
 SET ANSI_NULLS ON
 GO
 SET QUOTED_IDENTIFIER ON

@@ -36,9 +36,9 @@ namespace GameOfRevenge.Business.CacheData
             new IAPProduct("r_a001"), new IAPProduct("r_a002"), new IAPProduct("r_a003")
         };
 
-        public static List<IAPProduct> GetIAPProducts(int playerId = 0)
+        public static IReadOnlyList<IAPProduct> GetIAPProducts(int playerId = 0)
         {
-            var iapProducts = allIAPProductRewards;
+            var iapProducts = AllIAPProductRewards;
 /*            var iapProducts = new List<IAPProduct>()
             {
                 new IAPProduct( "p_a001", "Pack 1", "Pack 1 description", new List<DataReward>()

@@ -290,6 +290,8 @@ namespace GameOfRevenge.Business.CacheData
                 case StructureType.Workshop: return new List<string>() { "Level", "Troop", "Health", "Attack" };
 
                 case StructureType.Market: return new List<string>() { "Level", "Max Caravan Load" };
+
+                case StructureType.FriendshipHall:
                 case StructureType.TrainingHeroes: return new List<string>() { "Level" };
 
                 default: return null;
@@ -320,15 +322,15 @@ namespace GameOfRevenge.Business.CacheData
                         item.Add(level.Data.HitPoint.ToString());
                         break;
                     case StructureType.WatchTower:
-                        if (level.Data.Level == 1) item.Add("Reveals the incoming troops Player name.");
-                        else if (level.Data.Level == 3) item.Add("Reveals the exact location of the incoming troops origin.");
-                        else if (level.Data.Level == 7) item.Add("Reveals the incoming troops estimated time of arrival.");
-                        else if (level.Data.Level == 11) item.Add("Reveals the total size of incoming troops.");
+                        if (level.Data.Level == 1) item.Add("Reveals incoming troops from Player name.");
+                        else if (level.Data.Level == 3) item.Add("Reveals the precise location of the incoming troops' origin.");
+                        else if (level.Data.Level == 7) item.Add("Reveals the estimated time of arrival for incoming troops.");
+                        else if (level.Data.Level == 11) item.Add("Reveals the total size of the incoming troops.");
                         else if (level.Data.Level == 17) item.Add("Reveals the exact king level of the incoming troops.");
-                        else if (level.Data.Level == 19) item.Add("Reveals the soldier types of the incoming troops.");
-                        else if (level.Data.Level == 23) item.Add("Reveals the number of each soldier type frome the incoming troops.");
-                        else if (level.Data.Level == 25) item.Add("Displays the amount of heroes in the dispatch.");
-                        else if (level.Data.Level == 30) item.Add("Displays the type of Heroes in the dispatch.");
+                        else if (level.Data.Level == 19) item.Add("Reveals the types of soldiers in the incoming troops.");
+                        else if (level.Data.Level == 23) item.Add("Reveals the number of each soldier type in the incoming troops.");
+                        else if (level.Data.Level == 25) item.Add("Reveals the amount of heroes in the dispatch.");
+                        else if (level.Data.Level == 30) item.Add("Reveals the types of heroes in the dispatch.");
                         else item.Add(string.Empty);
                         break;
                     case StructureType.Blacksmith:

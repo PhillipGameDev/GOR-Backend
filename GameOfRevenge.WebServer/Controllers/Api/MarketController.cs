@@ -52,7 +52,7 @@ namespace GameOfRevenge.WebServer.Controllers.Api
         public IActionResult GetAllIAPProducts()
         {
             var iapProducts = CacheProductDataManager.GetIAPProducts(Token.PlayerId);
-            return ReturnResponse(new Response<List<IAPProduct>>(iapProducts, CaseType.Success, "Available Products"));
+            return ReturnResponse(new Response<IReadOnlyList<IAPProduct>>(iapProducts, CaseType.Success, "Available Products"));
         }
 
         [HttpPost]

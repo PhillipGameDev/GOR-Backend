@@ -22,7 +22,7 @@ namespace GameOfRevenge.GameApplication
         public GorMmoPeer(InitRequest initRequest) : base(initRequest)
         {
             Clients.Add(this);
-            log.Debug($"Client connected from: {RemoteIP}, with connection state: {ConnectionState}");
+            log.Debug($"****** Client connected from: {RemoteIP}, with connection state: {ConnectionState}");
         }
 
         protected override void OnDisconnect(DisconnectReason reasonCode, string reasonDetail)
@@ -43,7 +43,7 @@ namespace GameOfRevenge.GameApplication
 #endif
                 }
 #if DEBUG
-                log.Debug($"Client {Actor.PlayerId} disconnected with code: {reasonCode}{reasonDetail}");
+                log.Debug($"****** Client {Actor.PlayerId} disconnected with code: {reasonCode}{reasonDetail}");
 #endif
 
                 Actor.StopOnReal();
@@ -51,7 +51,7 @@ namespace GameOfRevenge.GameApplication
 #if DEBUG
             else
             {
-                log.Debug($"Client -- disconnected with code: {reasonCode}{reasonDetail}");
+                log.Debug($"****** Client -- disconnected with code: {reasonCode}{reasonDetail}");
             }
 #endif
 

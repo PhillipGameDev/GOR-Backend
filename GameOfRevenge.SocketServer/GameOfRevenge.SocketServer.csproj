@@ -200,6 +200,8 @@
     <Compile Include="Model\Operation\DeleteChatMessageRequest.cs" />
     <Compile Include="Model\Common\DeleteChatMessageRespose.cs" />
     <Compile Include="Model\Common\ReinforcementsResponse.cs" />
+    <Compile Include="Model\Operation\FriendRequest.cs" />
+    <Compile Include="Model\Operation\RespondToFriendRequest.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="GameOfRevenge.dll.config">

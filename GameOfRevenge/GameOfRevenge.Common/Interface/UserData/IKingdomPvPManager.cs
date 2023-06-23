@@ -7,11 +7,11 @@ using GameOfRevenge.Common.Net;
 
 namespace GameOfRevenge.Common.Interface.UserData
 {
-    public interface IKingdomPvPManager
-    {
-        Task<Response<AttackStatusData>> AttackOtherPlayer(int attackerId, MarchingArmy army, MapLocation location, int defenderId);
+//    public interface IKingdomPvPManager
+//    {
+//        Task<Response<AttackStatusData>> AttackOtherPlayer(int attackerId, MarchingArmy army, MapLocation location, int defenderId);
 //        (BattlePower, BattlePower) PrepareBattleData(PlayerCompleteData attackerArmy, PlayerCompleteData defenderArmy);
 //        Task<Response<BattleReport>> BattleSimulation(PlayerCompleteData attackerData, PlayerCompleteData defenderData);
 //        void ApplyPlayerArmyToMarch(PlayerCompleteData data, MarchingArmy army, bool removeArmy);
-    }
+//    }
 }

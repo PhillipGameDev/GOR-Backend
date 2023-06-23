@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Runtime.Serialization;
 using GameOfRevenge.Common.Models.Hero;
+using GameOfRevenge.Common.Models.Kingdom;
 //using Newtonsoft.Json;
 
 namespace GameOfRevenge.Common.Models
@@ -96,18 +97,22 @@ namespace GameOfRevenge.Common.Models
         [DataMember]
         public long Id { get; set; }
         [DataMember]
-        public List<TroopInfos> Troops { get; set; }
-        [DataMember]
         public int TargetPlayer { get; set; }
         [DataMember]
         public DateTime StartTime { get; set; }
         [DataMember]
-        public int ReachedTime { get; set; }  //reach to destination time from start point
+        public int ReachedTime { get; set; }
         [DataMember]
         public int BattleDuration { get; set; }
-
+        [DataMember]
+        public List<TroopInfos> Troops { get; set; }
         [DataMember(EmitDefaultValue = false)]
         public List<HeroType> Heroes { get; set; }
+
+        [DataMember(EmitDefaultValue = false)]
+        public BattleReport Report { get; set; }
+        [DataMember(EmitDefaultValue = false)]
+        public List<TroopDetailsPvP> TroopChanges { get; set; }
 
         public double TimeLeftForTask
         {
@@ -136,6 +141,43 @@ namespace GameOfRevenge.Common.Models
                 double totalSecs = (endTime - DateTime.UtcNow).TotalSeconds;
                 return (totalSecs > 0)? totalSecs : 0;
             }
+        }
+
+        public int[] TroopsToArray()
+        {
+            var list = new List<int>();
+            foreach (var troopClass in Troops)
+            {
+                foreach (var troop in troopClass.TroopData)
+                {
+                    list.Add((int)troopClass.TroopType);
+                    list.Add(troop.Level);
+                    list.Add(troop.Count);
+                }
+            }
+            return list.ToArray();
+        }
+
+        public int[] HeroesToArray(List<UserHeroDetails> userHeroes)
+        {
+            int[] heroes = null;
+            if ((Heroes != null) && (Heroes.Count > 0))
+            {
+                var len = Heroes.Count;
+                var idx = 0;
+                heroes = new int[len * 2];
+                for (int num = 0; num < len; num++)
+                {
+                    var heroType = Heroes[num];
+                    heroes[idx] = (int)heroType;
+                    var userHero = userHeroes.Find(x => (x.HeroType == heroType));
+                    if (userHero != null) heroes[idx + 1] = userHero.Level;
+
+                    idx += 2;
+                }
+            }
+
+            return heroes;
         }
     }
 }

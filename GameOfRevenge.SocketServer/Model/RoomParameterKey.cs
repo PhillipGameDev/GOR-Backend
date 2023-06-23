@@ -62,6 +62,8 @@
         ResourceTotal = 58,
         WorkerId = 59,
         SetBoost = 60,
-        Flags = 61
+        Flags = 61,
+        RequestId = 62,
+        Value = 63
     }
 }

@@ -1,19 +1,8 @@
-﻿using ExitGames.Concurrency.Fibers;
+﻿using System;
+using ExitGames.Concurrency.Fibers;
 using ExitGames.Logging;
 using GameOfRevenge.Common.Models;
-using GameOfRevenge.GameApplication;
-using GameOfRevenge.Helpers;
 using GameOfRevenge.Interface;
-using GameOfRevenge.Model;
-using Photon.SocketServer;
-using Photon.SocketServer.Concurrency;
-using System;
-using System.Collections.Concurrent;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
 
 namespace GameOfRevenge.GameHandlers
 {
@@ -26,7 +15,7 @@ namespace GameOfRevenge.GameHandlers
         public Region WorldRegion { get; private set; }
         public IInterestArea InterestArea { get; private set; }
         public IPlayerSocketDataManager InternalPlayerDataManager { get; private set; }
-        public IPlayerAttackHandler PlayerAttackHandler { get { return this.InternalPlayerDataManager.AttackHandler; } }
+        public IPlayerAttackHandler PlayerAttackHandler => InternalPlayerDataManager.AttackHandler;
         
         public MmoActor(int playerId, PlayerInfo playerInfo, IWorld world, Region region) : base(playerId, playerInfo)
         {
@@ -74,7 +63,11 @@ namespace GameOfRevenge.GameHandlers
                     InternalPlayerDataManager = null;
                 }
 
-                if (Fiber != null) Fiber.Dispose();
+                if (Fiber != null)
+                {
+                    Fiber.Dispose();
+                    Fiber = null;
+                }
 
                 if (InterestArea != null)
                 {

@@ -1,18 +1,12 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
 using System.Threading.Tasks;
 using ExitGames.Logging;
 using GameOfRevenge.Business.Manager.Base;
 using GameOfRevenge.Business.Manager.UserData;
-using GameOfRevenge.Common;
-using GameOfRevenge.Common.Interface;
-using GameOfRevenge.Common.Interface.UserData;
 using GameOfRevenge.Common.Models;
 using GameOfRevenge.Common.Models.Quest;
-using GameOfRevenge.Common.Models.Quest.Template;
 using GameOfRevenge.Common.Services;
-using Newtonsoft.Json;
 
 namespace GameOfRevenge.Business.Manager
 {
@@ -22,7 +16,6 @@ namespace GameOfRevenge.Business.Manager
         private readonly object SyncRoot = new object();
 
         private readonly UserQuestManager questManager = new UserQuestManager();
-        private readonly BaseUserDataManager userManager = new BaseUserDataManager();
 
         private readonly Dictionary<int, PlayerUserQuestData> allPlayerDatas = new Dictionary<int, PlayerUserQuestData>();
 
@@ -57,7 +50,7 @@ namespace GameOfRevenge.Business.Manager
         public async Task<PlayerCompleteData> PlayerDataChanged(PlayerUserQuestData data)
         {
             var playerId = data.PlayerId;
-            var userData = await userManager.GetFullPlayerData(playerId);
+            var userData = await BaseUserDataManager.GetFullPlayerData(playerId);
             var userQuestData = await questManager.GetUserAllQuestProgress(playerId, true);
 
             lock (SyncRoot)
@@ -109,7 +102,7 @@ namespace GameOfRevenge.Business.Manager
         {
             try
             {
-                var userData = await userManager.GetFullPlayerData(playerId);
+                var userData = await BaseUserDataManager.GetFullPlayerData(playerId);
                 var userQuestData = await questManager.GetUserAllQuestProgress(playerId, true);
 
                 var playerQuestData = new PlayerUserQuestData()

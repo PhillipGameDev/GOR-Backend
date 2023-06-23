@@ -344,7 +344,8 @@ namespace GameOfRevenge.GameHandlers
             if (this.PlayerBuildings.ContainsKey(structureType))
             {
                 //TODO: check this logic, dif pulling playerbuildings/internalplayerdata
-                resp = player.InternalPlayerDataManager.PlayerBuildings[structureType].FirstOrDefault(d => (d.Location == location));
+//                resp = player.InternalPlayerDataManager.PlayerBuildings[structureType].FirstOrDefault(d => (d.Location == location));
+                resp = this.PlayerBuildings[structureType].FirstOrDefault(d => (d.Location == location));
             }
 
             return resp;

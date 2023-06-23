@@ -99,7 +99,7 @@ namespace GameOfRevenge.Business.Manager.UserData
 
             currWorker.Location = location;
             var json = JsonConvert.SerializeObject((UserBuilderDetails)currWorker);
-            System.Console.WriteLine("builder " + currWorker.Id + " data = " + json);
+//            System.Console.WriteLine("builder " + currWorker.Id + " data = " + json);
 
             Response<PlayerDataTableUpdated> respBuilder;
             if (currWorker.Id == 0)
@@ -282,7 +282,7 @@ namespace GameOfRevenge.Business.Manager.UserData
                 var success = userResourceManager.HasResourceRequirements(structure.Requirements, playerData.Data.Resources, 1);
                 if (!success) return new Response<BuildingStructureData>(203, "Insufficient player resources");
             }
-            System.Console.WriteLine("building time = " + secs);
+//            System.Console.WriteLine("building time = " + secs);
 
             Response<UserRecordBuilderDetails> currWorker = null;
             if (secs > 0)
@@ -308,7 +308,7 @@ namespace GameOfRevenge.Business.Manager.UserData
                     ValueId = structureType,
                     Value = dataList
                 };
-                return new Response<BuildingStructureData>(new BuildingStructureData(userStructure, (currWorker != null)? currWorker.Data : null), 100, "Structure added succesfully");
+                return new Response<BuildingStructureData>(new BuildingStructureData(userStructure, currWorker?.Data), 100, "Structure added succesfully");
             }
             else
             {
@@ -350,6 +350,7 @@ namespace GameOfRevenge.Business.Manager.UserData
                         if (technology != null)
                         {
                             var specBoostData = CacheBoostDataManager.SpecNewBoostDatas.FirstOrDefault(x => x.Type == technology.Type);
+
                             if (specBoostData.Table > 0)
                             {
                                 float.TryParse(specBoostData.Levels[technology.Level].ToString(), out float levelVal);
@@ -375,7 +376,7 @@ namespace GameOfRevenge.Business.Manager.UserData
                         int secs = structureSpec.Data.TimeToBuild - (int)seconds;
                         float multiplier = (1 - (percentage / 100f));
                         secs = (int)(secs * multiplier);
-                        if (secs < 0) secs = 0;
+                        if (secs <= 0) secs = 1;
                         locData.Duration = secs;
 
                         if (removeRes)
@@ -413,7 +414,7 @@ namespace GameOfRevenge.Business.Manager.UserData
                                 ValueId = type,
                                 Value = dataList
                             };
-                            return new Response<BuildingStructureData>(new BuildingStructureData(userStructure, currBuilder.Data), 100, "Structure upgraded succesfully");
+                            return new Response<BuildingStructureData>(new BuildingStructureData(userStructure, currBuilder?.Data), 100, "Structure upgraded succesfully");
                         }
                         else
                         {

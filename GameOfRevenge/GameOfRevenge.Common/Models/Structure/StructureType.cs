@@ -23,6 +23,7 @@
         Stable = 17,//18,
         Infirmary = 18,//3,
 //        SentinelTower = 16,
+        FriendshipHall = 19
 
     }
 }

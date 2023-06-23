@@ -16,7 +16,7 @@ BEGIN
 	DECLARE @case INT = 1, @error INT = 0;
 	DECLARE @tempuserId INT = NULL;
 	DECLARE @message NVARCHAR(MAX) = NULL;
-	DECLARE @time DATETIME = CURRENT_TIMESTAMP;
+	DECLARE @time DATETIME = GETUTCDATE();
 	DECLARE @userId INT = NULL;
 
 	DECLARE @tempIdentifier VARCHAR(1000) = LTRIM(RTRIM(ISNULL(@Identifier, '')));
@@ -29,7 +29,7 @@ BEGIN
 	DECLARE @info VARCHAR(1000) = NULL;
 
 	BEGIN TRY
-		IF (@tempIdentifier = '' OR @tempIdentifier IS NULL)
+		IF (@tempIdentifier = '')
 			BEGIN
 				SET @case = 200;
 				SET @message = 'Invalid Identifier';
@@ -67,8 +67,8 @@ BEGIN
 								    END
 								END
 
-								INSERT INTO [dbo].[Player] (PlayerIdentifier, Name, AcceptedTermAndCondition, IsAdmin, IsDeveloper, VIPPoints, Version) 
-								VALUES (@tempIdentifier, @username, @tempAccepted, 0, 0, 0, @tempVersion);
+								INSERT INTO [dbo].[Player] (PlayerIdentifier, Name, AcceptedTermAndCondition, IsAdmin, IsDeveloper, VIPPoints, Version, LastLogin) 
+								VALUES (@tempIdentifier, @username, @tempAccepted, 0, 0, 0, @tempVersion, @time);
 
 								SELECT @existingAccount = p.[PlayerId] FROM [dbo].[Player] AS p WHERE p.[PlayerIdentifier] = @tempIdentifier; 
 								EXEC [dbo].[AddFirstTimeData] @existingAccount;
@@ -84,7 +84,8 @@ BEGIN
 					END
 				ELSE
 					BEGIN
-						IF (@tempVersion > @existingVersion) UPDATE [dbo].[Player] SET [Version] = @tempVersion WHERE [PlayerId] = @existingAccount;
+						/*IF (@tempVersion > @existingVersion) */
+						UPDATE [dbo].[Player] SET [Version] = @tempVersion, [LastLogin] = @time WHERE [PlayerId] = @existingAccount;
 
 						DECLARE @temp TABLE (
 							PlayerId INT,
@@ -94,7 +95,8 @@ BEGIN
 							KingLevel TINYINT,
 							VIPPoints INT,
 							CastleLevel TINYINT,
-							ClanId INT
+							ClanId INT,
+							LastLogin DATETIME
 						);
 						INSERT INTO @temp EXEC [dbo].[GetPlayerDetailsById] @existingAccount, 0;
 						SET @info = (SELECT * FROM @temp FOR JSON PATH, WITHOUT_ARRAY_WRAPPER);

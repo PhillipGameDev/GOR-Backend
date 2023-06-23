@@ -41,7 +41,7 @@ namespace GameOfRevenge.Troops
         public void Init(UserTroopData troopData)
         {
             SetTroopData(troopData);
-            AddBuildingCallBack();
+//            AddBuildingCallBack();
         }
 
         private void SetTroopData(UserTroopData data)
@@ -76,7 +76,7 @@ namespace GameOfRevenge.Troops
             {
                 var troop = GameService.BUsertroopManager.TrainTroops(Player.PlayerId, TroopType, request.TroopLevel, request.TroopCount, Building.Location).Result.Data;
                 SetTroopData(troop);
-                AddBuildingCallBack();
+//                AddBuildingCallBack();
                 log.Info($"TrainingStart playerId {Player.PlayerId} troopType {TroopType} CurrentLevel {TroopLevel} troopCount {request.TroopCount} location {Building.Location}");
             }
             catch (Exception ex)
@@ -85,18 +85,18 @@ namespace GameOfRevenge.Troops
             }
         }
 
-        public void AddBuildingCallBack()
+/*        public void AddBuildingCallBack()
         {
-            if (IsTraining)
+            if (IsTraining && (Player.Fiber != null))
             {
-                Player.Fiber.Schedule(() => { SendTrainingCompleteToTroop(); }, (long)(1000 * TroopTrainer.TimeLeft));
+                Player.Fiber.Schedule(SendTrainingCompleteToTroop, (long)(1000 * TroopTrainer.TimeLeft));
             }
         }
 
         public void SendTrainingCompleteToTroop()
         {
 
-        }
+        }*/
 
         public void SendTroopTrainingTimeToClient()
         {

@@ -27,13 +27,19 @@ namespace GameOfRevenge.Business.Manager
         {
             try
             {
-                if (version < 808) throw new DataNotExistExecption("Update Required");
+                if (version < 902) throw new DataNotExistExecption("Update Required");
                 if (string.IsNullOrWhiteSpace(identifier))
                 {
                     throw new InvalidModelExecption("Invalid identifier was provided");
                 }
 
                 identifier = identifier.Trim();
+/*                if ((identifier == "21886937eabae07847de33d5ad5bbf20") ||
+                    (identifier == "Bu3gC5191gftKiUYF0QmgSmRHDk2"))
+                {
+                    throw new DataNotExistExecption("Under Maintenance");
+                }
+                if (identifier == "test") identifier = "21886937eabae07847de33d5ad5bbf20";*/
 
                 if (!accepted) throw new RequirementExecption("Kindly accept terms and condition");
 
@@ -49,34 +55,38 @@ namespace GameOfRevenge.Business.Manager
                 if (!response.HasData) throw new InvalidModelExecption("Unable to validate your user account.");
 
                 int playerId = response.Data.PlayerId;
-                string testx = "";
                 if (response.Case == 100)// new account
                 {
                     //todo add in database
                     var structureData = CacheData.CacheStructureDataManager.GetFullStructureData(StructureType.CityCounsel);
                     var cityCounselHealth = structureData.Levels.OrderBy(x => x.Data.Level).FirstOrDefault().Data.HitPoint;
-                    var cityCounselLoc = structureData.Locations.FirstOrDefault();
+                    var cityCounselLoc = 1;//structureData.Locations.FirstOrDefault();
 
                     structureData = CacheData.CacheStructureDataManager.GetFullStructureData(StructureType.Gate);
                     var gateHealth = structureData.Levels.OrderBy(x => x.Data.Level).FirstOrDefault().Data.HitPoint;
-                    var gateLoc = structureData.Locations.FirstOrDefault();
+                    var gateLoc = 2;
 
                     structureData = CacheData.CacheStructureDataManager.GetFullStructureData(StructureType.WatchTower);
                     var wtHealth = structureData.Levels.OrderBy(x => x.Data.Level).FirstOrDefault().Data.HitPoint;
-                    var wtLoc = structureData.Locations.FirstOrDefault();
+                    var wtLoc = 4;
 
-                    int thHealth = 0;
-                    int thLoc = 0;
-                    if (version > 0)
+                    structureData = CacheData.CacheStructureDataManager.GetFullStructureData(StructureType.TrainingHeroes);
+                    var thHealth = structureData.Levels.OrderBy(x => x.Data.Level).FirstOrDefault().Data.HitPoint;
+                    var thLoc = 3;
+
+                    int fhHealth = 0;
+                    int fhLoc = 0;
+
+                    if (version > 901)
                     {
-                        structureData = CacheData.CacheStructureDataManager.GetFullStructureData(StructureType.TrainingHeroes);
-                        thHealth = structureData.Levels.OrderBy(x => x.Data.Level).FirstOrDefault().Data.HitPoint;
-                        thLoc = structureData.Locations.FirstOrDefault();
+                        structureData = CacheData.CacheStructureDataManager.GetFullStructureData(StructureType.FriendshipHall);
+                        fhHealth = structureData.Levels.OrderBy(x => x.Data.Level).FirstOrDefault().Data.HitPoint;
+                        fhLoc = 5;
                     }
 //#if DEBUG
 //                    await resManager.SumMainResource(playerId, 100000, 100000, 100000, 10000);
 //#else
-                    await resManager.SumMainResource(playerId, 10000, 10000, 10000, 100);
+                    await resManager.SumMainResource(playerId, 10000, 10000, 10000, 500);
 //#endif
                     var dataManager = new PlayerDataManager();
                     var json = JsonConvert.SerializeObject(new UserKingDetails());
@@ -110,20 +120,25 @@ namespace GameOfRevenge.Business.Manager
                     json = JsonConvert.SerializeObject(dataList);
                     await dataManager.AddOrUpdatePlayerData(playerId, DataType.Structure, (int)StructureType.WatchTower, json);
 
-                    if (version > 0)
+                    dataList[0].Location = thLoc;
+                    dataList[0].HitPoints = thHealth;
+                    json = JsonConvert.SerializeObject(dataList);
+                    await dataManager.AddOrUpdatePlayerData(playerId, DataType.Structure, (int)StructureType.TrainingHeroes, json);
+
+                    if (version > 901)
                     {
-                        dataList[0].Location = thLoc;
-                        dataList[0].HitPoints = thHealth;
+                        dataList[0].Location = fhLoc;
+                        dataList[0].HitPoints = fhHealth;
                         json = JsonConvert.SerializeObject(dataList);
-                        await dataManager.AddOrUpdatePlayerData(playerId, DataType.Structure, (int)StructureType.TrainingHeroes, json);
+                        await dataManager.AddOrUpdatePlayerData(playerId, DataType.Structure, (int)StructureType.FriendshipHall, json);
                     }
                 }
-                else if ((response.Case == 101) && (version > 0))
+                else if (response.Case == 101)// && (version > 0))
                 {
                     try
                     {
                         var dataManager = new PlayerDataManager();
-                        var resp = await dataManager.GetPlayerData(playerId, DataType.Structure, (int)StructureType.TrainingHeroes);
+                        var resp = await dataManager.GetPlayerData(playerId, DataType.Structure, (int)StructureType.FriendshipHall);
                         if (resp.IsSuccess)
                         {
                             var found = false;
@@ -136,12 +151,12 @@ namespace GameOfRevenge.Business.Manager
                                     if (bld != null)
                                     {
                                         found = true;
-                                        var structureData = CacheData.CacheStructureDataManager.GetFullStructureData(StructureType.TrainingHeroes);
-                                        int thLoc = structureData.Locations.FirstOrDefault();
+                                        var structureData = CacheData.CacheStructureDataManager.GetFullStructureData(StructureType.FriendshipHall);
+                                        int fhLoc = 5;
 
-                                        if (bld.Location != thLoc)
+                                        if (bld.Location != fhLoc)
                                         {
-                                            bld.Location = thLoc;
+                                            bld.Location = fhLoc;
                                             var json = JsonConvert.SerializeObject(structures);
                                             await dataManager.UpdatePlayerDataID(playerId, resp.Data.Id, json);
                                         }
@@ -150,39 +165,29 @@ namespace GameOfRevenge.Business.Manager
                             }
                             if (!found)
                             {
-                                testx += "nofound ";
-                                var structureData = CacheData.CacheStructureDataManager.GetFullStructureData(StructureType.TrainingHeroes);
-                                int thHealth = structureData.Levels.OrderBy(x => x.Data.Level).FirstOrDefault().Data.HitPoint;
-                                int thLoc = structureData.Locations.FirstOrDefault();
+                                var structureData = CacheData.CacheStructureDataManager.GetFullStructureData(StructureType.FriendshipHall);
+                                int fhHealth = structureData.Levels.OrderBy(x => x.Data.Level).FirstOrDefault().Data.HitPoint;
+                                int fhLoc = 5;// structureData.Locations.FirstOrDefault();
 
                                 var timestamp = DateTime.UtcNow;
                                 var dataList = new List<StructureDetails>();
                                 dataList.Add(new StructureDetails()
                                 {
                                     Level = 1,
-                                    Location = thLoc,
+                                    Location = fhLoc,
                                     StartTime = timestamp,
-                                    HitPoints = thHealth,
+                                    HitPoints = fhHealth,
                                 });
                                 var json = JsonConvert.SerializeObject(dataList);
-                                await dataManager.AddOrUpdatePlayerData(playerId, DataType.Structure, (int)StructureType.TrainingHeroes, json);
+                                await dataManager.AddOrUpdatePlayerData(playerId, DataType.Structure, (int)StructureType.FriendshipHall, json);
                             }
                         }
 
                         resp = await dataManager.GetPlayerData(playerId, DataType.Custom, 3);
-                        if (playerId == 71)
-                        {
-                            testx += resp.IsSuccess ? "ok" : "ng";
-                            testx += resp.HasData ? " si" : " no";
-                        }
                         if (resp.IsSuccess && !resp.HasData)
                         {
                             var json = JsonConvert.SerializeObject(new UserVIPDetails(100));
                             var x = await dataManager.AddOrUpdatePlayerData(playerId, DataType.Custom, 3, json);
-                            if (playerId == 71)
-                            {
-                                testx += " " + x.IsSuccess + "  " + x.Case + "  " + x.Message;
-                            }
                         }
                     }
                     catch (Exception ex)
@@ -191,10 +196,6 @@ namespace GameOfRevenge.Business.Manager
                     }
                 }
                 await CompleteAccountQuest(playerId, AccountTaskType.SignIn);
-                if (playerId == 71)
-                {
-                    response.Message = response.Case+"  "+version+testx;
-                }
 
                 return response;
             }

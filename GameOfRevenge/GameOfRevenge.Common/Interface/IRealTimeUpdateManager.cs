@@ -9,6 +9,6 @@ namespace GameOfRevenge.Common.Interface
         AttackStatusData GetAttackerData(int attackerId);
         AttackStatusData GetAttackDataForDefender(int defenderId);
         void AddNewAttackOnWorld(AttackStatusData data);
-        Task Update(Action<AttackStatusData> CallBackResult);
+        Task Update(Action<AttackStatusData, bool> callBackResult);
     }
 }

@@ -11,25 +11,23 @@ namespace GameOfRevenge.GameHandlers
 {
 
     using System;
-    using System.Collections.Generic;
     using System.Linq;
-    using ExitGames.Concurrency.Channels;
-
-    using Newtonsoft.Json.Linq;
-    using System.IO;
+    using System.Collections.Generic;
+    using System.Threading.Tasks;
     using ExitGames.Logging;
-    using Newtonsoft.Json;
     using ExitGames.Concurrency.Fibers;
-    using System.Collections.Concurrent;
+    using Newtonsoft.Json;
+    using GameOfRevenge.Common;
     using GameOfRevenge.Interface;
     using GameOfRevenge.Model;
     using GameOfRevenge.Common.Models.Kingdom;
-    using GameOfRevenge.Common.Services;
     using GameOfRevenge.Common.Models;
     using GameOfRevenge.GameApplication;
     using GameOfRevenge.Common.Interface;
     using GameOfRevenge.Business.Manager;
-    using System.Threading.Tasks;
+    using GameOfRevenge.Business.Manager.UserData;
+    using GameOfRevenge.Business.Manager.Base;
+    using GameOfRevenge.Common.Models.Structure;
 
     /// <summary>
     /// Grid used to divide the world.
@@ -47,6 +45,7 @@ namespace GameOfRevenge.GameHandlers
         private static readonly ILogger log = LogManager.GetCurrentClassLogger();
 
         private static readonly IAccountManager accountManager = new AccountManager();
+        private static readonly IPlayerDataManager manager = new PlayerDataManager();
 
         public int WorldId { get; set; }
         public string Name { get; set; }
@@ -114,6 +113,99 @@ namespace GameOfRevenge.GameHandlers
                 }
                 log.InfoFormat("Total users in world {0}", count);
 
+                var marchingList = new List<MarchingArmy>();
+                var taskMarching = manager.GetAllMarchingTroops();
+                taskMarching.Wait();
+                if (taskMarching.Result.IsSuccess && taskMarching.Result.HasData)
+                {
+                    count = 0;
+                    var list = taskMarching.Result.Data;
+                    foreach (var data in list)
+                    {
+                        MarchingArmy marching = null;
+                        if (!string.IsNullOrEmpty(data.Value))
+                        {
+                            try
+                            {
+                                marching = JsonConvert.DeserializeObject<MarchingArmy>(data.Value);
+                            }
+                            catch (Exception ex)
+                            {
+                                log.Info("Error: "+ex.Message);
+                                log.Info("Error deserializing marching army: " + data.Value);
+                            }
+                        }
+                        if (marching == null) continue;
+
+                        var attackerId = (int)data.Id;
+                        var task = BaseUserDataManager.GetFullPlayerData(attackerId);
+                        task.Wait();
+                        if (!task.Result.IsSuccess || !task.Result.HasData)
+                        {
+                            //delete marching
+                            continue;
+//                                throw new DataNotExistExecption(task.Result.Message);
+                        }
+                        var attackerData = task.Result.Data;
+
+                        var defenderId = marching.TargetPlayer;
+                        task = BaseUserDataManager.GetFullPlayerData(defenderId);
+                        task.Wait();
+                        if (!task.Result.IsSuccess || !task.Result.HasData)
+                        {
+                            continue;
+                        }
+                        var defenderData = task.Result.Data;
+
+                        byte watchLevel = 0;
+                        foreach (var structures in defenderData.Structures)
+                        {
+                            if (structures.StructureType != StructureType.WatchTower) continue;
+
+                            var watchTowers = structures.Buildings;
+                            if (watchTowers?.Count > 0)
+                            {
+                                watchLevel = (byte)watchTowers.Max(x => x.CurrentLevel);
+                            }
+                            break;
+                        }
+
+                        var response = new AttackResponseData()
+                        {
+                            AttackerId = attackerId,
+                            EnemyId = defenderId,
+
+                            WatchLevel = watchLevel,
+
+                            AttackerUsername = attackerData.PlayerName,
+                            EnemyUsername = defenderData.PlayerName,
+                            KingLevel = attackerData.King.Level,
+//                                LocationX = location.X,
+//                                LocationY = location.Y,
+
+                            Troops = marching.TroopsToArray(),
+                            Heroes = marching.HeroesToArray(attackerData.Heroes),
+
+                            StartTime = marching.StartTime.ToUniversalTime().ToString("s") + "Z",// timestart,
+                            ReachedTime = marching.ReachedTime,// reachedTime,
+                            BattleDuration = marching.BattleDuration//battleDuration
+                        };
+                        var attackStatus = new AttackStatusData()
+                        {
+                            MarchingArmy = marching,
+                            AttackData = response
+                        };
+//                            attackStatus.State = 1;
+
+                        GameService.BRealTimeUpdateManager.AddNewAttackOnWorld(attackStatus);
+                        count++;
+                    }
+                    log.InfoFormat("Total attacks running:{0}", count);
+                }
+                else
+                {
+                    log.Info("Error pulling marching troops");
+                }
 
                 GameService.BRealTimeUpdateManager.Update(InvokeAttackComplete);
             }
@@ -124,19 +216,20 @@ namespace GameOfRevenge.GameHandlers
             }
         }
 
-        public void InvokeAttackComplete(AttackStatusData data)
+        void InvokeAttackComplete(AttackStatusData data, bool forAttacker)
         {
-            var attacker = PlayersManager.GetPlayer(data.Attacker.PlayerId);
-            var defender = PlayersManager.GetPlayer(data.Defender.PlayerId);
-            if (attacker != null && defender != null)
+            var playerId = forAttacker? data.AttackData.AttackerId : data.AttackData.EnemyId;
+            var actor = PlayersManager.GetPlayer(playerId);
+            if (actor != null)
             {
-                var winnerPly = (data.WinnerPlayerId == attacker.PlayerId) ? attacker : defender;
-                var result = new AttackResultResponse();
-                result.WinnerId = winnerPly.PlayerId;
-                attacker.SendEvent(EventCode.AttackResult, result);
-                defender.SendEvent(EventCode.AttackResult, result);
+                var result = new AttackResultResponse
+                {
+                    WinnerId = data.MarchingArmy.Report.AttackerWon? data.AttackData.AttackerId : data.AttackData.EnemyId
+                };
+                actor.SendEvent(EventCode.AttackResult, result);
             }
         }
+
         public Region FindFreeRegion()
         {
             int mapSize = WorldRegions.Length;

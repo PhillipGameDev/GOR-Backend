@@ -680,6 +680,32 @@ namespace GameOfRevenge.Business.Manager.UserData
             }
         }
 
+        public async Task<Response<List<PlayerDataTable>>> GetAllMarchingTroops()
+        {
+            try
+            {
+                return await Db.ExecuteSPMultipleRow<PlayerDataTable>("GetMarchingTroops", null);
+            }
+            catch (InvalidModelExecption ex)
+            {
+                return new Response<List<PlayerDataTable>>()
+                {
+                    Case = 200,
+                    Data = null,
+                    Message = ex.Message
+                };
+            }
+            catch (Exception ex)
+            {
+                return new Response<List<PlayerDataTable>>()
+                {
+                    Case = 0,
+                    Data = null,
+                    Message = ErrorManager.ShowError(ex)
+                };
+            }
+        }
+
         private static Dictionary<string, object> ResourceUpdateSpParams(int playerId, int food, int wood, int ore, int gem, bool showResult = true)
         {
             if (playerId <= 0) throw new InvalidModelExecption("Invalid player id");

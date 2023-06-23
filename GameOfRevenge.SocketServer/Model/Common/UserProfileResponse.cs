@@ -1,4 +1,5 @@
-﻿using Photon.SocketServer.Rpc;
+﻿using System;
+using Photon.SocketServer.Rpc;
 
 namespace GameOfRevenge.Model
 {
@@ -21,5 +22,8 @@ namespace GameOfRevenge.Model
 
         [DataMember(Code = (byte)RoomParameterKey.CastleLevel, IsOptional = false)]
         public byte CastleLevel { get; set; }
+
+        [DataMember(Code = (byte)RoomParameterKey.Timestamp, IsOptional = false)]
+        public string LastLogin { get; set; }
     }
 }

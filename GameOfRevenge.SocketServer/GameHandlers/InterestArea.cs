@@ -1,15 +1,11 @@
-﻿using ExitGames.Concurrency.Fibers;
+﻿using System;
+using System.Collections.Generic;
+using System.Linq;
+using ExitGames.Concurrency.Fibers;
 using ExitGames.Logging;
-using GameOfRevenge.Common;
 using GameOfRevenge.GameApplication;
 using GameOfRevenge.Interface;
 using GameOfRevenge.Model;
-using Photon.SocketServer.Concurrency;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace GameOfRevenge.GameHandlers
 {
@@ -208,12 +204,12 @@ namespace GameOfRevenge.GameHandlers
                 var response = new IaEnterResponse(region.Owner);
                 this.Owner.SendEvent(EventCode.IaEnter, response);
 
-                var attackData = GameService.BRealTimeUpdateManager.GetAttackerData(region.Owner.PlayerId);
+/*                var attackData = GameService.BRealTimeUpdateManager.GetAttackerData(region.Owner.PlayerId);
                 if (attackData != null)
                 {
                     var attackResponse = new AttackResponse(attackData.AttackData);
                     this.Owner.SendEvent(EventCode.AttackEvent, attackResponse);
-                }
+                }*/
             }
         }
         public void SendOnExitEvent(Region r)

@@ -18,12 +18,12 @@ namespace GameOfRevenge.WebServer.Controllers.Api
     [AllowAnonymous]
     public class GameDefController : BaseApiController
     {
-        private readonly IBaseUserManager baseUserManager;
+//        private readonly IBaseUserManager baseUserManager;
 
-        public GameDefController(IBaseUserManager baseUserManager)
-        {
-            this.baseUserManager = baseUserManager;
-        }
+//        public GameDefController(IBaseUserManager baseUserManager)
+//        {
+//            this.baseUserManager = baseUserManager;
+//        }
 
         [HttpGet]
         public IActionResult GetAllBoosts()
@@ -158,11 +158,11 @@ namespace GameOfRevenge.WebServer.Controllers.Api
             return ReturnResponse(response);
         }
 
-        [HttpGet]
+/*        [HttpGet]
         public IActionResult GetInstantBuildCost(int timeLeft)//obsolete -> playercontroller.instantbuild
         {
             var response = baseUserManager.GetInstantBuildCost(timeLeft);
             return ReturnResponse(new Response<int>(response, 100, "Instant build cost"));
-        }
+        }*/
     }
 }

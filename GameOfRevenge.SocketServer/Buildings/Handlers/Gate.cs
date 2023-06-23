@@ -9,6 +9,7 @@ using GameOfRevenge.GameApplication;
 using GameOfRevenge.GameHandlers;
 using GameOfRevenge.Common;
 using GameOfRevenge.Business.CacheData;
+using GameOfRevenge.Business.Manager.Base;
 
 namespace GameOfRevenge.Buildings.Handlers
 {
@@ -56,7 +57,7 @@ namespace GameOfRevenge.Buildings.Handlers
 
         private Response<PlayerCompleteData> PlayerData()
         {
-            var task = GameService.BPlayerStructureManager.GetFullPlayerData(Player.PlayerId);
+            var task = BaseUserDataManager.GetFullPlayerData(Player.PlayerId);
             task.Wait();
             var result = task.Result;
             return result;

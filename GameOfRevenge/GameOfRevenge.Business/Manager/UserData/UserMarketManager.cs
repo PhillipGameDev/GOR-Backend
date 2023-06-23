@@ -1,5 +1,6 @@
 ﻿using System.Collections.Generic;
 using System.Threading.Tasks;
+using System.Linq;
 using GameOfRevenge.Business.Manager.Base;
 using GameOfRevenge.Common.Net;
 using GameOfRevenge.Common.Models.Structure;
@@ -62,7 +63,7 @@ namespace GameOfRevenge.Business.Manager.UserData
 //            if (productId already redeemed) return new Response(201, "Product already redemeed");
 
             var iapProducts = CacheProductDataManager.GetIAPProducts();
-            var pack = iapProducts.Find(x => (x.ProductId == productId));
+            var pack = iapProducts.FirstOrDefault(x => (x.ProductId == productId));
             if (pack != null)
             {
                 await UserQuestManager.CollectRewards(playerId, pack.Rewards); //TODO:implement response error

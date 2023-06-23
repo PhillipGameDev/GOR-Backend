@@ -1,6 +1,7 @@
 ﻿using System.Threading.Tasks;
 using System.Collections.Generic;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Logging;
 using GameOfRevenge.Common.Net;
 using GameOfRevenge.Common.Models;
 using GameOfRevenge.Common.Models.Boost;
@@ -9,7 +10,7 @@ using GameOfRevenge.Common.Interface.UserData;
 using GameOfRevenge.Common;
 using GameOfRevenge.Common.Models.Structure;
 using GameOfRevenge.Common.Models.Hero;
-using GameOfRevenge.Common.Models.PlayerData;
+using GameOfRevenge.Business.Manager.Base;
 
 namespace GameOfRevenge.WebServer.Controllers.Api
 {
@@ -24,11 +25,15 @@ namespace GameOfRevenge.WebServer.Controllers.Api
         private readonly IUserTechnologyManager userTechnologyManager;
         private readonly IInstantProgressManager instantProgressManager;
         private readonly IUserHeroManager userHeroManager;
+        private readonly IUserFriendsManager userFriendsManager;
+
+        private readonly ILogger<PlayerController> _logger;
 
         public PlayerController(IUserResourceManager userResourceManager, IUserStructureManager userStructureManager,
                                 IUserInventoryManager userInventoryManager, IUserActiveBoostsManager userActiveBoostManager,
                                 IUserTechnologyManager userTechnologyManager, IUserTroopManager userTroopManager,
-                                IInstantProgressManager instantProgressManager, IUserHeroManager userHeroManager)
+                                IInstantProgressManager instantProgressManager, IUserHeroManager userHeroManager,
+                                IUserFriendsManager userFriendsManager, ILogger<PlayerController> logger)
         {
             userManager = userResourceManager;
             this.userResourceManager = userResourceManager;
@@ -39,13 +44,24 @@ namespace GameOfRevenge.WebServer.Controllers.Api
             this.userTroopManager = userTroopManager;
             this.instantProgressManager = instantProgressManager;
             this.userHeroManager = userHeroManager;
+            this.userFriendsManager = userFriendsManager;
+            _logger = logger;
         }
 
         [HttpPost]
         public async Task<IActionResult> GetUserData(int playerId = 0)
         {
+
             int plyId = (playerId == 0)? Token.PlayerId : playerId;
-            return ReturnResponse(await userResourceManager.GetFullPlayerData(plyId));
+            _logger.LogInformation("GetUserData plyId=" + plyId);
+
+            var response = await BaseUserDataManager.GetFullPlayerData(plyId);
+            if ((response.Case < 100) || (response.Case >= 200))
+            {
+                _logger.LogWarning("ERROR: " + response.Message);
+            }
+
+            return ReturnResponse(response);
         }
 
 #region Gate
@@ -361,7 +377,7 @@ namespace GameOfRevenge.WebServer.Controllers.Api
             }
             else
             {
-                var response = await userInventoryManager.GetFullPlayerData(Token.PlayerId);
+                var response = await BaseUserDataManager.GetFullPlayerData(Token.PlayerId);
                 if (response.IsSuccess && response.HasData)
                 {
                     string msg = string.Empty;
@@ -421,7 +437,7 @@ namespace GameOfRevenge.WebServer.Controllers.Api
         [HttpGet]
         public async Task<IActionResult> GetActiveBoostList()
         {
-            var response = await userInventoryManager.GetFullPlayerData(Token.PlayerId);
+            var response = await BaseUserDataManager.GetFullPlayerData(Token.PlayerId);
             return ReturnResponse(new Response<List<UserRecordNewBoost>>(response.Data?.Boosts, response.Case, response.Message));
         }
 #endregion
@@ -430,7 +446,7 @@ namespace GameOfRevenge.WebServer.Controllers.Api
         [HttpGet]
         public async Task<IActionResult> GetHeroList()
         {
-            var response = await userManager.GetFullPlayerData(Token.PlayerId);
+            var response = await BaseUserDataManager.GetFullPlayerData(Token.PlayerId);
             if (response.IsSuccess)
             {
                 return ReturnResponse(new Response<List<UserHeroDetails>>(response.Data?.Heroes, response.Case, "User heroes"));
@@ -491,7 +507,7 @@ namespace GameOfRevenge.WebServer.Controllers.Api
         [HttpGet]
         public async Task<IActionResult> GetUserTechnologyData()
         {
-            var response = await userManager.GetFullPlayerData(Token.PlayerId);
+            var response = await BaseUserDataManager.GetFullPlayerData(Token.PlayerId);
 
             return ReturnResponse(new Response<List<TechnologyInfos>>(response.Data?.Technologies, response.Case, response.Message));
         }
@@ -539,7 +555,7 @@ namespace GameOfRevenge.WebServer.Controllers.Api
         [HttpGet]
         public async Task<IActionResult> GetUserTroopData()
         {
-            var response = await userManager.GetFullPlayerData(Token.PlayerId);
+            var response = await BaseUserDataManager.GetFullPlayerData(Token.PlayerId);
             return ReturnResponse(new Response<List<TroopInfos>>(response.Data?.Troops, response.Case, response.Message));
         }
 
@@ -574,6 +590,13 @@ namespace GameOfRevenge.WebServer.Controllers.Api
             return ReturnResponse(response);
         }
 
+        //public async Task<IActionResult> InstantTrainTroops(int buildingLoc)
+        //{
+        //    var response = await userTroopManager.InstantTrainTroops(Token.PlayerId, buildingLoc);
+        //    return ReturnResponse(response);
+        //}
+#endregion
+
         [HttpPost]
         public async Task<IActionResult> GetRanking()
         {
@@ -588,13 +611,36 @@ namespace GameOfRevenge.WebServer.Controllers.Api
             return ReturnResponse(response);
         }
 
-        //public async Task<IActionResult> InstantTrainTroops(int buildingLoc)
-        //{
-        //    var response = await userTroopManager.InstantTrainTroops(Token.PlayerId, buildingLoc);
-        //    return ReturnResponse(response);
-        //}
+#region Friends
+        [HttpPost]
+        public async Task<IActionResult> GetFriendRequests(byte filter)
+        {
+            var response = await userFriendsManager.GetFriendRequests(Token.PlayerId, filter);
+            return ReturnResponse(response);
+        }
 
-        #endregion
+        [HttpPost]
+        public async Task<IActionResult> GetFriends()
+        {
+            var response = await userFriendsManager.GetFriends(Token.PlayerId);
+            return ReturnResponse(response);
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> SendFriendRequest(int toPlayerId)
+        {
+            var response = await userFriendsManager.SendFriendRequest(Token.PlayerId, toPlayerId);
+            return ReturnResponse(response);
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> RespondToFriendRequest(int toPlayerId, byte value)
+        {
+            var response = await userFriendsManager.RespondToFriendRequest(Token.PlayerId, toPlayerId, value);
+            return ReturnResponse(response);
+        }
+#endregion
+
         //OBSOLETE, remove later
         [HttpPost]
         public async Task<IActionResult> HelpBuilding(int toPlayerId, StructureType type, int locId, int helpSeconds)
@@ -623,6 +669,6 @@ namespace GameOfRevenge.WebServer.Controllers.Api
 
         [HttpPost]
         public async Task<IActionResult> InstantRecruitTroops(int locId, TroopType type, int level, int count) => ReturnResponse(await instantProgressManager.InstantRecruitTroops(Token.PlayerId, locId, type, level, count));
-        #endregion
+#endregion
     }
 }

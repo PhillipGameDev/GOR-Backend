@@ -13,8 +13,6 @@ namespace GameOfRevenge.Interface
         Dictionary<StructureType, List<IPlayerBuildingManager>> PlayerBuildings { get; }
         Dictionary<ResourceType, IPlayerResources> PlayerResources { get; }
         IPlayerAttackHandler AttackHandler { get; }
-//        UserKingDetails King { get; }
-//        List<UserRecordBuilderDetails> Builders { get; }
 
         void UpdateData(PlayerCompleteData data);
 

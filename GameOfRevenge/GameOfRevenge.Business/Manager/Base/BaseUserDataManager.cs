@@ -36,7 +36,7 @@ namespace GameOfRevenge.Business.Manager.Base
 
         public async Task<Response<List<PlayerDataTable>>> GetAllPlayerData(int playerId) => await manager.GetAllPlayerData(playerId);
 
-        public UserResourceData PlayerDataToUserResourceData(PlayerDataTable playerData)
+        public static UserResourceData PlayerDataToUserResourceData(PlayerDataTable playerData)
         {
             if (!long.TryParse(playerData.Value, out long value))
             {
@@ -52,7 +52,7 @@ namespace GameOfRevenge.Business.Manager.Base
             };
         }
 
-        public async Task<Response<PlayerCompleteData>> GetFullPlayerData(int playerId)
+        public static async Task<Response<PlayerCompleteData>> GetFullPlayerData(int playerId)
         {
             string line = "-";
             try
@@ -248,11 +248,11 @@ namespace GameOfRevenge.Business.Manager.Base
                             marching.Id = userMarching.Id;
                             finalData.Data.MarchingArmy = marching;
                         }
-                        else
+/*                        else
                         {
                             await manager.UpdatePlayerDataID(playerId, userMarching.Id, string.Empty);
                             //AddOrUpdatePlayerData(playerId, DataType.Custom, 2, json);
-                        }
+                        }*/
                     }
                 }
 
@@ -476,7 +476,7 @@ namespace GameOfRevenge.Business.Manager.Base
                 return new Response<PlayerCompleteData>()
                 {
                     Case = 200,
-                    Message = ErrorManager.ShowError(ex),
+                    Message = ErrorManager.ShowError(ex) + "i"+line,
                     Data = null
                 };
             }
@@ -485,7 +485,7 @@ namespace GameOfRevenge.Business.Manager.Base
                 return new Response<PlayerCompleteData>()
                 {
                     Case = 201,
-                    Message = ErrorManager.ShowError(ex),
+                    Message = ErrorManager.ShowError(ex) + "d"+line,
                     Data = null
                 };
             }
@@ -494,7 +494,7 @@ namespace GameOfRevenge.Business.Manager.Base
                 return new Response<PlayerCompleteData>()
                 {
                     Case = 0,
-                    Message = ErrorManager.ShowError(ex) + line,
+                    Message = ErrorManager.ShowError(ex) + "e"+line,
                     Data = null
                 };
             }
@@ -529,158 +529,6 @@ namespace GameOfRevenge.Business.Manager.Base
                 throw ex;
             }
             return dict;
-        }
-
-        public async Task<Response<UserVIPDetails>> AddVIPPoints(int playerId, int points)
-        {
-            try
-            {
-                var response = await manager.GetAllPlayerData(playerId);
-                if (!response.IsSuccess) throw new InvalidModelExecption(response.Message);
-
-                var gemsdata = response.Data.Find(x => (x.DataType == DataType.Resource) && (x.ValueId == (int)ResourceType.Gems));
-                if (gemsdata == null) throw new InvalidModelExecption("No resource gems");
-
-                long.TryParse(gemsdata.Value, out long plyGems);
-                if (plyGems < points) throw new InvalidModelExecption("Not enough gems");
-
-                var vipdata = response.Data.Find(x => (x.DataType == DataType.Custom) && (x.ValueId == 3));
-                if (vipdata != null)
-                {
-                    var vipdetails = JsonConvert.DeserializeObject<UserVIPDetails>(vipdata.Value);
-                    vipdetails.Points += points;//TODO: add vippoints to player info
-                    var json = JsonConvert.SerializeObject(vipdetails);
-                    var saveResp = await manager.UpdatePlayerDataID(playerId, vipdata.Id, json);
-                    if (saveResp.IsSuccess)
-                    {
-                        await manager.RemovePlayerResourceData(playerId, 0, 0, 0, points);
-                    }
-                    return new Response<UserVIPDetails>()
-                    {
-                        Case = 100,
-                        Message = "Success",
-                        Data = vipdetails
-                    };
-                }
-
-                throw new DataNotExistExecption("VIP data missing");
-            }
-            catch (InvalidModelExecption ex)
-            {
-                return new Response<UserVIPDetails>()
-                {
-                    Case = 200,
-                    Message = ErrorManager.ShowError(ex),
-                    Data = null
-                };
-            }
-            catch (DataNotExistExecption ex)
-            {
-                return new Response<UserVIPDetails>()
-                {
-                    Case = 201,
-                    Message = ErrorManager.ShowError(ex),
-                    Data = null
-                };
-            }
-            catch (Exception ex)
-            {
-                return new Response<UserVIPDetails>()
-                {
-                    Case = 0,
-                    Message = ErrorManager.ShowError(ex),
-                    Data = null
-                };
-            }
-        }
-
-        public async Task<Response<UserVIPDetails>> ActivateVIPBoosts(int playerId)
-        {
-            try
-            {
-                var response = await manager.GetAllPlayerData(playerId, DataType.Custom);
-                if (!response.IsSuccess) throw new InvalidModelExecption(response.Message);
-
-                var vipdata = response.Data.Find(x => (x.DataType == DataType.Custom) && (x.ValueId == 3));
-                if (vipdata != null)
-                {
-                    var vipdetails = JsonConvert.DeserializeObject<UserVIPDetails>(vipdata.Value);
-
-                    int levelVal = 0;
-                    var specBoostData = CacheBoostDataManager.SpecNewBoostDatas.First(x => x.Type == NewBoostType.Blessing);
-                    if (specBoostData.Table > 0)
-                    {
-                        if (specBoostData.Levels.ContainsKey((byte)vipdetails.Level))
-                        {
-                            int.TryParse(specBoostData.Levels[(byte)vipdetails.Level].ToString(), out levelVal);
-                        }
-                    }
-/*                    var nvip = CacheBoostDataManager.GetNewBoostByTypeId((int)NewBoostType.VIP);
-                    foreach (var tech in nvip.Techs)
-                    {
-                        if ((tech.StartLevel > 0) && (vipdetails.Level < tech.StartLevel)) continue;
-                        if (tech.Tech != (NewBoostTech)VIPBoostTech.BuildingTimeBonus) continue;
-
-                        var value = tech.GetValue(vipdetails.Level);
-                        if (value > maxVal) maxVal = value;
-                    }*/
-                    if (levelVal > 0)
-                    {
-                        if (vipdetails.TimeLeft == 0)
-                        {
-                            vipdetails.StartTime = DateTime.UtcNow;
-                            vipdetails.Duration = 0;
-                        }
-                        vipdetails.Duration += levelVal;
-
-                        var json = JsonConvert.SerializeObject(vipdetails);
-                        var saveResp = await manager.UpdatePlayerDataID(playerId, vipdata.Id, json);
-
-                        return new Response<UserVIPDetails>()
-                        {
-                            Case = 100,
-                            Message = "Success",
-                            Data = vipdetails
-                        };
-                    }
-
-                    return new Response<UserVIPDetails>()
-                    {
-                        Case = 101,
-                        Message = "Activation not required",
-                        Data = null
-                    };
-                }
-
-                throw new DataNotExistExecption("VIP data missing");
-            }
-            catch (InvalidModelExecption ex)
-            {
-                return new Response<UserVIPDetails>()
-                {
-                    Case = 200,
-                    Message = ErrorManager.ShowError(ex),
-                    Data = null
-                };
-            }
-            catch (DataNotExistExecption ex)
-            {
-                return new Response<UserVIPDetails>()
-                {
-                    Case = 201,
-                    Message = ErrorManager.ShowError(ex),
-                    Data = null
-                };
-            }
-            catch (Exception ex)
-            {
-                return new Response<UserVIPDetails>()
-                {
-                    Case = 0,
-                    Message = ErrorManager.ShowError(ex),
-                    Data = null
-                };
-            }
         }
 
         public bool HasRequirements(IReadOnlyList<IReadOnlyDataRequirement> requirements, PlayerCompleteData playerData) => HasRequirements(requirements, playerData, 1);
@@ -863,6 +711,158 @@ namespace GameOfRevenge.Business.Manager.Base
             var baseCostMultiplierPerSec = 0.01f;
             var cost = timeLeft * baseCostMultiplierPerSec;
             return (int)cost;
+        }
+
+        public async Task<Response<UserVIPDetails>> AddVIPPoints(int playerId, int points)
+        {
+            try
+            {
+                var response = await manager.GetAllPlayerData(playerId);
+                if (!response.IsSuccess) throw new InvalidModelExecption(response.Message);
+
+                var gemsdata = response.Data.Find(x => (x.DataType == DataType.Resource) && (x.ValueId == (int)ResourceType.Gems));
+                if (gemsdata == null) throw new InvalidModelExecption("No resource gems");
+
+                long.TryParse(gemsdata.Value, out long plyGems);
+                if (plyGems < points) throw new InvalidModelExecption("Not enough gems");
+
+                var vipdata = response.Data.Find(x => (x.DataType == DataType.Custom) && (x.ValueId == 3));
+                if (vipdata != null)
+                {
+                    var vipdetails = JsonConvert.DeserializeObject<UserVIPDetails>(vipdata.Value);
+                    vipdetails.Points += points;//TODO: add vippoints to player info
+                    var json = JsonConvert.SerializeObject(vipdetails);
+                    var saveResp = await manager.UpdatePlayerDataID(playerId, vipdata.Id, json);
+                    if (saveResp.IsSuccess)
+                    {
+                        await manager.RemovePlayerResourceData(playerId, 0, 0, 0, points);
+                    }
+                    return new Response<UserVIPDetails>()
+                    {
+                        Case = 100,
+                        Message = "Success",
+                        Data = vipdetails
+                    };
+                }
+
+                throw new DataNotExistExecption("VIP data missing");
+            }
+            catch (InvalidModelExecption ex)
+            {
+                return new Response<UserVIPDetails>()
+                {
+                    Case = 200,
+                    Message = ErrorManager.ShowError(ex),
+                    Data = null
+                };
+            }
+            catch (DataNotExistExecption ex)
+            {
+                return new Response<UserVIPDetails>()
+                {
+                    Case = 201,
+                    Message = ErrorManager.ShowError(ex),
+                    Data = null
+                };
+            }
+            catch (Exception ex)
+            {
+                return new Response<UserVIPDetails>()
+                {
+                    Case = 0,
+                    Message = ErrorManager.ShowError(ex),
+                    Data = null
+                };
+            }
+        }
+
+        public async Task<Response<UserVIPDetails>> ActivateVIPBoosts(int playerId)
+        {
+            try
+            {
+                var response = await manager.GetAllPlayerData(playerId, DataType.Custom);
+                if (!response.IsSuccess) throw new InvalidModelExecption(response.Message);
+
+                var vipdata = response.Data.Find(x => (x.DataType == DataType.Custom) && (x.ValueId == 3));
+                if (vipdata != null)
+                {
+                    var vipdetails = JsonConvert.DeserializeObject<UserVIPDetails>(vipdata.Value);
+
+                    int levelVal = 0;
+                    var specBoostData = CacheBoostDataManager.SpecNewBoostDatas.First(x => x.Type == NewBoostType.Blessing);
+                    if (specBoostData.Table > 0)
+                    {
+                        if (specBoostData.Levels.ContainsKey((byte)vipdetails.Level))
+                        {
+                            int.TryParse(specBoostData.Levels[(byte)vipdetails.Level].ToString(), out levelVal);
+                        }
+                    }
+                    /*                    var nvip = CacheBoostDataManager.GetNewBoostByTypeId((int)NewBoostType.VIP);
+                                        foreach (var tech in nvip.Techs)
+                                        {
+                                            if ((tech.StartLevel > 0) && (vipdetails.Level < tech.StartLevel)) continue;
+                                            if (tech.Tech != (NewBoostTech)VIPBoostTech.BuildingTimeBonus) continue;
+
+                                            var value = tech.GetValue(vipdetails.Level);
+                                            if (value > maxVal) maxVal = value;
+                                        }*/
+                    if (levelVal > 0)
+                    {
+                        if (vipdetails.TimeLeft == 0)
+                        {
+                            vipdetails.StartTime = DateTime.UtcNow;
+                            vipdetails.Duration = 0;
+                        }
+                        vipdetails.Duration += levelVal;
+
+                        var json = JsonConvert.SerializeObject(vipdetails);
+                        var saveResp = await manager.UpdatePlayerDataID(playerId, vipdata.Id, json);
+
+                        return new Response<UserVIPDetails>()
+                        {
+                            Case = 100,
+                            Message = "Success",
+                            Data = vipdetails
+                        };
+                    }
+
+                    return new Response<UserVIPDetails>()
+                    {
+                        Case = 101,
+                        Message = "Activation not required",
+                        Data = null
+                    };
+                }
+
+                throw new DataNotExistExecption("VIP data missing");
+            }
+            catch (InvalidModelExecption ex)
+            {
+                return new Response<UserVIPDetails>()
+                {
+                    Case = 200,
+                    Message = ErrorManager.ShowError(ex),
+                    Data = null
+                };
+            }
+            catch (DataNotExistExecption ex)
+            {
+                return new Response<UserVIPDetails>()
+                {
+                    Case = 201,
+                    Message = ErrorManager.ShowError(ex),
+                    Data = null
+                };
+            }
+            catch (Exception ex)
+            {
+                return new Response<UserVIPDetails>()
+                {
+                    Case = 0,
+                    Message = ErrorManager.ShowError(ex),
+                    Data = null
+                };
+            }
         }
 
         public async Task<Response<RankingElement>> GetRanking(int playerId)

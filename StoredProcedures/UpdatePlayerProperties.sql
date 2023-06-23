@@ -1,6 +1,6 @@
 USE [GameOfRevenge]
 GO
-/****** Object:  StoredProcedure [dbo].[UpdatePlayerProperties]    Script Date: 5/1/2023 9:08:33 AM ******/
+/****** Object:  StoredProcedure [dbo].[UpdatePlayerProperties]    Script Date: 6/13/2023 7:35:16 AM ******/
 SET ANSI_NULLS ON
 GO
 SET QUOTED_IDENTIFIER ON

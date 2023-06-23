@@ -4,6 +4,7 @@ using GameOfRevenge.Common.Interface.UserData;
 using GameOfRevenge.Buildings.Interface;
 using GameOfRevenge.GameHandlers;
 using GameOfRevenge.Common.Models.Structure;
+using GameOfRevenge.Business.Manager.UserData;
 
 namespace GameOfRevenge.Interface
 {
@@ -18,7 +19,7 @@ namespace GameOfRevenge.Interface
         IWorldHandler WorldHandler { get; }
         IPlayerDataManager BPlayerManager { get; }
         IKingdomManager BKingdomManager { get; }
-        IKingdomPvPManager BkingdomePvpManager { get; }
+        KingdomPvPManager BkingdomePvpManager { get; }
         IUserTroopManager BUsertroopManager { get; }
         ITechnologyManager BTechnologyManager { get; }
     }

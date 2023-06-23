@@ -39,7 +39,7 @@ namespace GameOfRevenge.Model
         public int[] Heroes { get; set; }
 
 
-        public AttackResponse(AttackSocketResponse res)
+        public AttackResponse(AttackResponseData res)
         {
             AttackerId = res.AttackerId;
             AttackerUsername = res.AttackerUsername;
@@ -47,17 +47,15 @@ namespace GameOfRevenge.Model
             EnemyId = res.EnemyId;
             EnemyUsername = res.EnemyUsername;
 
-            ReachedTime = res.ReachedTime;
-
             KingLevel = res.KingLevel;
             WatchLevel = res.WatchLevel;
 
             Troops = res.Troops;
-
             Heroes = res.Heroes;
 
-            StartTime = res.StartTime.ToUniversalTime().ToString("s") + "Z";
+            StartTime = res.StartTime;
             BattleDuration = res.BattleDuration;
+            ReachedTime = res.ReachedTime;
         }
     }
 }

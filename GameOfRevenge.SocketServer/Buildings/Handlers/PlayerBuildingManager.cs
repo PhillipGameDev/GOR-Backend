@@ -62,9 +62,9 @@ namespace GameOfRevenge.Buildings.Handlers
 
         public void AddBuildingCallBack()
         {
-            log.Info("player = " + (Player != null));
-            log.Info("fiber = " + (Player.Fiber != null));
-            log.Info("data = " + (PlayerStructureData != null));
+            log.Info("player exists = " + (Player != null));
+            log.Info("fiber exists = " + (Player.Fiber != null));
+            log.Info("data exists = " + (PlayerStructureData != null));
 //            Player.Fiber.Schedule(SendBuildingCompleteToBuild, PlayerStructureData.TimeLeft * 1000);
         }
 
