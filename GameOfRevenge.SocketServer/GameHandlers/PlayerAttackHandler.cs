@@ -47,10 +47,9 @@ namespace GameOfRevenge.GameHandlers
                 return false;
             }
 
-            DateTime timestart = DateTime.UtcNow.AddSeconds(2);
-            bool success = true;
-            double dist = attacker.World.GetDistanceBw2Points(Enemy.WorldRegion, attacker.WorldRegion) * 100;// / 0.2f;
-            int reachedTime = (int)dist;
+            var timestart = DateTime.UtcNow.AddSeconds(2);
+            var success = true;
+            var dist = attacker.World.GetDistanceBw2Points(Enemy.WorldRegion, attacker.WorldRegion) * 100;// / 0.2f;
 
             //apply HeroType.AlyamamahEyes - Troop Marching Time
             /*            if (request.HeroIds != null)
@@ -61,7 +60,6 @@ namespace GameOfRevenge.GameHandlers
             //                        attacker.World.PlayersManager.GetPlayer("").
                         }
                         }*/
-
             try
             {
                 var marchingArmy = new MarchingArmy()
@@ -99,29 +97,40 @@ namespace GameOfRevenge.GameHandlers
                 }
                 delay /= 100;
                 if (delay < 5) delay = 5;
-                int battleDuration = (int)delay;
 
                 marchingArmy.StartTime = timestart;
-                marchingArmy.ReachedTime = reachedTime;
-                marchingArmy.BattleDuration = battleDuration;
+                marchingArmy.ReachedTime = (int)dist;
+                marchingArmy.BattleDuration = (int)delay;
                 marchingArmy.TargetPlayer = Enemy.PlayerId;
 
-                log.InfoFormat("Passing Data attackerId {0} Data {1} defenderId {2} ", attacker.PlayerId, JsonConvert.SerializeObject(marchingArmy), Enemy.PlayerId);
-
-
-                var location = new MapLocation() { X = attacker.WorldRegion.X, Y = attacker.WorldRegion.Y };
+                var str = "Passing Data attackerId {0} Data {1} defenderId {2} ";
+                log.InfoFormat(str, attacker.PlayerId, JsonConvert.SerializeObject(marchingArmy), Enemy.PlayerId);
 
                 var resp = await BaseUserDataManager.GetFullPlayerData(attacker.PlayerId);
                 if (!resp.IsSuccess || !resp.HasData) throw new DataNotExistExecption(resp.Message);
 
+                AttackResponseData attackData;
                 var attackerCompleteData = resp.Data;
-                byte watchLevel = await GameService.BkingdomePvpManager.AttackOtherPlayer(attackerCompleteData, marchingArmy, location, Enemy.PlayerId);
-                var attackData = new AttackResponseData(attackerCompleteData, marchingArmy, Enemy.PlayerId, Enemy.PlayerData.Name, watchLevel);
+                if (Enemy.PlayerData.Invaded == 0)
+                {
+                    var location = new MapLocation() { X = attacker.WorldRegion.X, Y = attacker.WorldRegion.Y };
+                    var watchLevel = await GameService.BkingdomePvpManager.AttackOtherPlayer(attackerCompleteData, marchingArmy, location, Enemy.PlayerId);
+
+                    attackData = new AttackResponseData(attackerCompleteData, marchingArmy, Enemy.PlayerId, Enemy.PlayerData.Name, watchLevel);
+                }
+                else
+                {
+                    await GameService.BkingdomePvpManager.AttackMonster(attackerCompleteData, marchingArmy);
+                    attackData = new AttackResponseData(attackerCompleteData, marchingArmy, Enemy.PlayerId, Enemy.PlayerData.Invaded);
+                }
 
                 var attackResponse = new AttackResponse(attackData);
                 attacker.SendEvent(EventCode.AttackEvent, attackResponse);
 
-                Enemy.SendEvent(EventCode.UnderAttack, attackResponse);
+                if (Enemy.PlayerData.Invaded == 0)
+                {
+                    Enemy.SendEvent(EventCode.UnderAttack, attackResponse);
+                }
 
                 var attackStatus = new AttackStatusData()
                 {

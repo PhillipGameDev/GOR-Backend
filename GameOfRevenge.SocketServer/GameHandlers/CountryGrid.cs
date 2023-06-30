@@ -228,6 +228,10 @@ namespace GameOfRevenge.GameHandlers
                 };
                 actor.SendEvent(EventCode.AttackResult, result);
             }
+            if (forAttacker)
+            {
+                actor.SendOperation(OperationCode.PlayerConnectToServer, ReturnCode.OK);
+            }
         }
 
         public Region FindFreeRegion()

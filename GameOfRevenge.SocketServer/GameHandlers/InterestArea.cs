@@ -47,6 +47,37 @@ namespace GameOfRevenge.GameHandlers
             var scYPos = this.CameraRegion.Y + (-1 * (GlobalConst.TilesIaY));
             var eC = new Vector(Math.Min(maxPosX - 1, ecXPos), Math.Min(maxPosX - 1, ecYPos));    // last cordinate position of tiles which is part of IA
             var sC = new Vector(Math.Max(0, scXPos), Math.Max(0, scYPos));   //start cordinate position of tiles which is part of IA
+
+            var enemyId = 0;
+            var attackData = GameService.BRealTimeUpdateManager.GetAttackerData(this.Owner.PlayerId);
+            if (attackData != null)
+            {
+                enemyId = attackData.AttackData.EnemyId;
+                var found = false;
+                for (int i = 0; i < maxPosX; i++)   //loop for x coordinate
+                {
+                    for (int j = 0; j < maxPosY; j++)   // loop for y coordinate
+                    {
+                        var r = this.World.WorldRegions[i][j];
+                        if ((r.Owner == null) || (r.Owner.PlayerId != enemyId)) continue;
+
+                        if (!this.Regions.Contains(r))
+                        {
+                            this.Regions.Add(r);
+                            if (r.IsBooked && (r.Owner != null) && !this.Owner.InterestUsers.ContainsKey(r.Owner.PlayerId))
+                            {
+                                this.Owner.InterestUsers.TryAdd(r.Owner.PlayerId, r.Owner);
+                                if (isLocatedNewLocation) r.OnEnterPlayer(this.Owner); // new player instanstiate
+                                if (this.Owner.IsInKingdomView) this.SendOnEnterEvent(r);
+                            }
+                        }
+                        found = true;
+                        break;
+                    }
+                    if (found) break;
+                }
+            }
+
             for (int i = (int)sC.X; i <= eC.X && i >= 0 && i < maxPosX; i++)   //loop for x cordinate
             {
                 for (int j = (int)sC.Y; j <= eC.Y && j >= 0 && j < maxPosY; j++)   // loop for y cordinate
@@ -64,6 +95,7 @@ namespace GameOfRevenge.GameHandlers
                     }
                 }
             }
+
             if (((regions != null) && (regions.Count() > 0)) &&
                 ((Regions != null) && (Regions.Count() > 0)))
             {
@@ -71,6 +103,11 @@ namespace GameOfRevenge.GameHandlers
                 foreach (Region r in outRegions)
                 {
                     if (!Regions.Contains(r)) continue;
+                    if (r.Owner != null)
+                    {
+                        if (r.Owner.PlayerId == this.Owner.PlayerId) continue;
+                        if ((attackData != null) && (r.Owner.PlayerId == enemyId)) continue;
+                    }
 
                     Regions.Remove(r);
                     if (r.IsBooked && (r.Owner != null) &&

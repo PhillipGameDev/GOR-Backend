@@ -17,6 +17,9 @@ namespace GameOfRevenge.Model
         [DataMember(Code = (byte)RoomParameterKey.TargetUsername, IsOptional = true)]
         public string EnemyUsername { get; set; }
 
+        [DataMember(Code = (byte)RoomParameterKey.Invaded, IsOptional = true)]
+        public int MonsterId { get; set; }
+
         [DataMember(Code = (byte)RoomParameterKey.StartTime, IsOptional = true)]
         public string StartTime { get; set; }
 
@@ -46,6 +49,7 @@ namespace GameOfRevenge.Model
 
             EnemyId = res.EnemyId;
             EnemyUsername = res.EnemyUsername;
+            MonsterId = res.MonsterId;
 
             KingLevel = res.KingLevel;
             WatchLevel = res.WatchLevel;

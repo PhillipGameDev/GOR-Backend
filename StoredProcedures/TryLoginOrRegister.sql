@@ -93,8 +93,11 @@ BEGIN
 							IsAdmin BIT,
 							IsDeveloper BIT,
 							KingLevel TINYINT,
-							VIPPoints INT,
 							CastleLevel TINYINT,
+							WatchLevel TINYINT,
+							ShieldEndTime DATETIME,
+							Invaded INT,
+							VIPPoints INT,
 							ClanId INT,
 							LastLogin DATETIME
 						);

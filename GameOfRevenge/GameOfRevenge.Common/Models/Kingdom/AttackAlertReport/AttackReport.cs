@@ -5,7 +5,7 @@ using System.Runtime.Serialization;
 namespace GameOfRevenge.Common.Models.Kingdom.AttackAlertReport
 {
     [DataContract]
-    public class UnderAttackReport
+    public class AttackReport
     {
         [DataMember]
         public int AttackerId { get; set; }
@@ -14,8 +14,6 @@ namespace GameOfRevenge.Common.Models.Kingdom.AttackAlertReport
 
         [DataMember]
         public string AttackerUsername { get; set; }
-        [DataMember]
-        public MapLocation Location { get; set; }
 
         [DataMember]
         public DateTime StartTime { get; set; }
@@ -38,7 +36,10 @@ namespace GameOfRevenge.Common.Models.Kingdom.AttackAlertReport
         public int Duration { get; set; }
     }
 
-    public class AttackReport : UnderAttackReport
+    [DataContract]
+    public class UnderAttackReport : AttackReport
     {
+        [DataMember]
+        public MapLocation Location { get; set; }
     }
 }

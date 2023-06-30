@@ -25,7 +25,7 @@ namespace GameOfRevenge.Common.Models
     [DataContract]
     public class DataReward : BaseDataTypeTable<int, int>, IBaseTable, IBaseDataTypeTable<int, int>, IReadOnlyBaseDataTypeTable<int, int>, IDataReward, IReadOnlyDataReward
     {
-        [DataMember]
+        [DataMember(EmitDefaultValue = false)]
         public int RewardId { get; set; }
         public int QuestId { get; set; }
         [DataMember, JsonProperty(Order = 10)]
@@ -46,8 +46,10 @@ namespace GameOfRevenge.Common.Models
         {
         }
 
-        public DataReward(DataType dataType, int valueId, int value, int count)
+        public DataReward(int rewardId, int questId, DataType dataType, int valueId, int value, int count)
         {
+            RewardId = rewardId;
+            QuestId = questId;
             DataType = dataType;
             ValueId = valueId;
             Value = value;

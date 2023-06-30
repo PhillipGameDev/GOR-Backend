@@ -25,6 +25,21 @@ namespace GameOfRevenge.Common.Models.Kingdom
         internal int TempAttack;
         internal int TempDefense;
 
+        public BattlePower(int playerId, int monsterId, int hitPoints, int attack, int defense)
+        {
+            PlayerId = playerId;
+            MonsterId = monsterId;
+            HitPoints = hitPoints;
+            TempAttack = attack;
+            TempDefense = defense;
+            Attack = attack;
+            Defense = defense;
+//            Username
+//            TotalArmy
+//            Wounded
+//            Dead
+        }
+
         public BattlePower(PlayerCompleteData completeData, MarchingArmy marchingArmy,
             Func<TroopType, IReadOnlyTroopDataRequirementRel> getTroopData,
             Func<PlayerCompleteData, MarchingArmy, List<AttackDefenseMultiplier>> getAtkDefMultiplier)
@@ -130,29 +145,19 @@ namespace GameOfRevenge.Common.Models.Kingdom
             TempDefense = (int)defense;
         }
 
-        public void AttackPlayer(BattlePower defenderPower)
+        public void AttackMonster(BattlePower defenderPower)
         {
             var attackerPower = this;
             var random = new Random();
             var atkSoldierHealth = attackerPower.TroopChanges.Average(x => x.Data.Health);
-            var defSoldierHealth = defenderPower.TroopChanges.Average(x => x.Data.Health);
             var atkSoldiersToSacrifice = Math.Max(10, (attackerPower.TroopChanges.Sum(x => x.InitialCount) * 0.1f));
-            var defSoldiersToSacrifice = Math.Max(20, (defenderPower.TroopChanges.Sum(x => x.InitialCount) * 0.2f));
-
-            var atkDamage = attackerPower.TempAttack - defenderPower.TempDefense;
-            if (atkDamage < (defSoldierHealth * defSoldiersToSacrifice))
-            {
-                atkDamage = (int)(defSoldierHealth * defSoldiersToSacrifice * (random.Next(5, 10) / 10f));
-            }
-            var multiplier = (random.Next(3, 8) / 10f);
-            var damageToDefender = atkDamage * multiplier;
 
             var defDamage = defenderPower.TempAttack - attackerPower.TempDefense;
             if (defDamage < (atkSoldierHealth * atkSoldiersToSacrifice))
             {
                 defDamage = (int)(atkSoldierHealth * atkSoldiersToSacrifice * (random.Next(5, 10) / 10f));
             }
-            multiplier = (random.Next(3, 8) / 10f);
+            var multiplier = (random.Next(3, 8) / 10f);
             var damageToAttacker = defDamage * multiplier;
 
             foreach (var troop in attackerPower.TroopChanges)
@@ -170,6 +175,62 @@ namespace GameOfRevenge.Common.Models.Kingdom
                 break;
             }
 
+            var atkDamage = attackerPower.TempAttack - defenderPower.TempDefense;
+            multiplier = (random.Next(3, 8) / 10f);
+            var damageToDefender = atkDamage * multiplier;
+            defenderPower.HitPoints -= (int)damageToDefender;
+            defenderPower.TempAttack = (int)(defenderPower.TempAttack * 0.9f);
+            if (defenderPower.HitPoints < 0) defenderPower.HitPoints = 0;
+
+            attackerPower.Recalculate();
+        }
+
+        public void AttackPlayer(BattlePower defenderPower)
+        {
+            var attackerPower = this;
+            var random = new Random();
+            var atkSoldierHealth = attackerPower.TroopChanges.Average(x => x.Data.Health);
+            var atkSoldiersToSacrifice = Math.Max(10, (attackerPower.TroopChanges.Sum(x => x.InitialCount) * 0.1f));
+            
+            var defDamage = defenderPower.TempAttack - attackerPower.TempDefense;
+            if (defDamage < (atkSoldierHealth * atkSoldiersToSacrifice))
+            {
+                defDamage = (int)(atkSoldierHealth * atkSoldiersToSacrifice * (random.Next(5, 10) / 10f));
+            }
+            var multiplier = (random.Next(3, 8) / 10f);
+            var damageToAttacker = defDamage * multiplier;
+
+            foreach (var troop in attackerPower.TroopChanges)
+            {
+                var temp = troop.TotalHP;
+                troop.TotalHP -= (int)damageToAttacker;
+                if (troop.TotalHP <= 0)
+                {
+                    troop.TotalHP = 0;
+                    damageToAttacker -= temp;
+                    if (damageToAttacker < 0) damageToAttacker = 0;
+                    continue;
+                }
+
+                break;
+            }
+
+            float defSoldierHealth = 0;
+            float defSoldiersToSacrifice = 0;
+            if (defenderPower.TroopChanges != null)
+            {
+                defSoldierHealth = defenderPower.TroopChanges.Average(x => x.Data.Health);
+                defSoldiersToSacrifice = Math.Max(20, (defenderPower.TroopChanges.Sum(x => x.InitialCount) * 0.2f));
+            }
+
+            var atkDamage = attackerPower.TempAttack - defenderPower.TempDefense;
+            if (atkDamage < (defSoldierHealth * defSoldiersToSacrifice))
+            {
+                atkDamage = (int)(defSoldierHealth * defSoldiersToSacrifice * (random.Next(5, 10) / 10f));
+            }
+            multiplier = (random.Next(3, 8) / 10f);
+            var damageToDefender = atkDamage * multiplier;
+
             if (defenderPower.GateHP > 0)
             {
                 var temp = defenderPower.GateHP;
@@ -177,7 +238,7 @@ namespace GameOfRevenge.Common.Models.Kingdom
                 if (defenderPower.GateHP < 0) defenderPower.GateHP = 0;
                 damageToDefender -= temp;
             }
-            if (damageToDefender > 0)
+            if ((damageToDefender > 0) && (defenderPower.TroopChanges != null))
             {
                 foreach (var troop in defenderPower.TroopChanges)
                 {
@@ -194,6 +255,7 @@ namespace GameOfRevenge.Common.Models.Kingdom
                     break;
                 }
             }
+
             attackerPower.Recalculate();
             defenderPower.Recalculate();
         }
@@ -211,8 +273,10 @@ namespace GameOfRevenge.Common.Models.Kingdom
     {
         [DataMember]
         public int PlayerId { get; set; }
-        [DataMember]
+        [DataMember(EmitDefaultValue = false)]
         public string Username { get; set; }
+        [DataMember(EmitDefaultValue = false)]
+        public int MonsterId { get; set; }
 
         [DataMember(EmitDefaultValue = false)]
         public int Attack { get; set; }
@@ -226,15 +290,18 @@ namespace GameOfRevenge.Common.Models.Kingdom
         public int Dead { get; set; }
         public int Survived => (TotalArmy - Dead);
 
-        [DataMember(EmitDefaultValue = false)]
+/*        [DataMember(EmitDefaultValue = false)]
         public int Food { get; set; }
         [DataMember(EmitDefaultValue = false)]
         public int Wood { get; set; }
         [DataMember(EmitDefaultValue = false)]
-        public int Ore { get; set; }
+        public int Ore { get; set; }*/
 
         [DataMember(EmitDefaultValue = false)]
         public List<HeroData> Heroes { get; set; }
+
+        [DataMember(EmitDefaultValue = false)]
+        public List<DataReward> Items { get; set; }
     }
 
     [DataContract]

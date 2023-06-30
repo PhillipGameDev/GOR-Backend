@@ -64,6 +64,9 @@
         SetBoost = 60,
         Flags = 61,
         RequestId = 62,
-        Value = 63
+        Value = 63,
+        WatchLevel = 64,
+        ShieldEndTime = 65,
+        Invaded = 66
     }
 }

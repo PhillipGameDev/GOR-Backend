@@ -12,8 +12,12 @@ namespace GameOfRevenge.Common.Models
         public bool IsDeveloper { get; set; }
 
         public byte KingLevel { get; set; }
-        public int VIPPoints { get; set; }
         public byte CastleLevel { get; set; }
+        public byte WatchLevel { get; set; }
+        public DateTime ShieldEndTime { get; set; }
+        public int Invaded { get; set; }
+
+        public int VIPPoints { get; set; }
         public int AllianceId { get; set; }
         public DateTime LastLogin { get; set; }
 
@@ -26,8 +30,12 @@ namespace GameOfRevenge.Common.Models
             IsDeveloper = reader.GetValue(index) != DBNull.Value && reader.GetBoolean(index); index++;
 
             KingLevel = reader.GetValue(index) == DBNull.Value ? (byte)0 : reader.GetByte(index); index++;
-            VIPPoints = reader.GetValue(index) == DBNull.Value ? 0 : reader.GetInt32(index); index++;
             CastleLevel = reader.GetValue(index) == DBNull.Value ? (byte)0 : reader.GetByte(index); index++;
+            WatchLevel = reader.GetValue(index) == DBNull.Value ? (byte)0 : reader.GetByte(index); index++;
+            ShieldEndTime = reader.GetValue(index) == DBNull.Value ? new DateTime() : reader.GetDateTime(index); index++;
+            Invaded = reader.GetValue(index) == DBNull.Value ? 0 : reader.GetInt32(index); index++;
+
+            VIPPoints = reader.GetValue(index) == DBNull.Value ? 0 : reader.GetInt32(index); index++;
             AllianceId = reader.GetValue(index) == DBNull.Value ? 0 : reader.GetInt32(index); index++;
             LastLogin = reader.GetValue(index) == DBNull.Value ? new DateTime() : reader.GetDateTime(index);
         }

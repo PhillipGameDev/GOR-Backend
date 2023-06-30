@@ -27,6 +27,7 @@ namespace GameOfRevenge.Common.Models
 
         public int EnemyId { get; set; }
         public string EnemyUsername { get; set; }
+        public int MonsterId { get; set; }
 
 //        public int LocationX { get; set; }
 //        public int LocationY { get; set; }
@@ -45,6 +46,29 @@ namespace GameOfRevenge.Common.Models
         {
         }
 
+        public AttackResponseData(PlayerCompleteData attackerCompleteData, MarchingArmy marchingArmy, int enemyId, int monsterId)
+        {
+            AttackerId = attackerCompleteData.PlayerId;
+            AttackerUsername = attackerCompleteData.PlayerName;
+
+            EnemyId = enemyId;
+//            EnemyUsername = null;
+            MonsterId = monsterId;
+
+            //            LocationX = location.X;
+            //            LocationY = location.Y;
+
+//            KingLevel = attackerCompleteData.King.Level;
+//            WatchLevel = watchLevel;
+
+            StartTime = marchingArmy.StartTime.ToUniversalTime().ToString("s") + "Z";
+            ReachedTime = marchingArmy.ReachedTime;
+            BattleDuration = marchingArmy.BattleDuration;
+
+            Troops = marchingArmy.TroopsToArray();
+            Heroes = marchingArmy.HeroesToArray(attackerCompleteData.Heroes);
+        }
+
         public AttackResponseData(PlayerCompleteData attackerCompleteData, MarchingArmy marchingArmy, int enemyId, string enemyName, byte watchLevel)
         {
             AttackerId = attackerCompleteData.PlayerId;
@@ -52,6 +76,7 @@ namespace GameOfRevenge.Common.Models
 
             EnemyId = enemyId;
             EnemyUsername = enemyName;
+//            MonsterId = 0;
 
 //            LocationX = location.X;
 //            LocationY = location.Y;

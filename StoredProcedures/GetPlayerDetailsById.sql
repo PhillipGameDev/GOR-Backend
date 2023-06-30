@@ -56,6 +56,7 @@ BEGIN
 					END CATCH*/
 
 				/*castle level and watch level*/
+				DECLARE @level TINYINT = NULL;
 				DECLARE @index INT = 1;
 				DECLARE @castleValueId INT = 1;
 				DECLARE @watchValueId INT = 3;
@@ -68,6 +69,8 @@ BEGIN
 				    IF (@json IS NOT NULL)
 				    BEGIN
 				        BEGIN TRY
+							DECLARE @startTime DATETIME = NULL;
+							DECLARE @duration INT = NULL;
 				            SELECT
 				                @level = ISNULL(Level, 0),
 				                @startTime = CONVERT(DATETIMEOFFSET, StartTime),
@@ -77,7 +80,7 @@ BEGIN
 
 				            IF (@duration > 0)
 				            BEGIN
-				                DECLARE @secs INT = @duration - DATEDIFF(ss, @startTime, @time);
+				                DECLARE @secs INT = @duration - DATEDIFF(SECOND, @startTime, @time);
 				                IF (@secs > 0) SET @level -= 1;
 				            END
 				        END TRY
@@ -151,8 +154,10 @@ BEGIN
 			END CATCH
 		END
 
+	DECLARE @invaded INT = NULL;
+	IF (DATEDIFF(DAY, @lastLogin, GETUTCDATE()) > (30 * 6)) SET @invaded = 1;
 	SELECT 'PlayerId' = @existingId, 'Name' = @name, 'IsAdmin' = @isAdmin, 'IsDeveloper' = @isDeveloper, 'KingLevel' = @kingLevel, 
-			'CastleLevel' = @castleLevel, 'WatchLevel' = @watchLevel, 'ShieldEndTime' = @shieldEndTime,
+			'CastleLevel' = @castleLevel, 'WatchLevel' = @watchLevel, 'ShieldEndTime' = @shieldEndTime, 'Invaded' = @invaded,
 			'VIPPoints' = @vipPoints, 'ClanId' = @clanId, 'LastLogin' = @lastLogin;
 
 	IF (@Log = 1) EXEC [dbo].[GetMessage] @userId, @message, @case, @error, @time, 1, 1;
