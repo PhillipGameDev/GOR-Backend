@@ -31,5 +31,8 @@ namespace GameOfRevenge.Common.Models
                 return seconds;
             }
         }
+
+        public float TimeElapsed => (Duration - TimeLeft);
+        public float Percentage => (TimeElapsed / Duration);
     }
 }

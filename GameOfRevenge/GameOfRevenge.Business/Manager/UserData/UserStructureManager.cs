@@ -20,24 +20,24 @@ namespace GameOfRevenge.Business.Manager.UserData
     public class UserStructureManager : BaseUserDataManager, IUserStructureManager
     {
         private readonly UserResourceManager userResourceManager;
-//        private readonly UserQuestManager userQuestManager;
+        //        private readonly UserQuestManager userQuestManager;
         private readonly UserMarketManager marketManager;
 
         public UserStructureManager()
         {
             userResourceManager = new UserResourceManager();
-//            userQuestManager = new UserQuestManager();
+            //            userQuestManager = new UserQuestManager();
             marketManager = new UserMarketManager();
         }
 
         public async Task<Response<UserStructureData>> CheckBuildingStatus(int playerId, StructureType structureType)
         {
-//            var structId = CacheStructureDataManager.GetFullStructureData(structureType).Info.Id;
+            //            var structId = CacheStructureDataManager.GetFullStructureData(structureType).Info.Id;
             var playerData = await manager.GetPlayerData(playerId, DataType.Structure, (int)structureType);
             return new Response<UserStructureData>()
             {
                 Case = playerData.Case,
-                Data = playerData.HasData? PlayerData.PlayerDataToUserStructureData(playerData.Data) : null,
+                Data = playerData.HasData ? PlayerData.PlayerDataToUserStructureData(playerData.Data) : null,
                 Message = playerData.Message
             };
         }
@@ -72,6 +72,59 @@ namespace GameOfRevenge.Business.Manager.UserData
                 Data = null,
                 Message = allPlayerData.Message
             };
+        }
+
+        public async Task<Response<BuildingStructureData>> UpdateBuildingData(int playerId, StructureType structureType, int location, Dictionary<string, int> changes)
+        {
+            var existing = await CheckBuildingStatus(playerId, structureType);
+            List<StructureDetails> dataList = null;
+            StructureDetails building = null;
+            if (existing.IsSuccess && existing.HasData)
+            {
+                dataList = existing.Data.Value;
+                building = dataList.Find(x => (x.Location == location));
+            }
+            if (building == null)
+            {
+                return new Response<BuildingStructureData>(200, "Structure not found at location");
+            }
+
+            if (changes.ContainsKey("level")) building.Level = changes["level"];
+
+            if (changes.ContainsKey("upgrading"))
+            {
+                var duration = changes["upgrading"];
+                if ((duration > 0) && (building.TimeLeft == 0)) building.StartTime = DateTime.UtcNow;
+                building.Duration = duration;
+            }
+
+            if (changes.ContainsKey("boost"))
+            {
+                var duration = changes["boost"];
+                if (duration == 0)
+                {
+                    building.Boost = null;
+                }
+                else
+                {
+                    if ((building.Boost == null) || (building.Boost.TimeLeft == 0))
+                    {
+                        building.Boost = new TimerBase() { StartTime = DateTime.UtcNow };
+                    }
+                    building.Boost.Duration = duration;
+                }
+            }
+
+            var json = JsonConvert.SerializeObject(dataList);
+            var respModel = await manager.UpdatePlayerDataID(playerId, existing.Data.Id, json);
+            if (respModel.IsSuccess)
+            {
+                return new Response<BuildingStructureData>(new BuildingStructureData(existing.Data), 100, "Structure updated succesfully");
+            }
+            else
+            {
+                return new Response<BuildingStructureData>(201, respModel.Message);
+            }
         }
 
         private async Task<Response<UserRecordBuilderDetails>> SetWorkerLocation(int playerId, List<StructureInfos> structures, List<UserRecordBuilderDetails> workers, int location, bool createWorker)
@@ -214,7 +267,7 @@ namespace GameOfRevenge.Business.Manager.UserData
             {
                 int castleLvl = 0;
                 var userCastle = await CheckBuildingStatus(playerId, StructureType.CityCounsel);
-                if (userCastle.Data.Value.Count > 0) castleLvl = userCastle.Data.Value[0].Level;
+                if (userCastle.Data.Value.Count > 0) castleLvl = userCastle.Data.Value[0].CurrentLevel;
 
                 for (int num = castleLvl; num > 0; num--)
                 {

@@ -31,6 +31,13 @@ namespace GameOfRevenge.Common.Models
         [DataMember(EmitDefaultValue = false)]
         public bool IsMarching { get; set; }
 
-        public int Level => (int)Math.Floor(Points / (float)UNLOCK_POINTS);
+        public int Level => GetLevel(Points);
+
+        public static int GetLevel(int points)
+        {
+            var lvl = 0;
+            if (points > 0) lvl = (int)Math.Floor(points / (float)UNLOCK_POINTS);
+            return lvl;
+        }
     }
 }

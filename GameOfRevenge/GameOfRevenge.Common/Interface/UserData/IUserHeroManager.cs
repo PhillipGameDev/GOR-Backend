@@ -16,6 +16,6 @@ namespace GameOfRevenge.Common.Interface.UserData
 //        Task<Response<int>> AddHeroWarPoints(int playerId, HeroType heroType, int? value);
 
         Task<Response<UserHeroDetails>> GetHeroPoint(int playerId, int heroId);
-        Task<Response<UserHeroDetails>> SaveHeroPoint(int playerId, int heroId, int warPoints);
+        Task<Response<UserHeroDetails>> SaveHeroPoints(int playerId, HeroType heroType, int points);
     }
 }

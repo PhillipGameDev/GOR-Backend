@@ -1,0 +1,118 @@
+﻿@model InputStructureModel
+@using GameOfRevenge.WebAdmin.Models
+
+<style>
+    .form-group {
+        margin-bottom: 0px;
+    }
+
+    .progress-button .progress {
+        margin-top: 0.75rem;
+        border: 1px solid #ced4da;
+    }
+
+    .progress-button button {
+        padding-top: 2px;
+        padding-bottom: 2px;
+        margin-top: 0.5rem;
+    }
+</style>
+
+<form id="structure-modal-form" method="post" data-ajax-method="post" data-ajax="true"
+      data-ajax-success="SaveSuccess" data-ajax-failure="SaveFailure"
+      data-ajax-url="?handler=SaveStructureChanges">
+    <div class="modal-header">
+        <h4 class="modal-title" id="structure-modal-title">@Model.StructureType</h4>
+        <button class="close" type="button" data-dismiss="modal">x</button>
+        <input type="hidden" asp-for="PlayerId" value="@Model.PlayerId" />
+        <input type="hidden" asp-for="StructureType" value="@Model.StructureType" />
+        <input type="hidden" asp-for="StructureLocation" value="@Model.StructureLocation" />
+        <input type="hidden" asp-for="StructureValues" value="" />
+    </div>
+    <div class="modal-body">
+        <div class="row justify-content-center text-center" id="edit-structure-content">
+            <div class="form-group col-sm-2">
+                Location
+                <p class="col-form-static py-2 text-muted" id="structure-location">@Model.StructureLocation</p>
+            </div>
+            <div class="form-group col-sm-3 progress-button">
+                Boost
+                <div id="bar-boost">
+                    @if (Model.Structure.Boost != null)
+                    {
+                        <div class="progress rounded">
+                            <div class="progress-bar bg-warning" role="progressbar" id="structure-boost"
+                                 style="width: @Model.Structure.Boost.Percentage.ToString("0%")"></div>
+                        </div>
+                    }
+                    else
+                    {
+                        <p class="col-form-static py-2 text-muted">-</p>
+                    }
+                </div>
+            </div>
+            <div class="form-group col-sm-3 progress-button">
+                Upgrading
+                <div id="bar-upgrading">
+                    @if (Model.Structure.TimeLeft > 0)
+                    {
+                        <div class="progress rounded">
+                            <div class="progress-bar" role="progressbar" id="structure-upgrading"
+                                 style="width: @Model.Structure.Percentage.ToString("0%")"></div>
+                        </div>
+                        <button class="btn btn-sm btn-primary" type="button" onclick="CompleteProgress(this)"
+                                data-progress-type="upgrading" data-progress-level="@Model.Structure.Level">
+                            Complete
+                        </button>
+                    }
+                    else
+                    {
+                        <p class="col-form-static py-2 text-muted">-</p>
+                    }
+                </div>
+            </div>
+            <div class="form-group col-sm-2">
+                <strong>Level</strong>
+                <p class="col-form-static py-2" id="label-value">@Model.Structure.CurrentLevel</p>
+            </div>
+            <div class="form-group col-sm-2">
+                @if (Model.Structure.TimeLeft > 0)
+                {
+                    <strong class="text-muted" id="input-label">New Level</strong>
+                    <input class="form-control bg-light text-dark" id="input-newvalue" autocomplete="off"
+                           type="text" placeholder="" value="" disabled>
+                }
+                else
+                {
+                    <strong id="input-label">New Level</strong>
+                    <input class="form-control bg-light text-dark" id="input-newvalue" autocomplete="off"
+                           type="text" placeholder="" value="">
+                }
+            </div>
+        </div>
+    </div>
+    <div class="modal-footer">
+        <button class="btn btn-secondary" type="button" data-dismiss="modal">Close</button>
+        <button class="btn btn-warning" type="submit" id="edit-modal-save">Save changes</button>
+    </div>
+</form>
+
+<script>
+    function CompleteProgress(element) {
+        var content = document.getElementById('edit-structure-content');
+        var progressType = element.getAttribute('data-progress-type');
+        if (progressType === 'upgrading') {
+            content.querySelector('#input-newvalue').disabled = false;
+            content.querySelector('#input-label').classList.remove('text-muted');
+
+            var lvlLabel = content.querySelector('#label-value');
+            lvlLabel.textContent = element.getAttribute('data-progress-level');
+            multipleValues['upgrading'] = 0;
+        }
+        else if (progressType === 'boost') {
+            multipleValues['boost'] = 0;
+        }
+        var barContainer = content.querySelector('#bar-' + progressType);
+        barContainer.innerHTML = '<p class="col-form-static py-2 text-muted">-</p>';
+    }
+</script>

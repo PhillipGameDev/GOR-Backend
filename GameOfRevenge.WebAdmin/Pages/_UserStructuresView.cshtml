@@ -1,0 +1,233 @@
+﻿@model _UserStructuresViewModel
+@using WebAdmin.Pages
+
+<style>
+    .table-fixed {
+        width: 100%;
+    }
+
+    .table-fixed tbody {
+        height: 200px;
+        overflow-y: auto;
+        width: 100%;
+    }
+
+    .table-fixed thead tr th {
+        float: left;
+    }
+
+    .table-fixed tbody td {
+        float: left;
+    }
+
+    .table-fixed thead,
+    .table-fixed tbody,
+    .table-fixed tr,
+    .table-fixed td,
+    .table-fixed th {
+        display: block;
+    }
+
+    .wdt-h {
+        width: 5%;
+    }
+    .wdt-1 {
+        width: 10%;
+    }
+    .wdt-1h {
+        width: 15%;
+    }
+    .wdt-2 {
+        width: 20%;
+    }
+    .wdt-2h {
+        width: 25%;
+    }
+    .wdt-3 {
+        width: 30%;
+    }
+    .wdt-4 {
+        width: 40%;
+    }
+    .wdt-5 {
+        width: 50%;
+    }
+    .wdt-5h {
+        width: 55%;
+    }
+    .wdt-6 {
+        width: 60%;
+    }
+    .wdt-6h {
+        width: 65%;
+    }
+    .wdt-7 {
+        width: 70%;
+    }
+    .wdt-8 {
+        width: 80%;
+    }
+    .wdt-9 {
+        width: 90%;
+    }
+    .wdt-10 {
+        width: 100%;
+    }
+
+    .btn-edit {
+        padding-top: 2px;
+        padding-bottom: 2px;
+    }
+
+
+    /*    .table-status:empty {
+        flex-grow: 1;
+    }*/
+    .py-5 {
+        padding-top: 1.5rem !important;
+        padding-bottom: 0rem !important;
+    }
+
+    .label-progress {
+        flex-grow: 1;
+        line-height: 1rem;
+        margin: -2px 2px 0px 2px;
+    }
+
+    .label-progress label {
+        margin-bottom: 0.05rem;
+    }
+
+    .label-progress .progress {
+        height: 6px;
+        border: 1px solid #ddd;
+    }
+
+    .label-progress .progress .progress-bar {
+        width: 50%;
+    }
+</style>
+
+<table class="table table-responsive-sm table-sm table-fixed">
+    <!-- table-responsive-sm table-bordered table-striped table-sm table-fixed"> -->
+    <thead>
+        <tr>
+            <th class="wdt-2h">Building</th>
+            <th class="wdt-1 text-center">Level</th>
+            <th class="wdt-6h text-center">Status</th>
+        </tr>
+    </thead>
+    <tbody>
+        @if (Model.Data != null) foreach (var structure in Model.Data.Structures)
+        {
+            <tr>
+                <td class="wdt-10 bg-gray-100">@structure.StructureType</td>
+            </tr>
+            @foreach (var building in structure.Buildings)
+            {
+                <tr>
+                    <td class="wdt-2h align-middle text-muted">
+                        &nbsp;&nbsp;&nbsp;&nbsp;Location: @building.Location
+                    </td>
+                    <td class="wdt-1 align-middle text-center">@building.CurrentLevel</td>
+                    <td class="wdt-6h align-middle">
+                        <div style="display: flex;">
+                            @if (building.TimeLeft > 0)
+                            {
+                                <div class="label-progress">
+                                    <label class="small text-muted">Building<br />Upgrading</label>
+                                    <div class="progress rounded">
+                                        <div class="progress-bar" role="progressbar"
+                                             style="width: @building.Percentage.ToString("0%")"></div>
+                                    </div>
+                                </div>
+                            }
+                            @foreach (var training in _UserStructuresViewModel.TrainingTroop(Model.Data.Troops, building.Location))
+                            {
+                                <div class="label-progress">
+                                    <label class="small text-muted">Troop<br />Training</label>
+                                    <div class="progress rounded">
+                                        <div class="progress-bar" role="progressbar"
+                                             style="width: @training.Percentage.ToString("0%")"></div>
+                                    </div>
+                                </div>
+                            }
+                            @foreach (var recovering in _UserStructuresViewModel.RecoveringTroop(Model.Data.Troops, building.Location))
+                            {
+                                <div class="label-progress">
+                                    <div class="small text-muted">Troop<br />Restoring</div>
+                                    <div class="progress rounded">
+                                        <div class="progress-bar bg-success" role="progressbar"
+                                             style="width: @recovering.Percentage.ToString("0%")"></div>
+                                    </div>
+                                </div>
+                            }
+                            @if (building.Boost?.TimeLeft > 0)
+                            {
+                                <div class="label-progress">
+                                    <div class="small text-muted">Active<br />Boost</div>
+                                    <div class="progress rounded">
+                                        <div class="progress-bar bg-warning" role="progressbar"
+                                             style="width: @building.Boost.Percentage.ToString("0%")"></div>
+                                    </div>
+                                </div>
+                            }
+                            &nbsp;
+                            <div class="text-muted flex-grow-1 float-right" style="margin-left:-1.25em;">
+                                <button class="btn btn-sm btn-primary btn-edit float-right" type="button"
+                                        data-structure-type="@structure.StructureType" data-structure-name="@structure.StructureType"
+                                        data-structure-location="@building.Location"
+                                        data-toggle="modal" data-target="#edit-modal" data-modal="structure">
+                                    <i class="fa fa-pencil"></i>&nbsp;Edit
+                                </button>
+                            </div>
+                        </div>
+                    </td>
+                </tr>
+            }
+        }
+    </tbody>
+</table>
+
+<script>
+    showModal['structure'] = {
+        width: 800,
+        requestData: function (buttonElement) {
+            return {
+                handler: 'EditStructureView',
+                playerId: playerId,
+                structureType: buttonElement.data('structure-type'),
+                location: buttonElement.data('structure-location')
+            }
+        },
+        requestSubmit: function (event) {
+            if (typeof multipleValues[0] !== 'undefined') {
+                multipleValues['level'] = multipleValues[0];
+                delete multipleValues[0];
+            }
+
+            if (Object.keys(multipleValues).length == 0) {
+                event.preventDefault();
+                $('#edit-modal').modal('hide');
+                return false;
+            }
+
+            let structureValuesInput = document.getElementById('structure-modal-form').querySelector('input[name="StructureValues"]');
+            structureValuesInput.value = JSON.stringify(multipleValues);
+
+            return true;
+        }
+    }
+
+    hideModal['structure-modal-form'] = {
+        requestData: function() {
+            return {
+                handler: 'StructuresView',
+                playerId: playerId
+            }
+        },
+        requestSuccess: function (result) {
+            $('#tab-structures').html(result);
+        }
+    }
+</script>

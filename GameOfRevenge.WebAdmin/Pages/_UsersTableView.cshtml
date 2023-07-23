@@ -1,0 +1,172 @@
+﻿@model UserTable
+@using GameOfRevenge.WebAdmin.Models
+@using Humanizer
+
+<style>
+    .table-fixed2 {
+        width: 100%;
+    }
+
+
+
+    .wdt-1 {
+        width: 10%;
+    }
+
+    .wdt-1h {
+        width: 15%;
+    }
+
+    .wdt-2 {
+        width: 20%;
+    }
+
+    .wdt-3 {
+        width: 30%;
+    }
+
+    .wdt-3h {
+        width: 35%;
+    }
+
+    .wdt-4 {
+        width: 40%;
+    }
+
+    .wdt-5 {
+        width: 50%;
+    }
+
+    .wdt-6 {
+        width: 60%;
+    }
+
+    .wdt-7 {
+        width: 70%;
+    }
+
+    .wdt-8 {
+        width: 80%;
+    }
+
+    .wdt-9 {
+        width: 90%;
+    }
+
+    .wdt-10 {
+        width: 100%;
+    }
+
+    .btn-edit {
+        padding-top: 2px;
+        padding-bottom: 2px;
+    }
+
+
+    /*    .table-status:empty {
+        flex-grow: 1;
+    }*/
+    .py-5 {
+        padding-top: 1.5rem !important;
+        padding-bottom: 0rem !important;
+    }
+</style>
+
+<div class="card-header" style="display: flex; justify-content: space-between; align-items: center;">
+    <div>Users</div>
+    <nav>
+        <ul class="pagination justify-content-end" style="margin-top: 0; margin-bottom: 0;">
+            <li class="page-item @(Model.CurrentPage == Model.OffsetPage ? "disabled" : "")">
+                <a class="page-link" href="#" onclick="window.parent.ChangePage(@Model.PageFromCurrent(-1))">Previous</a>
+            </li>
+            @for (var i = 0; i < Model.Pages.Length; i++)
+            {
+                <li class="page-item @((Model.OffsetPage + i) == Model.CurrentPage ? "active" : "")">
+                    <a class="page-link" href="#" onclick="window.parent.ChangePage(@Model.PageFromOffset(i))">@(Model.OffsetPage+i+1)</a>
+                </li>
+            }
+            <li class="page-item @(Model.CurrentPage == Model.LastPage ? "disabled" : "")">
+                <a class="page-link" href="#" onclick="window.parent.ChangePage(@Model.PageFromCurrent(1))">Next</a>
+            </li>
+        </ul>
+    </nav>
+</div>
+<div class="card-body">
+    <div>
+        <table class="table table-fixed2 table-sm table-responsive-sm table-hover table-outline mb-0">
+            <thead class="thead-light">
+                <tr>
+                    <th style="width: 100%; display: inline-flex;">
+                        <div class="wdt-1 text-center">
+                            <i class="icon-people"></i>
+                        </div>
+                        <div class="wdt-3h">User</div>
+                        <div class="wdt-1 text-center">King Level</div>
+                        <div class="wdt-1 text-center">VIP Level</div>
+                        <div class="wdt-1 text-center">Castle Level</div>
+                        <div class="wdt-1h">Last Login</div>
+                        <div class="wdt-1">Account</div>
+                    </th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var user in Model.Users) {
+                    <tr class="align-middle @(user.Invaded == -1 ? "table-warning" : "")" type="button"
+                        data-player-id="@user.PlayerId" data-toggle="modal" data-target="#user-modal"
+                        style="width: 100%; display: inline-flex;">
+                        @if (user.PlayerId == 0) {
+                            <td class="wdt-10 align-middle text-center" style="width: 100%; display: inline-flex;">
+                                @user.Name
+                            </td>
+                        } else {
+                            <td class="wdt-10 align-middle" style="width: 100%; display: inline-flex;">
+                                <div class="wdt-1 align-middle text-center">
+                                    <strong>@user.PlayerId</strong>
+                                </div>
+                                <div class="wdt-3h align-middle">
+                                    <span>@user.Name</span><br />
+                                    <span class="small text-muted">
+                                        Registered: @user.RegisteredDate
+                                    </span>
+                                </div>
+                                <div class="wdt-1 align-middle text-center">
+                                    <strong>@user.KingLevel</strong>
+                                </div>
+                                <div class="wdt-1 align-middle text-center">
+                                    <strong>@user.VIPLevel</strong>
+                                </div>
+                                <div class="wdt-1 align-middle text-center">
+                                    <strong>@user.CastleLevel</strong>
+                                </div>
+                                <div class="wdt-1h align-middle">
+                                    @if (user.LastLogin != null)
+                                    {
+                                        <strong>@user.LastLogin.Humanize()</strong>
+                                    }
+                                    else
+                                    {
+                                        <span>-</span>
+                                    }
+                                </div>
+                                <div class="wdt-1 align-middle">
+                                    @if (user.Invaded > 0)
+                                    {
+                                        <span class="badge badge-secondary">Monster</span>
+                                    }
+                                    else if (user.IsDeveloper)
+                                    {
+                                        <span class="badge badge-warning">Developer</span>
+                                    }
+                                    else
+                                    {
+                                        <span class="badge badge-success">Player</span>
+                                    }
+                                </div>
+                            </td>
+                        }
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+</div>

@@ -1,0 +1,70 @@
+<?xml version="1.0"?>
+<doc>
+    <assembly>
+        <name>GameOfRevenge.WebAdmin</name>
+    </assembly>
+    <members>
+        <member name="T:GameOfRevenge.WebAdmin.Apis.AccountController">
+            <summary>
+            Class AccountController.
+            Implements the <see cref="T:Microsoft.AspNetCore.Mvc.ControllerBase" />
+            </summary>
+            <seealso cref="T:Microsoft.AspNetCore.Mvc.ControllerBase" />
+        </member>
+        <member name="M:GameOfRevenge.WebAdmin.Apis.AccountController.Get">
+            <summary>
+            Gets this instance.
+            </summary>
+            <returns>IEnumerable&lt;System.String&gt;.</returns>
+        </member>
+        <member name="M:GameOfRevenge.WebAdmin.Apis.AccountController.Get(System.Int32)">
+            <summary>
+            Gets the specified identifier.
+            </summary>
+            <param name="id">The identifier.</param>
+            <returns>System.String.</returns>
+        </member>
+        <member name="M:GameOfRevenge.WebAdmin.Apis.AccountController.Post(System.String)">
+            <summary>
+            Posts the specified value.
+            </summary>
+            <param name="value">The value.</param>
+        </member>
+        <member name="M:GameOfRevenge.WebAdmin.Apis.AccountController.Put(System.Int32,System.String)">
+            <summary>
+            Puts the specified identifier.
+            </summary>
+            <param name="id">The identifier.</param>
+            <param name="value">The value.</param>
+        </member>
+        <member name="M:GameOfRevenge.WebAdmin.Apis.AccountController.Delete(System.Int32)">
+            <summary>
+            Deletes the specified identifier.
+            </summary>
+            <param name="id">The identifier.</param>
+        </member>
+        <member name="T:GameOfRevenge.WebAdmin.Configurations.IdentityServer.InMemoryConfig">
+            <summary>
+            Class InMemoryConfig.
+            </summary>
+        </member>
+        <member name="M:GameOfRevenge.WebAdmin.Configurations.IdentityServer.InMemoryConfig.GetIdentityResources">
+            <summary>
+            Gets the identity resources for IdentityServer4
+            </summary>
+            <returns>IEnumerable&lt;IdentityResource&gt;.</returns>
+        </member>
+        <member name="M:GameOfRevenge.WebAdmin.Configurations.IdentityServer.InMemoryConfig.GetUsers">
+            <summary>
+            Gets the users.
+            </summary>
+            <returns>List&lt;TestUser&gt;.</returns>
+        </member>
+        <member name="M:GameOfRevenge.WebAdmin.Configurations.IdentityServer.InMemoryConfig.GetClients">
+            <summary>
+            Gets the clients.
+            </summary>
+            <returns>IEnumerable&lt;Client&gt;.</returns>
+        </member>
+    </members>
+</doc>

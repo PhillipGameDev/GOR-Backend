@@ -65,9 +65,73 @@ namespace GameOfRevenge.Business.Manager.UserData
             throw new NotImplementedException();
         }
 
-        public Task<Response<UserHeroDetails>> SaveHeroPoint(int playerId, int heroId, int warPoints)
+        public async Task<Response<UserHeroDetails>> SaveHeroPoints(int playerId, HeroType heroType, int points)
         {
-            throw new NotImplementedException();
+            try
+            {
+                var hero = CacheHeroDataManager.GetFullHeroDataID((int)heroType);
+                if (hero == null) throw new CacheDataNotExistExecption("Hero does not exist");
+
+                int valueId = hero.Info.HeroId;
+                var response = await manager.GetAllPlayerData(playerId, DataType.Hero);
+                if (response.IsSuccess)
+                {
+                    UserHeroDetails heroDetails = null;
+                    PlayerDataTable userHeroTable = response.Data.Find(x => (x.ValueId == valueId));
+                    if (userHeroTable != null)
+                    {
+                        heroDetails = JsonConvert.DeserializeObject<UserHeroDetails>(userHeroTable.Value);
+                    }
+                    else
+                    {
+                        heroDetails = new UserHeroDetails() { HeroType = (HeroType)hero.Info.HeroId };
+                    }
+                    if (points < 0) points = 0;
+                    heroDetails.Points = points;
+
+                    var heroJson = JsonConvert.SerializeObject(heroDetails);
+                    Response<PlayerDataTableUpdated> saveResponse = null;
+                    if (userHeroTable != null)
+                    {
+                        saveResponse = await manager.UpdatePlayerDataID(playerId, userHeroTable.Id, heroJson);
+                    }
+                    else
+                    {
+                        saveResponse = await manager.AddOrUpdatePlayerData(playerId, DataType.Hero, valueId, heroJson);
+                    }
+                    if (!saveResponse.IsSuccess)
+                    {
+                        return new Response<UserHeroDetails>(saveResponse.Case, saveResponse.Message);
+                    }
+
+                    var str = "Points set";
+                    return new Response<UserHeroDetails>(heroDetails, 100, str);
+                }
+                else
+                {
+                    return new Response<UserHeroDetails>(response.Case, response.Message);
+                }
+            }
+            catch (InvalidModelExecption ex)
+            {
+                return new Response<UserHeroDetails>() { Case = 200, Message = ErrorManager.ShowError(ex) };
+            }
+            catch (CacheDataNotExistExecption ex)
+            {
+                return new Response<UserHeroDetails>() { Case = 201, Message = ErrorManager.ShowError(ex) };
+            }
+            catch (DataNotExistExecption ex)
+            {
+                return new Response<UserHeroDetails>() { Case = 202, Message = ErrorManager.ShowError(ex) };
+            }
+            catch (RequirementExecption ex)
+            {
+                return new Response<UserHeroDetails>() { Case = 203, Message = ErrorManager.ShowError(ex) };
+            }
+            catch (Exception ex)
+            {
+                return new Response<UserHeroDetails>() { Case = 0, Message = ErrorManager.ShowError() };
+            }
         }
 
 /*        public async Task<Response<UserHeroDataList>> GetHeroDataList(int playerId, HeroType type)

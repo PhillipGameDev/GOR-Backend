@@ -1,0 +1,183 @@
+﻿@page
+@{
+    ViewData["Title"] = "Home page";
+}
+@model IndexModel
+@using WebAdmin.Pages
+
+<div class="container-fluid">
+    <div class="animated fadeIn">
+        <br />
+        <div class="card">
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-sm-5">
+                        <h4 class="card-title mb-0">Dashboard</h4>
+                        <div class="small text-muted">Last 30 Days</div>
+                    </div>
+                </div>
+                <div class="chart-wrapper" style="height:400px;margin-top:40px;">
+                    <canvas class="chart" id="main-chart" height="400"></canvas>
+                </div>
+            </div>
+            <div class="card-footer">
+                <div class="row text-center">
+                    <div class="col-sm-12 col-md mb-sm-2 mb-0">
+                        <div class="text-muted">New Users (Last 30 days)</div>
+                        <strong>@Model.Data.TotalNewUsers.ToString("N0") Users</strong>
+                        <div class="progress progress-xs mt-2 px-5">
+                            <div class="progress-bar bg-success" role="progressbar" style="width: 100%"></div>
+                        </div>
+                    </div>
+                    <div class="col-sm-12 col-md mb-sm-2 mb-0">
+                        <div class="text-muted">Recurring (Last 30 days)</div>
+                        <strong>@Model.Data.WithinOneMonth.ToString("N0") Users</strong>
+                        <div class="progress progress-xs mt-2 px-5">
+                            <div class="progress-bar bg-info" role="progressbar" style="width: 100%"></div>
+                        </div>
+                    </div>
+                    <div class="col-sm-12 col-md mb-sm-2 mb-0">
+                        <div class="text-muted">Within 3 months</div>
+                        <strong>@Model.Data.WithinThreeMonths.ToString("N0") Users</strong>
+                        <div class="progress progress-xs mt-2 px-5" style="display: none;">
+                            <div class="progress-bar bg-warning" role="progressbar" style="width: 100%"></div>
+                        </div>
+                    </div>
+                    <div class="col-sm-12 col-md mb-sm-2 mb-0">
+                        <div class="text-muted">Inactive</div>
+                        <strong>@((Model.Data.WithinSixMonths - Model.Data.WithinThreeMonths).ToString("N0")) Users</strong>
+                        <div class="progress progress-xs mt-2 px-5" style="display: none;">
+                            <div class="progress-bar bg-secondary" role="progressbar" style="width: 100%"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script src="~/lib/chart.js/dist/Chart.min.js"></script>
+    <script src="~/lib/coreui/js/custom-tooltips.min.js"></script>
+    <script>
+        const daysOfWeek = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+        const monthsOfYear = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
+
+        function getFormattedDate(date) {
+            let day = daysOfWeek[date.getUTCDay()];
+            let month = monthsOfYear[date.getUTCMonth()];
+            let dayOfMonth = date.getUTCDate();
+
+            function getDayOfMonthSuffix(day) {
+                if (day >= 11 && day <= 13) {
+                    return 'th';
+                }
+                switch (day % 10) {
+                    case 1: return 'st';
+                    case 2: return 'nd';
+                    case 3: return 'rd';
+                    default: return 'th';
+                }
+            }
+            let dayOfMonthSuffix = getDayOfMonthSuffix(dayOfMonth);
+
+            return `${day}, ${month} ${dayOfMonth}${dayOfMonthSuffix}`;
+        }
+
+        $(document).ready(function () {
+            const breadcrumbList = document.getElementById('breadcrumb-list');
+            const breadcrumbLinks = breadcrumbList.querySelectorAll('td[data-page]');
+            const currentUrl = window.location.pathname;
+            const currentPage = '/' + currentUrl.split('/').pop();
+
+            breadcrumbLinks.forEach(item => {
+                if (item.dataset.page === currentPage) {
+                    item.classList.add('active');
+                    item.style.cursor = 'auto';
+                } else {
+                    item.classList.remove('active');
+                    item.style.cursor = 'pointer';
+                }
+            });
+
+            let recurring = @Model.Data.Recurring;
+            let maxValue = Math.max(...recurring);
+            let dividedValue = maxValue / 5;
+            let stepSize = Math.ceil(dividedValue / 10) * 10;
+            let yAxesMax = stepSize * 5;
+
+            let currentDate = new Date();
+
+            const days = "SFTWTMS";
+            let last30Days = [];
+            let currentDayIndex = 6 - currentDate.getUTCDay();
+            for (let i = 29; i >= 0; i--) {
+                last30Days.push(days[(currentDayIndex + i) % 7]);
+            }
+
+            var mainChart = new Chart($('#main-chart'), {
+            type: 'line',
+            data: {
+                labels: last30Days,
+                datasets: [{
+                    label: 'New Users',
+                    backgroundColor: hexToRgba(getStyle('--info'), 10),
+                    borderColor: getStyle('--success'),
+                    pointHoverBackgroundColor: '#4dbd74',
+                    borderWidth: 2,
+                    data: @Model.Data.NewUsers
+                }, {
+                    label: 'Recurring Users',
+                    backgroundColor: 'transparent',
+                    borderColor: getStyle('--info'),
+                    pointHoverBackgroundColor: '#63c2de',
+                    borderWidth: 2,
+                    data: recurring
+                }]
+            },
+            options: {
+                maintainAspectRatio: false,
+                legend: {
+                    display: false
+                },
+                tooltips: {
+                    callbacks: {
+                        title: function (tooltipItem, data) {
+                            let daysAgo = (last30Days.length - 1) - tooltipItem[0].index;
+//                            let index = (currentDayIndex + daysAgo) % 7;
+
+                            let newDate = new Date();
+                            newDate.setUTCDate(currentDate.getUTCDate() - daysAgo);
+
+                            return getFormattedDate(newDate);
+                        }
+                    }
+                },
+                scales: {
+                    xAxes: [{
+                        gridLines: {
+                            drawOnChartArea: false
+                        }
+                    }],
+                    yAxes: [{
+                        ticks: {
+                            beginAtZero: true,
+                            maxTicksLimit: 5,
+                            stepSize: stepSize,
+                            max: yAxesMax
+                        }
+                    }]
+                },
+                elements: {
+                    point: {
+                        radius: 0,
+                        hitRadius: 10,
+                        hoverRadius: 4,
+                        hoverBorderWidth: 3
+                    }
+                }
+            }
+        });
+        });
+    </script>
+}

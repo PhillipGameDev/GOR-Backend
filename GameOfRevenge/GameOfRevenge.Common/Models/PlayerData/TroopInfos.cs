@@ -54,24 +54,43 @@ namespace GameOfRevenge.Common.Models
         {
             get
             {
-                var unavailable = 0;
-                if (InTraning != null)
-                {
-                    foreach (var trainingData in InTraning)
-                    {
-                        if (trainingData?.TimeLeft > 0) unavailable += trainingData.Count;
-                    }
-                }
-                if (InRecovery != null)
-                {
-                    foreach (var recoveryData in InRecovery)
-                    {
-                        if (recoveryData?.TimeLeft > 0) unavailable += recoveryData.Count;
-                    }
-                }
-                var count = Count - (unavailable + Wounded);
+                var count = Count - (InRecoveryCount + InTrainingCount + Wounded);
 
                 return (count > 0)? count: 0;
+            }
+        }
+
+        public int InRecoveryCount
+        {
+            get
+            {
+                var count = 0;
+                if (InRecovery != null)
+                {
+                    foreach (var inRecovery in InRecovery)
+                    {
+                        if (inRecovery.TimeLeft > 0) count += inRecovery.Count;
+                    }
+                }
+
+                return count;
+            }
+        }
+
+        public int InTrainingCount
+        {
+            get
+            {
+                var count = 0;
+                if (InTraning != null)
+                {
+                    foreach (var inTraining in InTraning)
+                    {
+                        if (inTraining.TimeLeft > 0) count += inTraining.Count;
+                    }
+                }
+
+                return count;
             }
         }
 

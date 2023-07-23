@@ -19,6 +19,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "GameOfRevenge.WebServerTest
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Unity", "Unity", "{0B0C4FAA-EF34-42FD-8F58-476EDEC80413}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "GameOfRevenge.WebAdmin", "GameOfRevenge.WebAdmin\GameOfRevenge.WebAdmin.csproj", "{4065D93A-D174-4150-851B-D86EC368BD7C}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -45,6 +47,10 @@ Global
 		{07CB4892-BBA8-48C4-AFEB-B3FC4E1F3B0D}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{07CB4892-BBA8-48C4-AFEB-B3FC4E1F3B0D}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{07CB4892-BBA8-48C4-AFEB-B3FC4E1F3B0D}.Release|Any CPU.Build.0 = Release|Any CPU
+		{4065D93A-D174-4150-851B-D86EC368BD7C}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{4065D93A-D174-4150-851B-D86EC368BD7C}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{4065D93A-D174-4150-851B-D86EC368BD7C}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{4065D93A-D174-4150-851B-D86EC368BD7C}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -55,6 +61,7 @@ Global
 		{422BC36B-E2B4-4F70-8256-DD6EA0C5DED4} = {E5B4FB78-6AD8-4EFC-BD4A-82C25FF16F11}
 		{3E904156-ADF9-4E39-B7A6-6D55340A2200} = {93FBF289-A6E8-4185-AB62-B4BB9491A6E6}
 		{07CB4892-BBA8-48C4-AFEB-B3FC4E1F3B0D} = {93FBF289-A6E8-4185-AB62-B4BB9491A6E6}
+		{4065D93A-D174-4150-851B-D86EC368BD7C} = {93FBF289-A6E8-4185-AB62-B4BB9491A6E6}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {6F57F825-5759-49A4-B66E-61C9BC12757B}

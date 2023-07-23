@@ -1,0 +1,120 @@
+﻿@model InputTroopModel
+@using GameOfRevenge.WebAdmin.Models
+
+<!-- <style>
+    .form-control::placeholder { /* Chrome, Firefox, Opera, Safari 10.1+ */
+        color: #EDF0F2;
+        opacity: 1; /* Firefox */
+    }
+
+    .form-control:-ms-input-placeholder { /* Internet Explorer 10-11 */
+        color: #EDF0F2;
+    }
+
+    .form-control::-ms-input-placeholder { /* Microsoft Edge */
+        color: lightgray;
+    }
+</style> -->
+<form id="troops-modal-form" method="post" data-ajax-method="post" data-ajax="true"
+      data-ajax-success="SaveSuccess" data-ajax-failure="SaveFailure"
+      data-ajax-url="?handler=SaveTroopChanges">
+    <div class="modal-header">
+        <h4 class="modal-title" id="troops-modal-title">@Model.TroopType</h4>
+        <button class="close" type="button" data-dismiss="modal">×</button>
+        <input type="hidden" asp-for="PlayerId" value="@Model.PlayerId" />
+        <input type="hidden" asp-for="TroopType" value="@Model.TroopType" />
+        <input type="hidden" asp-for="TroopValues" value="" />
+    </div>
+    <div class="modal-body">
+        <div id="edit-troops-content">
+            <div class="row justify-content-center text-center">
+                <div clsss="form-group col-sm-2">
+                    <strong>Troop</strong>
+
+                    <select class="form-control" id="dropdown-level" onchange="TroopLevelChange(this)"
+                            asp-items="@Model.Options.Select(x => new SelectListItem {
+                            Text = "Level " + (Model.Options.IndexOf(x) + 1),
+                            Value = Json.Serialize(InputTroopModel.Values(x)).ToString()
+                    })">
+                    </select>
+                </div>
+                <div class="form-group col-sm-3">
+                    Disabled
+                    <p class="col-form-static py-2 text-muted" id="troop-disabled"></p>
+                </div>
+                <div class="form-group col-sm-3">
+                    Restoring
+                    <p class="col-form-static py-2 text-muted" id="troop-restoring"></p>
+                </div>
+                <div class="form-group col-sm-3">
+                    Training
+                    <p class="col-form-static py-2 text-muted" id="troop-training"></p>
+                </div>
+            </div>
+            <div class="row justify-content-center text-center">
+                <div class="col-sm-1 px-5"></div>
+                <div class="form-group col-sm-3">
+                    Total
+                    <p class="col-form-static py-2 text-muted" id="troop-total"></p>
+                </div>
+                <div class="form-group col-sm-3">
+                    <strong>Active</strong>
+                    <p class="col-form-static py-2" id="label-value"></p>
+                </div>
+                <div class="form-group col-sm-3">
+                    <strong>New Active Value</strong>
+                    <input class="form-control bg-light text-dark" id="input-newvalue" autocomplete="off"
+                           type="text" placeholder="" value="" />
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="modal-footer">
+        <button class="btn btn-secondary" type="button" data-dismiss="modal">Close</button>
+        <button class="btn btn-warning" type="submit" id="edit-modal-save">Save changes</button>
+    </div>
+</form>
+
+<script>/*    function UpdateValues(event) {
+            console.log("update");
+            if (KeyDown(event)) {
+                console.log("true");
+                KeyInput(event);
+                var troopValuesInput = document.getElementById('troop-values');
+                troopValuesInput.value = JSON.stringify(multipleValues);
+            }
+            else {
+                console.log("false");
+
+            }
+        }*/
+
+    function FormatNumber(value) {
+        return value.toString().replace(/(\d)(?=(\d{3})+(?!\d))/g, '$1,');
+    }
+
+    function TroopLevelChange(element) {
+        currSelection = element.selectedIndex;
+        if ((element.options.length == 0) || (currSelection >= element.options.length)) return;
+
+        var troopData = JSON.parse(element.selectedOptions[0].value);
+        var editTroopView = document.getElementById('edit-troops-content');
+        editTroopView.querySelector('#troop-disabled').textContent = FormatNumber(troopData[0]);
+        editTroopView.querySelector('#troop-restoring').textContent = FormatNumber(troopData[1]);
+        editTroopView.querySelector('#troop-training').textContent = FormatNumber(troopData[2]);
+        editTroopView.querySelector('#troop-total').textContent = FormatNumber(troopData[3]);
+        editTroopView.querySelector('#label-value').textContent = FormatNumber(troopData[4]);
+
+        var value = null;
+        if (typeof multipleValues[currSelection] !== 'undefined') {
+            value = FormatNumber(multipleValues[currSelection]);
+        }
+        var editTroopViewInput = editTroopView.querySelector('#input-newvalue');
+        editTroopViewInput.value = value;
+    }
+
+    $(document).ready(function () {
+        var selectElement = document.getElementById('dropdown-level');
+        TroopLevelChange(selectElement);
+    });
+</script>

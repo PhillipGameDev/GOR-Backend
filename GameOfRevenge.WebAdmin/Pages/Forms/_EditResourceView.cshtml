@@ -1,0 +1,31 @@
+﻿@model InputResourceModel
+@using GameOfRevenge.WebAdmin.Models
+
+<form id="resource-modal-form" method="post" data-ajax-method="post" data-ajax="true"
+      data-ajax-success="SaveSuccess" data-ajax-failure="SaveFailure"
+      data-ajax-url="?handler=SaveResourceChange">
+    <div class="modal-header">
+        <h4 class="modal-title">@Model.ResourceType</h4>
+        <button class="close" type="button" data-dismiss="modal">x</button>
+        <input type="hidden" asp-for="PlayerId" value="@Model.PlayerId" />
+        <input type="hidden" asp-for="ResourceType" value="@Model.ResourceType" />
+        <input type="hidden" asp-for="ResourceValue" value="" />
+    </div>
+    <div class="modal-body">
+        <div class="row justify-content-center">
+            <div class="form-group col-sm-5">
+                <strong>Value</strong>
+                <p class="col-form-static py-2" id="label-value" for="input-newvalue">@Model.Value.ToString("N0")</p>
+            </div>
+            <div class="form-group col-sm-6">
+                <strong>New Value</strong>
+                <input class="form-control bg-light text-dark" id="input-newvalue" autocomplete="off"
+                       type="text" placeholder="" value="">
+            </div>
+        </div>
+    </div>
+    <div class="modal-footer">
+        <button class="btn btn-secondary" type="button" data-dismiss="modal">Close</button>
+        <button class="btn btn-warning" type="submit" id="edit-modal-save">Save changes</button>
+    </div>
+</form>
