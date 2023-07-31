@@ -31,6 +31,8 @@ namespace GameOfRevenge.Business.Manager.UserData
             return await Db.ExecuteSPMultipleRow<PlayerID>("GetPlayerIDs", spParams);
         }
 
+        public async Task<Response<PlayerInfo>> GetPlayerInfo(int playerId) => await accountManager.GetAccountInfo(playerId);
+
         public async Task<Response<List<PlayerInfo>>> GetPlayersInfo(int playerId = 0, int length = 10)
         {
             List<PlayerInfo> list = null;
@@ -93,6 +95,126 @@ namespace GameOfRevenge.Business.Manager.UserData
             catch (Exception ex)
             {
                 return new Response<ActiveUsersTable>()
+                {
+                    Case = 0,
+                    Message = ErrorManager.ShowError(ex)
+                };
+            }
+        }
+
+        public async Task<Response> SaveDailyVisits()
+        {
+            try
+            {
+                return await Db.ExecuteSPNoData("SaveDailyVisits", null);
+            }
+            catch (Exception ex)
+            {
+                return new Response()
+                {
+                    Case = 0,
+                    Message = ErrorManager.ShowError(ex)
+                };
+            }
+        }
+
+        public async Task<Response<List<PlayerBackupTable>>> GetPlayerBackups(int playerId)
+        {
+            var spParams = new Dictionary<string, object>()
+            {
+                { "PlayerId", playerId }
+            };
+
+            try
+            {
+                return await Db.ExecuteSPMultipleRow<PlayerBackupTable>("GetPlayerBackups", spParams);
+            }
+            catch (Exception ex)
+            {
+                return new Response<List<PlayerBackupTable>>()
+                {
+                    Case = 0,
+                    Message = ErrorManager.ShowError(ex)
+                };
+            }
+        }
+
+        public async Task<Response<PlayerBackupTable>> GetPlayerBackup(long backupId)
+        {
+            var spParams = new Dictionary<string, object>()
+            {
+                { "BackupId", backupId }
+            };
+
+            try
+            {
+                return await Db.ExecuteSPSingleRow<PlayerBackupTable>("GetPlayerBackup", spParams);
+            }
+            catch (Exception ex)
+            {
+                return new Response<PlayerBackupTable>()
+                {
+                    Case = 0,
+                    Message = ErrorManager.ShowError(ex)
+                };
+            }
+        }
+
+        public async Task<Response> RestorePlayerBackup(int playerId, long backupId)
+        {
+            var spParams = new Dictionary<string, object>()
+            {
+                { "PlayerId", playerId },
+                { "BackupId", backupId }
+            };
+
+            try
+            {
+                return await Db.ExecuteSPNoData("RestorePlayerBackup", spParams);
+            }
+            catch (Exception ex)
+            {
+                return new Response()
+                {
+                    Case = 0,
+                    Message = ErrorManager.ShowError(ex)
+                };
+            }
+        }
+
+        public async Task<Response> SavePlayerBackup(int playerId, string description, string data)
+        {
+            var spParams = new Dictionary<string, object>()
+            {
+                { "PlayerId", playerId },
+                { "Description", description },
+                { "Data", data }
+            };
+
+            try
+            {
+                return await Db.ExecuteSPNoData("SavePlayerBackup", spParams);
+            }
+            catch (Exception ex)
+            {
+                return new Response()
+                {
+                    Case = 0,
+                    Message = ErrorManager.ShowError(ex)
+                };
+            }
+        }
+
+
+        public async Task<Response> ResetAllDailyQuests()
+        {
+            try
+            {
+                return await Db.ExecuteSPNoData("ResetAllDailyQuests", null);
+            }
+            catch (Exception ex)
+            {
+                return new Response()
                 {
                     Case = 0,
                     Message = ErrorManager.ShowError(ex)

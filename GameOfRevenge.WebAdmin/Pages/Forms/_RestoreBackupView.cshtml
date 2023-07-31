@@ -1,0 +1,30 @@
+﻿@model InputRestoreModel
+@using GameOfRevenge.WebAdmin.Models
+
+<form id="restore-modal-form" method="post" data-ajax-method="post" data-ajax="true"
+      data-ajax-success="PostSuccess" data-ajax-failure="PostFailure"
+      data-ajax-url="?handler=RestoreBackup">
+    <div class="modal-header">
+        <h4 class="modal-title">Restore Backup</h4>
+        <button class="close" type="button" data-dismiss="modal"><span>x</span></button>
+        <input type="hidden" asp-for="PlayerId" value="@Model.PlayerId" />
+        <input type="hidden" asp-for="BackupId" value="@Model.BackupId" />
+        <input type="hidden" asp-for="BackupDate" value="@Model.BackupDate" />
+    </div>
+    <div class="modal-body">
+        <div class="row justify-content-center">
+            <div class="form-group col-sm">
+                <strong id="label-title">
+                    Date of Backup: @Model.BackupDate
+                </strong>
+                <p class="col-form-static py-2" id="label-value">
+                    All existing data will be replaced with the data from the backup. Any changes made after the backup date will be lost.
+                </p>
+            </div>
+        </div>
+    </div>
+    <div class="modal-footer">
+        <button class="btn btn-secondary" type="button" data-dismiss="modal">Close</button>
+        <button class="btn btn-warning" type="button" id="edit-modal-save">Restore</button>
+    </div>
+</form>

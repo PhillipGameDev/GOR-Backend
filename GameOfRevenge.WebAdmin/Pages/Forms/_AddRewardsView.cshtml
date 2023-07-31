@@ -1,0 +1,103 @@
+﻿@model InputRewardsModel
+@using GameOfRevenge.WebAdmin.Models
+
+<form id="add-reward-modal-form" method="post" data-ajax-method="post" data-ajax="true"
+      data-ajax-success="PostSuccess" data-ajax-failure="PostFailure"
+      data-ajax-url="?handler=AddReward">
+    <div class="modal-header">
+        <h4 class="modal-title" id="rewards-modal-title">Add Reward</h4>
+        <button class="close" type="button" data-dismiss="modal"><span>x</span></button>
+        <input type="hidden" asp-for="PlayerId" value="@Model.PlayerId" />
+        <input type="hidden" asp-for="RewardValues" value="" />
+        <input type="hidden" asp-for="ApplyToAll" value="@Model.ApplyToAll" />
+    </div>
+    <div class="modal-body">
+        <div id="add-reward-content">
+            <div class="row justify-content-center text-center">
+                <div clsss="form-group col-sm-3">
+                    <strong>Type</strong>
+                    <select class="form-control" id="dropdown-type" onchange="RewardTypeChange(this)"
+                            asp-items="@Model.DataTypes.Select(x => new SelectListItem {
+                            Text = x.ToString(),
+                            Value = ((int)x).ToString()
+                    })">
+                    </select>
+                </div>
+                <div class="form-group col-sm-5">
+                    <strong>Option</strong>
+                    <select class="form-control" id="dropdown-option" onchange="RewardOptionChange(this)">
+                    </select>
+                </div>
+                <div class="form-group col-sm-3">
+                    <strong>Amount</strong>
+                    <input class="form-control bg-light text-dark" id="input-newvalue" autocomplete="off"
+                           type="text" placeholder="" value="" />
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="modal-footer">
+        <button class="btn btn-secondary" type="button" data-dismiss="modal">Close</button>
+        <button class="btn btn-warning" type="button" id="edit-modal-save">Add reward</button>
+    </div>
+</form>
+
+<script>
+    var rewardOptions = @Html.Raw(Json.Serialize(Model.Options.Select(item => new {
+        rewardId = item.Item1,
+        dataType = ((int)item.Item2).ToString(),
+        desc = item.Item3
+    })));
+
+    function FormatNumber(value) {
+        return value.toString().replace(/(\d)(?=(\d{3})+(?!\d))/g, '$1,');
+    }
+
+    function RewardTypeChange(element) {
+        let selection = element.selectedIndex;
+        if ((element.options.length == 0) || (selection >= element.options.length)) return;
+
+        let selectedGroup = element.value;//options[selection].text;
+//        const options = document.getElementById('dropdown-option').options;
+
+        let newOptions = [];
+
+        rewardOptions.forEach(item => {
+            if (item.dataType === selectedGroup) newOptions.push(item);
+        });
+
+        let selectElement = document.getElementById('dropdown-option');
+        selectElement.innerHTML = '';
+
+        for (const item of newOptions) {
+            let newOption = document.createElement('option');
+            newOption.value = item.rewardId;
+            newOption.textContent = item.rewardId + ": " + item.desc;
+            selectElement.appendChild(newOption);
+        }
+        RewardOptionChange(selectElement);
+    }
+
+    function RewardOptionChange(element) {
+        currSelection = element.selectedIndex;
+        if ((element.options.length == 0) || (currSelection >= element.options.length)) return;
+
+//        var troopData = JSON.parse(element.selectedOptions[0].value);
+        var editContent = document.getElementById('add-reward-content');
+//        editContent.querySelector('#label-value').textContent = FormatNumber(troopData[4]);
+
+        var value = null;
+/*        if (typeof multipleValues[currSelection] !== 'undefined') {
+            value = FormatNumber(multipleValues[currSelection]);
+        }
+        var editValueInput = editContent.querySelector('#input-newvalue');
+        editValueInput.value = value;*/
+        var editValueInput = editContent.querySelector('#input-newvalue');
+        editValueInput.value = '';
+    }
+
+    $(document).ready(function () {
+        var selectElement = document.getElementById('dropdown-type');
+        RewardTypeChange(selectElement);
+    });
+</script>

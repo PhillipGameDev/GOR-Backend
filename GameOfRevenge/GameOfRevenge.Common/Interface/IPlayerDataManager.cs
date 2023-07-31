@@ -18,7 +18,7 @@ namespace GameOfRevenge.Common.Interface
 //        Task<Response<PlayerDataTableUpdated>> UpdatePlayerData(int playerId, DataType type, int valueId, string value);
         Task<Response<PlayerDataTableUpdated>> UpdatePlayerDataID(int playerId, long playerDataId, string value);
 
-        Task<Response<PlayerDataTableUpdated>> IncrementPlayerData(int playerId, DataType type, int valueId, int? value);
+        Task<Response<PlayerDataTableUpdated>> IncrementPlayerData(int playerId, DataType type, int valueId, int value, bool log = true);
         Task<Response<PlayerDataTableUpdated>> SumPlayerData(int playerId, long playerDataId, int value);
 
         Task<Response> RemoveAllPlayerData(int playerId);

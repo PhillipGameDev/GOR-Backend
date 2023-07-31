@@ -600,6 +600,7 @@ namespace GameOfRevenge.Business.Manager.UserData
 
                 var heroData = new UserHeroDetails()
                 {
+//                    HeroId = userHeroDetails.HeroId,
                     HeroType = (HeroType)heroInfo.Info.HeroId,
                     Points = userHeroDetails.Points,
                     Power = userHeroDetails.Power,

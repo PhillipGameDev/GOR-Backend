@@ -1,0 +1,25 @@
+﻿@model InputBackupModel
+@using GameOfRevenge.WebAdmin.Models
+
+<form id="backup-modal-form" method="post" data-ajax-method="post" data-ajax="true"
+      data-ajax-success="PostSuccess" data-ajax-failure="PostFailure"
+      data-ajax-url="?handler=CreateBackup">
+    <div class="modal-header">
+        <h4 class="modal-title">Create Backup</h4>
+        <button class="close" type="button" data-dismiss="modal"><span>x</span></button>
+        <input type="hidden" asp-for="PlayerId" value="@Model.PlayerId" />
+    </div>
+    <div class="modal-body">
+        <div class="row justify-content-center">
+            <div class="form-group col-sm">
+                <p class="col-form-static py-2" id="label-value">
+                    Are you sure you want to create a new backup for this user? This action will save their current data as a backup copy.
+                </p>
+            </div>
+        </div>
+    </div>
+    <div class="modal-footer">
+        <button class="btn btn-secondary" type="button" data-dismiss="modal">Close</button>
+        <button class="btn btn-warning" type="button" id="edit-modal-save">Backup</button>
+    </div>
+</form>

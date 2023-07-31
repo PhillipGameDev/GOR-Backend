@@ -15,6 +15,11 @@ using GameOfRevenge.Business.Manager.UserData;
 using WebAdmin.Pages;
 using Microsoft.AspNetCore.Mvc.ViewFeatures;
 using Microsoft.AspNetCore.Mvc.ModelBinding;
+using System.Linq;
+using GameOfRevenge.Common.Models.Structure;
+using GameOfRevenge.Common.Models.Quest;
+using GameOfRevenge.Business.Manager.GameDef;
+using static GameOfRevenge.WebAdmin.Models.UserModel;
 
 namespace GameOfRevenge.WebAdmin.Models
 {
@@ -23,16 +28,23 @@ namespace GameOfRevenge.WebAdmin.Models
     {
         private readonly IAdminDataManager manager;
         private readonly IClanManager userClanManager;
+        private readonly IUserQuestManager userQuestManager;
+        private readonly IPlayerDataManager playerDataManager;
 
         private static List<PlayerID> Users { get; set; } = new List<PlayerID>();
         private static List<int> Pages { get; set; } = new List<int>();
 
         public UserTable UserTable { get; set; } = new UserTable();
 
-        public UserModel(IAdminDataManager adminDataManager, IClanManager clanManager)
+        public IAdminDataManager AdminManager => manager;
+
+        public UserModel(IAdminDataManager adminDataManager, IPlayerDataManager playerManager,
+                        IClanManager clanManager, IUserQuestManager questManager)
         {
             manager = adminDataManager;
             userClanManager = clanManager;
+            userQuestManager = questManager;
+            playerDataManager = playerManager;
             //            string title = ViewData["Title"] as string;
         }
 
@@ -57,29 +69,152 @@ namespace GameOfRevenge.WebAdmin.Models
             return RedirectToPage("/Login");
         }
 
-        public async Task<IActionResult> OnGetUserViewAsync(int playerId)
+        public async Task<AllPlayerData> GetAllPlayerData(int playerId)
+        {
+            try
+            {
+                var allPlayerData = new AllPlayerData();
+
+                //PLAYER INFO
+                var playerInfo = await manager.GetPlayerInfo(playerId);
+                if (!playerInfo.IsSuccess || !playerInfo.HasData) throw new Exception();
+
+                allPlayerData.PlayerInfo = playerInfo.Data;
+
+                //ALL PLAYER DATA
+                var allData = await playerDataManager.GetAllPlayerData(playerId);
+                if (!allData.IsSuccess || !allData.HasData) throw new Exception();
+
+                allPlayerData.PlayerData = allData.Data;
+
+                //QUESTS
+                var questsResp = await userQuestManager.GetAllQuestProgress(playerId);
+                if (!questsResp.IsSuccess || !questsResp.HasData) throw new Exception();
+
+                allPlayerData.QuestData = questsResp.Data;
+
+                return allPlayerData;
+            }
+            catch
+            {
+            }
+
+            return null;
+        }
+
+        public class PlayerDataReward : PlayerRewardDataTable
+        {
+            public int RewardId { get; set; }
+        }
+
+        public async Task<List<PlayerDataReward>> GetAllPlayerRewards(int playerId)
+        {
+            var rewardsResp = await userQuestManager.GetUserAllRewards(playerId);
+            if (rewardsResp.IsSuccess && rewardsResp.HasData)
+            {
+                var allPlayerRewards = new List<PlayerDataReward>();
+                var playerDataResp = await playerDataManager.GetAllPlayerData(playerId, DataType.Reward);
+                if (playerDataResp.IsSuccess && playerDataResp.HasData)
+                {
+                    foreach (var userReward in rewardsResp.Data)
+                    {
+                        var reward = new PlayerDataReward()
+                        {
+                            PlayerDataId = userReward.PlayerDataId,
+                            DataType = userReward.DataType,
+                            ValueId = userReward.ValueId,
+                            Value = userReward.Value,
+                            Count = userReward.Count,
+                            RewardId = playerDataResp.Data.Find(x => (x.Id == userReward.PlayerDataId)).ValueId
+                        };
+                        allPlayerRewards.Add(reward);
+                    }
+                    allPlayerRewards = allPlayerRewards.OrderBy(x => x.DataType).ThenBy(x => x.RewardId).ThenBy(x => x.ValueId).ThenBy(x => x.Value).ToList();
+                }
+
+                return allPlayerRewards;
+            }
+
+            return null;
+        }
+
+        public async Task<List<DataReward>> GetAvailableRewards()
+        {
+            var qm = new QuestManager();
+            var resp = await qm.GetAllQuestRewards();
+            if (resp.IsSuccess && resp.HasData)
+            {
+                return resp.Data;
+            }
+
+            return null;
+        }
+
+        public async Task<FullPlayerCompleteData> GetFullPlayerData(int playerId, bool allData = true, bool getBackups = false)
         {
             FullPlayerCompleteData fullPlayerData = null;
-            var respInfo = await manager.GetPlayersInfo(playerId, 1);
-            if (respInfo.IsSuccess && respInfo.HasData && (respInfo.Data.Count > 0))
-            {
-                var playerInfo = respInfo.Data[0];
 
-                var resp = await BaseUserDataManager.GetFullPlayerData(playerId);
-                if (resp.IsSuccess && resp.HasData)
+            var resp = await BaseUserDataManager.GetFullPlayerData(playerId);
+            if (resp.IsSuccess && resp.HasData)
+            {
+                fullPlayerData = new FullPlayerCompleteData(resp.Data);
+
+                //CLAN
+                var clanResp = userClanManager.GetClanData(fullPlayerData.ClanId);
+                if (clanResp.Result.IsSuccess && clanResp.Result.HasData)
                 {
-                    fullPlayerData = new FullPlayerCompleteData(resp.Data);
-                    var clanData = userClanManager.GetClanData(playerInfo.AllianceId);
-                    if (clanData.Result.IsSuccess && clanData.Result.HasData)
+                    fullPlayerData.Clan = clanResp.Result.Data;
+                }
+
+                if (allData)
+                {
+                    //REWARDS
+                    fullPlayerData.Rewards = await GetAllPlayerRewards(playerId);
+
+                    //QUESTS
+                    var questsResp = await userQuestManager.GetAllQuestProgress(playerId);
+                    if (questsResp.IsSuccess && questsResp.HasData)
                     {
-                        fullPlayerData.Clan = clanData.Result.Data;
+                        fullPlayerData.Quests = questsResp.Data;
+                    }
+                }
+
+                //BACKUPS
+                if (getBackups)
+                {
+                    var backupResp = await AdminManager.GetPlayerBackups(playerId);
+                    if (backupResp.IsSuccess)
+                    {
+                        fullPlayerData.Backups = backupResp.Data;
                     }
                 }
             }
+            else
+            {
+                Console.WriteLine(resp.Message);
+            }
+
+            return fullPlayerData;
+        }
+
+        public async Task<IActionResult> OnGetFullPlayerDataAsync(int playerId)//method used after restore backup
+        {
+            var fullPlayerData = await GetFullPlayerData(playerId, false);
+
+            string json = null;
+            if (fullPlayerData != null) json = Newtonsoft.Json.JsonConvert.SerializeObject(fullPlayerData);
+
+            return new JsonResult(new { Success = true, Data = json });
+        }
+
+        public async Task<IActionResult> OnGetUserViewAsync(int playerId)
+        {
+            var fullPlayerData = await GetFullPlayerData(playerId, true, true);
 
             if (fullPlayerData == null)
             {
-                fullPlayerData = new FullPlayerCompleteData() { PlayerId = playerId };
+                return BadRequest();
+//                fullPlayerData = new FullPlayerCompleteData() { PlayerId = playerId };
             }
 
             return Partial("_UserView", fullPlayerData);
@@ -151,17 +286,34 @@ namespace GameOfRevenge.WebAdmin.Models
             await SetPageAsync(0);
         }
 
-        public async Task<IActionResult> OnGetUserPageViewAsync(int pageIndex)
+        public async Task<IActionResult> OnGetUserPageViewAsync(int pageIndex, string userId)
         {
-            await SetPageAsync(pageIndex);
+            if (userId != null)
+            {
+                if (int.TryParse(userId, out int id))
+                {
+                    if (id <= Pages[0])
+                    {
+                        pageIndex = 0;
+                    }
+                    else
+                    {
+                        pageIndex = Pages.FindLastIndex(x => (x < id));
+                    }
+                    await SetPageAsync(pageIndex);
+                }
+                else
+                {
+                    return BadRequest();
+                }
+            }
+            else
+            {
+                await SetPageAsync(pageIndex);
+            }
 
             return Partial("_UsersTableView", UserTable);
         }
-
-
-
-
-
 
 
 
@@ -170,7 +322,7 @@ namespace GameOfRevenge.WebAdmin.Models
 
         public async Task<IActionResult> OnGetEditResourceViewAsync(int playerId, string resourceType)
         {
-            Console.WriteLine("get edit resource ply="+playerId+" type="+ resourceType);
+//            Console.WriteLine("get edit resource ply="+playerId+" type="+ resourceType);
             InputResourceModel model = null;
             if (Enum.TryParse(resourceType, out ResourceType resource) && (resource != ResourceType.Other))
             {
@@ -196,12 +348,22 @@ namespace GameOfRevenge.WebAdmin.Models
 
             return NewPartial("Forms/_EditResourceView", model);
         }
+        public async Task<IActionResult> OnGetSaveResourceChangeAsync(int playerId, string resourceType, string resourceValue)
+        {
+            InputResource = new InputResourceModel
+            {
+                PlayerId = playerId,
+                ResourceType = resourceType,
+                ResourceValue = resourceValue
+            };
+            return await OnPostSaveResourceChangeAsync();
+        }
         public async Task<IActionResult> OnPostSaveResourceChangeAsync()
         {
             var playerId = InputResource.PlayerId;
             var resourceType = InputResource.ResourceType;
             var resourceValue = InputResource.ResourceValue;
-            Console.WriteLine("on save resource ply="+ playerId+" type="+ resourceType+ " value=" + resourceValue);
+//            Console.WriteLine("on save resource ply="+ playerId+" type="+ resourceType+ " value=" + resourceValue);
 
             try
             {
@@ -230,6 +392,17 @@ namespace GameOfRevenge.WebAdmin.Models
                 await _UserStructuresViewModel.OnGetStructuresViewAsync(playerId);
         public async Task<IActionResult> OnGetEditStructureViewAsync(int playerId, string structureType, int location) =>
                 await _UserStructuresViewModel.OnGetEditStructureViewAsync(playerId, structureType, location);
+        public async Task<IActionResult> OnGetSaveStructureChangesAsync(int playerId, string structureType, int structureLocation, string structureValues)
+        {
+            InputStructure = new InputStructureModel
+            {
+                PlayerId = playerId,
+                StructureType = structureType,
+                StructureLocation = structureLocation,
+                StructureValues = structureValues
+            };
+            return await OnPostSaveStructureChangesAsync();
+        }
         public async Task<IActionResult> OnPostSaveStructureChangesAsync()
         {
             try
@@ -248,6 +421,16 @@ namespace GameOfRevenge.WebAdmin.Models
                 await _UserTroopsViewModel.OnGetTroopsViewAsync(playerId);
         public async Task<IActionResult> OnGetEditTroopViewAsync(int playerId, string troopType) =>
                 await _UserTroopsViewModel.OnGetEditTroopViewAsync(playerId, troopType);
+        public async Task<IActionResult> OnGetSaveTroopChangesAsync(int playerId, string troopType, string troopValues)
+        {
+            InputTroop = new InputTroopModel
+            {
+                PlayerId = playerId,
+                TroopType = troopType,
+                TroopValues = troopValues
+            };
+            return await OnPostSaveTroopChangesAsync();
+        }
         public async Task<IActionResult> OnPostSaveTroopChangesAsync()
         {
             try
@@ -266,12 +449,133 @@ namespace GameOfRevenge.WebAdmin.Models
                 await _UserHeroesViewModel.OnGetHeroesViewAsync(playerId);
         public async Task<IActionResult> OnGetEditHeroViewAsync(int playerId, string heroType) =>
                 await _UserHeroesViewModel.OnGetEditHeroViewAsync(playerId, heroType);
+        public async Task<IActionResult> OnGetSaveHeroChangesAsync(int playerId, string heroType, string heroValues)
+        {
+            InputHero = new InputHeroModel
+            {
+                PlayerId = playerId,
+                HeroType = heroType,
+                HeroValues = heroValues
+            };
+            return await OnPostSaveHeroChangesAsync();
+        }
         public async Task<IActionResult> OnPostSaveHeroChangesAsync()
         {
-            Console.WriteLine("on save hero");
             try
             {
                 return await _UserHeroesViewModel.OnPostSaveHeroChangesAsync(InputHero);
+            }
+            catch { }
+
+            return BadRequest();
+        }
+
+        [BindProperty]
+        public InputRewardModel InputReward { get; set; }
+
+        public async Task<IActionResult> OnGetRewardsViewAsync(int playerId) =>
+                await _UserRewardsViewModel.OnGetRewardsViewAsync(this, playerId);
+        public async Task<IActionResult> OnGetEditRewardViewAsync(int playerId, long playerDataId, string description) =>
+                await _UserRewardsViewModel.OnGetEditRewardViewAsync(this, playerId, playerDataId, description);
+        public async Task<IActionResult> OnGetSaveRewardChangeAsync(int playerId, long playerDataId, int rewardValue)
+        {
+            InputReward = new InputRewardModel()
+            {
+                PlayerId = playerId,
+                PlayerDataId = playerDataId,
+                RewardValue = rewardValue
+            };
+            return await OnPostSaveRewardChangeAsync();
+        }
+        public async Task<IActionResult> OnPostSaveRewardChangeAsync()
+        {
+            try
+            {
+                return await _UserRewardsViewModel.OnPostSaveRewardChangeAsync(this, InputReward);
+            }
+            catch { }
+
+            return BadRequest();
+        }
+
+        [BindProperty]
+        public InputRewardsModel InputRewards { get; set; }
+
+        public async Task<IActionResult> OnGetAddRewardsViewAsync(int playerId, bool applyToAll) =>
+                await _UserRewardsViewModel.OnGetAddRewardsViewAsync(this, playerId, applyToAll);
+        public async Task<IActionResult> OnGetAddRewardAsync(int playerId, string rewardValues, bool applyToAll)
+        {
+            InputRewards = new InputRewardsModel()
+            {
+                PlayerId = playerId,
+                ApplyToAll = applyToAll,
+                RewardValues = rewardValues
+            };
+            return await OnPostAddRewardAsync();
+        }
+        public async Task<IActionResult> OnPostAddRewardAsync()
+        {
+            try
+            {
+                return await _UserRewardsViewModel.OnPostAddRewardAsync(this, InputRewards);
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine(ex.Message);
+            }
+
+            return BadRequest();
+        }
+
+
+        [BindProperty]
+        public InputRestoreModel InputRestore { get; set; }
+
+//        public async Task<IActionResult> OnGetBackupsViewAsync(int playerId) =>
+//                await _UserBackupsViewModel.OnGetBackupsViewAsync(playerId);
+        public IActionResult OnGetRestoreBackupView(int playerId, long backupId, string date) =>
+                _UserBackupsViewModel.OnGetRestoreBackupView(this, playerId, backupId, date);
+        public async Task<IActionResult> OnGetRestoreBackupAsync(int playerId, long backupId)
+        {
+            InputRestore = new InputRestoreModel()
+            {
+                PlayerId = playerId,
+                BackupId = backupId
+            };
+            return await OnPostRestoreBackupAsync();
+        }
+        public async Task<IActionResult> OnPostRestoreBackupAsync()
+        {
+            try
+            {
+                return await _UserBackupsViewModel.OnPostRestoreBackupAsync(this, InputRestore);
+            }
+            catch { }
+
+            return BadRequest();
+        }
+
+        [BindProperty]
+        public InputBackupModel InputBackup { get; set; }
+
+        public async Task<IActionResult> OnGetBackupsViewAsync(int playerId) =>
+                await _UserBackupsViewModel.OnGetBackupsViewAsync(this, playerId);
+        public IActionResult OnGetCreateBackupView(int playerId) =>
+                _UserBackupsViewModel.OnGetCreateBackupView(this, playerId);
+        public async Task<IActionResult> OnGetCreateBackupAsync(int playerId)
+        {
+            InputBackup = new InputBackupModel()
+            {
+                PlayerId = playerId
+            };
+
+            return await OnPostCreateBackupAsync();
+        }
+        public async Task<IActionResult> OnPostCreateBackupAsync()
+        {
+            try
+            {
+                return await _UserBackupsViewModel.OnPostCreateBackupAsync(this, InputBackup);
             }
             catch { }
 
@@ -311,8 +615,22 @@ namespace GameOfRevenge.WebAdmin.Models
     public class FullPlayerCompleteData : PlayerCompleteData
     {
         public ClanData Clan { get; set; }
+        public List<PlayerDataReward> Rewards { get; set; }
+        public List<PlayerBackupTable> Backups { get; set; }
+        public List<PlayerQuestDataTable> Quests { get; set; }
 
         public int KingLevel => (King != null)? King.Level : 0;
+        public int CastleLevel
+        {
+            get
+            {
+                var structure = Structures?.Find(x => (x.StructureType == StructureType.CityCounsel));
+                var castle = structure?.Buildings.FirstOrDefault();
+                var castleLvl = (castle != null) ? castle.CurrentLevel : 0;
+
+                return castleLvl;
+            }
+        }
         public long Food => (Resources != null) ? Resources.Food : 0;
         public long Wood => (Resources != null) ? Resources.Wood : 0;
         public long Ore => (Resources != null) ? Resources.Ore : 0;

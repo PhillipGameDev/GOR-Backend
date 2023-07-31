@@ -105,7 +105,7 @@ namespace WebAdmin.Pages
 
         public static async Task<IActionResult> OnGetEditStructureViewAsync(int playerId, string structureType, int location)
         {
-            Console.WriteLine("get edit structures ply=" + playerId+" type="+structureType+" loc="+location);
+//            Console.WriteLine("get edit structures ply=" + playerId+" type="+structureType+" loc="+location);
             InputStructureModel model = null;
             if (Enum.TryParse(structureType, out StructureType structure) && (structure != StructureType.Unknown))
             {
@@ -133,7 +133,7 @@ namespace WebAdmin.Pages
             var structureType = inputStructure.StructureType;
             var location = inputStructure.StructureLocation;
             var values = inputStructure.StructureValues;
-            Console.WriteLine("post save structures ply=" + playerId + " type=" + structureType + " loc=" + location+" values="+values);
+//            Console.WriteLine("post save structures ply=" + playerId + " type=" + structureType + " loc=" + location+" values="+values);
 
             if (!Enum.TryParse(structureType, out StructureType structure)) throw new Exception("Error in form values");
 

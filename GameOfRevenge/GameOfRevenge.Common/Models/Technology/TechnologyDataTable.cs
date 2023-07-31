@@ -5,7 +5,7 @@ using System.Data;
 
 namespace GameOfRevenge.Common.Models.Technology
 {
-    public interface IReadOnlySubTechnologyDataTable : IReadOnlyBaseRefEnumLevelDataTable
+/*    public interface IReadOnlySubTechnologyDataTable : IReadOnlyBaseRefEnumLevelDataTable
     {
         int Value { get; }
         int TimeTaken { get; }
@@ -24,7 +24,7 @@ namespace GameOfRevenge.Common.Models.Technology
             Value = reader.GetValue(index) == DBNull.Value ? 0 : reader.GetInt32(index); index++;
             TimeTaken = reader.GetValue(index) == DBNull.Value ? 0 : reader.GetInt32(index);
         }
-    }
+    }*/
 
 
 

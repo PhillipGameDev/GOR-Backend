@@ -97,18 +97,33 @@
                 <span class="sr-only text-dark">Loading...</span>
             </div>
             <label class="text-dark d-none">Error loading data</label>
-            <button class="close" type="button" data-dismiss="modal">x</button>
+            <button class="close" type="button" data-dismiss="modal"><span>x</span></button>
         </div>
         <div class="modal-footer">
             <button class="btn btn-secondary" type="button" data-dismiss="modal">Close</button>
             <button class="btn btn-warning" type="button" disabled>Save changes</button>
         </div>
     </div>
+    <!-- Toast -->
+<!--    <div class="toast-container position-fixed bottom-0 end-0 p-3">
+        <div id="toast" class="toast" role="alert">
+            <div class="toast-header">
+                <img src="..." class="rounded me-2" alt="...">
+                <strong class="me-auto">aa</strong>
+                <small>xx</small>
+                <button type="button" class="btn-close" data-coreui-dismiss="toast" aria-label="Close"></button>
+            </div>
+            <div class="toast-body">
+                User not found.
+            </div>
+        </div>
+    </div> -->
 </div>
 
 @section Scripts {
     <script src="~/lib/jquery-ajax-unobtrusive/jquery.unobtrusive-ajax.min.js"></script>
     <script>
+
         var allowedKeys = ['ArrowLeft', 'ArrowRight', 'Backspace', 'Delete', 'Tab'];
         var newValue = '';
         var multipleValues = {};
@@ -116,12 +131,13 @@
         var playerId = 0;
         var showModal = {};
         var hideModal = {};
+        var myToast = document.getElementById('toast');
 
-        function SaveSuccess() {
+        function PostSuccess() {
             $(this).closest('.modal').modal('hide');
         }
-        function SaveFailure() {
-            document.getElementById('save-modal-text').innerText = "Error saving data";
+        function PostFailure() {
+            document.getElementById('save-modal-text').innerText = "Something went wrong";
             document.getElementById('save-modal-close').disabled = false;
         }
 
@@ -155,7 +171,7 @@
         function AddEditInputListeners(id, func) {
             var modal = document.getElementById(id);
             var editInput = modal.querySelector('#input-newvalue');
-            if (typeof editInput === 'undefined') return;
+            if (editInput === null) return;
 
             editInput.removeEventListener('keydown', KeyDown);
             editInput.addEventListener('keydown', KeyDown);
@@ -166,11 +182,42 @@
             editInput.addEventListener('input', f);
         }
 
+/*        function ShowToast() {
+            const toast = new bootstrap.Toast(document.getElementById('toast'));
+            toast.show();
+
+            setTimeout(() => {
+                toast.hide();
+            }, 3000);
+        }*/
+
         function ChangePage(idx) {
             $.ajax({
                 url: window.location.href,
                 type: 'GET',
-                data: { handler: 'UserPageView', pageIndex: idx },
+                data: {
+                    handler: 'UserPageView',
+                    pageIndex: idx
+                },
+                success: function (result) {
+                    $('#users').html(result);
+                }
+            });
+        }
+
+        function SearchUser(element) {
+            let searchInput = document.getElementById('search-user');
+            console.log(searchInput.value);
+//            ShowToast();
+
+
+            $.ajax({
+                url: window.location.href,
+                type: 'GET',
+                data: {
+                    handler: 'UserPageView',
+                    userId: searchInput.value
+                },
                 success: function (result) {
                     $('#users').html(result);
                 }
@@ -193,6 +240,183 @@
             });
         });
 
+        showModal['gift'] = {
+            width: 750,
+            requestData: function (buttonElement) {
+                return {
+                    handler: 'AddRewardsView',
+                    applyToAll: true
+                }
+            },
+            requestSubmit: function (event) {
+                if (newValue === '') {
+                    event.preventDefault();
+                    $('#edit-modal').modal('hide');
+                    return false;
+                }
+
+                let modalForm = document.getElementById('add-reward-modal-form');
+                let selectElement = modalForm.querySelector('#dropdown-option');
+                let values = {};
+                values[selectElement.options[selectElement.selectedIndex].value] = newValue;
+
+                let rewardValueInput = modalForm.querySelector('input[name="RewardValues"]');
+                rewardValueInput.value = JSON.stringify(values);
+
+                return true;
+            }
+        }
+
+        hideModal['add-reward-modal-form'] = {
+            requestData: function () {
+                if (playerId == 0) return null;
+
+                return {
+                    handler: 'RewardsView',
+                    playerId: playerId
+                }
+            },
+            requestSuccess: function (result) {
+                $('#tab-rewards').html(result);
+            }
+        }
+
+        function OnShowEditModal(event) {
+            newValue = '';
+            multipleValues = {};
+            currSelection = 0;
+
+            let editModal = $(event.target);
+            let modalContent = editModal.find('.modal-content');
+            modalContent.empty();
+            modalContent.html(document.getElementById('spinner').innerHTML);
+
+            let requestData;
+            let requestSubmit;
+            let inputListener;
+            let buttonElement = $(event.relatedTarget);
+            let modalId = buttonElement.data('modal');
+
+            if (typeof showModal[modalId] === 'undefined') {
+                modalContent.find('.spinner-border').addClass('d-none');
+                var label = modalContent.find('label')
+                label.removeClass('d-none');
+                return;
+            }
+
+            let width = showModal[modalId].width;
+            if (typeof width !== 'undefined') {
+                editModal.find('.modal-dialog').css('max-width', width + 'px');
+            }
+
+            requestData = showModal[modalId].requestData(buttonElement);
+            requestSubmit = showModal[modalId].requestSubmit;
+            inputListener = showModal[modalId].inputListener;
+
+            $.ajax({
+                url: window.location.href,
+                type: 'GET',
+                data: requestData,
+                success: function (result) {
+                    let resultObj = $(result);
+                    resultObj.find('#edit-modal-save').on('click', function (event) {
+                        if (!requestSubmit(event)) return;
+
+                        document.getElementById('save-modal-text').innerText = "Please wait...";
+                        document.getElementById('save-modal-close').disabled = true;
+                        $('#save-modal').modal('show');
+
+                        let editModal = $('#edit-modal');
+                        let form = editModal.find('form');
+                        let url = form.data('ajax-url');
+                        let handler = url.split('=')[1];
+
+                        let postData = {
+                            handler: handler
+                        }
+                        let inputs = form.find('input');
+                        inputs.each(function () {
+                            let input = $(this);
+                            postData[input.attr('id')] = input.val();
+                        });
+                        $.ajax({
+                            url: window.location.href,
+                            type: 'GET',
+                            data: postData,
+                            success: function (result) {
+                                //                            PostSuccess();
+
+                                editModal.modal('hide');
+                            },
+                            error: function () {
+                                //                            PostFailure();
+
+                                document.getElementById('save-modal-text').innerText = "Something went wrong";
+                                document.getElementById('save-modal-close').disabled = false;
+                            }
+                        })
+                    });
+                    modalContent.html(resultObj);
+
+                    AddEditInputListeners('edit-modal', inputListener);
+                },
+                error: function () {
+                    modalContent.find('.spinner-border').addClass('d-none');
+                    let label = modalContent.find('label')
+                    label.removeClass('d-none');
+                }
+            });
+            /*        let formattedValue = value.replace(/(\d)(?=(\d{3})+(?!\d))/g, '$1,');
+                    let lvl = Math.floor(parseInt(value) / @@UserHeroDetails.UNLOCK_POINTS);
+                    event.target.querySelector('#label-title').textContent = 'Points (Level ' + lvl + ')';
+                    event.target.querySelector('#label-value').textContent = formattedValue;
+                    event.target.querySelector('#input-newvalue').value = '';*/
+        }
+        $(document).off('show.bs.modal', '#edit-modal').on('show.bs.modal', '#edit-modal', OnShowEditModal);
+
+        function OnHideEditModal(event) {
+            let saveModal = $('#save-modal');
+            if (!saveModal.hasClass('show')) return;
+
+            let requestData;
+            let requestSuccess;
+            let form = event.target.querySelector('form');
+            let formId = form.id;
+
+            if (typeof hideModal[formId] === 'undefined') {
+                $('#save-modal-text').textContent = 'Something went wrong';
+                return;
+            }
+            requestData = hideModal[formId].requestData(form);
+            if (requestData === null) {
+                setTimeout(function () {
+                    saveModal.modal('hide');
+                    $('#save-modal-close').prop('disabled', false);
+                }, 300);
+                return;
+            }
+
+            requestSuccess = hideModal[formId].requestSuccess;
+
+            $('#save-modal-text').textContent = 'Please wait...';
+            $('#save-modal-close').prop('disabled', true);
+
+            $.ajax({
+                url: window.location.href,
+                type: 'GET',
+                data: requestData,
+                success: function (result) {
+                    if (typeof requestSuccess === 'function') requestSuccess(result);
+                    saveModal.modal('hide');
+                },
+                error: function () {
+                    $('#save-modal-text').textContent = 'Something went wrong';
+                    $('#save-modal-close').prop('disabled', false);
+                }
+            });
+        }
+        $(document).off('hidden.bs.modal', '#edit-modal').on('hidden.bs.modal', '#edit-modal', OnHideEditModal);
+
         $(document).ready(function () {
             const breadcrumbList = document.getElementById('breadcrumb-list');
             const breadcrumbLinks = breadcrumbList.querySelectorAll('td[data-page]');
@@ -209,5 +433,6 @@
                 }
             });
         });
+
     </script>
 }

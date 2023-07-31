@@ -46,7 +46,7 @@ namespace WebAdmin.Pages
 
         public static async Task<IActionResult> OnGetHeroesViewAsync(int playerId)
         {
-            Console.WriteLine("get heroes ply="+playerId);
+//            Console.WriteLine("get heroes ply="+playerId);
             FullPlayerCompleteData fullPlayerData = null;
             var resp = await BaseUserDataManager.GetFullPlayerData(playerId);
             if (resp.IsSuccess && resp.HasData)
@@ -59,7 +59,7 @@ namespace WebAdmin.Pages
 
         public static async Task<IActionResult> OnGetEditHeroViewAsync(int playerId, string heroType)
         {
-            Console.WriteLine("get edit hero ply="+playerId+" type="+heroType);
+//            Console.WriteLine("get edit hero ply="+playerId+" type="+heroType);
             InputHeroModel model = null;
             if (Enum.TryParse(heroType, out HeroType hero) && (hero != HeroType.Unknown))
             {
@@ -85,7 +85,7 @@ namespace WebAdmin.Pages
             int playerId = inputHero.PlayerId;
             string heroType = inputHero.HeroType;
             string heroValue = inputHero.HeroValues;
-            Console.WriteLine("post save hero ply = " + playerId + " type = " + heroType + " values = " + heroValue);
+//            Console.WriteLine("post save hero ply = " + playerId + " type = " + heroType + " values = " + heroValue);
 
             if (!Enum.TryParse(heroType, out HeroType hero) || (hero == HeroType.Unknown) ||
                 !int.TryParse(heroValue, out int value))

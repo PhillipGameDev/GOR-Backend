@@ -16,6 +16,7 @@ namespace GameOfRevenge.Business.Manager
         private readonly object SyncRoot = new object();
 
         private readonly UserQuestManager questManager = new UserQuestManager();
+        private readonly AdminDataManager adminManager = new AdminDataManager();
 
         private readonly Dictionary<int, PlayerUserQuestData> allPlayerDatas = new Dictionary<int, PlayerUserQuestData>();
 
@@ -133,7 +134,7 @@ namespace GameOfRevenge.Business.Manager
             {
                 //                var seconds = (tomorrow - DateTime.UtcNow).TotalSeconds;
                 //                if (seconds < 1) 
-                TryToResetQuests(2);
+                FinishDailyProcess(2);
             }
             if ((DateTime.UtcNow - lastUpdate).TotalMilliseconds < UPDATE_INTERVAL) return;
 
@@ -163,9 +164,9 @@ namespace GameOfRevenge.Business.Manager
             }, UPDATE_INTERVAL + 1);
         }
 
-        private void TryToResetQuests(int count)
+        private void FinishDailyProcess(int count)
         {
-            log.Info("TryToResetQuests: " + count);
+            log.Info("FinishDailyProcess: " + count);
             reseting = count;
             if (reseting == 0)
             {
@@ -179,19 +180,28 @@ namespace GameOfRevenge.Business.Manager
 
             new DelayedAction().WaitForCallBack(async () =>
             {
-                var response = await questManager.ResetAllDailyQuests();
-                if (response.IsSuccess)
+                var save = false;
+                var reset = false;
+
+                var respSave = await adminManager.SaveDailyVisits();
+                log.Info("TryToSaveDailyVisits: " + respSave.Message);
+                save = respSave.IsSuccess;
+
+                var respReset = await adminManager.ResetAllDailyQuests();
+                log.Info("TryToResetQuests: " + respReset.Message);
+                reset = respReset.IsSuccess;
+
+                if (save && reset)
                 {
                     tomorrow = DateTime.UtcNow.AddDays(1).Date;
-                    log.Info("TryToResetQuests: " + response.Message);
                     count = 0;
                 }
                 else
                 {
-                    log.Error("TryToResetQuests: " + response.Message);
                     count--;
                 }
-                TryToResetQuests(count);
+
+                FinishDailyProcess(count);
             }, 1000);
         }
 

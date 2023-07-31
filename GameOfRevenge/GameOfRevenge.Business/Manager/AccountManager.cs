@@ -34,12 +34,12 @@ namespace GameOfRevenge.Business.Manager
                 }
 
                 identifier = identifier.Trim();
-/*                if ((identifier == "21886937eabae07847de33d5ad5bbf20") ||
-                    (identifier == "Bu3gC5191gftKiUYF0QmgSmRHDk2"))
-                {
-                    throw new DataNotExistExecption("Under Maintenance");
-                }
-                if (identifier == "test") identifier = "21886937eabae07847de33d5ad5bbf20";*/
+                /*                if ((identifier == "21886937eabae07847de33d5ad5bbf20") ||
+                                    (identifier == "Bu3gC5191gftKiUYF0QmgSmRHDk2"))
+                                {
+                                    throw new DataNotExistExecption("Under Maintenance");
+                                }
+                                if (identifier == "test") identifier = "21886937eabae07847de33d5ad5bbf20";*/
 
                 if (!accepted) throw new RequirementExecption("Kindly accept terms and condition");
 
@@ -83,11 +83,11 @@ namespace GameOfRevenge.Business.Manager
                         fhHealth = structureData.Levels.OrderBy(x => x.Data.Level).FirstOrDefault().Data.HitPoint;
                         fhLoc = 5;
                     }
-//#if DEBUG
-//                    await resManager.SumMainResource(playerId, 100000, 100000, 100000, 10000);
-//#else
+                    //#if DEBUG
+                    //                    await resManager.SumMainResource(playerId, 100000, 100000, 100000, 10000);
+                    //#else
                     await resManager.SumMainResource(playerId, 10000, 10000, 10000, 500);
-//#endif
+                    //#endif
                     var dataManager = new PlayerDataManager();
                     var json = JsonConvert.SerializeObject(new UserKingDetails());
                     await dataManager.AddOrUpdatePlayerData(playerId, DataType.Custom, 1, json);
@@ -132,9 +132,13 @@ namespace GameOfRevenge.Business.Manager
                         json = JsonConvert.SerializeObject(dataList);
                         await dataManager.AddOrUpdatePlayerData(playerId, DataType.Structure, (int)StructureType.FriendshipHall, json);
                     }
+
+                    await CreateBackup(playerId);
                 }
                 else if (response.Case == 101)// && (version > 0))
                 {
+                    await CreateBackup(playerId);
+
                     try
                     {
                         var dataManager = new PlayerDataManager();
@@ -195,6 +199,10 @@ namespace GameOfRevenge.Business.Manager
                         response.Message = ex.Message;
                     }
                 }
+                else
+                {
+                    await CreateBackup(playerId);
+                }
                 await CompleteAccountQuest(playerId, AccountTaskType.SignIn);
 
                 return response;
@@ -214,6 +222,65 @@ namespace GameOfRevenge.Business.Manager
             catch (Exception ex)
             {
                 return new Response<Player>() { Case = 0, Data = null, Message = ErrorManager.ShowError(ex) };
+            }
+        }
+
+        private async Task<Response> CreateBackup(int playerId)
+        {
+            string json = null;
+            try
+            {
+                var allPlayerData = new AllPlayerData();
+                var dataManager = new PlayerDataManager();
+
+                //PLAYER INFO
+                var playerInfo = await GetAccountInfo(playerId);
+                if (!playerInfo.IsSuccess || !playerInfo.HasData) throw new Exception("Error retrieving player info");
+
+                allPlayerData.PlayerInfo = playerInfo.Data;
+
+                //ALL PLAYER DATA
+                var allData = await dataManager.GetAllPlayerData(playerId);
+                if (!allData.IsSuccess || !allData.HasData) throw new Exception("Error retrieving all player data");
+
+                allPlayerData.PlayerData = allData.Data;
+
+                //QUESTS
+                var questsResp = await questManager.GetAllQuestProgress(playerId);
+                if (!questsResp.IsSuccess || !questsResp.HasData) throw new Exception("Error retrieving all quest data");
+
+                allPlayerData.QuestData = questsResp.Data;
+
+                json = Newtonsoft.Json.JsonConvert.SerializeObject(allPlayerData);
+            }
+            catch (Exception ex)
+            {
+                return new Response<AllPlayerData>() { Case = 0, Data = null, Message = ErrorManager.ShowError(ex) };
+            }
+
+            return await SavePlayerBackup(playerId, "Auto backup", json);
+        }
+
+        private async Task<Response> SavePlayerBackup(int playerId, string description, string data)
+        {
+            var spParams = new Dictionary<string, object>()
+            {
+                { "PlayerId", playerId },
+                { "Description", description },
+                { "Data", data }
+            };
+
+            try
+            {
+                return await Db.ExecuteSPNoData("SavePlayerBackup", spParams);
+            }
+            catch (Exception ex)
+            {
+                return new Response()
+                {
+                    Case = 0,
+                    Message = ErrorManager.ShowError(ex)
+                };
             }
         }
 

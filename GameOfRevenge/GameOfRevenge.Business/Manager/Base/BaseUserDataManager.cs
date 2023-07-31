@@ -164,7 +164,7 @@ namespace GameOfRevenge.Business.Manager.Base
                 var userTroops = response.Data.Where(x => x.DataType == DataType.Troop)?.ToList();
                 var userMarching = response.Data.Find(x => (x.DataType == DataType.Marching));
                 var userTechnologies = response.Data.Where(x => x.DataType == DataType.Technology)?.ToList();
-                var userSubTechs = response.Data.Where(x => x.DataType == DataType.SubTechnology)?.ToList();
+//                var userSubTechs = response.Data.Where(x => x.DataType == DataType.SubTechnology)?.ToList();
                 var userItems = response.Data.Where(x => x.DataType == DataType.Inventory)?.ToList();
                 var userBoosts = response.Data.Where(x => x.DataType == DataType.ActiveBoost)?.ToList();
                 var userHeroData = response.Data.Where(x => x.DataType == DataType.Hero)?.ToList();
@@ -372,6 +372,7 @@ namespace GameOfRevenge.Business.Manager.Base
 
                         var data = new UserHeroDetails()
                         {
+//                            HeroId = userHeroDetails.HeroId,
                             HeroType = (HeroType)heroInfo.Info.HeroId,
                             Points = userHeroDetails.Points,
                             Power = userHeroDetails.Power,

@@ -2,15 +2,6 @@
 @using WebAdmin.Pages
 @using GameOfRevenge.Common.Models
 
-<!--
-    @@inject Microsoft.AspNetCore.Antiforgery.IAntiforgery Xsrf
-@@functions{
-    public string GetAntiXsrfRequestToken()
-    {
-        return Xsrf.GetAndStoreTokens(Context).RequestToken;
-    }
-} -->
-
 <style>
     .table-fixed {
         table-layout: fixed;
@@ -174,15 +165,6 @@
 </table>
 
 <script>
-/*    $(document).ready(function() {
-        var attackLabels = document.getElementsByClassName('label-group');
-
-        for (var i = 0; i < attackLabels.length; i++) {
-            var thWidth = attackLabels[i].parentNode.width;
-            attackLabels[i].style.width = (thWidth * 2) + "px";
-        }
-    });*/
-
     showModal['hero'] = {
         width: 500,
         requestData: function (buttonElement) {

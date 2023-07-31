@@ -1,4 +1,5 @@
 ﻿using System.Collections.Generic;
+using GameOfRevenge.Common.Models.Quest;
 
 namespace GameOfRevenge.Common.Models
 {
@@ -14,7 +15,7 @@ namespace GameOfRevenge.Common.Models
         public UserKingDetails King { get; set; }
         public UserVIPDetails VIP { get; set; }
         public int VIPPoints { get; set; }
-        public int VIPLevel => UserVIPDetails.VIPLevel(VIPPoints);
+        public int VIPLevel => UserVIPDetails.VIPLevel((VIP != null)? VIP.Points : 0);
         public List<UserRecordBuilderDetails> Workers { get; set; }
 
         public ResourcesList Resources { get; set; }
@@ -27,5 +28,12 @@ namespace GameOfRevenge.Common.Models
         public List<UserItemDetails> Items { get; set; }
         public List<UserRecordNewBoost> Boosts { get; set; }
         public List<UserHeroDetails> Heroes { get; set; }
+    }
+
+    public class AllPlayerData
+    {
+        public PlayerInfo PlayerInfo { get; set; }
+        public List<PlayerDataTable> PlayerData { get; set; }
+        public List<PlayerQuestDataTable> QuestData { get; set; }
     }
 }

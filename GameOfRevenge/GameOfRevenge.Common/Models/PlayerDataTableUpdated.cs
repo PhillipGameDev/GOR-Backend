@@ -18,7 +18,6 @@ namespace GameOfRevenge.Common.Models
         {
             int index = 0;
             Id = reader.GetValue(index) == DBNull.Value ? 0 : reader.GetInt64(index); index++;
-//            PlayerId = reader.GetValue(index) == DBNull.Value ? 0 : reader.GetInt32(index); index++;
             DataType = reader.GetValue(index) == DBNull.Value ? DataType.Unknown : (DataType)Enum.Parse(typeof(DataType), reader.GetString(index)); index++;
             ValueId = reader.GetValue(index) == DBNull.Value ? 0 : reader.GetInt32(index); index++;
             Value = reader.GetValue(index) == DBNull.Value ? string.Empty : reader.GetString(index); index++;

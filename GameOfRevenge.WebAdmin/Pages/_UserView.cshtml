@@ -249,18 +249,28 @@
                                     <li class="nav-item">
                                         <a class="nav-link" data-toggle="tab" href="#tab-heroes" role="tab">Heroes</a>
                                     </li>
+                                    <li class="nav-item">
+                                        <a class="nav-link" data-toggle="tab" href="#tab-rewards" role="tab">Rewards</a>
+                                    </li>
+                                    <li class="nav-item">
+                                        <a class="nav-link" data-toggle="tab" href="#tab-backups" role="tab">Backups</a>
+                                    </li>
                                 </ul>
                                 <div class="tab-content" id="user-tabs">
                                     <div class="tab-pane active" id="tab-structures" role="tabpanel">
                                         @await Html.PartialAsync("_UserStructuresView", new _UserStructuresViewModel(Model))
                                     </div>
-
                                     <div class="tab-pane" id="tab-troops" role="tabpanel">
                                         @await Html.PartialAsync("_UserTroopsView", new _UserTroopsViewModel(Model))
                                     </div>
-
                                     <div class="tab-pane" id="tab-heroes" role="tabpanel">
                                         @await Html.PartialAsync("_UserHeroesView", new _UserHeroesViewModel(Model))
+                                    </div>
+                                    <div class="tab-pane" id="tab-rewards" role="tabpanel">
+                                        @await Html.PartialAsync("_UserRewardsView", new _UserRewardsViewModel(Model.Rewards))
+                                    </div>
+                                    <div class="tab-pane" id="tab-backups" role="tabpanel">
+                                        @await Html.PartialAsync("_UserBackupsView", new _UserBackupsViewModel(Model.Backups))
                                     </div>
                                 </div>
                             </div>
@@ -394,110 +404,4 @@
         }
     }
 
-
-    function OnShowEditModal(event) {
-        newValue = '';
-        multipleValues = {};
-        currSelection = 0;
-
-        let editModal = $(event.target);
-        let modalContent = editModal.find('.modal-content');
-        modalContent.empty();
-        modalContent.html(document.getElementById('spinner').innerHTML);
-
-        let requestData;
-        let requestSubmit;
-        let inputListener;
-        let buttonElement = $(event.relatedTarget);
-        let modalId = buttonElement.data('modal');
-
-        if (typeof showModal[modalId] === 'undefined') {
-            modalContent.find('.spinner-border').addClass('d-none');
-            var label = modalContent.find('label')
-            label.removeClass('d-none');
-            return;
-        }
-
-        let width = showModal[modalId].width;
-        if (typeof width !== 'undefined') {
-            editModal.find('.modal-dialog').css('max-width', width + 'px');
-        }
-
-        requestData = showModal[modalId].requestData(buttonElement);
-        requestSubmit = showModal[modalId].requestSubmit;
-        inputListener = showModal[modalId].inputListener;
-
-        $.ajax({
-            url: window.location.href,
-            type: 'GET',
-            data: requestData,
-            success: function (result) {
-                let resultObj = $(result);
-                resultObj.find('#edit-modal-save').on('click', function (event) {
-                    if (!requestSubmit(event)) return;
-
-                    document.getElementById('save-modal-text').innerText = "Saving...";
-                    document.getElementById('save-modal-close').disabled = true;
-                    $('#save-modal').modal('show');
-                });
-                modalContent.html(resultObj);
-
-                AddEditInputListeners('edit-modal', inputListener);
-            },
-            error: function () {
-                modalContent.find('.spinner-border').addClass('d-none');
-                var label = modalContent.find('label')
-                label.removeClass('d-none');
-            }
-        });
-/*        let formattedValue = value.replace(/(\d)(?=(\d{3})+(?!\d))/g, '$1,');
-        let lvl = Math.floor(parseInt(value) / @@UserHeroDetails.UNLOCK_POINTS);
-        event.target.querySelector('#label-title').textContent = 'Points (Level ' + lvl + ')';
-        event.target.querySelector('#label-value').textContent = formattedValue;
-        event.target.querySelector('#input-newvalue').value = '';*/
-    }
-    $(document).off('show.bs.modal', '#edit-modal').on('show.bs.modal', '#edit-modal', OnShowEditModal);
-
-    function OnHideEditModal(event) {
-        var saveModal = $('#save-modal');
-        if (!saveModal.hasClass('show')) return;
-
-        let requestData;
-        let requestSuccess;
-        let form = event.target.querySelector('form');
-        let formId = form.id;
-
-        if (typeof hideModal[formId] === 'undefined') {
-            $('#save-modal-text').textContent = 'Error saving data';
-            return;
-        }
-        requestData = hideModal[formId].requestData(form);
-        if (requestData === null) {
-            setTimeout(function () {
-                saveModal.modal('hide');
-                $('#save-modal-close').prop('disabled', false);
-            }, 300);
-            return;
-        }
-
-        requestSuccess = hideModal[formId].requestSuccess;
-
-        $('#save-modal-text').textContent = 'Saving...';
-        $('#save-modal-close').prop('disabled', true);
-
-        $.ajax({
-            url: window.location.href,
-            type: 'GET',
-            data: requestData,
-            success: function (result) {
-                if (typeof requestSuccess === 'function') requestSuccess(result);
-                saveModal.modal('hide');
-            },
-            error: function () {
-                $('#save-modal-text').textContent = 'Error saving data';
-                $('#save-modal-close').prop('disabled', false);
-            }
-        });
-    }
-    $(document).off('hidden.bs.modal', '#edit-modal').on('hidden.bs.modal', '#edit-modal', OnHideEditModal);
 </script>

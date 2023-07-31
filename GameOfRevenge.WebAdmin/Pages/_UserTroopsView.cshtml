@@ -212,7 +212,7 @@
             let modalForm = document.getElementById('troops-modal-form');
             let selectElement = modalForm.querySelector('.form-control');
             for (let key in multipleValues) {
-                var troopData = JSON.parse(selectElement.options[key].value);
+                let troopData = JSON.parse(selectElement.options[key].value);
                 values[key] = parseInt(multipleValues[key]) + (troopData[0] + troopData[1] + troopData[2]);
             }
             let troopValuesInput = modalForm.querySelector('input[name="TroopValues"]');

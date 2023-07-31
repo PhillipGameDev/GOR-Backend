@@ -28,11 +28,6 @@ namespace GameOfRevenge.Business.Manager.UserData
         private readonly UserActiveBoostManager boostManager = new UserActiveBoostManager();
         protected static readonly IPlayerDataManager manager = new PlayerDataManager();
 
-        public async Task<Response> ResetAllDailyQuests()
-        {
-            return await Db.ExecuteSPNoData("ResetAllDailyQuests", new Dictionary<string, object>());
-        }
-
         public async Task<Response<List<PlayerRewardDataTable>>> GetUserAllRewards(int playerId)
         {
             try

@@ -94,7 +94,10 @@ namespace GameOfRevenge.Business.DataLink
 
                             await reader.NextResultAsync();
 
-                            if (await reader.ReadAsync()) response.LoadFromDataReader(reader);
+                            if (await reader.ReadAsync())
+                            {
+                                response.LoadFromDataReader(reader);
+                            }
                             reader.Close();
                         }
 

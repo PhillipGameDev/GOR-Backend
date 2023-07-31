@@ -233,7 +233,7 @@ namespace GameOfRevenge.Business.Manager.UserData
             }
         }
 
-        public async Task<Response<PlayerDataTableUpdated>> IncrementPlayerData(int playerId, DataType type, int valueId, int? value)
+        public async Task<Response<PlayerDataTableUpdated>> IncrementPlayerData(int playerId, DataType type, int valueId, int value, bool log = true)
         {
             try
             {
@@ -244,9 +244,10 @@ namespace GameOfRevenge.Business.Manager.UserData
                 {
                     { "PlayerId", playerId },
                     { "DataCode", type.ToString() },
-                    { "ValueId", valueId }
+                    { "ValueId", valueId },
+                    { "Value", value },
+                    { "Log", log? 1 : 0 }
                 };
-                if (value != null) spParams.Add("Value", value);
 
                 return await Db.ExecuteSPSingleRow<PlayerDataTableUpdated>("IncrementPlayerData", spParams);
             }

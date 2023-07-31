@@ -2,11 +2,11 @@
 @using GameOfRevenge.WebAdmin.Models
 
 <form id="resource-modal-form" method="post" data-ajax-method="post" data-ajax="true"
-      data-ajax-success="SaveSuccess" data-ajax-failure="SaveFailure"
+      data-ajax-success="PostSuccess" data-ajax-failure="PostFailure"
       data-ajax-url="?handler=SaveResourceChange">
     <div class="modal-header">
         <h4 class="modal-title">@Model.ResourceType</h4>
-        <button class="close" type="button" data-dismiss="modal">x</button>
+        <button class="close" type="button" data-dismiss="modal"><span>x</span></button>
         <input type="hidden" asp-for="PlayerId" value="@Model.PlayerId" />
         <input type="hidden" asp-for="ResourceType" value="@Model.ResourceType" />
         <input type="hidden" asp-for="ResourceValue" value="" />
@@ -26,6 +26,6 @@
     </div>
     <div class="modal-footer">
         <button class="btn btn-secondary" type="button" data-dismiss="modal">Close</button>
-        <button class="btn btn-warning" type="submit" id="edit-modal-save">Save changes</button>
+        <button class="btn btn-warning" type="button" id="edit-modal-save">Save changes</button>
     </div>
 </form>

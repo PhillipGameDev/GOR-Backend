@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -15,8 +16,10 @@ using IdentityServer4.AccessTokenValidation;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Builder;
+using Microsoft.AspNetCore.DataProtection;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.HttpsPolicy;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
@@ -50,6 +53,14 @@ namespace GameOfRevenge.WebAdmin
 
             services.AddRazorPages();
             services.AddControllers();
+/*            services.AddRazorPages().AddRazorPagesOptions(options =>
+            {
+                options.Conventions.ConfigureFilter(new IgnoreAntiforgeryTokenAttribute());
+            });
+            services.AddControllersWithViews(options =>
+            {
+                options.Filters.Add(new IgnoreAntiforgeryTokenAttribute());
+            });*/
 
             services.AddOpenApiDocument(config =>
             {
@@ -66,6 +77,9 @@ namespace GameOfRevenge.WebAdmin
                 config.Description = "WebAdmin documentation";
             });
 
+
+             services.AddDataProtection()
+            .PersistKeysToFileSystem(new DirectoryInfo("C:/IIS/GameOfRevengeAdmin/Keys"));
 
 /*            var key = Encoding.ASCII.GetBytes(appSettings.Secret);
             var auth = services.AddAuthentication();
@@ -191,7 +205,9 @@ namespace GameOfRevenge.WebAdmin
             services.AddSingleton<IAppSettings>(appSettings);
 
             services.AddSingleton<IAdminDataManager>(new AdminDataManager());
+            services.AddSingleton<IPlayerDataManager>(new PlayerDataManager());
             services.AddSingleton<IClanManager>(new ClanManager());
+            services.AddSingleton<IUserQuestManager>(new UserQuestManager());
 
             var task = ReloadDataBaseDataAsync();
             task.Wait();

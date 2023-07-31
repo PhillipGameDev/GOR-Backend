@@ -70,10 +70,27 @@
         padding-top: 1.5rem !important;
         padding-bottom: 0rem !important;
     }
+    .user-row {
+        width: 100%;
+        display: inline-flex;
+    }
 </style>
 
 <div class="card-header" style="display: flex; justify-content: space-between; align-items: center;">
-    <div>Users</div>
+    <div class="d-flex align-items-center">
+        <span>Users</span>
+        <span style="width:100px;"></span>
+        <div class="input-group mb-3 ms-3" style="margin-bottom:0px !important;">
+            <input type="text" class="form-control" id="search-user" placeholder="Username ID">
+            <button class="input-group-text" type="button" id="search-button" onclick="window.parent.SearchUser(this)"><i class="fa fa-search"></i></button>
+        </div>
+    </div>
+    <div>
+        <button class="btn btn-sm btn-primary btn-action py-2" type="button" id="gift"
+                data-toggle="modal" data-target="#edit-modal" data-modal="gift">
+            <i class="fa fa-gift"></i>&nbsp;Send Gift to All Players
+        </button>
+    </div>
     <nav>
         <ul class="pagination justify-content-end" style="margin-top: 0; margin-bottom: 0;">
             <li class="page-item @(Model.CurrentPage == Model.OffsetPage ? "disabled" : "")">
@@ -93,7 +110,7 @@
 </div>
 <div class="card-body">
     <div>
-        <table class="table table-fixed2 table-sm table-responsive-sm table-hover table-outline mb-0">
+        <table id ="users-table" class="table table-fixed2 table-sm table-responsive-sm table-hover table-outline mb-0">
             <thead class="thead-light">
                 <tr>
                     <th style="width: 100%; display: inline-flex;">
@@ -111,32 +128,31 @@
             </thead>
             <tbody>
                 @foreach (var user in Model.Users) {
-                    <tr class="align-middle @(user.Invaded == -1 ? "table-warning" : "")" type="button"
-                        data-player-id="@user.PlayerId" data-toggle="modal" data-target="#user-modal"
-                        style="width: 100%; display: inline-flex;">
+                    <tr class="user-row align-middle @(user.Invaded == -1 ? "table-warning" : "")" type="button"
+                        id="user-@user.PlayerId" data-player-id="@user.PlayerId" data-toggle="modal" data-target="#user-modal">
                         @if (user.PlayerId == 0) {
-                            <td class="wdt-10 align-middle text-center" style="width: 100%; display: inline-flex;">
+                            <td id="user-name" class="wdt-10 user-row align-middle text-center">
                                 @user.Name
                             </td>
                         } else {
-                            <td class="wdt-10 align-middle" style="width: 100%; display: inline-flex;">
+                            <td class="wdt-10 user-row align-middle">
                                 <div class="wdt-1 align-middle text-center">
-                                    <strong>@user.PlayerId</strong>
+                                    <strong id="user-id">@user.PlayerId</strong>
                                 </div>
                                 <div class="wdt-3h align-middle">
-                                    <span>@user.Name</span><br />
+                                    <span id="user-name">@user.Name</span><br />
                                     <span class="small text-muted">
-                                        Registered: @user.RegisteredDate
+                                        Registered: @user.RegisteredDate.ToString("yyy/M/d h:mm:ss tt")
                                     </span>
                                 </div>
                                 <div class="wdt-1 align-middle text-center">
-                                    <strong>@user.KingLevel</strong>
+                                    <strong id="user-kinglevel">@user.KingLevel</strong>
                                 </div>
                                 <div class="wdt-1 align-middle text-center">
-                                    <strong>@user.VIPLevel</strong>
+                                    <strong id="user-viplevel">@user.VIPLevel</strong>
                                 </div>
                                 <div class="wdt-1 align-middle text-center">
-                                    <strong>@user.CastleLevel</strong>
+                                    <strong id="user-castlelevel">@user.CastleLevel</strong>
                                 </div>
                                 <div class="wdt-1h align-middle">
                                     @if (user.LastLogin != null)
