@@ -1,6 +1,6 @@
 USE [GameOfRevenge]
 GO
-/****** Object:  StoredProcedure [dbo].[ResetAllDailyQuests]    Script Date: 12/21/2022 11:23:59 AM ******/
+/****** Object:  StoredProcedure [dbo].[ResetAllDailyQuests]    Script Date: 7/21/2023 8:03:01 PM ******/
 SET ANSI_NULLS ON
 GO
 SET QUOTED_IDENTIFIER ON
@@ -12,7 +12,7 @@ AS
 BEGIN
 	DECLARE @case INT = 1, @error INT = 0;
 	DECLARE @message NVARCHAR(MAX) = NULL;
-	DECLARE @time DATETIME = CURRENT_TIMESTAMP;
+	DECLARE @time DATETIME = GETUTCDATE();
 	DECLARE @id INT = NULL;
 
 	DECLARE @SIDE_QUEST INT = 99;
@@ -41,7 +41,6 @@ BEGIN
 			END
 	END TRY
 	BEGIN CATCH
-		SET @currentId = NULL;
 		SET @case = 0;
 		SET @error = 1;
 		SET @message = ERROR_MESSAGE();

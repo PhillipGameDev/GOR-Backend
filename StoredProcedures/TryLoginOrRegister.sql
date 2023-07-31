@@ -99,6 +99,7 @@ BEGIN
 							Invaded INT,
 							VIPPoints INT,
 							ClanId INT,
+							RegisteredDate DATETIME,
 							LastLogin DATETIME
 						);
 						INSERT INTO @temp EXEC [dbo].[GetPlayerDetailsById] @existingAccount, 0;

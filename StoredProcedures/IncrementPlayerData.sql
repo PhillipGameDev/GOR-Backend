@@ -11,7 +11,8 @@ ALTER   PROCEDURE [dbo].[IncrementPlayerData]
 	@PlayerDataId BIGINT = NULL,
 	@DataCode VARCHAR(100) = NULL,
 	@ValueId INT = NULL,
-	@Value INT = NULL
+	@Value INT = NULL,
+	@Log BIT = 1
 AS
 BEGIN
 	DECLARE @case INT = 1, @error INT = 0;
@@ -77,12 +78,12 @@ BEGIN
 
 								INSERT INTO [dbo].[PlayerData]
 								OUTPUT INSERTED.PlayerDataId INTO @tempTable
-								VALUES (@validUserId, @validTypeId, @tempValueId, @finalValue);
+								VALUES (@validUserId, @validTypeId, @tempValueId, CAST(@finalValue AS VARCHAR(MAX)));
 
 								SELECT @validId = [PlayerDataId] FROM @tempTable;
 							END
 						ELSE IF (@tempValue <> 0)
-							UPDATE [dbo].[PlayerData] SET [Value] = @finalValue
+							UPDATE [dbo].[PlayerData] SET [Value] = CAST(@finalValue AS VARCHAR(MAX))
 							WHERE [PlayerDataId] = @validId;
 
 						SET @case = 101;
@@ -114,6 +115,9 @@ BEGIN
 			SELECT p.[PlayerDataId], d.[Code] AS 'DataType', p.[ValueId], p.[Value], p.[OldValue] FROM @outputTable AS p 
 			INNER JOIN [dbo].[DataType] AS d ON d.[DataTypeId] = p.[DataTypeId];
 		END
+	ELSE
+		SELECT p.[PlayerDataId], d.[Code] AS 'DataType', p.[ValueId], p.[Value], p.[Value] FROM [dbo].[PlayerData] AS p 
+		INNER JOIN [dbo].[DataType] AS d ON d.[DataTypeId] = p.[DataTypeId];
 
-	EXEC [dbo].[GetMessage] @userId, @message, @case, @error, @time, 1, 1;
+	IF (@Log = 1) EXEC [dbo].[GetMessage] @userId, @message, @case, @error, @time, 1, 1;
 END

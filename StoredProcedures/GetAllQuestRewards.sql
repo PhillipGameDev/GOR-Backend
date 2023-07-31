@@ -20,6 +20,7 @@ BEGIN
 
 	SELECT s.[QuestRewardId], s.[QuestId], s.[DataTypeId], s.[ReqValueId], s.[Value], s.[Count] FROM [dbo].[QuestReward] AS s
 	WHERE ([DataTypeId] <> 8) OR (([ReqValueId] <> 14) AND ([ReqValueId] <> 7));
+	--DataTypeId 8 = technology, 14 
 
 	EXEC [dbo].[GetMessage] @userId, @message, @case, @error, @time, 1, 1;
 END

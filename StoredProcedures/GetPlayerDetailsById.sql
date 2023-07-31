@@ -28,10 +28,11 @@ BEGIN
 	DECLARE @castleLevel TINYINT = NULL;
 	DECLARE @shieldEndTime DATETIME = NULL;
 	DECLARE @clanId INT = NULL;
+	DECLARE @creationDate DATETIME = NULL;
 	DECLARE @lastLogin DATETIME = NULL;
 
 	SELECT @existingId = [PlayerId], @name = [Name], @isAdmin = [IsAdmin], @isDeveloper = [IsDeveloper],
-			@vipPoints = [VIPPoints], @lastLogin = [LastLogin] FROM [dbo].[Player] 
+			@vipPoints = [VIPPoints], @creationDate = [CreateDate], @lastLogin = [LastLogin] FROM [dbo].[Player] 
 	WHERE [PlayerId] = @userId;
 
 	IF (@existingId IS NULL)
@@ -154,11 +155,11 @@ BEGIN
 			END CATCH
 		END
 
-	DECLARE @invaded INT = NULL;
-	IF (DATEDIFF(DAY, @lastLogin, GETUTCDATE()) > (30 * 6)) SET @invaded = 1;
+	DECLARE @invaded INT = 0;
+	IF (DATEDIFF(DAY, @lastLogin, @time) > (30 * 6)) SET @invaded = 1;
 	SELECT 'PlayerId' = @existingId, 'Name' = @name, 'IsAdmin' = @isAdmin, 'IsDeveloper' = @isDeveloper, 'KingLevel' = @kingLevel, 
 			'CastleLevel' = @castleLevel, 'WatchLevel' = @watchLevel, 'ShieldEndTime' = @shieldEndTime, 'Invaded' = @invaded,
-			'VIPPoints' = @vipPoints, 'ClanId' = @clanId, 'LastLogin' = @lastLogin;
+			'VIPPoints' = @vipPoints, 'ClanId' = @clanId, 'RegisteredDate' = @creationDate, 'LastLogin' = @lastLogin;
 
 	IF (@Log = 1) EXEC [dbo].[GetMessage] @userId, @message, @case, @error, @time, 1, 1;
 END
