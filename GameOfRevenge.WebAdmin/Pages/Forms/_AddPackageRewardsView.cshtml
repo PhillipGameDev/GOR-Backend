@@ -1,0 +1,181 @@
+﻿@model InputPackageRewardsModel
+@using GameOfRevenge.WebAdmin.Models
+
+<form id="add-package-reward-modal-form" method="post" data-ajax-method="post" data-ajax="true"
+      data-ajax-success="PostSuccess" data-ajax-failure="PostFailure"
+      data-ajax-url="?handler=AddPackageReward">
+    <div class="modal-header">
+        <h4 class="modal-title" id="package-rewards-modal-title">Add Reward</h4>
+        <button class="close" type="button" data-dismiss="modal"><span>x</span></button>
+        <input type="hidden" asp-for="PackageId" value="@Model.PackageId" />
+        <input type="hidden" asp-for="QuestId" value="@Model.QuestId" />
+        <input type="hidden" asp-for="RewardValues" value="" />
+    </div>
+    <div class="modal-body">
+        <div id="add-package-reward-content">
+            <div class="row justify-content-center text-center">
+                <div class="form-group col-sm-3">
+                    <strong>Type</strong>
+                    <select class="form-control" id="dropdown-type" onchange="RewardTypeChange(this)"
+                            asp-items="@Model.DataTypes.Select(x => new SelectListItem {
+                            Text = x.ToString(),
+                            Value = ((int)x).ToString()
+                    })">
+                    </select>
+                </div>
+                <div class="form-group col-sm-7" style="margin-bottom:0px;">
+                    <strong>Option</strong>
+                    <select class="form-control" id="dropdown-option" onchange="RewardOptionChange(this)">
+                    </select>
+                    <div class="row justify-content-center pt-2 d-none" id="new-reward-row" style="margin-bottom: -15px;">
+                        <div class="row justify-content-center col-12">
+                            <select class="form-control col-sm-7" id="dropdown-suboption" onchange="RewardSubOptionChange(this)">
+                            </select>&nbsp;&nbsp;&nbsp;
+                            <input class="form-control bg-light text-dark col-sm-3" id="input-suboptionvalue"
+                                   autocomplete="off" type="text" placeholder="Value" value="" />
+                        </div>
+                        <label class="col-12 small my-1" style="white-space: pre;">&nbsp;</label>
+                    </div>
+                </div>
+                <div class="form-group col-sm-2">
+                    <strong>Amount</strong>
+                    <input class="form-control bg-light text-dark" id="input-newvalue" autocomplete="off"
+                           type="text" placeholder="" value="" />
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="modal-footer">
+        <button class="btn btn-secondary" type="button" data-dismiss="modal">Close</button>
+        <button class="btn btn-warning" type="submit" id="edit-modal-save">Add reward</button>
+    </div>
+</form>
+
+<script>
+    var rewardOptions = @Html.Raw(Json.Serialize(Model.Options.Select(item => new {
+        rewardId = item.Item1,
+        dataType = ((int)item.Item2).ToString(),
+        desc = item.Item3
+    })));
+
+    var rewardSubOptions = @Html.Raw(Json.Serialize(Model.SubOptions.Select(item => new {
+        dataType = ((int)item.Item1).ToString(),
+        valueId = item.Item2,
+        desc = item.Item3,
+        valueUnit = item.Item4
+    })));
+
+    var subOptionIndex = 0;
+
+    function FormatNumber(value) {
+        return value.toString().replace(/(\d)(?=(\d{3})+(?!\d))/g, '$1,');
+    }
+
+    function RewardTypeChange(element) {
+        let selection = element.selectedIndex;
+        if ((element.options.length == 0) || (selection >= element.options.length)) return;
+
+        let dataType = element.value;
+        let newOptions = [];
+        rewardOptions.forEach(item => {
+            if (item.dataType === dataType) newOptions.push(item);
+        });
+        let newSubOptions = [];
+        rewardSubOptions.forEach(item => {
+            if (item.dataType === dataType) newSubOptions.push(item);
+        });
+
+        let editContent = document.getElementById('add-package-reward-content');
+        let selectElement = editContent.querySelector('#dropdown-suboption');
+        selectElement.innerHTML = '';
+        for (let item of newSubOptions) {
+            let newSubOption = document.createElement('option');
+            newSubOption.value = rewardSubOptions.indexOf(item);
+            newSubOption.textContent = item.valueId + ": " + item.desc;
+            selectElement.appendChild(newSubOption);
+        }
+        RewardSubOptionChange(selectElement);
+
+        selectElement = editContent.querySelector('#dropdown-option');
+        selectElement.innerHTML = '';
+        for (let item of newOptions) {
+            let newOption = document.createElement('option');
+            newOption.value = item.rewardId;
+            newOption.textContent = item.rewardId + ": " + item.desc;
+            selectElement.appendChild(newOption);
+        }
+        RewardOptionChange(selectElement);
+    }
+
+    function RewardOptionChange(element) {
+        currSelection = element.selectedIndex;
+        if ((element.options.length == 0) || (currSelection >= element.options.length)) return;
+
+        let editContent = document.getElementById('add-package-reward-content');
+        var editValueInput = editContent.querySelector('#input-newvalue');
+        editValueInput.value = '';
+
+        let newRewardBlock = document.getElementById('new-reward-row');
+        if (element.options[currSelection].value === "0") {
+            newRewardBlock.classList.remove('d-none');
+        }
+        else {
+            newRewardBlock.classList.add('d-none');
+        }
+    }
+
+    function RewardSubOptionChange(element) {
+        let optSelection = element.selectedIndex;
+        if ((element.options.length == 0) || (optSelection >= element.options.length)) return;
+
+        var editValueInput = element.parentNode.querySelector('#input-suboptionvalue');
+        editValueInput.value = '';
+
+        subOptionIndex = parseInt(element.options[optSelection].value);
+        let valueUnit = rewardSubOptions[subOptionIndex].valueUnit;
+        if (valueUnit == null) valueUnit = '';
+        editValueInput.placeholder = 'Value ' + valueUnit;
+
+        let editContent = document.getElementById('add-package-reward-content');
+
+        let lbl = element.parentNode.nextElementSibling;
+        lbl.innerText = ' ';
+
+    }
+
+    $(document).ready(function () {
+        let editContent = document.getElementById('add-package-reward-content');
+        let selectElement = editContent.querySelector('#dropdown-type');
+        RewardTypeChange(selectElement);
+
+        let editInput = editContent.querySelector('#input-suboptionvalue');
+        editInput.addEventListener('input', (event) => {
+            let newRewardBlock = editContent.querySelector('#new-reward-row');
+            let lbl = newRewardBlock.querySelector('label');
+
+            let val = parseInt(event.target.value);
+            if (isNaN(val)) val = 0;
+            if (val < 1) {
+                lbl.innerText = ' ';
+                return;
+            }
+
+            $.ajax({
+                url: window.location.href,
+                type: "GET",
+                data: {
+                    handler: 'OptionDescription',
+                    dataType: rewardSubOptions[subOptionIndex].dataType,
+                    valueId: rewardSubOptions[subOptionIndex].valueId,
+                    value: val
+                },
+                success: function (response) {
+                    lbl.innerText = response.data;
+                },
+                error: function (error) {
+                    lbl.innerText = ' ';
+                }
+            });
+        });
+    });
+</script>

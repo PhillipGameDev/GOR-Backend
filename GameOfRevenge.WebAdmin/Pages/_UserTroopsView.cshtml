@@ -1,4 +1,5 @@
-﻿@model WebAdmin.Pages._UserTroopsViewModel
+﻿@model GameOfRevenge.WebAdmin.Pages._UserTroopsViewModel
+@using GameOfRevenge.WebAdmin
 
 <!--@@model List<TroopInfos> 
 @@using GameOfRevenge.Common.Models -->
@@ -11,226 +12,233 @@
     }
 } -->
 
-<style>
-    .table-fixed {
-        width: 100%;
-    }
+@if (Helper.IsRegion(ViewData, "StyleSection"))
+{
+    <style>
+        .table-fixed {
+            width: 100%;
+        }
 
-    .table-fixed tbody {
-        height: 200px;
-        overflow-y: auto;
-        width: 100%;
-    }
+        .table-fixed tbody {
+            height: 250px;
+            overflow-y: auto;
+            width: 100%;
+        }
 
-    .table-fixed thead tr th {
-        float: left;
-    }
+        .table-fixed thead tr th {
+            float: left;
+        }
 
-    .table-fixed tbody td {
-        float: left;
-    }
+        .table-fixed tbody td {
+            float: left;
+        }
 
-    .table-fixed thead,
-    .table-fixed tbody,
-    .table-fixed tr,
-    .table-fixed td,
-    .table-fixed th {
-        display: block;
-    }
+        .table-fixed thead,
+        .table-fixed tbody,
+        .table-fixed tr,
+        .table-fixed td,
+        .table-fixed th {
+            display: block;
+        }
 
-    .wdt-1
-    {
-        width: 10%;
-    }
-    .wdt-1h {
-        width: 15%;
-    }
-    .wdt-2 {
-        width: 20%;
-    }
-    .wdt-3 {
-        width: 30%;
-    }
-    .wdt-4 {
-        width: 40%;
-    }
-    .wdt-5 {
-        width: 50%;
-    }
-    .wdt-6 {
-        width: 60%;
-    }
-    .wdt-7 {
-        width: 70%;
-    }
-    .wdt-8 {
-        width: 80%;
-    }
-    .wdt-9 {
-        width: 90%;
-    }
-    .wdt-10 {
-        width: 100%;
-    }
-
-    .btn-edit {
-        padding-top: 2px;
-        padding-bottom: 2px;
-    }
-
-
-    /*    .table-status:empty {
-        flex-grow: 1;
-    }*/
-    .py-5 {
-        padding-top: 1.5rem !important;
-        padding-bottom: 0rem !important;
-    }
-
-    .label-progress {
-        flex-grow: 1;
-        line-height: 1rem;
-        margin: -2px 2px 0px 2px;
-    }
-
-    .label-progress label {
-        margin-bottom: 0.05rem;
-    }
-
-    .label-progress .progress {
-        height: 6px;
-        border: 1px solid #ddd;
-        margin-top:0.2rem;
-    }
-
-    .label-progress .progress .progress-bar {
-        width: 80%;
-    }
-
-    .label-progress .progress-count {
-        margin-top:-0.75rem;
-    }
-</style>
-
-<table class="table table-responsive-sm table-sm table-fixed">
-    <!-- table-responsive-sm table-bordered table-striped table-sm table-fixed"> -->
-    <thead>
-        <tr>
-            <th class="wdt-3">Troop</th>
-            <th class="wdt-1h text-center">Active</th>
-            <th class="wdt-1h text-center">Disabled</th>
-            <th class="wdt-4 text-center">Status</th>
-        </tr>
-    </thead> 
-    <tbody>
-        @foreach (var troopGroup in Model.Data)
+        .wdt-1
         {
-            <tr>
-                <td class="wdt-10 bg-gray-100">@troopGroup.TroopType
-                    <span class="text-muted float-right">
-                        Total: @((troopGroup.TroopData != null)? troopGroup.TroopData.Sum(troop => troop.Count) : 0)&nbsp;
-                        <button class="btn btn-sm btn-primary btn-edit float-right" type="button"
-                                data-troop-type="@troopGroup.TroopType" data-troop-name="@troopGroup.TroopType"
-                                data-toggle="modal" data-target="#edit-modal" data-modal="troops">
-                            <i class="fa fa-pencil"></i>&nbsp;Edit
-                        </button>
-                    </span>
-                </td>
-            </tr>
-            @if (troopGroup.TroopData == null) continue;
+            width: 10%;
+        }
+        .wdt-1h {
+            width: 15%;
+        }
+        .wdt-2 {
+            width: 20%;
+        }
+        .wdt-3 {
+            width: 30%;
+        }
+        .wdt-4 {
+            width: 40%;
+        }
+        .wdt-5 {
+            width: 50%;
+        }
+        .wdt-6 {
+            width: 60%;
+        }
+        .wdt-7 {
+            width: 70%;
+        }
+        .wdt-8 {
+            width: 80%;
+        }
+        .wdt-9 {
+            width: 90%;
+        }
+        .wdt-10 {
+            width: 100%;
+        }
 
-            @foreach (var troop in troopGroup.TroopData)
+        .btn-edit {
+            padding-top: 2px;
+            padding-bottom: 2px;
+        }
+
+
+        /*    .table-status:empty {
+            flex-grow: 1;
+        }*/
+        .py-5 {
+            padding-top: 1.5rem !important;
+            padding-bottom: 0rem !important;
+        }
+
+        .label-progress {
+            flex-grow: 1;
+            line-height: 1rem;
+            margin: -2px 2px 0px 2px;
+        }
+
+        .label-progress label {
+            margin-bottom: 0.05rem;
+        }
+
+        .label-progress .progress {
+            height: 6px;
+            border: 1px solid #ddd;
+            margin-top:0.2rem;
+        }
+
+        .label-progress .progress .progress-bar {
+            width: 80%;
+        }
+
+        .label-progress .progress-count {
+            margin-top:-0.75rem;
+        }
+    </style>
+}
+else if (Helper.IsRegion(ViewData, "HTMLSection"))
+{
+    <table class="table table-responsive-sm table-sm table-fixed mb-0">
+        <!-- table-responsive-sm table-bordered table-striped table-sm table-fixed"> -->
+        <thead>
+            <tr>
+                <th class="wdt-3">Troop</th>
+                <th class="wdt-1h text-center">Active</th>
+                <th class="wdt-1h text-center">Disabled</th>
+                <th class="wdt-4 text-center">Status</th>
+            </tr>
+        </thead> 
+        <tbody>
+            @foreach (var troopGroup in Model.Data)
             {
                 <tr>
-                    <td class="wdt-3 align-middle text-muted">
-                        &nbsp;&nbsp;&nbsp;&nbsp;Level @troop.Level
-                        <span class="float-right">Total: @troop.Count</span>
-                    </td>
-                    <td class="wdt-1h align-middle text-center">@troop.FinalCount</td>
-                    <td class="wdt-1h align-middle text-center">@troop.Wounded</td>
-                    <td class="wdt-4 align-middle">
-                        <div style="display: flex;">
-                            @if (troop.InTraning?.Count > 0) foreach (var training in troop.InTraning)
-                            {
-                                @if (training.TimeLeft == 0) continue;
-
-                                <div class="label-progress">
-                                    <label class="small text-muted">Training</label>
-                                    <div class="progress rounded">
-                                        <div class="progress-bar" role="progressbar"
-                                            style="width: @training.Percentage.ToString("0%")"></div>
-                                    </div>
-                                    <div class="text-dark text-center progress-count">@training.Count.ToString("N0")</div>
-                                </div>
-                            }
-                            @if (troop.InRecovery?.Count > 0) foreach (var recovering in troop.InRecovery)
-                            {
-                                @if (recovering.TimeLeft == 0) continue;
-
-                                <div class="label-progress">
-                                    <span class="small text-muted">Restoring</span>
-                                    <div class="progress rounded">
-                                        <div class="progress-bar bg-success" role="progressbar"
-                                            style="width: @recovering.Percentage.ToString("0%")"></div>
-                                    </div>
-                                    <div class="text-dark text-center progress-count">@recovering.Count.ToString("N0")</div>
-                                </div>
-                            }
-                            &nbsp;
-                        </div>
+                    <td class="wdt-10 bg-gray-100">@troopGroup.TroopType
+                        <span class="text-muted float-right">
+                            Total: @((troopGroup.TroopData != null) ? troopGroup.TroopData.Sum(troop => troop.Count) : 0)&nbsp;
+                            <button class="btn btn-sm btn-primary btn-edit float-right" type="button"
+                                    data-troop-type="@troopGroup.TroopType" data-troop-name="@troopGroup.TroopType"
+                                    data-toggle="modal" data-target="#edit-modal" data-modal="troops">
+                                <i class="fa fa-pencil"></i>&nbsp;Edit
+                            </button>
+                        </span>
                     </td>
                 </tr>
+                @if (troopGroup.TroopData == null) continue;
+
+                @foreach (var troop in troopGroup.TroopData)
+                {
+                    <tr>
+                        <td class="wdt-3 align-middle text-muted">
+                            &nbsp;&nbsp;&nbsp;&nbsp;Level @troop.Level
+                            <span class="float-right">Total: @troop.Count</span>
+                        </td>
+                        <td class="wdt-1h align-middle text-center">@troop.FinalCount</td>
+                        <td class="wdt-1h align-middle text-center">@troop.Wounded</td>
+                        <td class="wdt-4 align-middle">
+                            <div style="display: flex;">
+                                @if (troop.InTraning?.Count > 0) foreach (var training in troop.InTraning)
+                                    {
+                                    @if (training.TimeLeft == 0) continue;
+
+                                    <div class="label-progress">
+                                        <label class="small text-muted">Training</label>
+                                        <div class="progress rounded">
+                                            <div class="progress-bar" role="progressbar"
+                                                style="width: @training.Percentage.ToString("0%")"></div>
+                                        </div>
+                                        <div class="text-dark text-center progress-count">@training.Count.ToString("N0")</div>
+                                    </div>
+                                    }
+                                @if (troop.InRecovery?.Count > 0) foreach (var recovering in troop.InRecovery)
+                                    {
+                                    @if (recovering.TimeLeft == 0) continue;
+
+                                    <div class="label-progress">
+                                        <span class="small text-muted">Restoring</span>
+                                        <div class="progress rounded">
+                                            <div class="progress-bar bg-success" role="progressbar"
+                                                style="width: @recovering.Percentage.ToString("0%")"></div>
+                                        </div>
+                                        <div class="text-dark text-center progress-count">@recovering.Count.ToString("N0")</div>
+                                    </div>
+                                    }
+                                &nbsp;
+                            </div>
+                        </td>
+                    </tr>
+                }
+            }
+        </tbody>
+    </table>
+}
+else if (Helper.IsRegion(ViewData, "ScriptSection"))
+{
+    <script>
+        showModal['troops'] = {
+            width: 750,
+            requestData: function (buttonElement) {
+                return {
+                    handler: 'EditTroopView',
+                    playerId: playerId,
+                    troopType: buttonElement.data('troop-type')
+                }
+            },
+            requestSubmit: function (event) {
+                for (let key in multipleValues) {
+                    if (!multipleValues.hasOwnProperty(key)) continue;
+
+                    if ((multipleValues[key] === "") || (multipleValues[key] === null)) delete multipleValues[key];
+                }
+
+                if (Object.keys(multipleValues).length == 0) {
+                    event.preventDefault();
+                    $('#edit-modal').modal('hide');
+                    return false;
+                }
+
+                let values = {};
+                let modalForm = document.getElementById('troops-modal-form');
+                let selectElement = modalForm.querySelector('.form-control');
+                for (let key in multipleValues) {
+                    let troopData = JSON.parse(selectElement.options[key].value);
+                    values[key] = parseInt(multipleValues[key]) + (troopData[0] + troopData[1] + troopData[2]);
+                }
+                let troopValuesInput = modalForm.querySelector('input[name="TroopValues"]');
+                troopValuesInput.value = JSON.stringify(values);
+
+                return true;
             }
         }
-    </tbody>
-</table>
 
-<script>
-    showModal['troops'] = {
-        width: 750,
-        requestData: function (buttonElement) {
-            return {
-                handler: 'EditTroopView',
-                playerId: playerId,
-                troopType: buttonElement.data('troop-type')
+        hideModal['troops-modal-form'] = {
+            requestData: function (form) {
+                return {
+                    handler: 'TroopsView',
+                    playerId: playerId
+                }
+            },
+            requestSuccess: function (result) {
+                $('#tab-troops').html(result);
             }
-        },
-        requestSubmit: function (event) {
-            for (let key in multipleValues) {
-                if (!multipleValues.hasOwnProperty(key)) continue;
-
-                if ((multipleValues[key] === "") || (multipleValues[key] === null)) delete multipleValues[key];
-            }
-
-            if (Object.keys(multipleValues).length == 0) {
-                event.preventDefault();
-                $('#edit-modal').modal('hide');
-                return false;
-            }
-
-            let values = {};
-            let modalForm = document.getElementById('troops-modal-form');
-            let selectElement = modalForm.querySelector('.form-control');
-            for (let key in multipleValues) {
-                let troopData = JSON.parse(selectElement.options[key].value);
-                values[key] = parseInt(multipleValues[key]) + (troopData[0] + troopData[1] + troopData[2]);
-            }
-            let troopValuesInput = modalForm.querySelector('input[name="TroopValues"]');
-            troopValuesInput.value = JSON.stringify(values);
-
-            return true;
         }
-    }
-
-    hideModal['troops-modal-form'] = {
-        requestData: function () {
-            return {
-                handler: 'TroopsView',
-                playerId: playerId
-            }
-        },
-        requestSuccess: function (result) {
-            $('#tab-troops').html(result);
-        }
-    }
-</script>
+    </script>
+}

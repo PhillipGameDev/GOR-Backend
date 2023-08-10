@@ -1,12 +1,13 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Threading.Tasks;
-using ExitGames.Logging;
-using GameOfRevenge.Business.Manager.Base;
-using GameOfRevenge.Business.Manager.UserData;
+using System.Collections.Generic;
 using GameOfRevenge.Common.Models;
 using GameOfRevenge.Common.Models.Quest;
 using GameOfRevenge.Common.Services;
+using GameOfRevenge.Common.Interface;
+using GameOfRevenge.Common.Interface.UserData;
+using GameOfRevenge.Business.Manager.Base;
+using ExitGames.Logging;
 
 namespace GameOfRevenge.Business.Manager
 {
@@ -15,8 +16,8 @@ namespace GameOfRevenge.Business.Manager
         private static readonly ILogger log = LogManager.GetCurrentClassLogger();
         private readonly object SyncRoot = new object();
 
-        private readonly UserQuestManager questManager = new UserQuestManager();
-        private readonly AdminDataManager adminManager = new AdminDataManager();
+        private readonly IAdminDataManager adminManager;
+        private readonly IUserQuestManager questManager;
 
         private readonly Dictionary<int, PlayerUserQuestData> allPlayerDatas = new Dictionary<int, PlayerUserQuestData>();
 
@@ -28,8 +29,10 @@ namespace GameOfRevenge.Business.Manager
 
         private const int UPDATE_INTERVAL = 5000;
 
-        public RealTimeUpdateManagerQuestValidator()
+        public RealTimeUpdateManagerQuestValidator(IAdminDataManager adminDataManager, IUserQuestManager userQuestManager)
         {
+            adminManager = adminDataManager;
+            questManager = userQuestManager;
             Running = true;
             tomorrow = DateTime.UtcNow.AddDays(1).Date;
             lastUpdate = DateTime.UtcNow;

@@ -2,7 +2,6 @@ using System;
 using System.IO;
 using System.Text;
 using System.Threading.Tasks;
-using System.Configuration;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
@@ -10,14 +9,9 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Configuration;
-using Microsoft.Extensions.FileProviders;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
-using Microsoft.AspNetCore.DataProtection;
-using Microsoft.AspNetCore.HttpsPolicy;
 using Microsoft.IdentityModel.Tokens;
-//using Microsoft.OpenApi.Models;
-using Newtonsoft.Json;
 using GameOfRevenge.Common.Interface;
 using GameOfRevenge.Common.Interface.UserData;
 using GameOfRevenge.Business;
@@ -28,6 +22,7 @@ using GameOfRevenge.Business.Manager.GameDef;
 using GameOfRevenge.Business.Manager;
 using GameOfRevenge.WebServer.Services;
 using GameOfRevenge.Business.Manager.Base;
+//using Microsoft.AspNetCore.Identity;
 
 namespace GameOfRevenge.WebServer
 {
@@ -37,18 +32,13 @@ namespace GameOfRevenge.WebServer
 
         public Startup(IConfiguration configuration)
         {
-            Console.WriteLine("--- START UP");
             Configuration = configuration;
         }
-
 
         // This method gets called by the runtime. Use this method to add services to the container.
         public void ConfigureServices(IServiceCollection services)
         {
-            Console.WriteLine("--- CONFIGURE SERVICE");
-
             //services.AddDataProtection().PersistKeysToFileSystem(new DirectoryInfo(@"C:\temp-keys\"));
-            services.AddRazorPages();
 
             services.AddControllers().AddNewtonsoftJson();
 
@@ -60,15 +50,12 @@ namespace GameOfRevenge.WebServer
             var appSettingsSection = Configuration.GetSection("AppSettings");
             services.Configure<IAppSettings>(appSettingsSection);
             var appSettings = appSettingsSection.Get<AppSettings>();
-            Console.WriteLine("--- CURR CONN STRING " + AppSettings.Config);
             AppSettings.Config = appSettings;
-            Console.WriteLine("--- SET CONN STRING "+appSettings );
 
             Config.ConnectionString = appSettings.ConnectionString;
 
             var key = Encoding.ASCII.GetBytes(appSettings.Secret);
             var auth = services.AddAuthentication();
-            Console.WriteLine("--- KEY = " + key);
             services.AddAuthentication(config =>
             {
                 config.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
@@ -87,7 +74,7 @@ namespace GameOfRevenge.WebServer
                 };
             }).AddCookie(AuthHelper.AuthenticationSchemeCookie, config =>
             {
-                config.Cookie.Name = "GameOFRevenge.Cookie";
+                config.Cookie.Name = "GameOfRevenge.WebServer.Cookie";
                 config.LoginPath = "/Account/Login";
                 config.LogoutPath = "/Account/Logout";
                 config.AccessDeniedPath = "/Home/AccessDenied";
@@ -100,13 +87,23 @@ namespace GameOfRevenge.WebServer
 
             services.AddSingleton<IHttpContextAccessor, HttpContextAccessor>();
 
+/*            services.AddIdentity<ApplicationUser, IdentityRole>()
+            .AddEntityFrameworkStores<ApplicationDbContext>()
+            .AddDefaultTokenProviders();
+
+            services.Configure<IdentityOptions>(options =>
+            {
+                options.SignIn.RequireConfirmedEmail = true;
+            });*/
+
             ResolverServices(services, appSettings);
 
             services.AddCors();
-            services.AddControllers();
-            services.AddControllersWithViews();
+            //            services.AddControllers();
+            //            services.AddControllersWithViews();
             services.AddRazorPages();
 
+            
 /*            services.AddSwaggerGen(setup =>
             {
                 // Include 'SecurityScheme' to use JWT Authentication
@@ -138,8 +135,6 @@ namespace GameOfRevenge.WebServer
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
         public void Configure(IApplicationBuilder app, IWebHostEnvironment env, ILoggerFactory loggerFactory)
         {
-            Console.WriteLine("--- CONFIGURE");
-
             var path = Directory.GetCurrentDirectory();
             loggerFactory.AddFile($"{path}\\Logs\\Log.txt");
 
@@ -193,8 +188,6 @@ namespace GameOfRevenge.WebServer
 
         private static void ResolverServices(IServiceCollection services, AppSettings appSettings)
         {
-            Console.WriteLine("--- RESOLVE SERVICES");
-
             services.AddSingleton<IAppSettings>(appSettings);
 
             services.AddSingleton<IAccountManager>(new AccountManager());
@@ -217,6 +210,7 @@ namespace GameOfRevenge.WebServer
             services.AddSingleton<IUserActiveBoostsManager>(new UserActiveBoostManager());
             services.AddSingleton<IUserTechnologyManager>(new UserTechnologyManager());
             services.AddSingleton<IUserHeroManager>(new UserHeroManager());
+            services.AddSingleton<IUserFriendsManager>(new UserFriendsManager());
 
             services.AddSingleton<IUserQuestManager>(new UserQuestManager());
             services.AddSingleton<IUserMailManager>(new UserMailManager());
@@ -229,7 +223,6 @@ namespace GameOfRevenge.WebServer
 
         public static async Task ReloadDataBaseDataAsync()
         {
-            Console.WriteLine("RELOAD CACHE START");
             CacheBoostDataManager.LoadCacheMemory();
             await CacheInventoryDataManager.LoadCacheMemoryAsync();
             await CacheResourceDataManager.LoadCacheMemoryAsync();
@@ -239,26 +232,10 @@ namespace GameOfRevenge.WebServer
             await CacheHeroDataManager.LoadCacheMemoryAsync();
             await CacheQuestDataManager.LoadCacheMemoryAsync();
             await CacheProductDataManager.LoadCacheMemoryAsync();
-
-            Console.WriteLine("RELOAD CACHE END");
-/*
-
-            await CacheStructureDataManager.LoadCacheMemoryAsync((s) => { });
-            await CacheTechnologyDataManager.LoadCacheMemoryAsync();
-            await CacheInventoryDataManager.LoadCacheMemoryAsync();
-            await CacheResourceDataManager.LoadCacheMemoryAsync();
-            await CacheTroopDataManager.LoadCacheMemoryAsync();
-            await CacheBoostDataManager.LoadCacheMemoryAsync();
-            await CacheHeroDataManager.LoadCacheMemoryAsync();
-            await CacheQuestDataManager.LoadCacheMemoryAsync();
-*/
-
-
         }
 
         public static void ReloadDataBaseData()
         {
-            Console.WriteLine("--- RELOAD DATABASE");
             var task = ReloadDataBaseDataAsync();
             task.Wait();
         }

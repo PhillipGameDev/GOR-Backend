@@ -86,7 +86,7 @@ namespace GameOfRevenge.Business.Manager
                     //#if DEBUG
                     //                    await resManager.SumMainResource(playerId, 100000, 100000, 100000, 10000);
                     //#else
-                    await resManager.SumMainResource(playerId, 10000, 10000, 10000, 500);
+                    await resManager.SumMainResource(playerId, 10000, 10000, 10000, 500, 200);
                     //#endif
                     var dataManager = new PlayerDataManager();
                     var json = JsonConvert.SerializeObject(new UserKingDetails());

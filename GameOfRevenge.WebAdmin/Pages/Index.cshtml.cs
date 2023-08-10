@@ -1,12 +1,13 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Threading.Tasks;
-using GameOfRevenge.Business.Manager.UserData;
-using GameOfRevenge.Common.Interface.UserData;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
+using Microsoft.AspNetCore.Authentication;
+using Microsoft.AspNetCore.Authentication.Cookies;
+using GameOfRevenge.Common.Interface.UserData;
+using GameOfRevenge.WebAdmin.Models;
 
-namespace WebAdmin.Pages
+namespace GameOfRevenge.WebAdmin.Pages
 {
     public class IndexModel : PageModel
     {
@@ -18,6 +19,13 @@ namespace WebAdmin.Pages
         public IndexModel(IAdminDataManager adminDataManager)
         {
             manager = adminDataManager;
+        }
+
+        public async Task<IActionResult> OnPostLogoutAsync()
+        {
+            await HttpContext.SignOutAsync(CookieAuthenticationDefaults.AuthenticationScheme);
+
+            return RedirectToPage("/login");
         }
 
         public async Task<IActionResult> OnGetAsync()
@@ -43,33 +51,6 @@ namespace WebAdmin.Pages
             }
 
             return Page();
-        }
-    }
-
-    public class ChartData
-    {
-        public string NewUsers;
-        public string Recurring;
-        public int WithinOneMonth;
-        public int WithinThreeMonths;
-        public int WithinSixMonths;
-
-        public int TotalNewUsers
-        {
-            get
-            {
-                var total = 0;
-                var strs = NewUsers.Split(',');
-                foreach (var str in strs)
-                {
-                    if (int.TryParse(str, out int val)) total += val;
-                }
-                return total;
-            }
-        }
-
-        public ChartData()
-        {
         }
     }
 }

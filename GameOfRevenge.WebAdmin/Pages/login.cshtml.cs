@@ -1,14 +1,13 @@
 ﻿using System;
-using System.Diagnostics;
 using System.Security.Claims;
 using System.Threading.Tasks;
-using GameOfRevenge.WebAdmin.Configurations.IdentityServer;
-using Microsoft.AspNetCore.Authentication;
-using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
+using Microsoft.AspNetCore.Authentication;
+using Microsoft.AspNetCore.Authentication.Cookies;
+using GameOfRevenge.WebAdmin.Configurations.IdentityServer;
 
-namespace WebAdmin.Pages
+namespace GameOfRevenge.WebAdmin.Pages
 {
     public class LoginModel : PageModel
     {
@@ -30,7 +29,7 @@ namespace WebAdmin.Pages
                 await HttpContext.SignInAsync(CookieAuthenticationDefaults.AuthenticationScheme,
                                             new ClaimsPrincipal(claimsIdentity), authProperties);
 
-                return RedirectToPage("/Index");
+                return RedirectToPage("/index");
             }
             else
             {

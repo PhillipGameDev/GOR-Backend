@@ -1,9 +1,8 @@
-﻿using System.Collections.Generic;
-using System.Threading.Tasks;
+﻿using System.Threading.Tasks;
+using System.Collections.Generic;
+using GameOfRevenge.Common.Net;
 using GameOfRevenge.Common.Models;
 using GameOfRevenge.Common.Models.Quest;
-using GameOfRevenge.Common.Models.Quest.Template;
-using GameOfRevenge.Common.Net;
 
 namespace GameOfRevenge.Common.Interface
 {
@@ -15,6 +14,8 @@ namespace GameOfRevenge.Common.Interface
         Task CheckQuestProgressForCollectResourceAsync(PlayerUserQuestData playerData, ResourceType resourceType, int count);
         Task CheckQuestProgressForTrainTroops(PlayerUserQuestData playerData, TroopType troopType, int level, int count);
         Task CheckQuestProgressForGroupTechnologyAsync(PlayerUserQuestData playerData, GroupTechnologyType groupTechnologyType);
+
+        Task CheckPlayerQuestDataAsync(PlayerUserQuestData data);
 
         Task<Response<List<PlayerQuestDataTable>>> GetAllQuestProgress(int playerId);
         Task<Response<UserChapterAllQuestProgress>> GetUserAllQuestProgress(int playerId, bool fullTree = false);

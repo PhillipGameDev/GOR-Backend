@@ -6,6 +6,7 @@ using System.Text;
 using System.Threading.Tasks;
 using GameOfRevenge.Business;
 using GameOfRevenge.Business.CacheData;
+using GameOfRevenge.Business.Manager;
 using GameOfRevenge.Business.Manager.Kingdom;
 using GameOfRevenge.Business.Manager.UserData;
 using GameOfRevenge.Common.Interface;
@@ -127,9 +128,9 @@ namespace GameOfRevenge.WebAdmin
             .AddCookie(config =>
             {
                 config.Cookie.Name = "GameOfRevenge.WebAdmin.Cookie";
-                config.LoginPath = "/Login";
-                config.LogoutPath = "/Login";
-                config.AccessDeniedPath = "/Error";
+                config.LoginPath = "/login";
+                config.LogoutPath = "/login";
+                config.AccessDeniedPath = "/404";
                 config.SlidingExpiration = true;
                 config.ExpireTimeSpan = TimeSpan.FromDays(30);
                 config.Cookie.HttpOnly = true;
@@ -164,7 +165,7 @@ namespace GameOfRevenge.WebAdmin
             }
             else
             {
-                app.UseExceptionHandler("/Error");
+                app.UseExceptionHandler("/404");
                 // The default HSTS value is 30 days. You may want to change this for production scenarios, see https://aka.ms/aspnetcore-hsts.
                 app.UseHsts();
             }
@@ -180,9 +181,9 @@ namespace GameOfRevenge.WebAdmin
             app.UseAuthorization();
             app.Use(async (context, next) =>
             {
-                if (!context.User.Identity.IsAuthenticated && !context.Request.Path.StartsWithSegments("/Login"))
+                if (!context.User.Identity.IsAuthenticated && !context.Request.Path.StartsWithSegments("/login"))
                 {
-                    context.Response.Redirect("/Login");
+                    context.Response.Redirect("/login");
                     return;
                 }
 
@@ -204,10 +205,16 @@ namespace GameOfRevenge.WebAdmin
         {
             services.AddSingleton<IAppSettings>(appSettings);
 
-            services.AddSingleton<IAdminDataManager>(new AdminDataManager());
-            services.AddSingleton<IPlayerDataManager>(new PlayerDataManager());
-            services.AddSingleton<IClanManager>(new ClanManager());
-            services.AddSingleton<IUserQuestManager>(new UserQuestManager());
+            var pdm = new PlayerDataManager();
+            services.AddSingleton<IPlayerDataManager>(pdm);
+            var cm = new ClanManager();
+            services.AddSingleton<IClanManager>(cm);
+            var qm = new UserQuestManager();
+            services.AddSingleton<IUserQuestManager>(qm);
+            services.AddSingleton<IUserMarketManager>(new UserMarketManager());
+
+            var adminManager = new AdminDataManager(pdm, cm, qm);
+            services.AddSingleton<IAdminDataManager>(adminManager);
 
             var task = ReloadDataBaseDataAsync();
             task.Wait();

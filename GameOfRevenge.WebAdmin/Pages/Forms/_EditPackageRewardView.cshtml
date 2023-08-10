@@ -1,0 +1,31 @@
+﻿@model InputPackageRewardModel
+@using GameOfRevenge.WebAdmin.Models
+
+<form id="package-reward-modal-form" method="post" data-ajax-method="post" data-ajax="true"
+      data-ajax-success="PostSuccess" data-ajax-failure="PostFailure"
+      data-ajax-url="?handler=SavePackageRewardChange">
+    <div class="modal-header">
+        <h4 class="modal-title">@Model.Description</h4>
+        <button class="close" type="button" data-dismiss="modal"><span>x</span></button>
+        <input type="hidden" asp-for="PackageId" value="@Model.PackageId" />
+        <input type="hidden" asp-for="RewardId" value="@Model.RewardId" />
+        <input type="hidden" asp-for="RewardValue" value="@Model.RewardValue" />
+    </div>
+    <div class="modal-body">
+        <div class="row justify-content-center">
+            <div class="form-group col-sm-5">
+                <strong>Amount</strong>
+                <p class="col-form-static py-2" id="label-value" for="input-newvalue">@Model.RewardValue.ToString("N0")</p>
+            </div>
+            <div class="form-group col-sm-6">
+                <strong>New Amount</strong>
+                <input class="form-control bg-light text-dark" id="input-newvalue" autocomplete="off"
+                       type="text" placeholder="" value="">
+            </div>
+        </div>
+    </div>
+    <div class="modal-footer">
+        <button class="btn btn-secondary" type="button" data-dismiss="modal">Close</button>
+        <button class="btn btn-warning" type="submit" id="edit-modal-save">Save changes</button>
+    </div>
+</form>

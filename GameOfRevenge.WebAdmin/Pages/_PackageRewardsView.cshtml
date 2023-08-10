@@ -1,0 +1,302 @@
+﻿@model _PackageRewardsViewModel
+@using GameOfRevenge.WebAdmin.Pages
+@using GameOfRevenge.WebAdmin 
+
+@if (Helper.IsRegion(ViewData, "StyleSection"))
+{
+    <style>
+        .table-fixed {
+            table-layout: fixed;
+            width: 100%;
+        }
+
+        .table-fixed tbody {
+            height: 250px;
+            overflow-y: auto;
+            width: 100%;
+        }
+
+        .table-fixed thead tr th {
+            float: left;
+        }
+
+        .table-fixed tbody td {
+            float: left;
+        }
+
+        .table-fixed thead,
+        .table-fixed tbody,
+        .table-fixed tr,
+        .table-fixed td,
+        .table-fixed th {
+            display: block;
+        }
+
+        .wdt-h {
+            width: 5%;
+        }
+        .wdt-1
+        {
+            width: 10%;
+        }
+        .wdt-1h {
+            width: 15%;
+        }
+        .wdt-2 {
+            width: 20%;
+        }
+        .wdt-2h {
+            width: 25%;
+        }
+        .wdt-3 {
+            width: 30%;
+        }
+        .wdt-3h {
+            width: 35%;
+        }
+        .wdt-4 {
+            width: 40%;
+        }
+        .wdt-5 {
+            width: 50%;
+        }
+        .wdt-5h {
+            width: 50%;
+        }
+        .wdt-6 {
+            width: 60%;
+        }
+        .wdt-6h {
+            width: 65%;
+        }
+        .wdt-7 {
+            width: 70%;
+        }
+        .wdt-8 {
+            width: 80%;
+        }
+        .wdt-9 {
+            width: 90%;
+        }
+        .wdt-10 {
+            width: 100%;
+        }
+
+        .btn-edit {
+            padding-top: 2px;
+            padding-bottom: 2px;
+        }
+
+        .btn-action {
+            padding-top: 0px;
+            padding-bottom: 0px;
+            border-top: 0px;
+            border-bottom: 0px;
+        }
+
+
+        /*    .table-status:empty {
+            flex-grow: 1;
+        }*/
+        .py-5 {
+            padding-top: 1.5rem !important;
+            padding-bottom: 0rem !important;
+        }
+
+        .label-group-header {
+            position: absolute;
+            font-size: 0.8rem;
+            margin-top: -15px;
+        }
+
+        .label-group-header span {
+            background-color: #fff;
+            padding: 0px 10px;
+        }
+
+        .label-group-title {
+            display: flex;
+        }
+
+        .label-group-title span {
+            font-size: 0.9rem;
+            flex-grow: 1;
+        }
+    </style>
+}
+else if (Helper.IsRegion(ViewData, "HTMLSection"))
+{
+    <table class="table table-responsive-sm table-sm table-fixed mb-0">
+        <!-- table-responsive-sm table-bordered table-striped table-sm table-fixed"> -->
+        <thead>
+            <tr>
+                <th class="wdt-h">
+                    &nbsp;
+                </th>
+                <th class="wdt-1h">
+                    Type
+                </th>
+                <th class="wdt-5h">
+                    ID/Description
+                </th>
+                <th class="wdt-2h">
+                    <span>Amount</span>
+                    <span class="text-muted float-right">
+                        <button class="btn btn-sm btn-primary btn-action" type="button" id="package-reward-add"
+                                data-package-id="@Model.Data.PackageId" data-quest-id="@Model.Data.QuestId"
+                                data-toggle="modal" data-target="#edit-modal" data-modal="add-package-rewards">
+                            <i class="fa fa-plus"></i>&nbsp;Add
+                        </button>
+                        &nbsp;
+                        <button class="btn btn-sm btn-primary btn-action" type="button" id="package-reward-edit" disabled
+                                data-package-id="@Model.Data.PackageId"
+                                data-toggle="modal" data-target="#edit-modal" data-modal="edit-package-reward">
+                            <i class="fa fa-pencil"></i>&nbsp;Edit
+                        </button>
+                    </span>
+                </th>
+            </tr>
+        </thead>
+        <tbody>
+            @if (Model.Data != null) for (int i = 0; i < Model.Data.Rewards.Count; i++)
+            {
+                <tr class="text-muted">
+                    <td class="wdt-h py-2 @(((i % 2) == 0)? "bg-gray-100": "")">
+                        <input type="radio" name="radioGroup" id="radio_@Model.Data.Rewards[i].RewardId" onclick="handlePackageRewardInputClick(event)"
+                               data-reward-id="@Model.Data.Rewards[i].RewardId"
+                               data-reward-count="@Model.Data.Rewards[i].Count"
+                               data-reward-description="@_PackageRewardsViewModel.GetTitle(Model.Data.Rewards[i])">
+                    </td>
+                    <td class="wdt-1h py-2 @(((i % 2) == 0)? "bg-gray-100": "")">
+                        <span>@Model.Data.Rewards[i].DataType</span>
+                    </td>
+                    <td class="wdt-5h py-2 @(((i % 2) == 0)? "bg-gray-100": "")">
+                        <span>@(Model.Data.Rewards[i].RewardId.ToString() + ": " + _PackageRewardsViewModel.GetTitle(Model.Data.Rewards[i]))</span>
+                    </td>
+                    <td class="wdt-2h py-2 @(((i % 2) == 0)? "bg-gray-100": "")" id="value_radio_@Model.Data.Rewards[i].RewardId">
+                        @Model.Data.Rewards[i].Count.ToString("N0")
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+}
+else if (Helper.IsRegion(ViewData, "ScriptSection"))
+{
+    <script>
+        var selectedPackageRadioId = 'radio-none';
+
+        function handlePackageRewardInputClick(event) {
+            let btnAction = document.getElementById('package-reward-edit');
+
+            let radioButton = event.target;
+            if (radioButton.id === selectedPackageRadioId) {
+                event.preventDefault();
+                selectedPackageRadioId = 'radio-none';
+                btnAction.disabled = true;
+                radioButton.closest('tr').classList.add('text-muted');
+                radioButton.disabled = true;
+
+                setTimeout(function () {
+                    radioButton.disabled = false;
+                    radioButton.checked = false;
+                }, 100);
+                return;
+            }
+
+            let prevButton = document.querySelector('#' + selectedPackageRadioId);
+            if (prevButton !== null) prevButton.closest('tr').classList.add('text-muted');
+            selectedPackageRadioId = radioButton.id;
+            btnAction.disabled = false;
+            radioButton.closest('tr').classList.remove('text-muted');
+        }
+
+        showModal['edit-package-reward'] = {
+            width: 500,
+            requestData: function (buttonElement) {
+                let radioBtn = $('#' + selectedPackageRadioId);
+                return {
+                    handler: 'EditPackageRewardView',
+                    packageId: buttonElement.data('package-id'),
+                    rewardId: radioBtn.data('reward-id'),
+                    count: radioBtn.data('reward-count'),
+                    description: radioBtn.data('reward-description')
+                }
+            },
+            requestSubmit: function (event) {
+                if (newValue === '') {
+                    event.preventDefault();
+                    $('#edit-modal').modal('hide');
+                    return false;
+                }
+
+                let valueInput = document.getElementById('package-reward-modal-form').querySelector('input[name="RewardValue"]');
+                valueInput.value = newValue;
+
+                return true;
+            }
+        }
+
+        hideModal['package-reward-modal-form'] = {
+            requestData: function (form) {
+                let formattedValue = newValue.replace(/(\d)(?=(\d{3})+(?!\d))/g, '$1,');
+
+                let selected = document.querySelector('#value_' + selectedPackageRadioId);
+                selected.textContent = formattedValue;
+
+                return null;
+            }
+        }
+
+
+
+
+        showModal['add-package-rewards'] = {
+            width: 950,
+            requestData: function (buttonElement) {
+                return {
+                    handler: 'AddPackageRewardsView',
+                    packageId: buttonElement.data('package-id'),
+                    questId: buttonElement.data('quest-id')
+                }
+            },
+            requestSubmit: function (event) {
+                if (newValue === '') {
+                    event.preventDefault();
+                    $('#edit-modal').modal('hide');
+                    return false;
+                }
+
+                let modalForm = document.getElementById('add-package-reward-modal-form');
+                let selectElement = modalForm.querySelector('#dropdown-option');
+
+                let values = {};
+                let rewardId = selectElement.options[selectElement.selectedIndex].value;
+
+                selectElement = modalForm.querySelector('#dropdown-suboption');
+                let index = selectElement.options[selectElement.selectedIndex].value;
+                let subOption = rewardSubOptions[index];
+                let rewardValue = modalForm.querySelector('#input-suboptionvalue').value;
+                values[rewardId] = [subOption.dataType, subOption.valueId, rewardValue, newValue];
+
+                let rewardValueInput = modalForm.querySelector('input[name="RewardValues"]');
+                rewardValueInput.value = JSON.stringify(values);
+
+                return true;
+            }
+        }
+
+        hideModal['add-package-reward-modal-form'] = {
+            requestData: function (form) {
+                return {
+                    handler: 'PackageRewardsView',
+                    packageId: form.querySelector('input[name="PackageId"]').value
+                }
+            },
+            requestSuccess: function (result) {
+                $('#tab-rewards').html(result);
+            }
+        }
+
+    </script>
+}

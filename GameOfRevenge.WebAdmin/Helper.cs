@@ -2,11 +2,39 @@
 {
     using System;
     using System.Globalization;
-//    using UnityEngine;
-//    using UnityEngine.EventSystems;
+    using Microsoft.AspNetCore.Mvc.ViewFeatures;
+
+    //    using UnityEngine;
+    //    using UnityEngine.EventSystems;
 
     public static class Helper
     {
+        public static bool IsRegion(ViewDataDictionary viewData, string name)
+        {
+            var resp = false;
+            if ((viewData != null) && viewData.ContainsKey("Region"))
+            {
+                resp = (viewData["Region"] as string) == name;
+            }
+
+            return resp;
+        }
+
+        public static ViewDataDictionary ViewRegion(ViewDataDictionary viewData, string name)
+        {
+            var dic = new ViewDataDictionary(viewData);
+            if (dic.ContainsKey("Region"))
+            {
+                dic["Region"] = name;
+            }
+            else
+            {
+                dic.Add("Region", name);
+            }
+
+            return dic;
+        }
+
 //        private static List<RaycastResult> results = new List<RaycastResult>();
         private static CultureInfo arabicCulture = new CultureInfo("ar-SA");
         public static string ChangeSecondsToFormatTimeWords(int seconds, bool camelcase = false)

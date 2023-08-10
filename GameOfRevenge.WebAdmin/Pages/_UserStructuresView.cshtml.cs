@@ -1,17 +1,17 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using System.Collections.Generic;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.RazorPages;
+using GameOfRevenge.Common.Models;
+using GameOfRevenge.Common.Models.Structure;
 using GameOfRevenge.Business.CacheData;
 using GameOfRevenge.Business.Manager.Base;
 using GameOfRevenge.Business.Manager.UserData;
-using GameOfRevenge.Common.Models;
-using GameOfRevenge.Common.Models.Structure;
 using GameOfRevenge.WebAdmin.Models;
-using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.Mvc.RazorPages;
 
-namespace WebAdmin.Pages
+namespace GameOfRevenge.WebAdmin.Pages
 {
     public class _UserStructuresViewModel : PageModel
     {
@@ -40,16 +40,14 @@ namespace WebAdmin.Pages
 
                     foreach (var inTraining in troopData.InTraning)
                     {
-                        if (inTraining.BuildingLocId != location) continue;
-
-                        if (inTraining.TimeLeft > 0) list.Add(inTraining);
-//                        if ((lastInTraining == null) || (inTraining.TimeLeft > lastInTraining.TimeLeft))
-//                        {
-//                            lastInTraining = inTraining;
-//                        }
+                        if ((inTraining.BuildingLocId == location) && (inTraining.TimeLeft > 0))
+                        {
+                            list.Add(inTraining);
+                        }
                     }
                 }
             }
+
             return list;
         }
 
@@ -64,16 +62,14 @@ namespace WebAdmin.Pages
 
                     foreach (var inRecovery in troopData.InRecovery)
                     {
-                        if (inRecovery.BuildingLocId != location) continue;
-
-                        if (inRecovery.TimeLeft > 0) list.Add(inRecovery);
-//                        if ((lastInTraining == null) || (inTraining.TimeLeft > lastInTraining.TimeLeft))
-//                        {
-//                            lastInTraining = inTraining;
-//                        }
+                        if ((inRecovery.BuildingLocId == location) && (inRecovery.TimeLeft > 0))
+                        {
+                            list.Add(inRecovery);
+                        }
                     }
                 }
             }
+
             return list;
         }
 
@@ -92,7 +88,7 @@ namespace WebAdmin.Pages
 
         public static async Task<IActionResult> OnGetStructuresViewAsync(int playerId)
         {
-            Console.WriteLine("get structures ply=" + playerId);
+//            Console.WriteLine("get structures ply=" + playerId);
             FullPlayerCompleteData fullPlayerData = null;
             var resp = await BaseUserDataManager.GetFullPlayerData(playerId);
             if (resp.IsSuccess && resp.HasData)
@@ -100,7 +96,7 @@ namespace WebAdmin.Pages
                 fullPlayerData = new FullPlayerCompleteData(resp.Data);
             }
 
-            return UserModel.NewPartial("_UserStructuresView", new _UserStructuresViewModel(fullPlayerData));
+            return UsersModel.NewPartial("_UserStructuresView", new _UserStructuresViewModel(fullPlayerData));
         }
 
         public static async Task<IActionResult> OnGetEditStructureViewAsync(int playerId, string structureType, int location)
@@ -124,7 +120,7 @@ namespace WebAdmin.Pages
                 }
             }
 
-            return UserModel.NewPartial("Forms/_EditStructureView", model);
+            return UsersModel.NewPartial("Forms/_EditStructureView", model);
         }
 
         public static async Task<IActionResult> OnPostSaveStructureChangesAsync(InputStructureModel inputStructure)

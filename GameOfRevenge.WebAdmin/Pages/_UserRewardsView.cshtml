@@ -1,304 +1,326 @@
 ﻿@model _UserRewardsViewModel
-@using WebAdmin.Pages
+@using GameOfRevenge.WebAdmin.Pages
+@using GameOfRevenge.WebAdmin
 
-<style>
-    .table-fixed {
-        table-layout: fixed;
-        width: 100%;
-    }
+@if (Helper.IsRegion(ViewData, "StyleSection"))
+{
+    <style>
+        .table-fixed {
+            table-layout: fixed;
+            width: 100%;
+        }
 
-    .table-fixed tbody {
-        height: 200px;
-        overflow-y: auto;
-        width: 100%;
-    }
+        .table-fixed tbody {
+            height: 250px;
+            overflow-y: auto;
+            width: 100%;
+        }
 
-    .table-fixed thead tr th {
-        float: left;
-    }
+        .table-fixed thead tr th {
+            float: left;
+        }
 
-    .table-fixed tbody td {
-        float: left;
-    }
+        .table-fixed tbody td {
+            float: left;
+        }
 
-    .table-fixed thead,
-    .table-fixed tbody,
-    .table-fixed tr,
-    .table-fixed td,
-    .table-fixed th {
-        display: block;
-    }
+        .table-fixed thead,
+        .table-fixed tbody,
+        .table-fixed tr,
+        .table-fixed td,
+        .table-fixed th {
+            display: block;
+        }
 
-    .wdt-h {
-        width: 5%;
-    }
-    .wdt-1
-    {
-        width: 10%;
-    }
-    .wdt-1h {
-        width: 15%;
-    }
-    .wdt-2 {
-        width: 20%;
-    }
-    .wdt-2h {
-        width: 25%;
-    }
-    .wdt-3 {
-        width: 30%;
-    }
-    .wdt-4 {
-        width: 40%;
-    }
-    .wdt-5 {
-        width: 50%;
-    }
-    .wdt-5h {
-        width: 50%;
-    }
-    .wdt-6 {
-        width: 60%;
-    }
-    .wdt-6h {
-        width: 65%;
-    }
-    .wdt-7 {
-        width: 70%;
-    }
-    .wdt-8 {
-        width: 80%;
-    }
-    .wdt-9 {
-        width: 90%;
-    }
-    .wdt-10 {
-        width: 100%;
-    }
-
-    .btn-edit {
-        padding-top: 2px;
-        padding-bottom: 2px;
-    }
-
-    .btn-action {
-        padding-top: 0px;
-        padding-bottom: 0px;
-        border-top: 0px;
-        border-bottom: 0px;
-    }
-
-
-    /*    .table-status:empty {
-        flex-grow: 1;
-    }*/
-    .py-5 {
-        padding-top: 1.5rem !important;
-        padding-bottom: 0rem !important;
-    }
-
-    .label-group-header {
-        position: absolute;
-        font-size: 0.8rem;
-        margin-top: -15px;
-    }
-
-    .label-group-header span {
-        background-color: #fff;
-        padding: 0px 10px;
-    }
-
-    .label-group-title {
-        display: flex;
-    }
-
-    .label-group-title span {
-        font-size: 0.9rem;
-        flex-grow: 1;
-    }
-</style>
-
-<table class="table table-responsive-sm table-sm table-fixed">
-    <!-- table-responsive-sm table-bordered table-striped table-sm table-fixed"> -->
-    <thead>
-        <tr>
-            <th class="wdt-h">
-                &nbsp;
-            </th>
-            <th class="wdt-1h">
-                Type
-            </th>
-            <th class="wdt-5h">
-                ID/Description
-            </th>
-            <th class="wdt-3">
-                <span>Count</span>
-                <span class="text-muted float-right">
-                    <button class="btn btn-sm btn-primary btn-action" type="button" id="reward-add"
-                            data-toggle="modal" data-target="#edit-modal" data-modal="add-rewards">
-                        <i class="fa fa-plus"></i>&nbsp;Add
-                    </button>
-                    &nbsp;
-                    <button class="btn btn-sm btn-primary btn-action" type="button" id="reward-edit" disabled
-                            data-toggle="modal" data-target="#edit-modal" data-modal="edit-reward">
-                        <i class="fa fa-edit"></i>&nbsp;Edit
-                    </button>
-                </span>
-            </th>
-        </tr>
-    </thead>
-    <tbody>
-        @if (Model.Data != null) for (int i = 0; i < Model.Data.Count; i++)
+        .wdt-h {
+            width: 5%;
+        }
+        .wdt-1
         {
-            <tr class="text-muted">
-                <td class="wdt-h py-2 @(((i % 2) == 0)? "bg-gray-100": "")">
-                    <input type="radio" name="radioGroup" id="radio_@Model.Data[i].PlayerDataId" onclick="handleRewardInputClick(event)"
-                           data-reward-id="@Model.Data[i].PlayerDataId" data-reward-description="@_UserRewardsViewModel.GetTitle(Model.Data[i])">
-                </td>
-                <td class="wdt-1h py-2 @(((i % 2) == 0)? "bg-gray-100": "")">
-                    <span>@Model.Data[i].DataType</span>
-                </td>
-                <td class="wdt-5h py-2 @(((i % 2) == 0)? "bg-gray-100": "")">
-                    <span>@(Model.Data[i].RewardId.ToString() + ": " + _UserRewardsViewModel.GetTitle(Model.Data[i]))</span>
-                </td>
-                <td class="wdt-3 py-2 @(((i % 2) == 0)? "bg-gray-100": "")" id="value_radio_@Model.Data[i].PlayerDataId">
-                    @Model.Data[i].Count.ToString("N0")
-                </td>
-            </tr>
+            width: 10%;
         }
-    </tbody>
-</table>
+        .wdt-1h {
+            width: 15%;
+        }
+        .wdt-2 {
+            width: 20%;
+        }
+        .wdt-2h {
+            width: 25%;
+        }
+        .wdt-3 {
+            width: 30%;
+        }
+        .wdt-4 {
+            width: 40%;
+        }
+        .wdt-5 {
+            width: 50%;
+        }
+        .wdt-5h {
+            width: 50%;
+        }
+        .wdt-6 {
+            width: 60%;
+        }
+        .wdt-6h {
+            width: 65%;
+        }
+        .wdt-7 {
+            width: 70%;
+        }
+        .wdt-8 {
+            width: 80%;
+        }
+        .wdt-9 {
+            width: 90%;
+        }
+        .wdt-10 {
+            width: 100%;
+        }
 
-<script>
-    var selectedRadioId = 'radio-none';
+        .btn-edit {
+            padding-top: 2px;
+            padding-bottom: 2px;
+        }
 
-//    $(document).ready(function() {
-/*        var attackLabels = document.getElementsByClassName('label-group');
+        .btn-action {
+            padding-top: 0px;
+            padding-bottom: 0px;
+            border-top: 0px;
+            border-bottom: 0px;
+        }
 
-        for (var i = 0; i < attackLabels.length; i++) {
-            var thWidth = attackLabels[i].parentNode.width;
-            attackLabels[i].style.width = (thWidth * 2) + "px";
+
+        /*    .table-status:empty {
+            flex-grow: 1;
         }*/
-//        const radioButtons = document.querySelectorAll('input[type="radio"]');
-
-//        radioButtons.forEach((radioButton) => {
-//            radioButton.addEventListener('input', handleRadioInputChange);
-//        });
-//    });
-
-    function handleRewardInputClick(event) {
-        let btnAction = document.getElementById('reward-edit');
-
-        let radioButton = event.target;
-        if (radioButton.id === selectedRadioId) {
-            event.preventDefault();
-            selectedRadioId = 'radio-none';
-            btnAction.disabled = true;
-            radioButton.closest('tr').classList.add('text-muted');
-            radioButton.disabled = true;
-
-            setTimeout(function () {
-                radioButton.disabled = false;
-                radioButton.checked = false;
-            }, 100);
-            return;
+        .py-5 {
+            padding-top: 1.5rem !important;
+            padding-bottom: 0rem !important;
         }
 
-        let prevButton = document.querySelector('#' + selectedRadioId);
-        if (prevButton !== null) prevButton.closest('tr').classList.add('text-muted');
-        selectedRadioId = radioButton.id;
-        btnAction.disabled = false;
-        radioButton.closest('tr').classList.remove('text-muted');
-    }
+        .label-group-header {
+            position: absolute;
+            font-size: 0.8rem;
+            margin-top: -15px;
+        }
 
-    showModal['edit-reward'] = {
-        width: 500,
-        requestData: function (buttonElement) {
-            let radioBtn = $('#' + selectedRadioId);
-            return {
-                handler: 'EditRewardView',
-                playerId: playerId,
-                playerDataId: radioBtn.data('reward-id'),
-                description: radioBtn.data('reward-description')
-            }
-        },
-        requestSubmit: function (event) {
-            if (newValue === '') {
+        .label-group-header span {
+            background-color: #fff;
+            padding: 0px 10px;
+        }
+
+        .label-group-title {
+            display: flex;
+        }
+
+        .label-group-title span {
+            font-size: 0.9rem;
+            flex-grow: 1;
+        }
+    </style>
+}
+else if (Helper.IsRegion(ViewData, "HTMLSection"))
+{
+    <table class="table table-responsive-sm table-sm table-fixed mb-0">
+        <!-- table-responsive-sm table-bordered table-striped table-sm table-fixed"> -->
+        <thead>
+            <tr>
+                <th class="wdt-h">
+                    &nbsp;
+                </th>
+                <th class="wdt-1h">
+                    Type
+                </th>
+                <th class="wdt-5h">
+                    ID/Description
+                </th>
+                <th class="wdt-3">
+                    <span>Amount</span>
+                    <span class="text-muted float-right">
+                        <button class="btn btn-sm btn-primary btn-action" type="button" id="reward-add"
+                                data-toggle="modal" data-target="#edit-modal" data-modal="add-rewards">
+                            <i class="fa fa-plus"></i>&nbsp;Add
+                        </button>
+                        &nbsp;
+                        <button class="btn btn-sm btn-primary btn-action" type="button" id="reward-edit" disabled
+                                data-toggle="modal" data-target="#edit-modal" data-modal="edit-reward">
+                            <i class="fa fa-pencil"></i>&nbsp;Edit
+                        </button>
+                    </span>
+                </th>
+            </tr>
+        </thead>
+        <tbody>
+            @if (Model.Data != null) for (int i = 0; i < Model.Data.Count; i++)
+                {
+                <tr class="text-muted">
+                    <td class="wdt-h py-2 @(((i % 2) == 0) ? "bg-gray-100" : "")">
+                        <input type="radio" name="radioGroup" id="radio_@Model.Data[i].PlayerDataId" onclick="handleRewardInputClick(event)"
+                               data-reward-id="@Model.Data[i].PlayerDataId" data-reward-description="@_UserRewardsViewModel.GetTitle(Model.Data[i])">
+                    </td>
+                    <td class="wdt-1h py-2 @(((i % 2) == 0) ? "bg-gray-100" : "")">
+                        <span>@Model.Data[i].DataType</span>
+                    </td>
+                    <td class="wdt-5h py-2 @(((i % 2) == 0) ? "bg-gray-100" : "")">
+                        <span>@(Model.Data[i].RewardId.ToString() + ": " + _UserRewardsViewModel.GetTitle(Model.Data[i]))</span>
+                    </td>
+                    <td class="wdt-3 py-2 @(((i % 2) == 0) ? "bg-gray-100" : "")" id="value_radio_@Model.Data[i].PlayerDataId">
+                        @Model.Data[i].Count.ToString("N0")
+                    </td>
+                </tr>
+                }
+        </tbody>
+    </table>
+}
+else if (Helper.IsRegion(ViewData, "ScriptSection"))
+{
+    <script>
+        var selectedRadioId = 'radio-none';
+
+    //    $(document).ready(function() {
+    /*        var attackLabels = document.getElementsByClassName('label-group');
+
+            for (var i = 0; i < attackLabels.length; i++) {
+                var thWidth = attackLabels[i].parentNode.width;
+                attackLabels[i].style.width = (thWidth * 2) + "px";
+            }*/
+    //        const radioButtons = document.querySelectorAll('input[type="radio"]');
+
+    //        radioButtons.forEach((radioButton) => {
+    //            radioButton.addEventListener('input', handleRadioInputChange);
+    //        });
+    //    });
+
+        function handleRewardInputClick(event) {
+            let btnAction = document.getElementById('reward-edit');
+
+            let radioButton = event.target;
+            if (radioButton.id === selectedRadioId) {
                 event.preventDefault();
-                $('#edit-modal').modal('hide');
-                return false;
+                selectedRadioId = 'radio-none';
+                btnAction.disabled = true;
+                radioButton.closest('tr').classList.add('text-muted');
+                radioButton.disabled = true;
+
+                setTimeout(function () {
+                    radioButton.disabled = false;
+                    radioButton.checked = false;
+                }, 100);
+                return;
             }
 
-            let resValueInput = document.getElementById('reward-modal-form').querySelector('input[name="RewardValue"]');
-            resValueInput.value = newValue;//JSON.stringify(multipleValues);
-
-            return true;
+            let prevButton = document.querySelector('#' + selectedRadioId);
+            if (prevButton !== null) prevButton.closest('tr').classList.add('text-muted');
+            selectedRadioId = radioButton.id;
+            btnAction.disabled = false;
+            radioButton.closest('tr').classList.remove('text-muted');
         }
-    }
 
-    hideModal['reward-modal-form'] = {
-        requestData: function (form) {
-            let formattedValue = newValue.replace(/(\d)(?=(\d{3})+(?!\d))/g, '$1,');
+        showModal['edit-reward'] = {
+            width: 500,
+            requestData: function (buttonElement) {
+                let radioBtn = $('#' + selectedRadioId);
+                return {
+                    handler: 'EditRewardView',
+                    playerId: playerId,
+                    playerDataId: radioBtn.data('reward-id'),
+                    description: radioBtn.data('reward-description')
+                }
+            },
+            requestSubmit: function (event) {
+                if (newValue === '') {
+                    event.preventDefault();
+                    $('#edit-modal').modal('hide');
+                    return false;
+                }
 
-            let selected = document.querySelector('#value_' + selectedRadioId);
-            selected.textContent = formattedValue;
+                let resValueInput = document.getElementById('reward-modal-form').querySelector('input[name="RewardValue"]');
+                resValueInput.value = newValue;//JSON.stringify(multipleValues);
 
-            return null;
+                return true;
+            }
         }
-    }
 
+        hideModal['reward-modal-form'] = {
+            requestData: function (form) {
+                let formattedValue = newValue.replace(/(\d)(?=(\d{3})+(?!\d))/g, '$1,');
 
+                let selected = document.querySelector('#value_' + selectedRadioId);
+                selected.textContent = formattedValue;
 
-
-    showModal['add-rewards'] = {
-        width: 750,
-        requestData: function (buttonElement) {
-            return {
-                handler: 'AddRewardsView',
-                playerId: playerId
+                return null;
             }
-        },
-        requestSubmit: function (event) {
-            if (newValue === '') {
-                event.preventDefault();
-                $('#edit-modal').modal('hide');
-                return false;
-            }
-
-            let modalForm = document.getElementById('add-reward-modal-form');
-            let selectElement = modalForm.querySelector('#dropdown-option');
-            let values = {};
-            values[selectElement.options[selectElement.selectedIndex].value] = newValue;
-
-            let rewardValueInput = modalForm.querySelector('input[name="RewardValues"]');
-            rewardValueInput.value = JSON.stringify(values);
-
-
-
-/*            for (let key in multipleValues) {
-                if (!multipleValues.hasOwnProperty(key)) continue;
-
-                if ((multipleValues[key] === "") || (multipleValues[key] === null)) delete multipleValues[key];
-            }
-
-            if (Object.keys(multipleValues).length == 0) {
-                event.preventDefault();
-                $('#edit-modal').modal('hide');
-                return false;
-            }
-
-            let values = {};
-            let modalForm = document.getElementById('troops-modal-form');
-            let selectElement = modalForm.querySelector('.form-control');
-            for (let key in multipleValues) {
-                let troopData = JSON.parse(selectElement.options[key].value);
-                values[key] = parseInt(multipleValues[key]) + (troopData[0] + troopData[1] + troopData[2]);
-            }
-            let troopValuesInput = modalForm.querySelector('input[name="TroopValues"]');
-            troopValuesInput.value = JSON.stringify(values);*/
-
-            return true;
         }
-    }
 
-</script>
+
+
+
+        showModal['add-rewards'] = {
+            width: 750,
+            requestData: function (buttonElement) {
+                return {
+                    handler: 'AddRewardsView',
+                    playerId: playerId
+                }
+            },
+            requestSubmit: function (event) {
+                if (newValue === '') {
+                    event.preventDefault();
+                    $('#edit-modal').modal('hide');
+                    return false;
+                }
+
+                let modalForm = document.getElementById('add-reward-modal-form');
+                let selectElement = modalForm.querySelector('#dropdown-option');
+                let values = {};
+                values[selectElement.options[selectElement.selectedIndex].value] = newValue;
+
+                let rewardValueInput = modalForm.querySelector('input[name="RewardValues"]');
+                rewardValueInput.value = JSON.stringify(values);
+
+
+
+    /*            for (let key in multipleValues) {
+                    if (!multipleValues.hasOwnProperty(key)) continue;
+
+                    if ((multipleValues[key] === "") || (multipleValues[key] === null)) delete multipleValues[key];
+                }
+
+                if (Object.keys(multipleValues).length == 0) {
+                    event.preventDefault();
+                    $('#edit-modal').modal('hide');
+                    return false;
+                }
+
+                let values = {};
+                let modalForm = document.getElementById('troops-modal-form');
+                let selectElement = modalForm.querySelector('.form-control');
+                for (let key in multipleValues) {
+                    let troopData = JSON.parse(selectElement.options[key].value);
+                    values[key] = parseInt(multipleValues[key]) + (troopData[0] + troopData[1] + troopData[2]);
+                }
+                let troopValuesInput = modalForm.querySelector('input[name="TroopValues"]');
+                troopValuesInput.value = JSON.stringify(values);*/
+
+                return true;
+            }
+        }
+
+        hideModal['add-reward-modal-form'] = {
+            requestData: function (form) {
+                if (playerId == 0) return null;
+
+                return {
+                    handler: 'RewardsView',
+                    playerId: playerId
+                }
+            },
+            requestSuccess: function (result) {
+                $('#tab-rewards').html(result);
+            }
+        }
+
+    </script>
+}

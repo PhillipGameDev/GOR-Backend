@@ -1,15 +1,15 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Threading.Tasks;
+using System.Collections.Generic;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.RazorPages;
 using GameOfRevenge.Business.Manager.Base;
 using GameOfRevenge.Business.Manager.UserData;
 using GameOfRevenge.Common.Models;
 using GameOfRevenge.Common.Models.Hero;
 using GameOfRevenge.WebAdmin.Models;
-using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.Mvc.RazorPages;
 
-namespace WebAdmin.Pages
+namespace GameOfRevenge.WebAdmin.Pages
 {
     public class _UserHeroesViewModel : PageModel
     {
@@ -54,7 +54,7 @@ namespace WebAdmin.Pages
                 fullPlayerData = new FullPlayerCompleteData(resp.Data);
             }
 
-            return UserModel.NewPartial("_UserHeroesView", new _UserHeroesViewModel(fullPlayerData));
+            return UsersModel.NewPartial("_UserHeroesView", new _UserHeroesViewModel(fullPlayerData));
         }
 
         public static async Task<IActionResult> OnGetEditHeroViewAsync(int playerId, string heroType)
@@ -77,7 +77,7 @@ namespace WebAdmin.Pages
                 }
             }
 
-            return UserModel.NewPartial("Forms/_EditHeroView", model);
+            return UsersModel.NewPartial("Forms/_EditHeroView", model);
         }
 
         public static async Task<IActionResult> OnPostSaveHeroChangesAsync(InputHeroModel inputHero)

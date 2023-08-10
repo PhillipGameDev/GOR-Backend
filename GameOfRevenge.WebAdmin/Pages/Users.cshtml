@@ -1,45 +1,19 @@
 ﻿@page
 @{
-    ViewData["Title"] = "Home page";
+    ViewData["Title"] = "Users";
 }
-@model GameOfRevenge.WebAdmin.Models.UserModel
+@model GameOfRevenge.WebAdmin.Pages.UsersModel
+@using GameOfRevenge.WebAdmin
 
-<style>
-    .modal-opened2::after {
-        content: '';
-        position: fixed;
-        top: 0;
-        left: 0;
-        width: 100%;
-        height: 100%;
-        background-color: rgba(0, 0, 0, 0.5);
-        z-index: 1040;
-    }
-
-    .modal-opened3::after {
-        content: '';
-        position: fixed;
-        top: 0;
-        left: 0;
-        width: 100%;
-        height: 100%;
-        background-color: rgba(0, 0, 0, 0.5);
-        z-index: 1030;
-    }
-
-    .modal.show .modal-dialog2 {
-        -webkit-transform: translate(0, 25%);
-        transform: translate(0, 25%);
-        z-index: 1050;
-    }
-
-    .modal.show .modal-dialog3 {
-        -webkit-transform: translate(0, 70%);
-        transform: translate(0, 70%);
-    }
-</style>
+@section Headers {
+    <partial name="_Modals" model="null" view-data="@Helper.ViewRegion(ViewData, "StyleSection")" />
+    <partial name="_UsersTableView" model="null" view-data="@Helper.ViewRegion(ViewData, "StyleSection")" />
+    <partial name="_UserView" model="null" view-data="@Helper.ViewRegion(ViewData, "StyleSection")" />
+}
 
 <div class="container-fluid">
+    <form id="logout-form" method="post" asp-page-handler="Logout" style="display: none;"></form>
+
     <!-- User Modal -->
     <div class="modal fade" id="user-modal" tabindex="-1" role="dialog" style="display: none;">
         <div class="modal-dialog modal-lg" role="document" style="max-width:95%">
@@ -53,144 +27,26 @@
             </div>
         </div>
     </div>
-    <!-- Edit Modal -->
-    <div class="modal fade modal-stack modal-opened2" id="edit-modal" tabindex="-1" role="dialog" style="display: none;">
-        <div class="modal-dialog modal-dialog2 modal-warning" role="document">
-            <div class="modal-content">
-            </div>
-        </div>
-    </div>
-    <!-- Save Modal -->
-    <div class="modal fade modal-stack modal-opened3" id="save-modal" tabindex="-1" role="dialog"
-         data-backdrop="static" style="display: none;">
-        <div class="modal-dialog modal-dialog3 modal-sm" role="document" style="z-index:1050">
-            <div class="modal-content">
-                <div class="modal-header">
-                </div>
-                <div class="modal-body">
-                    <p id="save-modal-text"></p>
-                </div>
-                <div class="modal-footer">
-                    <button class="btn btn-secondary" type="button" id="save-modal-close" data-dismiss="modal">Close</button>
-                </div>
-            </div>
-        </div>
-    </div>
 
     <div class="animated fadeIn">
         <div class="row">
             <div class="col-md-12">
-                <form method="post" id="logout-form" style="display: none;">
-                    <button type="submit">Logout</button>
-                </form>
-
                 <div id="users" class="card">
-                    @await Html.PartialAsync("_UsersTableView", Model.UserTable)
+                    @await Html.PartialAsync("_UsersTableView", Model.UserTable, Helper.ViewRegion(ViewData, "HTMLSection"))
                 </div>
             </div>
         </div>
     </div>
-    <!-- Spinner -->
-    <div id="spinner" style="display: none;">
-        <div class="modal-header">
-            <div class="spinner-border" role="status">
-                <span class="sr-only text-dark">Loading...</span>
-            </div>
-            <label class="text-dark d-none">Error loading data</label>
-            <button class="close" type="button" data-dismiss="modal"><span>x</span></button>
-        </div>
-        <div class="modal-footer">
-            <button class="btn btn-secondary" type="button" data-dismiss="modal">Close</button>
-            <button class="btn btn-warning" type="button" disabled>Save changes</button>
-        </div>
-    </div>
-    <!-- Toast -->
-<!--    <div class="toast-container position-fixed bottom-0 end-0 p-3">
-        <div id="toast" class="toast" role="alert">
-            <div class="toast-header">
-                <img src="..." class="rounded me-2" alt="...">
-                <strong class="me-auto">aa</strong>
-                <small>xx</small>
-                <button type="button" class="btn-close" data-coreui-dismiss="toast" aria-label="Close"></button>
-            </div>
-            <div class="toast-body">
-                User not found.
-            </div>
-        </div>
-    </div> -->
+
+    <partial name="_Modals" model="null" view-data="@Helper.ViewRegion(ViewData, "HTMLSection")"/>
 </div>
 
 @section Scripts {
-    <script src="~/lib/jquery-ajax-unobtrusive/jquery.unobtrusive-ajax.min.js"></script>
+    <partial name="_Modals" model="null" view-data="@Helper.ViewRegion(ViewData, "ScriptSection")"/>
+    <partial name="_UsersTableView" model="null" view-data="@Helper.ViewRegion(ViewData, "ScriptSection")" />
+    <partial name="_UserView" model="null" view-data="@Helper.ViewRegion(ViewData, "ScriptSection")" />
+
     <script>
-
-        var allowedKeys = ['ArrowLeft', 'ArrowRight', 'Backspace', 'Delete', 'Tab'];
-        var newValue = '';
-        var multipleValues = {};
-        var currSelection = 0;
-        var playerId = 0;
-        var showModal = {};
-        var hideModal = {};
-        var myToast = document.getElementById('toast');
-
-        function PostSuccess() {
-            $(this).closest('.modal').modal('hide');
-        }
-        function PostFailure() {
-            document.getElementById('save-modal-text').innerText = "Something went wrong";
-            document.getElementById('save-modal-close').disabled = false;
-        }
-
-        function KeyDown(event) {
-            if (!/^\d$/.test(event.key) && !allowedKeys.includes(event.key)) {
-                event.preventDefault();
-                return false;
-            }
-
-            return true;
-        }
-        function KeyInput(event, modal, func) {
-            var editInput = event.target;
-            var value = editInput.value;
-            var selectionStart = editInput.selectionStart;
-            var selectionEnd = editInput.selectionEnd;
-
-            var unformattedValue = value.replace(/,/g, '');
-            var formattedValue = unformattedValue.replace(/(\d)(?=(\d{3})+(?!\d))/g, '$1,');
-            newValue = unformattedValue;
-            multipleValues[currSelection] = newValue;
-            if (typeof func === 'function') func(modal, parseInt(unformattedValue));
-
-            var diffLength = formattedValue.length - value.length;
-            var newSelectionStart = Math.max(selectionStart + diffLength, 0);
-            var newSelectionEnd = Math.max(selectionEnd + diffLength, 0);
-
-            editInput.value = formattedValue;
-            editInput.setSelectionRange(newSelectionStart, newSelectionEnd);
-        }
-        function AddEditInputListeners(id, func) {
-            var modal = document.getElementById(id);
-            var editInput = modal.querySelector('#input-newvalue');
-            if (editInput === null) return;
-
-            editInput.removeEventListener('keydown', KeyDown);
-            editInput.addEventListener('keydown', KeyDown);
-
-            var f = KeyInput;
-            if (typeof func === 'function') f = function (event) { KeyInput(event, modal, func); }
-            editInput.removeEventListener('input', f);
-            editInput.addEventListener('input', f);
-        }
-
-/*        function ShowToast() {
-            const toast = new bootstrap.Toast(document.getElementById('toast'));
-            toast.show();
-
-            setTimeout(() => {
-                toast.hide();
-            }, 3000);
-        }*/
-
         function ChangePage(idx) {
             $.ajax({
                 url: window.location.href,
@@ -208,7 +64,7 @@
         function SearchUser(element) {
             let searchInput = document.getElementById('search-user');
             console.log(searchInput.value);
-//            ShowToast();
+            //            ShowToast();
 
 
             $.ajax({
@@ -224,20 +80,31 @@
             });
         }
 
-        var userModal = $('#user-info');
+        let userModal = $('#user-info');
         $(document).on('show.bs.modal', '#user-modal', function (event) {
             $('body').addClass('modal-open');
 
-            var playerId = $(event.relatedTarget).data('player-id');
+            let playerId = $(event.relatedTarget).data('player-id');
             userModal.empty();
             $.ajax({
                 url: window.location.href,
                 type: 'GET',
-                data: { handler: 'UserView', playerId: playerId },
+                data: {
+                    handler: 'UserView',
+                    playerId: playerId
+                },
                 success: function (result) {
                     userModal.html(result);
                 }
             });
+        });
+
+        $(document).on('hidden.bs.modal', '#user-modal', function (event) {
+            let structures = document.getElementById('user-modal').querySelector('#tab-structures');
+            let castlelvl = structures.querySelector('#castle-level').value;
+
+            let userRow = document.getElementById('users-table').querySelector('#user-' + playerId);
+            userRow.querySelector('#user-castlelevel').textContent = castlelvl;
         });
 
         showModal['gift'] = {
@@ -267,156 +134,6 @@
             }
         }
 
-        hideModal['add-reward-modal-form'] = {
-            requestData: function () {
-                if (playerId == 0) return null;
-
-                return {
-                    handler: 'RewardsView',
-                    playerId: playerId
-                }
-            },
-            requestSuccess: function (result) {
-                $('#tab-rewards').html(result);
-            }
-        }
-
-        function OnShowEditModal(event) {
-            newValue = '';
-            multipleValues = {};
-            currSelection = 0;
-
-            let editModal = $(event.target);
-            let modalContent = editModal.find('.modal-content');
-            modalContent.empty();
-            modalContent.html(document.getElementById('spinner').innerHTML);
-
-            let requestData;
-            let requestSubmit;
-            let inputListener;
-            let buttonElement = $(event.relatedTarget);
-            let modalId = buttonElement.data('modal');
-
-            if (typeof showModal[modalId] === 'undefined') {
-                modalContent.find('.spinner-border').addClass('d-none');
-                var label = modalContent.find('label')
-                label.removeClass('d-none');
-                return;
-            }
-
-            let width = showModal[modalId].width;
-            if (typeof width !== 'undefined') {
-                editModal.find('.modal-dialog').css('max-width', width + 'px');
-            }
-
-            requestData = showModal[modalId].requestData(buttonElement);
-            requestSubmit = showModal[modalId].requestSubmit;
-            inputListener = showModal[modalId].inputListener;
-
-            $.ajax({
-                url: window.location.href,
-                type: 'GET',
-                data: requestData,
-                success: function (result) {
-                    let resultObj = $(result);
-                    resultObj.find('#edit-modal-save').on('click', function (event) {
-                        if (!requestSubmit(event)) return;
-
-                        document.getElementById('save-modal-text').innerText = "Please wait...";
-                        document.getElementById('save-modal-close').disabled = true;
-                        $('#save-modal').modal('show');
-
-                        let editModal = $('#edit-modal');
-                        let form = editModal.find('form');
-                        let url = form.data('ajax-url');
-                        let handler = url.split('=')[1];
-
-                        let postData = {
-                            handler: handler
-                        }
-                        let inputs = form.find('input');
-                        inputs.each(function () {
-                            let input = $(this);
-                            postData[input.attr('id')] = input.val();
-                        });
-                        $.ajax({
-                            url: window.location.href,
-                            type: 'GET',
-                            data: postData,
-                            success: function (result) {
-                                //                            PostSuccess();
-
-                                editModal.modal('hide');
-                            },
-                            error: function () {
-                                //                            PostFailure();
-
-                                document.getElementById('save-modal-text').innerText = "Something went wrong";
-                                document.getElementById('save-modal-close').disabled = false;
-                            }
-                        })
-                    });
-                    modalContent.html(resultObj);
-
-                    AddEditInputListeners('edit-modal', inputListener);
-                },
-                error: function () {
-                    modalContent.find('.spinner-border').addClass('d-none');
-                    let label = modalContent.find('label')
-                    label.removeClass('d-none');
-                }
-            });
-            /*        let formattedValue = value.replace(/(\d)(?=(\d{3})+(?!\d))/g, '$1,');
-                    let lvl = Math.floor(parseInt(value) / @@UserHeroDetails.UNLOCK_POINTS);
-                    event.target.querySelector('#label-title').textContent = 'Points (Level ' + lvl + ')';
-                    event.target.querySelector('#label-value').textContent = formattedValue;
-                    event.target.querySelector('#input-newvalue').value = '';*/
-        }
-        $(document).off('show.bs.modal', '#edit-modal').on('show.bs.modal', '#edit-modal', OnShowEditModal);
-
-        function OnHideEditModal(event) {
-            let saveModal = $('#save-modal');
-            if (!saveModal.hasClass('show')) return;
-
-            let requestData;
-            let requestSuccess;
-            let form = event.target.querySelector('form');
-            let formId = form.id;
-
-            if (typeof hideModal[formId] === 'undefined') {
-                $('#save-modal-text').textContent = 'Something went wrong';
-                return;
-            }
-            requestData = hideModal[formId].requestData(form);
-            if (requestData === null) {
-                setTimeout(function () {
-                    saveModal.modal('hide');
-                    $('#save-modal-close').prop('disabled', false);
-                }, 300);
-                return;
-            }
-
-            requestSuccess = hideModal[formId].requestSuccess;
-
-            $('#save-modal-text').textContent = 'Please wait...';
-            $('#save-modal-close').prop('disabled', true);
-
-            $.ajax({
-                url: window.location.href,
-                type: 'GET',
-                data: requestData,
-                success: function (result) {
-                    if (typeof requestSuccess === 'function') requestSuccess(result);
-                    saveModal.modal('hide');
-                },
-                error: function () {
-                    $('#save-modal-text').textContent = 'Something went wrong';
-                    $('#save-modal-close').prop('disabled', false);
-                }
-            });
-        }
-        $(document).off('hidden.bs.modal', '#edit-modal').on('hidden.bs.modal', '#edit-modal', OnHideEditModal);
-
         $(document).ready(function () {
             const breadcrumbList = document.getElementById('breadcrumb-list');
             const breadcrumbLinks = breadcrumbList.querySelectorAll('td[data-page]');
@@ -433,6 +150,5 @@
                 }
             });
         });
-
     </script>
 }

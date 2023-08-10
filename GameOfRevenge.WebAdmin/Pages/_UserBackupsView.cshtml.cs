@@ -1,14 +1,12 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Threading.Tasks;
-using GameOfRevenge.Business.Manager.UserData;
-using GameOfRevenge.Common.Models;
-using GameOfRevenge.WebAdmin.Models;
+using System.Collections.Generic;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
-using static GameOfRevenge.WebAdmin.Models.UserModel;
+using GameOfRevenge.Common.Models;
+using GameOfRevenge.WebAdmin.Models;
 
-namespace WebAdmin.Pages
+namespace GameOfRevenge.WebAdmin.Pages
 {
     public class _UserBackupsViewModel : PageModel
     {
@@ -45,7 +43,7 @@ namespace WebAdmin.Pages
             return list;
         }*/
 
-        public static async Task<IActionResult> OnGetBackupsViewAsync(UserModel userModel, int playerId)
+        public static async Task<IActionResult> OnGetBackupsViewAsync(UsersModel userModel, int playerId)
         {
 //            Console.WriteLine("get backups ply="+playerId);
 
@@ -56,10 +54,10 @@ namespace WebAdmin.Pages
                 list = resp.Data;
             }
 
-            return UserModel.NewPartial("_UserBackupsView", new _UserBackupsViewModel(list));
+            return UsersModel.NewPartial("_UserBackupsView", new _UserBackupsViewModel(list));
         }
 
-        public static IActionResult OnGetRestoreBackupView(UserModel userModel, int playerId, long backupId, string date)
+        public static IActionResult OnGetRestoreBackupView(UsersModel userModel, int playerId, long backupId, string date)
         {
 //            Console.WriteLine("get restore backup ply="+playerId+" id="+ backupId+" date="+date);
             InputRestoreModel model = null;
@@ -74,10 +72,10 @@ namespace WebAdmin.Pages
                 };
             }
 
-            return UserModel.NewPartial("Forms/_RestoreBackupView", model);
+            return UsersModel.NewPartial("Forms/_RestoreBackupView", model);
         }
 
-        public static async Task<IActionResult> OnPostRestoreBackupAsync(UserModel userModel, InputRestoreModel inputRestore)
+        public static async Task<IActionResult> OnPostRestoreBackupAsync(UsersModel userModel, InputRestoreModel inputRestore)
         {
             int playerId = inputRestore.PlayerId;
             long backupId = inputRestore.BackupId;
@@ -113,7 +111,7 @@ namespace WebAdmin.Pages
         }
 
 
-        public static IActionResult OnGetCreateBackupView(UserModel userModel, int playerId)
+        public static IActionResult OnGetCreateBackupView(UsersModel userModel, int playerId)
         {
 //            Console.WriteLine("get create backup ply=" + playerId);
             InputBackupModel model = null;
@@ -126,18 +124,18 @@ namespace WebAdmin.Pages
                 };
             }
 
-            return UserModel.NewPartial("Forms/_CreateBackupView", model);
+            return UsersModel.NewPartial("Forms/_CreateBackupView", model);
         }
 
-        public static async Task<IActionResult> OnPostCreateBackupAsync(UserModel userModel, InputBackupModel inputBackup)
+        public static async Task<IActionResult> OnPostCreateBackupAsync(UsersModel userModel, InputBackupModel inputBackup)
         {
             int playerId = inputBackup.PlayerId;
 //            Console.WriteLine("post create backup ply = " + playerId);
 
-            var allPlayerData = await userModel.GetAllPlayerData(playerId);
-            if (allPlayerData == null) throw new Exception("Error retrieving user data");
+            var allFullPlayerData = await userModel.AdminManager.GetAllFullPlayerData(playerId);
+            if (allFullPlayerData == null) throw new Exception("Error retrieving user data");
 
-            var json = Newtonsoft.Json.JsonConvert.SerializeObject(allPlayerData);
+            var json = Newtonsoft.Json.JsonConvert.SerializeObject(allFullPlayerData);
             var resp = await userModel.AdminManager.SavePlayerBackup(playerId, "Manual backup", json);
             if (!resp.IsSuccess) throw new Exception(resp.Message);
 

@@ -6,6 +6,7 @@ using GameOfRevenge.Common.Net;
 using GameOfRevenge.Common.Models.Structure;
 using GameOfRevenge.Common.Interface;
 using GameOfRevenge.Business.CacheData;
+using GameOfRevenge.Common;
 
 namespace GameOfRevenge.Business.Manager.UserData
 {
@@ -62,7 +63,7 @@ namespace GameOfRevenge.Business.Manager.UserData
         {
 //            if (productId already redeemed) return new Response(201, "Product already redemeed");
 
-            var iapProducts = CacheProductDataManager.GetIAPProducts();
+            var iapProducts = CacheProductDataManager.GetPackageProducts();
             var pack = iapProducts.FirstOrDefault(x => (x.ProductId == productId));
             if (pack != null)
             {

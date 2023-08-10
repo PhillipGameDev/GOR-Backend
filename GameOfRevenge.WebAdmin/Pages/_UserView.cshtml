@@ -1,407 +1,428 @@
-﻿@model FullPlayerCompleteData
-@using GameOfRevenge.WebAdmin.Models
-@using WebAdmin.Pages
+﻿@model GameOfRevenge.Common.Models.FullPlayerCompleteData
+@using GameOfRevenge.WebAdmin.Pages
+@using GameOfRevenge.WebAdmin
 
-<style>
-    .wdt-1
-    {
-        width: 10%;
-    }
-    .wdt-1h {
-        width: 15%;
-    }
-    .wdt-2 {
-        width: 20%;
-    }
-    .wdt-3 {
-        width: 30%;
-    }
-    .wdt-4 {
-        width: 40%;
-    }
-    .wdt-5 {
-        width: 50%;
-    }
-    .wdt-6 {
-        width: 60%;
-    }
-    .wdt-7 {
-        width: 70%;
-    }
-    .wdt-8 {
-        width: 80%;
-    }
-    .wdt-9 {
-        width: 90%;
-    }
-    .wdt-10 {
-        width: 100%;
-    }
+@if (Helper.IsRegion(ViewData, "StyleSection"))
+{
+    <style>
+        .wdt-1
+        {
+            width: 10%;
+        }
+        .wdt-1h {
+            width: 15%;
+        }
+        .wdt-2 {
+            width: 20%;
+        }
+        .wdt-3 {
+            width: 30%;
+        }
+        .wdt-4 {
+            width: 40%;
+        }
+        .wdt-5 {
+            width: 50%;
+        }
+        .wdt-6 {
+            width: 60%;
+        }
+        .wdt-7 {
+            width: 70%;
+        }
+        .wdt-8 {
+            width: 80%;
+        }
+        .wdt-9 {
+            width: 90%;
+        }
+        .wdt-10 {
+            width: 100%;
+        }
 
-    .btn-edit {
-        padding-top: 2px;
-        padding-bottom: 2px;
-    }
+        .btn-edit {
+            padding-top: 2px;
+            padding-bottom: 2px;
+        }
 
 
-    /*    .table-status:empty {
-        flex-grow: 1;
-    }*/
-    .py-5 {
-        padding-top: 1.5rem !important;
-        padding-bottom: 0rem !important;
-    }
-</style>
-
-<section style="background-color: #eee;">
-    <div class="container py-5">
-        <input type="hidden" id="player-id" name="PlayerID" value=@Model.PlayerId />
+        /*    .table-status:empty {
+            flex-grow: 1;
+        }*/
+        .py-5 {
+            padding-top: 1.5rem !important;
+            padding-bottom: 0rem !important;
+        }
+    </style>
+    <partial name="_UserStructuresView" model="null" view-data="@Helper.ViewRegion(ViewData, "StyleSection")" />
+    <partial name="_UserTroopsView" model="null" view-data="@Helper.ViewRegion(ViewData, "StyleSection")" />
+    <partial name="_UserHeroesView" model="null" view-data="@Helper.ViewRegion(ViewData, "StyleSection")" />
+    <partial name="_UserRewardsView" model="null" view-data="@Helper.ViewRegion(ViewData, "StyleSection")" />
+    <partial name="_UserBackupsView" model="null" view-data="@Helper.ViewRegion(ViewData, "StyleSection")" />
+}
+else if (Helper.IsRegion(ViewData, "HTMLSection"))
+{
+    <script>
+        playerId = @Model.PlayerId;
+    </script>
+    <section style="background-color: #eee;">
+        <div class="container py-5">
+<!--            <input type="hidden" id="player-id" name="PlayerID" value=@@Model.PlayerId /> -->
     
-<!--        <div class="row">
-            <div class="col">
-                <nav aria-label="breadcrumb" class="bg-light rounded-3 p-3 mb-4">
-                    <ol class="breadcrumb mb-0">
-                        <li class="breadcrumb-item"><a href="#">Home</a></li>
-                        <li class="breadcrumb-item"><a href="#">User</a></li>
-                        <li class="breadcrumb-item active" aria-current="page">User Profile</li>
-                    </ol>
-                </nav>
-            </div>
-        </div>-->
-
-        <div class="row">
-            <div class="col-lg-4">
-                <div class="card mb-6">
-                    <div class="card-body">
-                        <div class="row">
-                            <div class="col-md-4 px-0 text-center">
-                                <img src="https://raw.githubusercontent.com/twbs/icons/main/icons/person-fill.svg" alt="avatar"
-                                     class="rounded-circle img-fluid" style="width: 150px;">
-                                <p class="text-muted mb-1">ID: @Model.PlayerId</p>
-                                <h5 class="my-1">@Model.PlayerName</h5>
-                                <!--                        <p class="text-muted mb-1">Full Stack Developer</p>
-                <div class="d-flex justify-content-center mb-2">
-                    <button type="button" class="btn btn-primary">Follow</button>
-                    <button type="button" class="btn btn-outline-primary ms-1">Message</button>
-                </div> -->
-                            </div>
-                            <div class="col-md-8 px-1">
-                                <br />
-                                <div class="row">
-                                    <div class="col-sm-5">
-                                        <strong>King Level</strong>
-                                    </div>
-                                    <div class="col-sm-7 text-center">
-                                        <p class="mb-0">@Model.KingLevel</p>
-                                    </div>
-                                </div>
-                                <hr class="my-1" />
-                                <div class="row">
-                                    <div class="col-sm-5">
-                                        <strong>VIP Level</strong>
-                                    </div>
-                                    <div class="col-sm-7 text-center">
-                                        <p class="mb-0">@Model.VIPLevel</p>
-                                    </div>
-                                </div>
-                                <hr class="my-1" />
-                                <div class="row">
-                                    <div class="col-sm-5">
-                                        <strong>Alliance</strong>
-                                    </div>
-                                    <div class="col-sm-7 text-center">
-                                        <p class="mb-0">
-                                            @if (Model.Clan != null)
-                                            {
-                                                @Model.Clan.Name
-                                            } else if (Model.ClanId > 0)
-                                            {
-                                                @Model.ClanId
-                                            }
-                                            else
-                                            {
-                                                <span>-</span>
-                                            }
-                                        </p>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
+    <!--        <div class="row">
+                <div class="col">
+                    <nav aria-label="breadcrumb" class="bg-light rounded-3 p-3 mb-4">
+                        <ol class="breadcrumb mb-0">
+                            <li class="breadcrumb-item"><a href="#">Home</a></li>
+                            <li class="breadcrumb-item"><a href="#">User</a></li>
+                            <li class="breadcrumb-item active" aria-current="page">User Profile</li>
+                        </ol>
+                    </nav>
                 </div>
+            </div>-->
 
-                <div class="col-mb-6">
-                    <div class="card">
+            <div class="row">
+                <div class="col-lg-4">
+                    <div class="card mb-6">
                         <div class="card-body">
-                            <table class="table table-responsive-sm table-sm">
-                                <thead>
-                                    <tr>
-                                        <th>Resource</th>
-                                        <th>Amount</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    <tr>
-                                        <td>Food</td>
-                                        <td id="resource-food">
-                                            <label>@Model.Food.ToString("N0")</label>
-                                            <button class="btn btn-sm btn-primary btn-edit float-right" type="button"
-                                                    data-resource-type="Food" data-resource-name="Food"
-                                                    data-resource-value=@Model.Food
-                                                    data-toggle="modal" data-target="#edit-modal" data-modal="resource">
-                                                <i class="fa fa-pencil"></i> Edit
-                                            </button>
-                                        </td>
-                                    </tr>
-                                    <tr>
-                                        <td>Wood</td>
-                                        <td id="resource-wood">
-                                            <label>@Model.Wood.ToString("N0")</label>
-                                            <button class="btn btn-sm btn-primary btn-edit float-right" type="button"
-                                                    data-resource-type="Wood" data-resource-name="Wood"
-                                                    data-resource-value=@Model.Wood
-                                                    data-toggle="modal" data-target="#edit-modal" data-modal="resource">
-                                                <i class="fa fa-pencil"></i> Edit
-                                            </button>
-                                        </td>
-                                    </tr>
-                                    <tr>
-                                        <td>Ore</td>
-                                        <td id="resource-ore">
-                                            <label>@Model.Ore.ToString("N0")</label>
-                                            <button class="btn btn-sm btn-primary btn-edit float-right" type="button"
-                                                    data-resource-type="Ore" data-resource-name="Ore"
-                                                    data-resource-value=@Model.Ore
-                                                    data-toggle="modal" data-target="#edit-modal" data-modal="resource">
-                                                <i class="fa fa-pencil"></i> Edit
-                                            </button>
-                                        </td>
-                                    </tr>
-                                    <tr>
-                                        <td>Gems</td>
-                                        <td id="resource-gems">
-                                            <label>@Model.Gems.ToString("N0")</label>
-                                            <button class="btn btn-sm btn-primary btn-edit float-right" type="button"
-                                                    data-resource-type="Gems" data-resource-name="Gems"
-                                                    data-resource-value=@Model.Gems
-                                                    data-toggle="modal" data-target="#edit-modal" data-modal="resource">
-                                                <i class="fa fa-pencil"></i> Edit
-                                            </button>
-                                        </td>
-                                    </tr>
-                                </tbody>
-                            </table>
+                            <div class="row">
+                                <div class="col-md-4 px-0 text-center">
+                                    <img src="https://raw.githubusercontent.com/twbs/icons/main/icons/person-fill.svg" alt="avatar"
+                                         class="rounded-circle img-fluid" style="width: 150px;">
+                                    <p class="text-muted mb-1">ID: @Model.PlayerId</p>
+                                    <h5 class="my-1">@Model.PlayerName</h5>
+                                    <!--                        <p class="text-muted mb-1">Full Stack Developer</p>
+                    <div class="d-flex justify-content-center mb-2">
+                        <button type="button" class="btn btn-primary">Follow</button>
+                        <button type="button" class="btn btn-outline-primary ms-1">Message</button>
+                    </div> -->
+                                </div>
+                                <div class="col-md-8 px-1">
+                                    <br />
+                                    <div class="row">
+                                        <div class="col-sm-5">
+                                            <strong>King Level</strong>
+                                        </div>
+                                        <div class="col-sm-7 text-center">
+                                            <p class="mb-0">@Model.KingLevel</p>
+                                        </div>
+                                    </div>
+                                    <hr class="my-1" />
+                                    <div class="row">
+                                        <div class="col-sm-5">
+                                            <strong>VIP Level</strong>
+                                        </div>
+                                        <div class="col-sm-7 text-center">
+                                            <p class="mb-0">@Model.VIPLevel</p>
+                                        </div>
+                                    </div>
+                                    <hr class="my-1" />
+                                    <div class="row">
+                                        <div class="col-sm-5">
+                                            <strong>Alliance</strong>
+                                        </div>
+                                        <div class="col-sm-7 text-center">
+                                            <p class="mb-0">
+                                                @if (Model.Clan != null)
+                                                {
+                                                    @Model.Clan.Name
+                                                }
+                                                else if (Model.ClanId > 0)
+                                                {
+                                                    @Model.ClanId
+                                                }
+                                                else
+                                                {
+                                                    <span>-</span>
+                                                }
+                                            </p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
                         </div>
                     </div>
-                </div>
-<!--                <div class="card mb-4 mb-lg-0">
-                    <div class="card-body p-0">
-                        <ul class="list-group list-group-flush rounded-3">
-                            <li class="list-group-item d-flex justify-content-between align-items-center p-3">
-                                <i class="fas fa-globe fa-lg text-warning"></i>
-                                <p class="mb-0">https://mdbootstrap.com</p>
-                            </li>
-                            <li class="list-group-item d-flex justify-content-between align-items-center p-3">
-                                <i class="fab fa-github fa-lg" style="color: #333333;"></i>
-                                <p class="mb-0">mdbootstrap</p>
-                            </li>
-                            <li class="list-group-item d-flex justify-content-between align-items-center p-3">
-                                <i class="fab fa-twitter fa-lg" style="color: #55acee;"></i>
-                                <p class="mb-0">mdbootstrap</p>
-                            </li>
-                            <li class="list-group-item d-flex justify-content-between align-items-center p-3">
-                                <i class="fab fa-instagram fa-lg" style="color: #ac2bac;"></i>
-                                <p class="mb-0">mdbootstrap</p>
-                            </li>
-                            <li class="list-group-item d-flex justify-content-between align-items-center p-3">
-                                <i class="fab fa-facebook-f fa-lg" style="color: #3b5998;"></i>
-                                <p class="mb-0">mdbootstrap</p>
-                            </li>
-                        </ul>
-                    </div>
-                </div> -->
-            </div>
-            <div class="col-lg-8">
 
-<!--                <div class="row">
-                    <div class="col-md-6">
+                    <div class="col-mb-6">
                         <div class="card">
                             <div class="card-body">
-
+                                <table class="table table-responsive-sm table-sm">
+                                    <thead>
+                                        <tr>
+                                            <th>Resource</th>
+                                            <th>Amount</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <tr>
+                                            <td>Food</td>
+                                            <td id="resource-food">
+                                                <label>@Model.Food.ToString("N0")</label>
+                                                <button class="btn btn-sm btn-primary btn-edit float-right" type="button"
+                                                        data-resource-type="Food" data-resource-name="Food"
+                                                        data-resource-value=@Model.Food
+                                                        data-toggle="modal" data-target="#edit-modal" data-modal="resource">
+                                                    <i class="fa fa-pencil"></i>&nbsp;Edit
+                                                </button>
+                                            </td>
+                                        </tr>
+                                        <tr>
+                                            <td>Wood</td>
+                                            <td id="resource-wood">
+                                                <label>@Model.Wood.ToString("N0")</label>
+                                                <button class="btn btn-sm btn-primary btn-edit float-right" type="button"
+                                                        data-resource-type="Wood" data-resource-name="Wood"
+                                                        data-resource-value=@Model.Wood
+                                                        data-toggle="modal" data-target="#edit-modal" data-modal="resource">
+                                                    <i class="fa fa-pencil"></i>&nbsp;Edit
+                                                </button>
+                                            </td>
+                                        </tr>
+                                        <tr>
+                                            <td>Ore</td>
+                                            <td id="resource-ore">
+                                                <label>@Model.Ore.ToString("N0")</label>
+                                                <button class="btn btn-sm btn-primary btn-edit float-right" type="button"
+                                                        data-resource-type="Ore" data-resource-name="Ore"
+                                                        data-resource-value=@Model.Ore
+                                                        data-toggle="modal" data-target="#edit-modal" data-modal="resource">
+                                                    <i class="fa fa-pencil"></i>&nbsp;Edit
+                                                </button>
+                                            </td>
+                                        </tr>
+                                        <tr>
+                                            <td>Gems</td>
+                                            <td id="resource-gems">
+                                                <label>@Model.Gems.ToString("N0")</label>
+                                                <button class="btn btn-sm btn-primary btn-edit float-right" type="button"
+                                                        data-resource-type="Gems" data-resource-name="Gems"
+                                                        data-resource-value=@Model.Gems
+                                                        data-toggle="modal" data-target="#edit-modal" data-modal="resource">
+                                                    <i class="fa fa-pencil"></i>&nbsp;Edit
+                                                </button>
+                                            </td>
+                                        </tr>
+                                    </tbody>
+                                </table>
                             </div>
                         </div>
                     </div>
-
-                </div> -->
-
-
-                <div class="row">
-                    <div class="col-lg-12">
-                        <div class="card">
-                            <div class="card-body">
-                                <ul class="nav nav-tabs" role="tablist">
-                                    <li class="nav-item active">
-                                        <a class="nav-link active" data-toggle="tab" href="#tab-structures" role="tab">Buildings</a>
-                                    </li>
-                                    <li class="nav-item">
-                                        <a class="nav-link" data-toggle="tab" href="#tab-troops" role="tab">Troops</a>
-                                    </li>
-                                    <li class="nav-item">
-                                        <a class="nav-link" data-toggle="tab" href="#tab-heroes" role="tab">Heroes</a>
-                                    </li>
-                                    <li class="nav-item">
-                                        <a class="nav-link" data-toggle="tab" href="#tab-rewards" role="tab">Rewards</a>
-                                    </li>
-                                    <li class="nav-item">
-                                        <a class="nav-link" data-toggle="tab" href="#tab-backups" role="tab">Backups</a>
-                                    </li>
-                                </ul>
-                                <div class="tab-content" id="user-tabs">
-                                    <div class="tab-pane active" id="tab-structures" role="tabpanel">
-                                        @await Html.PartialAsync("_UserStructuresView", new _UserStructuresViewModel(Model))
-                                    </div>
-                                    <div class="tab-pane" id="tab-troops" role="tabpanel">
-                                        @await Html.PartialAsync("_UserTroopsView", new _UserTroopsViewModel(Model))
-                                    </div>
-                                    <div class="tab-pane" id="tab-heroes" role="tabpanel">
-                                        @await Html.PartialAsync("_UserHeroesView", new _UserHeroesViewModel(Model))
-                                    </div>
-                                    <div class="tab-pane" id="tab-rewards" role="tabpanel">
-                                        @await Html.PartialAsync("_UserRewardsView", new _UserRewardsViewModel(Model.Rewards))
-                                    </div>
-                                    <div class="tab-pane" id="tab-backups" role="tabpanel">
-                                        @await Html.PartialAsync("_UserBackupsView", new _UserBackupsViewModel(Model.Backups))
-                                    </div>
-                                </div>
-                            </div>
+    <!--                <div class="card mb-4 mb-lg-0">
+                        <div class="card-body p-0">
+                            <ul class="list-group list-group-flush rounded-3">
+                                <li class="list-group-item d-flex justify-content-between align-items-center p-3">
+                                    <i class="fas fa-globe fa-lg text-warning"></i>
+                                    <p class="mb-0">https://mdbootstrap.com</p>
+                                </li>
+                                <li class="list-group-item d-flex justify-content-between align-items-center p-3">
+                                    <i class="fab fa-github fa-lg" style="color: #333333;"></i>
+                                    <p class="mb-0">mdbootstrap</p>
+                                </li>
+                                <li class="list-group-item d-flex justify-content-between align-items-center p-3">
+                                    <i class="fab fa-twitter fa-lg" style="color: #55acee;"></i>
+                                    <p class="mb-0">mdbootstrap</p>
+                                </li>
+                                <li class="list-group-item d-flex justify-content-between align-items-center p-3">
+                                    <i class="fab fa-instagram fa-lg" style="color: #ac2bac;"></i>
+                                    <p class="mb-0">mdbootstrap</p>
+                                </li>
+                                <li class="list-group-item d-flex justify-content-between align-items-center p-3">
+                                    <i class="fab fa-facebook-f fa-lg" style="color: #3b5998;"></i>
+                                    <p class="mb-0">mdbootstrap</p>
+                                </li>
+                            </ul>
                         </div>
-                    </div>
-                    <!-- /.col-->
+                    </div> -->
                 </div>
+                <div class="col-lg-8">
 
-                <div class="row">
-                    <div class="col-lg-12">
-                        <div class="card">
-                            <div class="card-body">
+    <!--                <div class="row">
+                        <div class="col-md-6">
+                            <div class="card">
+                                <div class="card-body">
 
+                                </div>
+                            </div>
+                        </div>
+
+                    </div> -->
+
+
+                    <div class="row">
+                        <div class="col-lg-12">
+                            <div class="card">
+                                <div class="card-body">
+                                    <ul class="nav nav-tabs" role="tablist">
+                                        <li class="nav-item active">
+                                            <a class="nav-link active" data-toggle="tab" href="#tab-structures" role="tab">Buildings</a>
+                                        </li>
+                                        <li class="nav-item">
+                                            <a class="nav-link" data-toggle="tab" href="#tab-troops" role="tab">Troops</a>
+                                        </li>
+                                        <li class="nav-item">
+                                            <a class="nav-link" data-toggle="tab" href="#tab-heroes" role="tab">Heroes</a>
+                                        </li>
+                                        <li class="nav-item">
+                                            <a class="nav-link" data-toggle="tab" href="#tab-rewards" role="tab">Rewards</a>
+                                        </li>
+                                        <li class="nav-item">
+                                            <a class="nav-link" data-toggle="tab" href="#tab-backups" role="tab">Backups</a>
+                                        </li>
+                                    </ul>
+                                    <div class="tab-content" id="user-tabs">
+                                        <div class="tab-pane active" id="tab-structures" role="tabpanel">
+                                            @await Html.PartialAsync("_UserStructuresView", new _UserStructuresViewModel(Model), Helper.ViewRegion(ViewData, "HTMLSection"))
+                                        </div>
+                                        <div class="tab-pane" id="tab-troops" role="tabpanel">
+                                            @await Html.PartialAsync("_UserTroopsView", new _UserTroopsViewModel(Model), Helper.ViewRegion(ViewData, "HTMLSection"))
+                                        </div>
+                                        <div class="tab-pane" id="tab-heroes" role="tabpanel">
+                                            @await Html.PartialAsync("_UserHeroesView", new _UserHeroesViewModel(Model), Helper.ViewRegion(ViewData, "HTMLSection"))
+                                        </div>
+                                        <div class="tab-pane" id="tab-rewards" role="tabpanel">
+                                            @await Html.PartialAsync("_UserRewardsView", new _UserRewardsViewModel(Model.Rewards), Helper.ViewRegion(ViewData, "HTMLSection"))
+                                        </div>
+                                        <div class="tab-pane" id="tab-backups" role="tabpanel">
+                                            @await Html.PartialAsync("_UserBackupsView", new _UserBackupsViewModel(Model.Backups), Helper.ViewRegion(ViewData, "HTMLSection"))
+                                        </div>
+                                    </div>
+                                </div>
                             </div>
                         </div>
                     </div>
-                    <!-- /.col-->
+
+<!--                    <div class="row">
+                        <div class="col-lg-12">
+                            <div class="card">
+                                <div class="card-body">
+
+                                </div>
+                            </div>
+                        </div>
+                    </div> -->
+    <!--                <div class="row">
+                        <div class="col-md-6">
+                            <div class="card mb-4 mb-md-0">
+                                <div class="card-body">
+                                    <p class="mb-4">
+                                        <span class="text-primary font-italic me-1">assigment</span> Project Status
+                                    </p>
+                                    <p class="mb-1" style="font-size: .77rem;">Web Design</p>
+                                    <div class="progress rounded" style="height: 5px;">
+                                        <div class="progress-bar" role="progressbar" style="width: 80%" aria-valuenow="80"
+                                             aria-valuemin="0" aria-valuemax="100"></div>
+                                    </div>
+                                    <p class="mt-4 mb-1" style="font-size: .77rem;">Website Markup</p>
+                                    <div class="progress rounded" style="height: 5px;">
+                                        <div class="progress-bar" role="progressbar" style="width: 72%" aria-valuenow="72"
+                                             aria-valuemin="0" aria-valuemax="100"></div>
+                                    </div>
+                                    <p class="mt-4 mb-1" style="font-size: .77rem;">One Page</p>
+                                    <div class="progress rounded" style="height: 5px;">
+                                        <div class="progress-bar" role="progressbar" style="width: 89%" aria-valuenow="89"
+                                             aria-valuemin="0" aria-valuemax="100"></div>
+                                    </div>
+                                    <p class="mt-4 mb-1" style="font-size: .77rem;">Mobile Template</p>
+                                    <div class="progress rounded" style="height: 5px;">
+                                        <div class="progress-bar" role="progressbar" style="width: 55%" aria-valuenow="55"
+                                             aria-valuemin="0" aria-valuemax="100"></div>
+                                    </div>
+                                    <p class="mt-4 mb-1" style="font-size: .77rem;">Backend API</p>
+                                    <div class="progress rounded mb-2" style="height: 5px;">
+                                        <div class="progress-bar" role="progressbar" style="width: 66%" aria-valuenow="66"
+                                             aria-valuemin="0" aria-valuemax="100"></div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="card mb-4 mb-md-0">
+                                <div class="card-body">
+                                    <p class="mb-4">
+                                        <span class="text-primary font-italic me-1">assigment</span> Project Status
+                                    </p>
+                                    <p class="mb-1" style="font-size: .77rem;">Web Design</p>
+                                    <div class="progress rounded" style="height: 5px;">
+                                        <div class="progress-bar" role="progressbar" style="width: 80%" aria-valuenow="80"
+                                             aria-valuemin="0" aria-valuemax="100"></div>
+                                    </div>
+                                    <p class="mt-4 mb-1" style="font-size: .77rem;">Website Markup</p>
+                                    <div class="progress rounded" style="height: 5px;">
+                                        <div class="progress-bar" role="progressbar" style="width: 72%" aria-valuenow="72"
+                                             aria-valuemin="0" aria-valuemax="100"></div>
+                                    </div>
+                                    <p class="mt-4 mb-1" style="font-size: .77rem;">One Page</p>
+                                    <div class="progress rounded" style="height: 5px;">
+                                        <div class="progress-bar" role="progressbar" style="width: 89%" aria-valuenow="89"
+                                             aria-valuemin="0" aria-valuemax="100"></div>
+                                    </div>
+                                    <p class="mt-4 mb-1" style="font-size: .77rem;">Mobile Template</p>
+                                    <div class="progress rounded" style="height: 5px;">
+                                        <div class="progress-bar" role="progressbar" style="width: 55%" aria-valuenow="55"
+                                             aria-valuemin="0" aria-valuemax="100"></div>
+                                    </div>
+                                    <p class="mt-4 mb-1" style="font-size: .77rem;">Backend API</p>
+                                    <div class="progress rounded mb-2" style="height: 5px;">
+                                        <div class="progress-bar" role="progressbar" style="width: 66%" aria-valuenow="66"
+                                             aria-valuemin="0" aria-valuemax="100"></div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div> -->
                 </div>
-<!--                <div class="row">
-                    <div class="col-md-6">
-                        <div class="card mb-4 mb-md-0">
-                            <div class="card-body">
-                                <p class="mb-4">
-                                    <span class="text-primary font-italic me-1">assigment</span> Project Status
-                                </p>
-                                <p class="mb-1" style="font-size: .77rem;">Web Design</p>
-                                <div class="progress rounded" style="height: 5px;">
-                                    <div class="progress-bar" role="progressbar" style="width: 80%" aria-valuenow="80"
-                                         aria-valuemin="0" aria-valuemax="100"></div>
-                                </div>
-                                <p class="mt-4 mb-1" style="font-size: .77rem;">Website Markup</p>
-                                <div class="progress rounded" style="height: 5px;">
-                                    <div class="progress-bar" role="progressbar" style="width: 72%" aria-valuenow="72"
-                                         aria-valuemin="0" aria-valuemax="100"></div>
-                                </div>
-                                <p class="mt-4 mb-1" style="font-size: .77rem;">One Page</p>
-                                <div class="progress rounded" style="height: 5px;">
-                                    <div class="progress-bar" role="progressbar" style="width: 89%" aria-valuenow="89"
-                                         aria-valuemin="0" aria-valuemax="100"></div>
-                                </div>
-                                <p class="mt-4 mb-1" style="font-size: .77rem;">Mobile Template</p>
-                                <div class="progress rounded" style="height: 5px;">
-                                    <div class="progress-bar" role="progressbar" style="width: 55%" aria-valuenow="55"
-                                         aria-valuemin="0" aria-valuemax="100"></div>
-                                </div>
-                                <p class="mt-4 mb-1" style="font-size: .77rem;">Backend API</p>
-                                <div class="progress rounded mb-2" style="height: 5px;">
-                                    <div class="progress-bar" role="progressbar" style="width: 66%" aria-valuenow="66"
-                                         aria-valuemin="0" aria-valuemax="100"></div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="col-md-6">
-                        <div class="card mb-4 mb-md-0">
-                            <div class="card-body">
-                                <p class="mb-4">
-                                    <span class="text-primary font-italic me-1">assigment</span> Project Status
-                                </p>
-                                <p class="mb-1" style="font-size: .77rem;">Web Design</p>
-                                <div class="progress rounded" style="height: 5px;">
-                                    <div class="progress-bar" role="progressbar" style="width: 80%" aria-valuenow="80"
-                                         aria-valuemin="0" aria-valuemax="100"></div>
-                                </div>
-                                <p class="mt-4 mb-1" style="font-size: .77rem;">Website Markup</p>
-                                <div class="progress rounded" style="height: 5px;">
-                                    <div class="progress-bar" role="progressbar" style="width: 72%" aria-valuenow="72"
-                                         aria-valuemin="0" aria-valuemax="100"></div>
-                                </div>
-                                <p class="mt-4 mb-1" style="font-size: .77rem;">One Page</p>
-                                <div class="progress rounded" style="height: 5px;">
-                                    <div class="progress-bar" role="progressbar" style="width: 89%" aria-valuenow="89"
-                                         aria-valuemin="0" aria-valuemax="100"></div>
-                                </div>
-                                <p class="mt-4 mb-1" style="font-size: .77rem;">Mobile Template</p>
-                                <div class="progress rounded" style="height: 5px;">
-                                    <div class="progress-bar" role="progressbar" style="width: 55%" aria-valuenow="55"
-                                         aria-valuemin="0" aria-valuemax="100"></div>
-                                </div>
-                                <p class="mt-4 mb-1" style="font-size: .77rem;">Backend API</p>
-                                <div class="progress rounded mb-2" style="height: 5px;">
-                                    <div class="progress-bar" role="progressbar" style="width: 66%" aria-valuenow="66"
-                                         aria-valuemin="0" aria-valuemax="100"></div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div> -->
             </div>
         </div>
-    </div>
-</section>
+    </section>
+}
+else if (Helper.IsRegion(ViewData, "ScriptSection"))
+{
+    <script>
+        var playerId = 0;
+/*        $(document).ready(function () {
+            playerId = parseInt(document.getElementById('player-id').value);
+            console.log('player id = ' + playerId);
+        });*/
 
-<script>
-    $(document).ready(function () {
-        playerId = parseInt(document.getElementById('player-id').value);
-    });
+        showModal['resource'] = {
+            width: 500,
+            requestData: function (buttonElement) {
+                return {
+                    handler: 'EditResourceView',
+                    playerId: playerId,
+                    resourceType: buttonElement.data('resource-type')
+                }
+            },
+            requestSubmit: function (event) {
+                if (newValue === '') {
+                    event.preventDefault();
+                    $('#edit-modal').modal('hide');
+                    return false;
+                }
 
-    showModal['resource'] = {
-        width: 500,
-        requestData: function (buttonElement) {
-            return {
-                handler: 'EditResourceView',
-                playerId: playerId,
-                resourceType: buttonElement.data('resource-type')
+                let resValueInput = document.getElementById('resource-modal-form').querySelector('input[name="ResourceValue"]');
+                resValueInput.value = newValue;//JSON.stringify(multipleValues);
+
+                return true;
             }
-        },
-        requestSubmit: function (event) {
-            if (newValue === '') {
-                event.preventDefault();
-                $('#edit-modal').modal('hide');
-                return false;
+        }
+
+        hideModal['resource-modal-form'] = {
+            requestData: function (form) {
+                let formattedValue = newValue.replace(/(\d)(?=(\d{3})+(?!\d))/g, '$1,');
+                let resName = form.querySelector('input[name="ResourceType"]').value;
+                let id = '#resource-' + resName.toLowerCase();
+                $(id + ' button').data('resource-value', newValue);
+                $(id + ' label').text(formattedValue);
+
+                return null;
             }
-
-            let resValueInput = document.getElementById('resource-modal-form').querySelector('input[name="ResourceValue"]');
-            resValueInput.value = newValue;//JSON.stringify(multipleValues);
-
-            return true;
         }
-    }
 
-    hideModal['resource-modal-form'] = {
-        requestData: function (form) {
-            let formattedValue = newValue.replace(/(\d)(?=(\d{3})+(?!\d))/g, '$1,');
-            let resName = form.querySelector('input[name="ResourceType"]').value;
-            let id = '#resource-' + resName.toLowerCase();
-            $(id + ' button').data('resource-value', newValue);
-            $(id + ' label').text(formattedValue);
-
-            return null;
-        }
-    }
-
-</script>
+    </script>
+    <partial name="_UserStructuresView" model="null" view-data="@Helper.ViewRegion(ViewData, "ScriptSection")" />
+    <partial name="_UserTroopsView" model="null" view-data="@Helper.ViewRegion(ViewData, "ScriptSection")" />
+    <partial name="_UserHeroesView" model="null" view-data="@Helper.ViewRegion(ViewData, "ScriptSection")" />
+    <partial name="_UserRewardsView" model="null" view-data="@Helper.ViewRegion(ViewData, "ScriptSection")" />
+    <partial name="_UserBackupsView" model="null" view-data="@Helper.ViewRegion(ViewData, "ScriptSection")" />
+}

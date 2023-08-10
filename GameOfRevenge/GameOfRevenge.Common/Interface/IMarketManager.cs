@@ -8,5 +8,6 @@ namespace GameOfRevenge.Common.Interface
     public interface IMarketManager
     {
         Task<Response<List<MarketProductTable>>> GetAllProducts();
+        Task<Response<List<StorePackageTable>>> GetStorePackages(bool? active = null);
     }
 }

@@ -8,7 +8,6 @@
     <DocumentationFile>WebAdmin.xml</DocumentationFile>
   </PropertyGroup>
 
-  <PropertyGroup Condition=" '$(RunConfiguration)' == 'WebAdmin' " />
   <ItemGroup>
     <None Remove="Configurations\.DS_Store" />
     <None Remove="Humanizer.Core" />

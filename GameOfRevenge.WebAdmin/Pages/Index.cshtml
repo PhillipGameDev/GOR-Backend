@@ -1,11 +1,15 @@
 ﻿@page
 @{
-    ViewData["Title"] = "Home page";
+    ViewData["Title"] = "Dashboard";
 }
-@model IndexModel
-@using WebAdmin.Pages
+@model GameOfRevenge.WebAdmin.Pages.IndexModel
+
+@section Headers {
+} 
 
 <div class="container-fluid">
+    <form id="logout-form" method="post" asp-page-handler="logout" style="display: none;"></form>
+
     <div class="animated fadeIn">
         <br />
         <div class="card">
@@ -57,8 +61,6 @@
 </div>
 
 @section Scripts {
-    <script src="~/lib/chart.js/dist/Chart.min.js"></script>
-    <script src="~/lib/coreui/js/custom-tooltips.min.js"></script>
     <script>
         const daysOfWeek = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
         const monthsOfYear = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
@@ -116,68 +118,68 @@
             }
 
             var mainChart = new Chart($('#main-chart'), {
-            type: 'line',
-            data: {
-                labels: last30Days,
-                datasets: [{
-                    label: 'New Users',
-                    backgroundColor: hexToRgba(getStyle('--info'), 10),
-                    borderColor: getStyle('--success'),
-                    pointHoverBackgroundColor: '#4dbd74',
-                    borderWidth: 2,
-                    data: @Model.Data.NewUsers
-                }, {
-                    label: 'Recurring Users',
-                    backgroundColor: 'transparent',
-                    borderColor: getStyle('--info'),
-                    pointHoverBackgroundColor: '#63c2de',
-                    borderWidth: 2,
-                    data: recurring
-                }]
-            },
-            options: {
-                maintainAspectRatio: false,
-                legend: {
-                    display: false
-                },
-                tooltips: {
-                    callbacks: {
-                        title: function (tooltipItem, data) {
-                            let daysAgo = (last30Days.length - 1) - tooltipItem[0].index;
-//                            let index = (currentDayIndex + daysAgo) % 7;
-
-                            let newDate = new Date();
-                            newDate.setUTCDate(currentDate.getUTCDate() - daysAgo);
-
-                            return getFormattedDate(newDate);
-                        }
-                    }
-                },
-                scales: {
-                    xAxes: [{
-                        gridLines: {
-                            drawOnChartArea: false
-                        }
-                    }],
-                    yAxes: [{
-                        ticks: {
-                            beginAtZero: true,
-                            maxTicksLimit: 5,
-                            stepSize: stepSize,
-                            max: yAxesMax
-                        }
+                type: 'line',
+                data: {
+                    labels: last30Days,
+                    datasets: [{
+                        label: 'New Users',
+                        backgroundColor: hexToRgba(getStyle('--info'), 10),
+                        borderColor: getStyle('--success'),
+                        pointHoverBackgroundColor: '#4dbd74',
+                        borderWidth: 2,
+                        data: @Model.Data.NewUsers
+                    }, {
+                        label: 'Recurring Users',
+                        backgroundColor: 'transparent',
+                        borderColor: getStyle('--info'),
+                        pointHoverBackgroundColor: '#63c2de',
+                        borderWidth: 2,
+                        data: recurring
                     }]
                 },
-                elements: {
-                    point: {
-                        radius: 0,
-                        hitRadius: 10,
-                        hoverRadius: 4,
-                        hoverBorderWidth: 3
+                options: {
+                    maintainAspectRatio: false,
+                    legend: {
+                        display: false
+                    },
+                    tooltips: {
+                        callbacks: {
+                            title: function (tooltipItem, data) {
+                                let daysAgo = (last30Days.length - 1) - tooltipItem[0].index;
+    //                            let index = (currentDayIndex + daysAgo) % 7;
+
+                                let newDate = new Date();
+                                newDate.setUTCDate(currentDate.getUTCDate() - daysAgo);
+
+                                return getFormattedDate(newDate);
+                            }
+                        }
+                    },
+                    scales: {
+                        xAxes: [{
+                            gridLines: {
+                                drawOnChartArea: false
+                            }
+                        }],
+                        yAxes: [{
+                            ticks: {
+                                beginAtZero: true,
+                                maxTicksLimit: 5,
+                                stepSize: stepSize,
+                                max: yAxesMax
+                            }
+                        }]
+                    },
+                    elements: {
+                        point: {
+                            radius: 0,
+                            hitRadius: 10,
+                            hoverRadius: 4,
+                            hoverBorderWidth: 3
+                        }
                     }
                 }
-            }
-        });
+            });
         });
     </script>
 }

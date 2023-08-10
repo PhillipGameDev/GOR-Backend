@@ -1,17 +1,17 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using System.Collections.Generic;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.RazorPages;
 using GameOfRevenge.Business.CacheData;
 using GameOfRevenge.Business.Manager.Base;
 using GameOfRevenge.Business.Manager.UserData;
 using GameOfRevenge.Common;
 using GameOfRevenge.Common.Models;
 using GameOfRevenge.WebAdmin.Models;
-using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.Mvc.RazorPages;
 
-namespace WebAdmin.Pages
+namespace GameOfRevenge.WebAdmin.Pages
 {
     public class _UserTroopsViewModel : PageModel
     {
@@ -52,7 +52,7 @@ namespace WebAdmin.Pages
                 fullPlayerData = new FullPlayerCompleteData(resp.Data);
             }
 
-            return UserModel.NewPartial("_UserTroopsView", new _UserTroopsViewModel(fullPlayerData));
+            return UsersModel.NewPartial("_UserTroopsView", new _UserTroopsViewModel(fullPlayerData));
         }
 
         public static async Task<IActionResult> OnGetEditTroopViewAsync(int playerId, string troopType)
@@ -84,7 +84,7 @@ namespace WebAdmin.Pages
                 Options = list
             };
 
-            return UserModel.NewPartial("Forms/_EditTroopsView", model);
+            return UsersModel.NewPartial("Forms/_EditTroopsView", model);
         }
 
         public static async Task<IActionResult> OnPostSaveTroopChangesAsync(InputTroopModel inputTroop)

@@ -4,7 +4,7 @@ using GameOfRevenge.Common.Models.Table;
 
 namespace GameOfRevenge.Common.Models.Quest
 {
-    public interface IReadOnlyPlayerRewardData
+    public interface IReadOnlyPlayerRewardDataTable
     {
         long PlayerDataId { get; }
         DataType DataType { get; }
@@ -14,7 +14,7 @@ namespace GameOfRevenge.Common.Models.Quest
         int Count { get; }
     }
 
-    public class PlayerRewardDataTable : IBaseTable, IReadOnlyPlayerRewardData
+    public class PlayerRewardDataTable : IBaseTable, IReadOnlyPlayerRewardDataTable
     {
         public long PlayerDataId { get; set; }
         public DataType DataType { get; set; }

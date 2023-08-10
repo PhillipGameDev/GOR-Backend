@@ -1,6 +1,6 @@
 USE [GameOfRevenge]
 GO
-/****** Object:  StoredProcedure [dbo].[RestorePlayerBackup]    Script Date: 7/30/2023 11:24:44 PM ******/
+/****** Object:  StoredProcedure [dbo].[RestorePlayerBackup]    Script Date: 1/4/2023 4:59:25 AM ******/
 SET ANSI_NULLS ON
 GO
 SET QUOTED_IDENTIFIER ON
@@ -24,6 +24,7 @@ BEGIN
 
 		IF (@json IS NOT NULL)
 			BEGIN
+				--PLAYER DATA
 				DECLARE @playerDataJson NVARCHAR(MAX) = (SELECT JSON_QUERY(@json, '$.PlayerData'));
 
 				SELECT 
@@ -33,6 +34,39 @@ BEGIN
 				    Value
 				INTO #TempPlayerData
 				FROM OPENJSON(@playerDataJson)
+				WITH (
+				    PlayerDataId BIGINT '$.PlayerDataId',
+				    DataType VARCHAR(100) '$.DataType',
+				    ValueId INT '$.ValueId',
+				    Value VARCHAR(MAX) '$.Value'
+				);
+
+				UPDATE PlayerData SET DataTypeId = 1020 WHERE PlayerId = @PlayerId
+
+				MERGE INTO PlayerData AS target
+				USING #TempPlayerData AS source
+				ON (target.PlayerDataId = source.PlayerDataId AND target.PlayerId = @PlayerId)
+				WHEN MATCHED THEN
+				    UPDATE SET
+				        target.DataTypeId = (SELECT DataTypeId FROM DataType WHERE Code = source.DataType),
+--				        target.ValueId = source.ValueId,
+				        target.Value = source.Value
+				WHEN NOT MATCHED THEN
+				    INSERT (PlayerId, DataTypeId, ValueId, Value)
+				    VALUES (@tPlayerId, (SELECT DataTypeId FROM DataType WHERE Code = source.DataType), source.ValueId, source.Value);
+
+				DROP TABLE #TempPlayerData;
+
+				--QUEST DATA
+				DECLARE @questDataJson NVARCHAR(MAX) = (SELECT JSON_QUERY(@json, '$.QuestData'));
+
+				SELECT 
+				    PlayerDataId,
+				    DataType,
+				    ValueId,
+				    Value
+				INTO #TempPlayerData
+				FROM OPENJSON(@questDataJson)
 				WITH (
 				    PlayerDataId BIGINT '$.PlayerDataId',
 				    DataType VARCHAR(100) '$.DataType',

@@ -1,0 +1,201 @@
+﻿@model InputPackageModel
+@using GameOfRevenge.WebAdmin
+@using GameOfRevenge.WebAdmin.Models
+@using GameOfRevenge.WebAdmin.Pages
+
+@if (Helper.IsRegion(ViewData, "StyleSection"))
+{
+    <style>
+        .wdt-1 {
+            width: 10%;
+        }
+
+        .wdt-1h {
+            width: 15%;
+        }
+
+        .wdt-2 {
+            width: 20%;
+        }
+
+        .wdt-3 {
+            width: 30%;
+        }
+
+        .wdt-4 {
+            width: 40%;
+        }
+
+        .wdt-4h {
+            width: 45%;
+        }
+
+        .wdt-5 {
+            width: 50%;
+        }
+
+        .wdt-5h {
+            width: 55%;
+        }
+
+        .wdt-6 {
+            width: 60%;
+        }
+
+        .wdt-7 {
+            width: 70%;
+        }
+
+        .wdt-8 {
+            width: 80%;
+        }
+
+        .wdt-9 {
+            width: 90%;
+        }
+
+        .wdt-10 {
+            width: 100%;
+        }
+
+        .btn-edit {
+            padding-top: 2px;
+            padding-bottom: 2px;
+        }
+
+
+        /*    .table-status:empty {
+            flex-grow: 1;
+        }*/
+        .py-5 {
+            padding-top: 1.5rem !important;
+            padding-bottom: 0rem !important;
+        }
+    </style>
+}
+else if (Helper.IsRegion(ViewData, "HTMLSection"))
+{
+    <section style="background-color: #eee;">
+        <div class="container py-5">
+            <div class="row">
+                <div class="col-lg-12">
+                    <div class="card">
+                        <div class="card-body">
+                            <div class="row justify-content-center">
+                                <div class="form-group col-sm-2 my-0">
+                                    <strong>Status</strong>
+                                    <p class="col-form-static py-2 my-0">
+                                        <span class="badge @(Model.PackageActive? "badge-success" : "badge-secondary")" id="status-value">
+                                            @(Model.PackageActive? "Active" : "Disabled")
+                                        </span>
+                                    </p>
+                                </div>
+                                <div class="form-group col-sm-5 my-0">
+                                    <strong>Name</strong>
+                                    <p class="col-form-static py-2 my-0">@Model.PackageName</p>
+                                </div>
+                                <div class="form-group col-sm-3 my-0">
+                                    <strong>Cost (Gold)</strong>
+                                    <p class="col-form-static py-2 my-0" style="padding-right:0px;" id="label-button">
+                                        <label>@Model.PackageCost</label>
+                                        <button class="btn btn-sm btn-primary btn-edit float-right" type="button"
+                                                data-package-id="@Model.PackageId"
+                                                data-package-name="@Model.PackageName"
+                                                data-package-cost="@Model.PackageCost"
+                                                data-package-active="@Model.PackageActive"
+                                                data-toggle="modal" data-target="#edit-modal" data-modal="package-edit">
+                                            <i class="fa fa-pencil"></i>&nbsp;Edit
+                                        </button>
+                                    </p>
+                                </div>
+                            </div>
+                            <hr class="wdt-8 hr" style="margin-top:0px;" />
+
+                            <div>
+                                <ul class="nav nav-tabs" role="tablist">
+                                    <li class="nav-item active">
+                                        <a class="nav-link active" data-toggle="tab" href="#tab-rewards" role="tab">Rewards</a>
+                                    </li>
+                                </ul>
+                                <div class="tab-content" id="user-tabs">
+                                    <div class="tab-pane active" id="tab-rewards" role="tabpanel">
+                                        @await Html.PartialAsync("_PackageRewardsView", new _PackageRewardsViewModel(Model.Package), Helper.ViewRegion(ViewData, "HTMLSection"))
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+}
+else if (Helper.IsRegion(ViewData, "ScriptSection"))
+{
+    <script>
+
+        showModal['package-edit'] = {
+            width: 600,
+            requestData: function (buttonElement) {
+                return {
+                    handler: 'EditPackageView',
+                    packageId: buttonElement.data('package-id'),
+                    name: buttonElement.data('package-name'),
+                    cost: buttonElement.data('package-cost'),
+                    active: buttonElement.data('package-active')
+                }
+            },
+            requestSubmit: function (event) {
+                let modalForm = document.getElementById('package-modal-form');
+                let formStatusActive = modalForm.querySelector('#status-check').checked;
+                let packageModal = document.getElementById('package-modal');
+
+                let statusValue = packageModal.querySelector('#status-value');
+                statusActive = statusValue.classList.contains('badge-success');
+
+                if ((newValue === '') && (formStatusActive === statusActive)) {
+                    event.preventDefault();
+                    $('#edit-modal').modal('hide');
+                    return false;
+                }
+
+                let valueInput = document.getElementById('package-modal-form').querySelector('input[name="PackageCost"]');
+                valueInput.value = newValue;
+
+                return true;
+            }
+        }
+
+        hideModal['package-modal-form'] = {
+            requestData: function (form) {
+                let packageModal = document.getElementById('package-modal');
+
+                let labelBtn = packageModal.querySelector('#label-button');
+                let button = $(labelBtn.querySelector('button'));
+
+                if (newValue !== '') {
+                    let formattedValue = newValue.replace(/(\d)(?=(\d{3})+(?!\d))/g, '$1,');
+                    $(labelBtn.querySelector('label')).text(formattedValue);
+                    button.data('package-cost', newValue);
+                }
+
+                let statusActive = form.querySelector('#status-check').checked;
+                let statusValue = packageModal.querySelector('#status-value');
+                if (statusActive) {
+                    statusValue.classList.remove('badge-secondary');
+                    statusValue.classList.add('badge-success');
+                    statusValue.textContent = 'Active';
+                }
+                else {
+                    statusValue.classList.remove('badge-success');
+                    statusValue.classList.add('badge-secondary');
+                    statusValue.textContent = 'Disabled';
+                }
+                button.data('package-active', statusActive);
+
+                return null;
+            }
+        }
+
+    </script>
+}

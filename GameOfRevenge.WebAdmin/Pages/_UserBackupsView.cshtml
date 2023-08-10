@@ -1,286 +1,293 @@
-﻿@model _UserBackupsViewModel
-@using WebAdmin.Pages
+﻿@model GameOfRevenge.WebAdmin.Pages._UserBackupsViewModel
+@using GameOfRevenge.WebAdmin
 
-<style>
-    .table-fixed {
-        table-layout: fixed;
-        width: 100%;
-    }
+@if (Helper.IsRegion(ViewData, "StyleSection"))
+{
+    <style>
+        .table-fixed {
+            table-layout: fixed;
+            width: 100%;
+        }
 
-    .table-fixed tbody {
-        height: 200px;
-        overflow-y: auto;
-        width: 100%;
-    }
+        .table-fixed tbody {
+            height: 250px;
+            overflow-y: auto;
+            width: 100%;
+        }
 
-    .table-fixed thead tr th {
-        float: left;
-    }
+        .table-fixed thead tr th {
+            float: left;
+        }
 
-    .table-fixed tbody td {
-        float: left;
-    }
+        .table-fixed tbody td {
+            float: left;
+        }
 
-    .table-fixed thead,
-    .table-fixed tbody,
-    .table-fixed tr,
-    .table-fixed td,
-    .table-fixed th {
-        display: block;
-    }
+        .table-fixed thead,
+        .table-fixed tbody,
+        .table-fixed tr,
+        .table-fixed td,
+        .table-fixed th {
+            display: block;
+        }
 
-    .wdt-h {
-        width: 5%;
-    }
-    .wdt-1
-    {
-        width: 10%;
-    }
-    .wdt-1h {
-        width: 15%;
-    }
-    .wdt-2 {
-        width: 20%;
-    }
-    .wdt-2h {
-        width: 25%;
-    }
-    .wdt-3 {
-        width: 30%;
-    }
-    .wdt-4 {
-        width: 40%;
-    }
-    .wdt-5 {
-        width: 50%;
-    }
-    .wdt-6 {
-        width: 60%;
-    }
-    .wdt-6h {
-        width: 65%;
-    }
-    .wdt-7 {
-        width: 70%;
-    }
-    .wdt-8 {
-        width: 80%;
-    }
-    .wdt-9 {
-        width: 90%;
-    }
-    .wdt-10 {
-        width: 100%;
-    }
-
-    .btn-edit {
-        padding-top: 2px;
-        padding-bottom: 2px;
-    }
-
-    .btn-action {
-        padding-top: 0px;
-        padding-bottom: 0px;
-        border-top: 0px;
-        border-bottom: 0px;
-    }
-
-
-    /*    .table-status:empty {
-        flex-grow: 1;
-    }*/
-    .py-5 {
-        padding-top: 1.5rem !important;
-        padding-bottom: 0rem !important;
-    }
-
-    .label-group-header {
-        position: absolute;
-        font-size: 0.8rem;
-        margin-top: -15px;
-    }
-
-    .label-group-header span {
-        background-color: #fff;
-        padding: 0px 10px;
-    }
-
-    .label-group-title {
-        display: flex;
-    }
-
-    .label-group-title span {
-        font-size: 0.9rem;
-        flex-grow: 1;
-    }
-</style>
-
-<table class="table table-responsive-sm table-sm table-fixed">
-    <!-- table-responsive-sm table-bordered table-striped table-sm table-fixed"> -->
-    <thead>
-        <tr>
-            <th class="wdt-h">
-                &nbsp;
-            </th>
-            <th class="wdt-3">
-                Date and time (UTC)
-            </th>
-            <th class="wdt-6h">
-                Description
-                <span class="text-muted float-right">
-                    <button class="btn btn-sm btn-primary btn-action" type="button" id="restore-backup" disabled
-                            data-toggle="modal" data-target="#edit-modal" data-modal="restore">
-                        <i class="fa fa-undo"></i>&nbsp;Restore
-                    </button>
-                    &nbsp;
-                    <button class="btn btn-sm btn-primary btn-action" type="button"
-                            data-toggle="modal" data-target="#edit-modal" data-modal="backup">
-                        <i class="fa fa-save"></i>&nbsp;New Backup
-                    </button>
-                </span>
-            </th>
-        </tr>
-    </thead>
-    <tbody>
-        @if (Model.Data != null) for (int i = 0; i < Model.Data.Count; i++)
+        .wdt-h {
+            width: 5%;
+        }
+        .wdt-1
         {
-            <tr class="text-muted">
-                <td class="wdt-h py-2 @(((i % 2) == 0)? "bg-gray-100": "")">
-                    <input type="radio" name="radioGroup" id="radio_@Model.Data[i].BackupId" onclick="handleRadioInputClick(event)"
-                           data-backup-id="@Model.Data[i].BackupId" data-backup-date="@Model.FullDate(Model.Data[i].BackupDate)">
-                </td>
-                <td class="wdt-3 py-2 @(((i % 2) == 0)? "bg-gray-100": "")">
-                    <span>@Model.FullDate(Model.Data[i].BackupDate)</span>
-                </td>
-                <td class="wdt-6h py-2 @(((i % 2) == 0)? "bg-gray-100": "")">
-                    <span>@Model.Data[i].Description</span>
-                </td>
-            </tr>
+            width: 10%;
         }
-    </tbody>
-</table>
+        .wdt-1h {
+            width: 15%;
+        }
+        .wdt-2 {
+            width: 20%;
+        }
+        .wdt-2h {
+            width: 25%;
+        }
+        .wdt-3 {
+            width: 30%;
+        }
+        .wdt-4 {
+            width: 40%;
+        }
+        .wdt-5 {
+            width: 50%;
+        }
+        .wdt-6 {
+            width: 60%;
+        }
+        .wdt-6h {
+            width: 65%;
+        }
+        .wdt-7 {
+            width: 70%;
+        }
+        .wdt-8 {
+            width: 80%;
+        }
+        .wdt-9 {
+            width: 90%;
+        }
+        .wdt-10 {
+            width: 100%;
+        }
 
-<script>
-    var selectedRadioId = 'radio-none';
+        .btn-edit {
+            padding-top: 2px;
+            padding-bottom: 2px;
+        }
 
-//    $(document).ready(function() {
-/*        var attackLabels = document.getElementsByClassName('label-group');
+        .btn-action {
+            padding-top: 0px;
+            padding-bottom: 0px;
+            border-top: 0px;
+            border-bottom: 0px;
+        }
 
-        for (var i = 0; i < attackLabels.length; i++) {
-            var thWidth = attackLabels[i].parentNode.width;
-            attackLabels[i].style.width = (thWidth * 2) + "px";
+
+        /*    .table-status:empty {
+            flex-grow: 1;
         }*/
-//        const radioButtons = document.querySelectorAll('input[type="radio"]');
-
-//        radioButtons.forEach((radioButton) => {
-//            radioButton.addEventListener('input', handleRadioInputChange);
-//        });
-//    });
-
-    function handleRadioInputClick(event) {
-        let btnAction = document.getElementById('restore-backup');
-
-        let radioButton = event.target;
-        if (radioButton.id === selectedRadioId) {
-            event.preventDefault();
-            selectedRadioId = 'radio-none';
-            btnAction.disabled = true;
-            radioButton.closest('tr').classList.add('text-muted');
-            radioButton.disabled = true;
-
-            setTimeout(function () {
-                radioButton.disabled = false;
-                radioButton.checked = false;
-            }, 100);
-            return;
+        .py-5 {
+            padding-top: 1.5rem !important;
+            padding-bottom: 0rem !important;
         }
 
-        let prevButton = document.querySelector('#' + selectedRadioId);
-        if (prevButton !== null) prevButton.closest('tr').classList.add('text-muted');
-        selectedRadioId = radioButton.id;
-        btnAction.disabled = false;
-        radioButton.closest('tr').classList.remove('text-muted');
-    }
-
-    showModal['restore'] = {
-        width: 500,
-        requestData: function (buttonElement) {
-            let radioBtn = $('#' + selectedRadioId);
-            return {
-                handler: 'RestoreBackupView',
-                playerId: playerId,
-                backupId: radioBtn.data('backup-id'),
-                date: radioBtn.data('backup-date')
-            }
-        },
-        requestSubmit: function (event) {
-//            let restoreValuesInput = document.getElementById('restore-modal-form').querySelector('input[name="RestoreValues"]');
-//            restoreValuesInput.value = backupId;
-
-            return true;
+        .label-group-header {
+            position: absolute;
+            font-size: 0.8rem;
+            margin-top: -15px;
         }
-    }
 
-    hideModal['restore-modal-form'] = {
-        requestData: function () {
-            return {
-                handler: 'FullPlayerData',
-                playerId: playerId
+        .label-group-header span {
+            background-color: #fff;
+            padding: 0px 10px;
+        }
+
+        .label-group-title {
+            display: flex;
+        }
+
+        .label-group-title span {
+            font-size: 0.9rem;
+            flex-grow: 1;
+        }
+    </style>
+}
+else if (Helper.IsRegion(ViewData, "HTMLSection"))
+{
+    <table class="table table-responsive-sm table-sm table-fixed mb-0">
+        <!-- table-responsive-sm table-bordered table-striped table-sm table-fixed"> -->
+        <thead>
+            <tr>
+                <th class="wdt-h">
+                    &nbsp;
+                </th>
+                <th class="wdt-3">
+                    Date and time (UTC)
+                </th>
+                <th class="wdt-6h">
+                    Description
+                    <span class="text-muted float-right">
+                        <button class="btn btn-sm btn-primary btn-action" type="button" id="restore-backup" disabled
+                                data-toggle="modal" data-target="#edit-modal" data-modal="restore">
+                            <i class="fa fa-undo"></i>&nbsp;Restore
+                        </button>
+                        &nbsp;
+                        <button class="btn btn-sm btn-primary btn-action" type="button"
+                                data-toggle="modal" data-target="#edit-modal" data-modal="backup">
+                            <i class="fa fa-save"></i>&nbsp;New Backup
+                        </button>
+                    </span>
+                </th>
+            </tr>
+        </thead>
+        <tbody>
+            @if (Model.Data != null) for (int i = 0; i < Model.Data.Count; i++)
+                {
+                <tr class="text-muted">
+                    <td class="wdt-h py-2 @(((i % 2) == 0) ? "bg-gray-100" : "")">
+                        <input type="radio" name="radioGroup" id="radio_@Model.Data[i].BackupId" onclick="handleRadioInputClick(event)"
+                               data-backup-id="@Model.Data[i].BackupId" data-backup-date="@Model.FullDate(Model.Data[i].BackupDate)">
+                    </td>
+                    <td class="wdt-3 py-2 @(((i % 2) == 0) ? "bg-gray-100" : "")">
+                        <span>@Model.FullDate(Model.Data[i].BackupDate)</span>
+                    </td>
+                    <td class="wdt-6h py-2 @(((i % 2) == 0) ? "bg-gray-100" : "")">
+                        <span>@Model.Data[i].Description</span>
+                    </td>
+                </tr>
+                }
+        </tbody>
+    </table>
+}
+else if (Helper.IsRegion(ViewData, "ScriptSection"))
+{
+    <script>
+        var selectedRadioId = 'radio-none';
+
+    //    $(document).ready(function() {
+    /*        var attackLabels = document.getElementsByClassName('label-group');
+
+            for (var i = 0; i < attackLabels.length; i++) {
+                var thWidth = attackLabels[i].parentNode.width;
+                attackLabels[i].style.width = (thWidth * 2) + "px";
+            }*/
+    //        const radioButtons = document.querySelectorAll('input[type="radio"]');
+
+    //        radioButtons.forEach((radioButton) => {
+    //            radioButton.addEventListener('input', handleRadioInputChange);
+    //        });
+    //    });
+
+        function handleRadioInputClick(event) {
+            let btnAction = document.getElementById('restore-backup');
+
+            let radioButton = event.target;
+            if (radioButton.id === selectedRadioId) {
+                event.preventDefault();
+                selectedRadioId = 'radio-none';
+                btnAction.disabled = true;
+                radioButton.closest('tr').classList.add('text-muted');
+                radioButton.disabled = true;
+
+                setTimeout(function () {
+                    radioButton.disabled = false;
+                    radioButton.checked = false;
+                }, 100);
+                return;
             }
-        },
-        requestSuccess: function (result) {
-            let json = result.data;
 
-            if (json != null) {
-                let playerData = JSON.parse(json);
-                let usersTable = $('#users-table');
-                let userRow = usersTable.find('#user-' + playerId);
-                let userNameElement = userRow.find('#user-name');
-                let userIdElement = userRow.find('#user-id');
-                if (userIdElement != null) {
-                    let userKingLvlElement = userRow.find('#user-kinglevel');
-                    let userVipLvlElement = userRow.find('#user-viplevel');
-                    let userCastleLvlElement = userRow.find('#user-castlelevel');
+            let prevButton = document.querySelector('#' + selectedRadioId);
+            if (prevButton !== null) prevButton.closest('tr').classList.add('text-muted');
+            selectedRadioId = radioButton.id;
+            btnAction.disabled = false;
+            radioButton.closest('tr').classList.remove('text-muted');
+        }
 
-                    userNameElement.text(playerData.PlayerName);
-                    userKingLvlElement.text(playerData.King.Level);
-                    userVipLvlElement.text(playerData.VIP.Level);
-                    userCastleLvlElement.text(playerData.CastleLevel);
+        showModal['restore'] = {
+            width: 500,
+            requestData: function (buttonElement) {
+                let radioBtn = $('#' + selectedRadioId);
+                return {
+                    handler: 'RestoreBackupView',
+                    playerId: playerId,
+                    backupId: radioBtn.data('backup-id'),
+                    date: radioBtn.data('backup-date')
+                }
+            },
+            requestSubmit: function (event) {
+    //            let restoreValuesInput = document.getElementById('restore-modal-form').querySelector('input[name="RestoreValues"]');
+    //            restoreValuesInput.value = backupId;
+
+                return true;
+            }
+        }
+
+        hideModal['restore-modal-form'] = {
+            requestData: function (form) {
+                return {
+                    handler: 'FullPlayerData',
+                    playerId: playerId
+                }
+            },
+            requestSuccess: function (result) {
+                let json = result.data;
+
+                if (json != null) {
+                    let playerData = JSON.parse(json);
+                    let usersTable = $('#users-table');
+                    let userRow = usersTable.find('#user-' + playerId);
+                    let userNameElement = userRow.find('#user-name');
+                    let userIdElement = userRow.find('#user-id');
+                    if (userIdElement != null) {
+                        let userKingLvlElement = userRow.find('#user-kinglevel');
+                        let userVipLvlElement = userRow.find('#user-viplevel');
+                        let userCastleLvlElement = userRow.find('#user-castlelevel');
+
+                        userNameElement.text(playerData.PlayerName);
+                        userKingLvlElement.text(playerData.King.Level);
+                        userVipLvlElement.text(playerData.VIP.Level);
+                        userCastleLvlElement.text(playerData.CastleLevel);
+                    }
+                }
+
+                $('#user-modal').modal('hide');
+
+    //            $('#tab-backups').html(result);
+            }
+        }
+
+        showModal['backup'] = {
+            width: 500,
+            requestData: function (buttonElement) {
+                return {
+                    handler: 'CreateBackupView',
+                    playerId: playerId
+                }
+            },
+            requestSubmit: function (event) {
+    //            let restoreValuesInput = document.getElementById('restore-modal-form').querySelector('input[name="RestoreValues"]');
+    //            restoreValuesInput.value = backupId;
+
+                return true;
+            }
+        }
+
+        hideModal['backup-modal-form'] = {
+            requestData: function (form) {
+                return {
+                    handler: 'BackupsView',
+                    playerId: playerId
                 }
             }
-
-            $('#user-modal').modal('hide');
-
-//            $('#tab-backups').html(result);
-        }
-    }
-
-    showModal['backup'] = {
-        width: 500,
-        requestData: function (buttonElement) {
-            return {
-                handler: 'CreateBackupView',
-                playerId: playerId
-            }
-        },
-        requestSubmit: function (event) {
-//            let restoreValuesInput = document.getElementById('restore-modal-form').querySelector('input[name="RestoreValues"]');
-//            restoreValuesInput.value = backupId;
-
-            return true;
-        }
-    }
-
-    hideModal['backup-modal-form'] = {
-        requestData: function () {
-            return {
-                handler: 'BackupsView',
-                playerId: playerId
+            ,
+            requestSuccess: function (result) {
+                $('#tab-backups').html(result);
             }
         }
-        ,
-        requestSuccess: function (result) {
-            $('#tab-backups').html(result);
-        }
-    }
-</script>
+    </script>
+}

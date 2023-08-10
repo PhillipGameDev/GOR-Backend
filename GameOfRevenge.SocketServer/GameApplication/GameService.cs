@@ -92,10 +92,11 @@ namespace GameOfRevenge.GameApplication
             BKingdomManager = new KingdomManager();
             BkingdomePvpManager = new KingdomPvPManager();
             BRealTimeUpdateManager = new RealTimeUpdateManager();
-            RealTimeUpdateManagerQuestValidator = new RealTimeUpdateManagerQuestValidator();
             BAccountManager = new AccountManager();
-
             BChatManager = new ChatManager();
+
+            var adminManager = new AdminDataManager(BPlayerManager, new ClanManager(), BUserQuestManager );
+            RealTimeUpdateManagerQuestValidator = new RealTimeUpdateManagerQuestValidator(adminManager, BUserQuestManager);
 
             instance = new object();
 

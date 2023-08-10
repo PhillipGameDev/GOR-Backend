@@ -1,207 +1,214 @@
-﻿@model _UserHeroesViewModel
-@using WebAdmin.Pages
+﻿@model GameOfRevenge.WebAdmin.Pages._UserHeroesViewModel
+@using GameOfRevenge.WebAdmin
 @using GameOfRevenge.Common.Models
 
-<style>
-    .table-fixed {
-        table-layout: fixed;
-        width: 100%;
-    }
+@if (Helper.IsRegion(ViewData, "StyleSection"))
+{
+    <style>
+        .table-fixed {
+            table-layout: fixed;
+            width: 100%;
+        }
 
-    .table-fixed tbody {
-        height: 200px;
-        overflow-y: auto;
-        width: 100%;
-    }
+        .table-fixed tbody {
+            height: 250px;
+            overflow-y: auto;
+            width: 100%;
+        }
 
-    .table-fixed thead tr th {
-        float: left;
-    }
+        .table-fixed thead tr th {
+            float: left;
+        }
 
-    .table-fixed tbody td {
-        float: left;
-    }
+        .table-fixed tbody td {
+            float: left;
+        }
 
-    .table-fixed thead,
-    .table-fixed tbody,
-    .table-fixed tr,
-    .table-fixed td,
-    .table-fixed th {
-        display: block;
-    }
+        .table-fixed thead,
+        .table-fixed tbody,
+        .table-fixed tr,
+        .table-fixed td,
+        .table-fixed th {
+            display: block;
+        }
 
-    .wdt-h {
-        width: 5%;
-    }
-    .wdt-1
-    {
-        width: 10%;
-    }
-    .wdt-1h {
-        width: 15%;
-    }
-    .wdt-2 {
-        width: 20%;
-    }
-    .wdt-2h {
-        width: 25%;
-    }
-    .wdt-3 {
-        width: 30%;
-    }
-    .wdt-4 {
-        width: 40%;
-    }
-    .wdt-5 {
-        width: 50%;
-    }
-    .wdt-6 {
-        width: 60%;
-    }
-    .wdt-7 {
-        width: 70%;
-    }
-    .wdt-8 {
-        width: 80%;
-    }
-    .wdt-9 {
-        width: 90%;
-    }
-    .wdt-10 {
-        width: 100%;
-    }
-
-    .btn-edit {
-        padding-top: 2px;
-        padding-bottom: 2px;
-    }
-
-
-    /*    .table-status:empty {
-        flex-grow: 1;
-    }*/
-    .py-5 {
-        padding-top: 1.5rem !important;
-        padding-bottom: 0rem !important;
-    }
-
-    .label-group-header {
-        position: absolute;
-        font-size: 0.8rem;
-        margin-top: -15px;
-    }
-
-    .label-group-header span {
-        background-color: #fff;
-        padding: 0px 10px;
-    }
-
-    .label-group-title {
-        display: flex;
-    }
-
-    .label-group-title span {
-        font-size: 0.9rem;
-        flex-grow: 1;
-    }
-</style>
-
-<table class="table table-responsive-sm table-sm table-fixed">
-    <!-- table-responsive-sm table-bordered table-striped table-sm table-fixed"> -->
-    <thead>
-        <tr>
-            <th class="wdt-2h">Hero</th>
-
-            <th class="wdt-3 text-center" colspan="2">
-                <div class="wdt-2h text-muted label-group-header">
-                    <span>Attack</span>
-                </div>
-                <div class="label-group-title">
-                    <span>Attempts</span>&nbsp;<span>Failures</span>
-                </div>
-            </th>
-
-            <th class="wdt-3 text-center" colspan="2">
-                <div class="wdt-2h text-muted label-group-header">
-                    <span>Defense</span>
-                </div>
-                <div class="label-group-title">
-                    <span>Engagements</span>&nbsp;<span>Failures</span>
-                </div>
-            </th>
-
-            <th class="wdt-1h text-center">Points</th>
-        </tr>
-    </thead>
-    <tbody>
-        @if (Model.Data != null) foreach (var hero in Model.Data)
+        .wdt-h {
+            width: 5%;
+        }
+        .wdt-1
         {
+            width: 10%;
+        }
+        .wdt-1h {
+            width: 15%;
+        }
+        .wdt-2 {
+            width: 20%;
+        }
+        .wdt-2h {
+            width: 25%;
+        }
+        .wdt-3 {
+            width: 30%;
+        }
+        .wdt-4 {
+            width: 40%;
+        }
+        .wdt-5 {
+            width: 50%;
+        }
+        .wdt-6 {
+            width: 60%;
+        }
+        .wdt-7 {
+            width: 70%;
+        }
+        .wdt-8 {
+            width: 80%;
+        }
+        .wdt-9 {
+            width: 90%;
+        }
+        .wdt-10 {
+            width: 100%;
+        }
+
+        .btn-edit {
+            padding-top: 2px;
+            padding-bottom: 2px;
+        }
+
+
+        /*    .table-status:empty {
+            flex-grow: 1;
+        }*/
+        .py-5 {
+            padding-top: 1.5rem !important;
+            padding-bottom: 0rem !important;
+        }
+
+        .label-group-header {
+            position: absolute;
+            font-size: 0.8rem;
+            margin-top: -15px;
+        }
+
+        .label-group-header span {
+            background-color: #fff;
+            padding: 0px 10px;
+        }
+
+        .label-group-title {
+            display: flex;
+        }
+
+        .label-group-title span {
+            font-size: 0.9rem;
+            flex-grow: 1;
+        }
+    </style>
+}
+else if (Helper.IsRegion(ViewData, "HTMLSection"))
+{
+    <table class="table table-responsive-sm table-sm table-fixed mb-0">
+        <!-- table-responsive-sm table-bordered table-striped table-sm table-fixed"> -->
+        <thead>
             <tr>
-                <td class="wdt-10 bg-gray-100">
-                    <span>@hero.HeroType @(hero.IsMarching? "(Marching)" : "")</span>
-                    <span class="text-muted float-right">
-                        <button class="btn btn-sm btn-primary btn-edit float-right" type="button"
-                                data-hero-type="@hero.HeroType" data-hero-name="@hero.HeroType"
-                                data-hero-value="@hero.Points"
-                                data-toggle="modal" data-target="#edit-modal" data-modal="hero">
-                            <i class="fa fa-pencil"></i>&nbsp;Edit
-                        </button>
-                    </span>
-                </td>
+                <th class="wdt-2h">Hero</th>
+
+                <th class="wdt-3 text-center" colspan="2">
+                    <div class="wdt-2h text-muted label-group-header">
+                        <span>Attack</span>
+                    </div>
+                    <div class="label-group-title">
+                        <span>Attempts</span>&nbsp;<span>Failures</span>
+                    </div>
+                </th>
+
+                <th class="wdt-3 text-center" colspan="2">
+                    <div class="wdt-2h text-muted label-group-header">
+                        <span>Defense</span>
+                    </div>
+                    <div class="label-group-title">
+                        <span>Engagements</span>&nbsp;<span>Failures</span>
+                    </div>
+                </th>
+
+                <th class="wdt-1h text-center">Points</th>
             </tr>
-            <tr>
-                <td class="wdt-2h align-middle text-muted">&nbsp;&nbsp;&nbsp;&nbsp;Level @hero.Level</td>
+        </thead>
+        <tbody>
+            @if (Model.Data != null) foreach (var hero in Model.Data)
+            {
+                <tr>
+                    <td class="wdt-10 bg-gray-100">
+                        <span>@hero.HeroType @(hero.IsMarching? "(Marching)" : "")</span>
+                        <span class="text-muted float-right">
+                            <button class="btn btn-sm btn-primary btn-edit float-right" type="button"
+                                    data-hero-type="@hero.HeroType" data-hero-name="@hero.HeroType"
+                                    data-hero-value="@hero.Points"
+                                    data-toggle="modal" data-target="#edit-modal" data-modal="hero">
+                                <i class="fa fa-pencil"></i>&nbsp;Edit
+                            </button>
+                        </span>
+                    </td>
+                </tr>
+                <tr>
+                    <td class="wdt-2h align-middle text-muted">&nbsp;&nbsp;&nbsp;&nbsp;Level @hero.Level</td>
 
-                <td class="wdt-1h align-middle text-center">@hero.AttackCount</td>
-                <td class="wdt-1h align-middle text-center">@hero.AttackFail</td>
+                    <td class="wdt-1h align-middle text-center">@hero.AttackCount</td>
+                    <td class="wdt-1h align-middle text-center">@hero.AttackFail</td>
 
-                <td class="wdt-1h align-middle text-center">@hero.DefenseCount</td>
-                <td class="wdt-1h align-middle text-center">@hero.DefenseFail</td>
+                    <td class="wdt-1h align-middle text-center">@hero.DefenseCount</td>
+                    <td class="wdt-1h align-middle text-center">@hero.DefenseFail</td>
 
-                <td class="wdt-1h align-middle text-center">@hero.Points</td>
-            </tr>
-        }
-    </tbody>
-</table>
-
-<script>
-    showModal['hero'] = {
-        width: 500,
-        requestData: function (buttonElement) {
-            return {
-                handler: 'EditHeroView',
-                playerId: playerId,
-                heroType: buttonElement.data('hero-type')
+                    <td class="wdt-1h align-middle text-center">@hero.Points</td>
+                </tr>
             }
-        },
-        requestSubmit: function (event) {
-            if (newValue === '') {
-                event.preventDefault();
-                $('#edit-modal').modal('hide');
-                return false;
+        </tbody>
+    </table>
+}
+else if (Helper.IsRegion(ViewData, "ScriptSection"))
+{
+    <script>
+        showModal['hero'] = {
+            width: 500,
+            requestData: function (buttonElement) {
+                return {
+                    handler: 'EditHeroView',
+                    playerId: playerId,
+                    heroType: buttonElement.data('hero-type')
+                }
+            },
+            requestSubmit: function (event) {
+                if (newValue === '') {
+                    event.preventDefault();
+                    $('#edit-modal').modal('hide');
+                    return false;
+                }
+
+                let heroValuesInput = document.getElementById('hero-modal-form').querySelector('input[name="HeroValues"]');
+                heroValuesInput.value = newValue;//JSON.stringify(multipleValues);
+
+                return true;
+            },
+            inputListener: function (modal, value) {
+                let pts = parseInt(value);
+                let lvl = (pts > 0)? (Math.floor(pts / @UserHeroDetails.UNLOCK_POINTS)) : 0;
+                modal.querySelector('#label-newvalue').textContent = 'New Value (Level ' + lvl + ')';
             }
-
-            let heroValuesInput = document.getElementById('hero-modal-form').querySelector('input[name="HeroValues"]');
-            heroValuesInput.value = newValue;//JSON.stringify(multipleValues);
-
-            return true;
-        },
-        inputListener: function (modal, value) {
-            let pts = parseInt(value);
-            let lvl = (pts > 0)? (Math.floor(pts / @UserHeroDetails.UNLOCK_POINTS)) : 0;
-            modal.querySelector('#label-newvalue').textContent = 'New Value (Level ' + lvl + ')';
         }
-    }
 
-    hideModal['hero-modal-form'] = {
-        requestData: function () {
-            return {
-                handler: 'HeroesView',
-                playerId: playerId
+        hideModal['hero-modal-form'] = {
+            requestData: function (form) {
+                return {
+                    handler: 'HeroesView',
+                    playerId: playerId
+                }
+            },
+            requestSuccess: function (result) {
+                $('#tab-heroes').html(result);
             }
-        },
-        requestSuccess: function (result) {
-            $('#tab-heroes').html(result);
         }
-    }
-</script>
+    </script>
+}

@@ -1,20 +1,17 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Linq;
-using System.Threading;
 using System.Threading.Tasks;
-using GameOfRevenge.Business.Manager.UserData;
+using System.Collections.Generic;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.RazorPages;
 using GameOfRevenge.Common;
 using GameOfRevenge.Common.Models;
 using GameOfRevenge.Common.Models.Boost;
-using GameOfRevenge.Common.Models.Quest;
-using GameOfRevenge.WebAdmin;
+using GameOfRevenge.Business.Manager.UserData;
 using GameOfRevenge.WebAdmin.Models;
-using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.Mvc.RazorPages;
-using static GameOfRevenge.WebAdmin.Models.UserModel;
+using GameOfRevenge.Common.Interface.UserData;
 
-namespace WebAdmin.Pages
+namespace GameOfRevenge.WebAdmin.Pages
 {
     public class _UserRewardsViewModel : PageModel
     {
@@ -199,42 +196,21 @@ namespace WebAdmin.Pages
             Data = rewards;
         }
 
-/*        public static List<UserHeroDetails> ViewHeroes(FullPlayerCompleteData fullPlayerData)
+        public static async Task<IActionResult> OnGetRewardsViewAsync(IAdminDataManager manager, int playerId)
         {
-            var list = new List<UserHeroDetails>();
-            var types = Enum.GetValues(typeof(HeroType));
-            foreach (HeroType heroType in types)
-            {
-                if (heroType == HeroType.Unknown) continue;
+//            Console.WriteLine("get rewards ply="+playerId);
 
-                UserHeroDetails hero = null;
-                if ((fullPlayerData != null) && (fullPlayerData.Heroes != null))
-                {
-                    hero = fullPlayerData.Heroes.Find(x => (x.HeroType == heroType));
-                }
-                if (hero == null) hero = new UserHeroDetails() { HeroType = heroType };
+            var list = await manager.GetAllPlayerRewards(playerId);
 
-                list.Add(hero);
-            }
-
-            return list;
-        }*/
-
-        public static async Task<IActionResult> OnGetRewardsViewAsync(UserModel userModel, int playerId)
-        {
-//            Console.WriteLine("get backups ply="+playerId);
-
-            var list = await userModel.GetAllPlayerRewards(playerId);
-
-            return UserModel.NewPartial("_UserRewardsView", new _UserRewardsViewModel(list));
+            return UsersModel.NewPartial("_UserRewardsView", new _UserRewardsViewModel(list));
         }
 
-        public static async Task<IActionResult> OnGetEditRewardViewAsync(UserModel userModel, int playerId, long playerDataId, string description)
+        public static async Task<IActionResult> OnGetEditRewardViewAsync(IAdminDataManager manager, int playerId, long playerDataId, string description)
         {
 //            Console.WriteLine("get reward ply="+playerId+" id="+ playerDataId+ " description="+description);
 
             InputRewardModel model = null;
-            var allRewards = await userModel.GetAllPlayerRewards(playerId);
+            var allRewards = await manager.GetAllPlayerRewards(playerId);
             if (allRewards != null)
             {
                 var data = allRewards.Find(x => (x.PlayerDataId == playerDataId));
@@ -250,15 +226,15 @@ namespace WebAdmin.Pages
                 }
             }
 
-            return UserModel.NewPartial("Forms/_EditRewardView", model);
+            return UsersModel.NewPartial("Forms/_EditRewardView", model);
         }
 
-        public static async Task<IActionResult> OnGetAddRewardsViewAsync(UserModel userModel, int playerId, bool applyToAll)
+        public static async Task<IActionResult> OnGetAddRewardsViewAsync(IAdminDataManager manager, int playerId, bool applyToAll)
         {
 //            Console.WriteLine("get add rewards ply=" + playerId+"  apply to all="+applyToAll);
 
             InputRewardsModel model = null;
-            var allRewards = await userModel.GetAvailableRewards();
+            var allRewards = await manager.GetAvailableRewards();
             if (allRewards != null)
             {
                 var uniqueDataTypes = allRewards.GroupBy(dataReward => dataReward.DataType)
@@ -277,10 +253,10 @@ namespace WebAdmin.Pages
                 };
             }
 
-            return UserModel.NewPartial("Forms/_AddRewardsView", model);
+            return UsersModel.NewPartial("Forms/_AddRewardsView", model);
         }
 
-        public static async Task<IActionResult> OnPostSaveRewardChangeAsync(UserModel userModel, InputRewardModel inputReward)
+        public static async Task<IActionResult> OnPostSaveRewardChangeAsync(IAdminDataManager manager, InputRewardModel inputReward)
         {
             int playerId = inputReward.PlayerId;
             long playerDataId = inputReward.PlayerDataId;
@@ -294,7 +270,7 @@ namespace WebAdmin.Pages
             return new JsonResult(new { Success = true });
         }
 
-        public static async Task<IActionResult> OnPostAddRewardAsync(UserModel userModel, InputRewardsModel inputRewards)
+        public static async Task<IActionResult> OnPostAddRewardAsync(IAdminDataManager manager, InputRewardsModel inputRewards)
         {
             int playerId = inputRewards.PlayerId;
             bool applyToAll = inputRewards.ApplyToAll;
@@ -310,7 +286,7 @@ namespace WebAdmin.Pages
                 var pdm = new PlayerDataManager();
                 if (applyToAll)
                 {
-                    var playersResp = await userModel.AdminManager.GetPlayers();
+                    var playersResp = await manager.GetPlayers();
                     if (!playersResp.IsSuccess || !playersResp.HasData) throw new Exception(playersResp.Message);
 
                     foreach (var ply in playersResp.Data)

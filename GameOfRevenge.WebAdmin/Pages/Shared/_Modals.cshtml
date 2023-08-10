@@ -1,0 +1,265 @@
+﻿@using GameOfRevenge.WebAdmin
+
+@if (Helper.IsRegion(ViewData, "StyleSection"))
+{
+    <style>
+        .modal-opened2::after {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            z-index: 1040;
+        }
+
+        .modal-opened3::after {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            z-index: 1030;
+        }
+
+        .modal.show .modal-dialog2 {
+            -webkit-transform: translate(0, 25%);
+            transform: translate(0, 25%);
+            z-index: 1050;
+        }
+
+        .modal.show .modal-dialog3 {
+            -webkit-transform: translate(0, 70%);
+            transform: translate(0, 70%);
+        }
+    </style>
+}
+else if (Helper.IsRegion(ViewData, "HTMLSection"))
+{
+    <!-- Edit Modal -->
+    <div class="modal fade modal-stack modal-opened2" id="edit-modal" tabindex="-1" role="dialog" style="display: none;">
+        <div class="modal-dialog modal-dialog2 modal-warning" role="document">
+            <div class="modal-content">
+            </div>
+        </div>
+    </div>
+    <!-- Save Modal -->
+    <div class="modal fade modal-stack modal-opened3" id="save-modal" tabindex="-1" role="dialog"
+         data-backdrop="static" style="display: none;">
+        <div class="modal-dialog modal-dialog3 modal-sm" role="document" style="z-index:1050">
+            <div class="modal-content">
+                <div class="modal-header">
+                </div>
+                <div class="modal-body">
+                    <p id="save-modal-text"></p>
+                </div>
+                <div class="modal-footer">
+                    <button class="btn btn-secondary" type="button" id="save-modal-close" data-dismiss="modal">Close</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Spinner -->
+    <div id="spinner" style="display: none;">
+        <div class="modal-header">
+            <div class="spinner-border" role="status">
+                <span class="sr-only text-dark">Loading...</span>
+            </div>
+            <label class="text-dark d-none">Error loading data</label>
+            <button class="close" type="button" data-dismiss="modal"><span>x</span></button>
+        </div>
+        <div class="modal-footer">
+            <button class="btn btn-secondary" type="button" data-dismiss="modal">Close</button>
+            <button class="btn btn-warning" type="button" disabled>Save changes</button>
+        </div>
+    </div>
+    <!-- Toast -->
+    <!--    <div class="toast-container position-fixed bottom-0 end-0 p-3">
+            <div id="toast" class="toast" role="alert">
+                <div class="toast-header">
+                    <img src="..." class="rounded me-2" alt="...">
+                    <strong class="me-auto">aa</strong>
+                    <small>xx</small>
+                    <button type="button" class="btn-close" data-coreui-dismiss="toast" aria-label="Close"></button>
+                </div>
+                <div class="toast-body">
+                    User not found.
+                </div>
+            </div>
+        </div> -->
+
+}
+else if (Helper.IsRegion(ViewData, "ScriptSection"))
+{
+    <script>
+        var allowedKeys = ['ArrowLeft', 'ArrowRight', 'Backspace', 'Delete', 'Tab'];
+        var newValue = '';
+        var multipleValues = {};
+        var currSelection = 0;
+        var showModal = {};
+        var hideModal = {};
+        var myToast = document.getElementById('toast');
+
+        function PostSuccess() {
+            $(this).closest('.modal').modal('hide');
+        }
+        function PostFailure() {
+            document.getElementById('save-modal-text').innerText = "Something went wrong";
+            document.getElementById('save-modal-close').disabled = false;
+        }
+
+        function KeyDown(event) {
+            if (!/^\d$/.test(event.key) && !allowedKeys.includes(event.key)) {
+                event.preventDefault();
+                return false;
+            }
+
+            return true;
+        }
+        function KeyInput(event, modal, func) {
+            var editInput = event.target;
+            var value = editInput.value;
+            var selectionStart = editInput.selectionStart;
+            var selectionEnd = editInput.selectionEnd;
+
+            var unformattedValue = value.replace(/,/g, '');
+            var formattedValue = unformattedValue.replace(/(\d)(?=(\d{3})+(?!\d))/g, '$1,');
+            newValue = unformattedValue;
+            multipleValues[currSelection] = newValue;
+            if (typeof func === 'function') func(modal, parseInt(unformattedValue));
+
+            var diffLength = formattedValue.length - value.length;
+            var newSelectionStart = Math.max(selectionStart + diffLength, 0);
+            var newSelectionEnd = Math.max(selectionEnd + diffLength, 0);
+
+            editInput.value = formattedValue;
+            editInput.setSelectionRange(newSelectionStart, newSelectionEnd);
+        }
+        function AddEditInputListeners(id, func) {
+            var modal = document.getElementById(id);
+            var editInput = modal.querySelector('#input-newvalue');
+            if (editInput === null) return;
+
+            editInput.removeEventListener('keydown', KeyDown);
+            editInput.addEventListener('keydown', KeyDown);
+
+            var f = KeyInput;
+            if (typeof func === 'function') f = function (event) { KeyInput(event, modal, func); }
+            editInput.removeEventListener('input', f);
+            editInput.addEventListener('input', f);
+        }
+
+        /*        function ShowToast() {
+                const toast = new bootstrap.Toast(document.getElementById('toast'));
+                toast.show();
+
+                setTimeout(() => {
+                    toast.hide();
+                }, 3000);
+            }*/
+
+        function OnShowEditModal(event) {
+            newValue = '';
+            multipleValues = {};
+            currSelection = 0;
+
+            let editModal = $(event.target);
+            let modalContent = editModal.find('.modal-content');
+            modalContent.empty();
+            modalContent.html(document.getElementById('spinner').innerHTML);
+
+            let buttonElement = $(event.relatedTarget);
+            let modalId = buttonElement.data('modal');
+
+            if (typeof showModal[modalId] === 'undefined') {
+                modalContent.find('.spinner-border').addClass('d-none');
+                var label = modalContent.find('label')
+                label.removeClass('d-none');
+                return;
+            }
+
+            let width = showModal[modalId].width;
+            if (typeof width !== 'undefined') {
+                editModal.find('.modal-dialog').css('max-width', width + 'px');
+            }
+
+            let requestData = showModal[modalId].requestData(buttonElement);
+            let requestSubmit = showModal[modalId].requestSubmit;
+            let inputListener = showModal[modalId].inputListener;
+
+            $.ajax({
+                url: window.location.href,
+                type: 'GET',
+                data: requestData,
+                success: function (result) {
+                    let resultObj = $(result);
+                    resultObj.find('#edit-modal-save').on('click', function (event) {
+                        if (!requestSubmit(event)) return;
+
+                        document.getElementById('save-modal-text').innerText = 'Please wait...';
+                        document.getElementById('save-modal-close').disabled = true;
+                        $('#save-modal').modal('show');
+                    });
+                    modalContent.html(resultObj);
+
+                    AddEditInputListeners('edit-modal', inputListener);
+                },
+                error: function () {
+                    modalContent.find('.spinner-border').addClass('d-none');
+                    let label = modalContent.find('label')
+                    label.removeClass('d-none');
+                }
+            });
+        }
+        $(document).off('show.bs.modal', '#edit-modal').on('show.bs.modal', '#edit-modal', OnShowEditModal);
+
+        function OnHideEditModal(event) {
+            let saveModal = $('#save-modal');
+            if (!saveModal.hasClass('show')) return;
+
+            let form = event.target.querySelector('form');
+            let formId = form.id;
+
+            let saveModalText = document.getElementById('save-modal-text');
+            let saveModalClose = document.getElementById('save-modal-close');
+            if (typeof hideModal[formId] === 'undefined') {
+                saveModalText.innerText = 'Something went wrong';
+                saveModalClose.disabled = false;
+                return;
+            }
+            let requestData = hideModal[formId].requestData(form);
+            if (requestData === null) {
+                setTimeout(function () {
+                    saveModal.modal('hide');
+                    saveModalClose.disabled = false;
+                }, 300);
+                return;
+            }
+
+            let requestSuccess = hideModal[formId].requestSuccess;
+
+            saveModalText.innerText = 'Please wait...';
+            saveModalClose.disabled = true;
+
+            $.ajax({
+                url: window.location.href,
+                type: 'GET',
+                data: requestData,
+                success: function (result) {
+                    if (typeof requestSuccess === 'function') requestSuccess(result);
+                    saveModal.modal('hide');
+                },
+                error: function () {
+                    saveModalText.innerText = 'Something went wrong';
+                    saveModalClose.disabled = false;
+                }
+            });
+        }
+        $(document).off('hidden.bs.modal', '#edit-modal').on('hidden.bs.modal', '#edit-modal', OnHideEditModal);
+
+    </script>
+}
