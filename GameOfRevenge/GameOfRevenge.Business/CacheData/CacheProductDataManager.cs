@@ -1,10 +1,9 @@
-﻿using System.Collections.Generic;
-using System.Linq;
+﻿using System.Linq;
 using System.Threading.Tasks;
-using GameOfRevenge.Business.Manager.GameDef;
-using GameOfRevenge.Common;
+using System.Collections.Generic;
 using GameOfRevenge.Common.Models;
 using GameOfRevenge.Common.Models.Quest;
+using GameOfRevenge.Business.Manager.GameDef;
 
 namespace GameOfRevenge.Business.CacheData
 {
@@ -17,8 +16,8 @@ namespace GameOfRevenge.Business.CacheData
 
         public static bool IsLoaded { get => isLoaded && Products != null; }
 
-        private static List<IAPProduct> allIAPProductRewards = null;
-        public static IReadOnlyList<IAPProduct> AllIAPProductRewards { get { CheckLoadCacheMemory(); return allIAPProductRewards.ToList(); } }
+        private static List<ProductPackage> allPackageRewards = null;
+        public static IReadOnlyList<ProductPackage> AllPackageRewards { get { CheckLoadCacheMemory(); return allPackageRewards.ToList(); } }
 
         public static IReadOnlyList<IReadOnlyProductTable> ProductList
         {
@@ -29,63 +28,63 @@ namespace GameOfRevenge.Business.CacheData
             }
         }
 
-        private static IAPProduct[] availableIAPs = new IAPProduct[]
+        public static IReadOnlyList<ProductPackage> GetPackageProducts(int playerId = 0)
         {
-            new IAPProduct("p_a001"), new IAPProduct("p_a002"), new IAPProduct("p_a003"),
-            new IAPProduct("p_a004"), new IAPProduct("p_a005"), new IAPProduct("p_a006"),
-            new IAPProduct("r_a001"), new IAPProduct("r_a002"), new IAPProduct("r_a003")
-        };
+            var packageProducts = AllPackageRewards;
 
-        public static IReadOnlyList<IAPProduct> GetIAPProducts(int playerId = 0)
-        {
-            var iapProducts = AllIAPProductRewards;
-/*            var iapProducts = new List<IAPProduct>()
-            {
-                new IAPProduct( "p_a001", "Pack 1", "Pack 1 description", new List<DataReward>()
-                {
-                    new DataReward{ DataType = DataType.Resource, ValueId = (int)ResourceType.Food, Value = 1000, Count = 5 }
-                }),
-                new IAPProduct( "r_a001", "Resource Pack 1", "Resource Pack 1 description", new List<DataReward>()
-                {
-                    new DataReward(){ DataType = DataType.Resource, ValueId = (int)ResourceType.Food, Value = 10000, Count = 5 },
-                    new DataReward(){ DataType = DataType.Resource, ValueId = (int)ResourceType.Wood, Value = 10000, Count = 5 },
-                    new DataReward(){ DataType = DataType.Resource, ValueId = (int)ResourceType.Gems, Value = 1000, Count = 1 }
-                })
-            };*/
-
-            return iapProducts;
+            return packageProducts;
         }
+
+/*        public static IReadOnlyList<ProductPackage> GetPackages()
+        {
+            var packageProducts = AllPackageRewards;
+
+            return packageProducts;
+        }*/
 
 #region Cache Check, Load and Clear
         public static async Task LoadCacheMemoryAsync()
         {
-            ClearCache();
-
-            var iapProducts = new List<IAPProduct>();
-            var allTaskRewards = CacheQuestDataManager.AllQuestRewards;
-            foreach (var product in availableIAPs)
+            var marketManager = new MarketManager();
+            var packagesResp = await marketManager.GetStorePackages(true);
+            if (!packagesResp.IsSuccess)
             {
-                var data = allTaskRewards.FirstOrDefault(x => (x.Quest != null) && (x.Quest.QuestGroup == QuestGroupType.PRODUCT_PACK) && (x.Quest.DataString == product.ProductId));
+                ClearCache();
+                throw new CacheDataNotExistExecption(packagesResp.Message);
+            }
+
+            var availableIAPs = packagesResp.Data;
+            var packageProducts = new List<ProductPackage>();
+            var allTaskRewards = CacheQuestDataManager.AllQuestRewards;
+            foreach (var package in availableIAPs)
+            {
+                IReadOnlyQuestRewardRelData data = allTaskRewards.FirstOrDefault(x => (x.Quest != null) &&
+                                            (x.Quest.QuestGroup == QuestGroupType.PRODUCT_PACK) &&
+                                            (x.Quest.QuestId == package.QuestId));
                 if (data == null) continue;
 
-                var prod = new IAPProduct(product.ProductId, product.Name, product.Description, data.Rewards);
-                iapProducts.Add(prod);
-            }
-            allIAPProductRewards = iapProducts;
+                var prod = new ProductPackage()
+                {
+                    ProductId = package.ProductId,
 
-            var resManager = new MarketManager();
-            var response = await resManager.GetAllProducts();
-
-            if (response.IsSuccess)
-            {
-                Products = response.Data;
-                isLoaded = true;
+                    PackageId = package.PackageId,
+                    QuestId = package.QuestId,
+                    Cost = package.Cost,
+                    Rewards = data.Rewards
+                };
+                packageProducts.Add(prod);
             }
-            else
+            allPackageRewards = packageProducts;
+
+            var response = await marketManager.GetAllProducts();
+            if (!response.IsSuccess)
             {
                 ClearCache();
                 throw new CacheDataNotExistExecption(response.Message);
             }
+
+            Products = response.Data;
+            isLoaded = true;
         }
         public static void LoadCacheMemory()
         {
@@ -113,26 +112,5 @@ namespace GameOfRevenge.Business.CacheData
             }
         }
 #endregion
-    }
-
-    public class IAPProduct
-    {
-        public string ProductId { get; private set; }
-        public string Name { get; private set; }
-        public string Description { get; private set; }
-        public IReadOnlyList<IReadOnlyDataReward> Rewards { get; private set; }
-
-        public IAPProduct(string productId)
-        {
-            ProductId = productId;
-        }
-
-        public IAPProduct(string productId, string name, string description, IReadOnlyList<IReadOnlyDataReward> rewards)
-        {
-            ProductId = productId;
-            Name = name;
-            Description = description;
-            Rewards = rewards;
-        }
     }
 }

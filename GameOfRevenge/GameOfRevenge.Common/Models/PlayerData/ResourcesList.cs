@@ -6,5 +6,6 @@
         public long Wood { get; set; }
         public long Ore { get; set; }
         public long Gems { get; set; }
+        public long Gold { get; set; }
     }
 }

@@ -7,6 +7,6 @@
         Wood = 2,
         Ore = 3,
         Gems = 4,
-        PhoenixAsh = 5
+        Gold = 5
     }
 }

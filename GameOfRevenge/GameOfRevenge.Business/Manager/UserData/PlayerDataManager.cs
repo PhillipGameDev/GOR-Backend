@@ -478,11 +478,11 @@ namespace GameOfRevenge.Business.Manager.UserData
             }
         }
 
-        public async Task<Response<List<PlayerDataTable>>> AddPlayerResourceData(int playerId, int food, int wood, int ore, int gem)
+        public async Task<Response<List<PlayerDataTable>>> AddPlayerResourceData(int playerId, int food, int wood, int ore, int gem, int gold)
         {
             try
             {
-                var spParams = ResourceUpdateSpParams(playerId, food, wood, ore, gem);
+                var spParams = ResourceUpdateSpParams(playerId, food, wood, ore, gem, gold);
                 return await Db.ExecuteSPMultipleRow<PlayerDataTable>("AddPlayerResourceData", spParams);
             }
             catch (InvalidModelExecption ex)
@@ -502,11 +502,11 @@ namespace GameOfRevenge.Business.Manager.UserData
                 };
             }
         }
-        public async Task<Response<List<PlayerDataTable>>> RemovePlayerResourceData(int playerId, int food, int wood, int ore, int gem)
+        public async Task<Response<List<PlayerDataTable>>> RemovePlayerResourceData(int playerId, int food, int wood, int ore, int gem, int gold)
         {
             try
             {
-                var spParams = ResourceUpdateSpParams(playerId, food, wood, ore, gem);
+                var spParams = ResourceUpdateSpParams(playerId, food, wood, ore, gem, gold);
                 return await Db.ExecuteSPMultipleRow<PlayerDataTable>("RemovePlayerResourceData", spParams);
             }
             catch (InvalidModelExecption ex)
@@ -526,11 +526,11 @@ namespace GameOfRevenge.Business.Manager.UserData
                 };
             }
         }
-        public async Task<Response<List<PlayerDataTable>>> UpdatePlayerResourceData(int playerId, int food, int wood, int ore, int gem)
+        public async Task<Response<List<PlayerDataTable>>> UpdatePlayerResourceData(int playerId, int food, int wood, int ore, int gem, int gold)
         {
             try
             {
-                var spParams = ResourceUpdateSpParams(playerId, food, wood, ore, gem);
+                var spParams = ResourceUpdateSpParams(playerId, food, wood, ore, gem, gold);
                 return await Db.ExecuteSPMultipleRow<PlayerDataTable>("UpdatePlayerResourceData", spParams);
             }
             catch (InvalidModelExecption ex)
@@ -707,7 +707,7 @@ namespace GameOfRevenge.Business.Manager.UserData
             }
         }
 
-        private static Dictionary<string, object> ResourceUpdateSpParams(int playerId, int food, int wood, int ore, int gem, bool showResult = true)
+        private static Dictionary<string, object> ResourceUpdateSpParams(int playerId, int food, int wood, int ore, int gem, int gold, bool showResult = true)
         {
             if (playerId <= 0) throw new InvalidModelExecption("Invalid player id");
 
@@ -721,6 +721,7 @@ namespace GameOfRevenge.Business.Manager.UserData
             if (wood > 0) spParams.Add("Wood", wood);
             if (ore > 0) spParams.Add("Ore", ore);
             if (gem > 0) spParams.Add("Gem", gem);
+            if (gold > 0) spParams.Add("Gold", gold);
 
             return spParams;
         }

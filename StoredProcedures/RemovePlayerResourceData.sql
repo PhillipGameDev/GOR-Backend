@@ -14,6 +14,7 @@ ALTER   PROCEDURE [dbo].[RemovePlayerResourceData]
 	@Wood INT = NULL,
 	@Ore INT = NULL,
 	@Gem INT = NULL,
+	@Gold INT = NULL,
 	@ShowResult BIT = 1
 AS
 BEGIN
@@ -29,12 +30,14 @@ BEGIN
 	DECLARE @tempWood INT = ISNULL(@Wood, 0);
 	DECLARE @tempOre INT = ISNULL(@Ore, 0);
 	DECLARE @tempGem INT = ISNULL(@Gem, 0);
+	DECLARE @tempGold INT = ISNULL(@Gold, 0);
 
-	DECLARE @foodId INT, @woodId INT, @oreId INT, @gemId INT, @resDataTypeId INT;
+	DECLARE @foodId INT, @woodId INT, @oreId INT, @gemId INT, @goldId INT, @resDataTypeId INT;
 	DECLARE @foodDataId INT = NULL, @foodPlayerValue VARCHAR(MAX) = '0';
 	DECLARE @woodDataId INT = NULL, @woodPlayerValue VARCHAR(MAX) = '0';
 	DECLARE @oreDataId INT = NULL, @orePlayerValue VARCHAR(MAX) = '0';
 	DECLARE @gemDataId INT = NULL, @gemPlayerValue VARCHAR(MAX) = '0';
+	DECLARE @goldDataId INT = NULL, @goldPlayerValue VARCHAR(MAX) = '0';
 
 	DECLARE @tempPlayerAllDataTable TABLE
 	(
@@ -48,7 +51,7 @@ BEGIN
 	BEGIN TRY
 		SELECT @currentId = p.[PlayerId] FROM [dbo].[Player] AS p WHERE p.[PlayerId] = @userId;
 
-		IF (@tempFood = 0 AND @tempWood = 0 AND @tempOre = 0 AND @tempGem = 0)
+		IF (@tempFood = 0 AND @tempWood = 0 AND @tempOre = 0 AND @tempGem = 0 AND @tempGold = 0)
 			BEGIN
 				SET @case = 101;
 				SET @message = 'No updates was needed';
@@ -138,6 +141,24 @@ BEGIN
 							INSERT INTO [dbo].[PlayerData] VALUES (@currentId, @resDataTypeId, @gemId, @gemPlayerValue)
 						ELSE 
 							UPDATE [dbo].[PlayerData] SET [Value] = @gemPlayerValue WHERE [PlayerDataId] = @gemDataId;
+					END
+				IF (@tempGold > 0)
+					BEGIN
+						SELECT @goldId = [ResourceId] FROM [dbo].[Resource] WHERE [Code] = 'Gold';
+
+						SELECT @goldDataId = p.[PlayerDataId], @goldPlayerValue = p.[Value]
+						FROM @tempPlayerAllDataTable AS p WHERE p.[ValueId] = @goldId
+
+						IF (@goldPlayerValue IS NULL OR LTRIM(RTRIM(@goldPlayerValue)) = '') SET @goldPlayerValue = '0'
+						DECLARE @valueINTGold BIGINT = CONVERT(BIGINT, @goldPlayerValue);
+						SET @valueINTGold = @valueINTGold - @tempGold;
+						IF (@valueINTGold < 0) SET @valueINTGold = 0;
+						SET @goldPlayerValue = CONVERT(VARCHAR(MAX), @valueINTGold);
+						
+						IF (@goldDataId IS NULL) 
+							INSERT INTO [dbo].[PlayerData] VALUES (@currentId, @resDataTypeId, @goldId, @goldPlayerValue)
+						ELSE 
+							UPDATE [dbo].[PlayerData] SET [Value] = @goldPlayerValue WHERE [PlayerDataId] = @goldDataId;
 					END
 
 				SET @case = 100;

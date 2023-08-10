@@ -28,9 +28,9 @@ namespace GameOfRevenge.Common.Interface
         Task<Response<PlayerDataTable>> GetPlayerData(int playerId, DataType type, int valueId);
         Task<Response<PlayerDataTable>> GetPlayerDataById(long playerDataId);
 
-        Task<Response<List<PlayerDataTable>>> AddPlayerResourceData(int playerId, int food, int wood, int ore, int gem);
-        Task<Response<List<PlayerDataTable>>> RemovePlayerResourceData(int playerId, int food, int wood, int ore, int gem);
-        Task<Response<List<PlayerDataTable>>> UpdatePlayerResourceData(int playerId, int food, int wood, int ore, int gem);
+        Task<Response<List<PlayerDataTable>>> AddPlayerResourceData(int playerId, int food, int wood, int ore, int gem, int gold);
+        Task<Response<List<PlayerDataTable>>> RemovePlayerResourceData(int playerId, int food, int wood, int ore, int gem, int gold);
+        Task<Response<List<PlayerDataTable>>> UpdatePlayerResourceData(int playerId, int food, int wood, int ore, int gem, int gold);
 
         Task<Response<List<StoredDataTable>>> GetAllPlayerStoredData(int playerId, int? locationId = null);
 //        Task<Response<PlayerDataTable>> StoreResource(int playerId, int structureLocationId, int resId, int value);

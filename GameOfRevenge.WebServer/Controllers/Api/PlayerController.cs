@@ -120,7 +120,7 @@ namespace GameOfRevenge.WebServer.Controllers.Api
             ore = ore <= 0 ? 0 : ore;
             gems = gems <= 0 ? 0 : gems;
 
-            return ReturnResponse(await userResourceManager.SumMainResource(Token.PlayerId, food, wood, ore, gems));
+            return ReturnResponse(await userResourceManager.SumMainResource(Token.PlayerId, food, wood, ore, gems, 0));
         }
 
         [HttpPost]//temporal api
@@ -131,7 +131,7 @@ namespace GameOfRevenge.WebServer.Controllers.Api
             ore = ore <= 0 ? 0 : ore;
             gems = gems <= 0 ? 0 : gems;
 
-            return ReturnResponse(await userResourceManager.SumMainResource(Token.PlayerId, -food, -wood, -ore, -gems));
+            return ReturnResponse(await userResourceManager.SumMainResource(Token.PlayerId, -food, -wood, -ore, -gems, 0));
         }
 
         [HttpPost]

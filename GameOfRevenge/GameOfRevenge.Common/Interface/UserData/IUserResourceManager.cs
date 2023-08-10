@@ -13,26 +13,29 @@ namespace GameOfRevenge.Common.Interface.UserData
         Task<Response<UserResourceData>> GetResource(int playerId, int resId);
         Task<Response<List<ResourceData>>> GetResources(int playerId);
         Task<Response<List<UserResourceData>>> GetMainResource(int playerId);
-        Task<Response<UserResourceData>> GetGemsResource(int playerId);
         Task<Response<UserResourceData>> GetFoodResource(int playerId);
         Task<Response<UserResourceData>> GetWoodResource(int playerId);
         Task<Response<UserResourceData>> GetOreResource(int playerId);
+        Task<Response<UserResourceData>> GetGemsResource(int playerId);
+        Task<Response<UserResourceData>> GetGoldResource(int playerId);
 
         Task<Response<UserResourceData>> UpdateResource(int playerId, ResourceType type, long value);
         Task<Response<UserResourceData>> UpdateResource(int playerId, int resId, long value);
-        Task<Response<List<UserResourceData>>> UpdateMainResource(int playerId, long food, long wood, long ore, long gems);
-        Task<Response<UserResourceData>> UpdateGemsResource(int playerId, long value);
+        Task<Response<List<UserResourceData>>> UpdateMainResource(int playerId, long food, long wood, long ore, long gems, long gold);
         Task<Response<UserResourceData>> UpdateFoodResource(int playerId, long value);
         Task<Response<UserResourceData>> UpdateWoodResource(int playerId, long value);
         Task<Response<UserResourceData>> UpdateOreResource(int playerId, long value);
+        Task<Response<UserResourceData>> UpdateGemsResource(int playerId, long value);
+        Task<Response<UserResourceData>> UpdateGoldResource(int playerId, long value);
 
         Task<Response<UserResourceData>> SumResource(int playerId, ResourceType type, int value);
         Task<Response<UserResourceData>> SumResource(int playerId, int resId, int value);
-        Task<Response<List<UserResourceData>>> SumMainResource(int playerId, int food, int wood, int ore, int gems);
+        Task<Response<List<UserResourceData>>> SumMainResource(int playerId, int food, int wood, int ore, int gems, int gold);
         Task<Response<UserResourceData>> SumGemsResource(int playerId, int value);
         Task<Response<UserResourceData>> SumFoodResource(int playerId, int value);
         Task<Response<UserResourceData>> SumWoodResource(int playerId, int value);
         Task<Response<UserResourceData>> SumOreResource(int playerId, int value);
+        Task<Response<UserResourceData>> SumGoldResource(int playerId, int value);
 
         Task<bool> RemoveResourceByRequirement(int playerId, IReadOnlyList<IReadOnlyDataRequirement> requirements);
         Task<bool> RefundResourceByRequirement(int playerId, IReadOnlyList<IReadOnlyDataRequirement> requirements);

@@ -12,6 +12,7 @@ ALTER   PROCEDURE [dbo].[UpdatePlayerResourceData]
 	@Wood INT = NULL,
 	@Ore INT = NULL,
 	@Gem INT = NULL,
+	@Gold INT = NULL,
 	@ShowResult BIT = 1
 AS
 BEGIN
@@ -27,7 +28,9 @@ BEGIN
 	DECLARE @tempWood INT = @Wood;
 	DECLARE @tempOre INT = @Ore;
 	DECLARE @tempGem INT = @Gem;
+	DECLARE @tempGold INT = @Gold;
 
+	DECLARE @goldPlayerId INT = NULL, @goldPlayerValue VARCHAR(MAX) = CONVERT(VARCHAR(MAX), @tempGold);
 	DECLARE @gemPlayerId INT = NULL, @gemPlayerValue VARCHAR(MAX) = CONVERT(VARCHAR(MAX), @tempGem);
 	DECLARE @orePlayerId INT = NULL, @orePlayerValue VARCHAR(MAX) = CONVERT(VARCHAR(MAX), @tempOre);
 	DECLARE @woodPlayerId INT = NULL, @woodPlayerValue VARCHAR(MAX) = CONVERT(VARCHAR(MAX), @tempWood);
@@ -42,11 +45,11 @@ BEGIN
 		Value VARCHAR(MAX) NOT NULL
 	);
 
-	DECLARE @foodId INT, @woodId INT, @oreId INT, @gemId INT, @resDataTypeId INT;
+	DECLARE @foodId INT, @woodId INT, @oreId INT, @gemId INT, @goldId INT, @resDataTypeId INT;
 
 	BEGIN TRY
 		SELECT @currentId = p.[PlayerId] FROM [dbo].[Player] AS p WHERE p.[PlayerId] = @userId;
-		IF (@tempFood IS NULL AND @tempWood IS NULL AND @tempOre IS NULL AND @tempGem IS NULL)
+		IF (@tempFood IS NULL AND @tempWood IS NULL AND @tempOre IS NULL AND @tempGem IS NULL AND @tempGold IS NULL)
 			BEGIN
 				SET @case = 101;
 				SET @message = 'No updates was needed';
@@ -66,12 +69,14 @@ BEGIN
 				SELECT @woodId = [ResourceId] FROM [dbo].[Resource] WHERE [Code] = 'Wood';
 				SELECT @oreId = [ResourceId] FROM [dbo].[Resource] WHERE [Code] = 'Ore';
 				SELECT @gemId = [ResourceId] FROM [dbo].[Resource] WHERE [Code] = 'Gems';
+				SELECT @goldId = [ResourceId] FROM [dbo].[Resource] WHERE [Code] = 'Gold';
 
-				DECLARE @foodUpdate BIT = 0, @woodUpdate BIT = 0, @oreUpdate BIT = 0, @gemUpdate BIT = 0;
+				DECLARE @foodUpdate BIT = 0, @woodUpdate BIT = 0, @oreUpdate BIT = 0, @gemUpdate BIT = 0, @goldUpdate BIT = 0;
 				IF(@tempFood IS NOT NULL AND @tempFood >= 0) SET @foodUpdate = 1;
 				IF(@tempWood IS NOT NULL AND @tempWood >= 0) SET @woodUpdate = 1;
 				IF(@tempOre IS NOT NULL AND @tempOre >= 0) SET @oreUpdate = 1;
 				IF(@tempGem IS NOT NULL AND @tempGem >= 0) SET @gemUpdate = 1;
+				IF(@tempGold IS NOT NULL AND @tempGold >= 0) SET @goldUpdate = 1;
 
 				IF (@foodUpdate = 1)
 					BEGIN
@@ -112,6 +117,16 @@ BEGIN
 							INSERT INTO [dbo].[PlayerData] VALUES (@currentId, @resDataTypeId, @gemPlayerId, @gemPlayerValue)
 						ELSE
 							UPDATE [dbo].[PlayerData] SET [Value] = @gemPlayerValue WHERE [PlayerDataId] = @gemPlayerId
+					END
+				IF (@goldUpdate = 1)
+					BEGIN
+						SELECT @goldPlayerId = p.[PlayerDataId] FROM @tempPlayerAllDataTable AS p 
+						WHERE p.[PlayerId] = @currentId AND p.[DataTypeId] = @resDataTypeId AND p.[ValueId] = @goldId
+
+						IF (@goldPlayerId IS NULL)
+							INSERT INTO [dbo].[PlayerData] VALUES (@currentId, @resDataTypeId, @goldPlayerId, @goldPlayerValue)
+						ELSE
+							UPDATE [dbo].[PlayerData] SET [Value] = @goldPlayerValue WHERE [PlayerDataId] = @goldPlayerId
 					END
 				SET @case = 100;
 				SET @message = 'Fetched all player game data';

@@ -17,12 +17,14 @@ namespace GameOfRevenge.Business.CacheData
         private static ResourceTable wood = null;
         private static ResourceTable ore = null;
         private static ResourceTable gems = null;
+        private static ResourceTable gold = null;
 
         public static IReadOnlyList<IReadOnlyResourceTable> ResourceInfos { get { if (resourceInfos == null) LoadCacheMemory(); return resourceInfos.ToList(); } }
         public static IReadOnlyResourceTable Food { get { if (food == null) LoadCacheMemory(); return food; } }
         public static IReadOnlyResourceTable Wood { get { if (wood == null) LoadCacheMemory(); return wood; } }
         public static IReadOnlyResourceTable Ore { get { if (ore == null) LoadCacheMemory(); return ore; } }
         public static IReadOnlyResourceTable Gems { get { if (gems == null) LoadCacheMemory(); return gems; } }
+        public static IReadOnlyResourceTable Gold { get { if (gold == null) LoadCacheMemory(); return gold; } }
 
         public static IReadOnlyDataRequirement NewGemRequirement(int value)
         {
@@ -66,6 +68,7 @@ namespace GameOfRevenge.Business.CacheData
                 wood = resourceInfos.Find(x => (x.Code == ResourceType.Wood));
                 ore = resourceInfos.Find(x => (x.Code == ResourceType.Ore));
                 gems = resourceInfos.Find(x => (x.Code == ResourceType.Gems));
+                gold = resourceInfos.Find(x => (x.Code == ResourceType.Gold));
 
                 isLoaded = true;
             }
@@ -93,6 +96,7 @@ namespace GameOfRevenge.Business.CacheData
             wood = null;
             ore = null;
             gems = null;
+            gold = null;
         }
     }
 }

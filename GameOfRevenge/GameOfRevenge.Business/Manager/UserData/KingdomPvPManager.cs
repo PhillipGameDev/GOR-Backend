@@ -520,7 +520,7 @@ namespace GameOfRevenge.Business.Manager.UserData
                         case ResourceType.Ore: ore += item.Value * item.Count; break;
                     }
                 }
-                var respResources = await resManager.SumMainResource(defenderPower.PlayerId, food, wood, ore, 0);
+                var respResources = await resManager.SumMainResource(defenderPower.PlayerId, food, wood, ore, 0, 0);
                 if (!respResources.IsSuccess)
                 {
                     log.Debug(respResources.Message);

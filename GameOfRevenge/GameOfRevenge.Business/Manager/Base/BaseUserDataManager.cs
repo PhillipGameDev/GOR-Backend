@@ -191,10 +191,21 @@ namespace GameOfRevenge.Business.Manager.Base
 
                         resourceList.Add(PlayerDataToUserResourceData(item));
                     }
-                    finalData.Data.Resources.Food = (long)resourceList.FirstOrDefault(x => (x.ValueId == ResourceType.Food))?.Value;
-                    finalData.Data.Resources.Wood = (long)resourceList.FirstOrDefault(x => (x.ValueId == ResourceType.Wood))?.Value;
-                    finalData.Data.Resources.Ore = (long)resourceList.FirstOrDefault(x => (x.ValueId == ResourceType.Ore))?.Value;
-                    finalData.Data.Resources.Gems = (long)resourceList.FirstOrDefault(x => (x.ValueId == ResourceType.Gems))?.Value;
+
+                    var resVal = resourceList.Find(x => (x.ValueId == ResourceType.Food));
+                    finalData.Data.Resources.Food = (resVal != null)? resVal.Value : 0;
+
+                    resVal = resourceList.Find(x => (x.ValueId == ResourceType.Wood));
+                    finalData.Data.Resources.Wood = (resVal != null) ? resVal.Value : 0;
+
+                    resVal = resourceList.Find(x => (x.ValueId == ResourceType.Ore));
+                    finalData.Data.Resources.Ore = (resVal != null) ? resVal.Value : 0;
+
+                    resVal = resourceList.Find(x => (x.ValueId == ResourceType.Gems));
+                    finalData.Data.Resources.Gems = (resVal != null) ? resVal.Value : 0;
+
+                    resVal = resourceList.Find(x => (x.ValueId == ResourceType.Gold));
+                    finalData.Data.Resources.Gold = (resVal != null) ? resVal.Value : 0;
                 }
 
                 line = "8";
@@ -736,7 +747,7 @@ namespace GameOfRevenge.Business.Manager.Base
                     var saveResp = await manager.UpdatePlayerDataID(playerId, vipdata.Id, json);
                     if (saveResp.IsSuccess)
                     {
-                        await manager.RemovePlayerResourceData(playerId, 0, 0, 0, points);
+                        await manager.RemovePlayerResourceData(playerId, 0, 0, 0, points, 0);
                     }
                     return new Response<UserVIPDetails>()
                     {
