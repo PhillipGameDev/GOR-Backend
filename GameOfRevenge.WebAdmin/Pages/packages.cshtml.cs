@@ -67,7 +67,7 @@ namespace GameOfRevenge.WebAdmin.Pages
                     Value = value
                 };
 
-                resp = _UserRewardsViewModel.GetProperties(reward).Item1;
+                resp = reward.GetProperties().Item1;
             }
             catch (Exception ex)
             {

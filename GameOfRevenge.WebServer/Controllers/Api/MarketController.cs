@@ -35,8 +35,8 @@ namespace GameOfRevenge.WebServer.Controllers.Api
 
             iapProducts = new List<IAPProduct>()
             {
-                new IAPProduct("g_a001", 500), new IAPProduct("g_a002", 1000),
-                new IAPProduct("g_a003", 5000), new IAPProduct("g_a004", 10000)
+                new IAPProduct("t_a002", 500), new IAPProduct("t_a004", 1000),
+                new IAPProduct("t_a014", 5000), new IAPProduct("t_a018", 10000)
             };
         }
 
@@ -66,8 +66,11 @@ namespace GameOfRevenge.WebServer.Controllers.Api
         [HttpGet]//obsolete
         public IActionResult GetAllIAPProducts()
         {
-            var iapProducts = CacheProductDataManager.GetPackageProducts(Token.PlayerId);
-            return ReturnResponse(new Response<IReadOnlyList<ProductPackage>>(iapProducts, CaseType.Success, "Available Products"));
+            var dummy = new List<IAPProduct>();
+            return ReturnResponse(new Response<List<IAPProduct>>(dummy, CaseType.Success, "Available IAP Products"));
+
+//            var iapProducts = CacheProductDataManager.GetPackageProducts(Token.PlayerId);
+//            return ReturnResponse(new Response<IReadOnlyList<ProductPackage>>(iapProducts, CaseType.Success, "Available Products"));
         }
 
         [HttpGet]

@@ -26,7 +26,7 @@ namespace GameOfRevenge.WebAdmin.Pages
                 Value = rewardData.Value
             };
 
-            return _UserRewardsViewModel.GetProperties(reward).Item1;
+            return reward.GetProperties().Item1;
         }
 
         public _PackageRewardsViewModel(ProductPackage product)
@@ -96,7 +96,7 @@ namespace GameOfRevenge.WebAdmin.Pages
 //                var uniqueDataTypes = allRewards.GroupBy(dataReward => dataReward.DataType)
 //                                    .Select(group => group.Key).OrderBy(x => x).ToList();
 
-                var allOptions = allRewards.ConvertAll(x => (x.RewardId, x.DataType, x.ValueId, x.Value, _UserRewardsViewModel.GetProperties(x).Item1));
+                var allOptions = allRewards.ConvertAll(x => (x.RewardId, x.DataType, x.ValueId, x.Value, x.GetProperties().Item1));
 
                 var groupedOptions = allOptions.GroupBy(x => x.Item5).Select(group => group.First()).ToList();
 
@@ -107,22 +107,23 @@ namespace GameOfRevenge.WebAdmin.Pages
 
                 var subOptions = new List<(DataType, int, string, string)>()
                 {
-                    (DataType.Custom, 1, "KingExperiencePoints", null),
-                    (DataType.Custom, 2, "KingStaminaPoints", null),
-                    (DataType.Custom, 3, "VIPPoints", null),
-                    (DataType.Custom, 4, "HeroPoints", null),
-                    (DataType.Resource, (int)ResourceType.Food, "Food", null),
-                    (DataType.Resource, (int)ResourceType.Wood, "Wood", null),
-                    (DataType.Resource, (int)ResourceType.Ore, "Ore", null),
-                    (DataType.Resource, (int)ResourceType.Gems, "Gems", null),
-                    (DataType.Technology, (int)NewBoostTech.TroopTrainingSpeedMultiplier, "TroopTrainingSpeedMultiplier", "(Seconds)"),
-                    (DataType.Technology, (int)NewBoostTech.TroopTrainingTimeBonus, "TroopTrainingTimeBonus", "(Seconds)"),
-                    (DataType.Technology, (int)NewBoostTech.TroopRecoverySpeedMultiplier, "TroopRecoverySpeedMultiplier", "(Seconds)"),
-                    (DataType.Technology, (int)NewBoostTech.TroopRecoveryTimeBonus, "TroopRecoveryTimeBonus", "(Seconds)"),
-                    (DataType.Technology, (int)NewBoostTech.BuildingSpeedMultiplier, "BuildingSpeedMultiplier", "(Seconds)"),
-                    (DataType.Technology, (int)NewBoostTech.BuildingTimeBonus, "BuildingTimeBonus", "(Seconds)"),
-                    (DataType.Technology, (int)NewBoostTech.ResearchSpeedMultiplier, "ResearchSpeedMultiplier", "(Seconds)"),
-                    (DataType.Technology, (int)NewBoostTech.ResearchTimeBonus, "ResearchTimeBonus", "(Seconds)")
+                    Tuple(DataType.Custom, CustomType.KingExperiencePoints),
+                    Tuple(DataType.Custom, CustomType.KingStaminaPoints),
+                    Tuple(DataType.Custom, CustomType.VIPPoints),
+                    Tuple(DataType.Custom, CustomType.HeroPoints),
+                    Tuple(DataType.Resource, ResourceType.Food),
+                    Tuple(DataType.Resource, ResourceType.Wood),
+                    Tuple(DataType.Resource, ResourceType.Ore),
+                    Tuple(DataType.Resource, ResourceType.Gems),
+                    Tuple(DataType.Technology, NewBoostTech.TroopTrainingSpeedMultiplier, "(Seconds)"),
+                    Tuple(DataType.Technology, NewBoostTech.TroopTrainingTimeBonus, "(Seconds)"),
+                    Tuple(DataType.Technology, NewBoostTech.TroopRecoverySpeedMultiplier, "(Seconds)"),
+                    Tuple(DataType.Technology, NewBoostTech.TroopRecoveryTimeBonus, "(Seconds)"),
+                    Tuple(DataType.Technology, NewBoostTech.TroopMarchingReductionMultiplier, "(Percentage)"),
+                    Tuple(DataType.Technology, NewBoostTech.BuildingSpeedMultiplier, "(Seconds)"),
+                    Tuple(DataType.Technology, NewBoostTech.BuildingTimeBonus, "(Seconds)"),
+                    Tuple(DataType.Technology, NewBoostTech.ResearchSpeedMultiplier, "(Seconds)"),
+                    Tuple(DataType.Technology, NewBoostTech.ResearchTimeBonus, "(Seconds)")
                 };
 
                 model = new InputPackageRewardsModel()
@@ -136,6 +137,11 @@ namespace GameOfRevenge.WebAdmin.Pages
             }
 
             return UsersModel.NewPartial("Forms/_AddPackageRewardsView", model);
+        }
+
+        private static (DataType, int, string, string) Tuple(DataType dataType, object typeValue, string valueLabel = null)
+        {
+            return (dataType, Convert.ToInt32(typeValue), typeValue.ToString(), valueLabel);
         }
 
         public static async Task<IActionResult> OnPostSavePackageRewardChangeAsync(IAdminDataManager manager, InputPackageRewardModel inputReward)

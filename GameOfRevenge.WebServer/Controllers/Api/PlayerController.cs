@@ -61,6 +61,15 @@ namespace GameOfRevenge.WebServer.Controllers.Api
                 _logger.LogWarning("ERROR: " + response.Message);
             }
 
+            if (response.Data.MarchingArmies != null)
+            {
+                foreach (var item in response.Data.MarchingArmies)
+                {
+                    item.Report = null;
+                    item.TroopChanges = null;
+                }
+            }
+
             return ReturnResponse(response);
         }
 

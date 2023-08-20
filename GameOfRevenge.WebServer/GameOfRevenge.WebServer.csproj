@@ -2,8 +2,6 @@
 
   <PropertyGroup>
     <TargetFramework>netcoreapp3.1</TargetFramework>
-    <CopyRefAssembliesToPublishDirectory>false</CopyRefAssembliesToPublishDirectory>
-    <OutputType>Exe</OutputType>
   </PropertyGroup>
 
   <ItemGroup>
@@ -20,14 +18,20 @@
     <None Remove="Microsoft.AspNetCore.Mvc.NewtonsoftJson" />
     <None Remove="Microsoft.AspNet.WebApi.WebHost" />
     <None Remove="Newtonsoft.Json" />
+    <None Remove=".DS_Store" />
   </ItemGroup>
 
   <ItemGroup>
+    <PackageReference Include="System.Data.SqlClient" Version="4.8.5" />
+
     <PackageReference Include="Serilog.Extensions.Logging.File" Version="2.0.0" />
     <PackageReference Include="Microsoft.VisualStudio.Web.CodeGeneration.Design" Version="3.1.5" />
     <PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="3.1.25" />
     <PackageReference Include="Microsoft.AspNetCore.Mvc.Razor.RuntimeCompilation" Version="3.1.25" />
     <PackageReference Include="Microsoft.AspNetCore.Mvc.NewtonsoftJson" Version="3.1.29" />
+    <PackageReference Include="Google.Apis.Auth.AspNetCore3" Version="1.60.0" />
+    <PackageReference Include="AspNet.Security.OAuth.Apple" Version="3.1.8" />
+    <PackageReference Include="Google.Apis.AndroidPublisher.v3" Version="1.60.0.3009" />
   </ItemGroup>
 
   <ItemGroup>

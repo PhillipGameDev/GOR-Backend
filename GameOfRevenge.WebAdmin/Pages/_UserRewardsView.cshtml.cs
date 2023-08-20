@@ -6,7 +6,6 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using GameOfRevenge.Common;
 using GameOfRevenge.Common.Models;
-using GameOfRevenge.Common.Models.Boost;
 using GameOfRevenge.Business.Manager.UserData;
 using GameOfRevenge.WebAdmin.Models;
 using GameOfRevenge.Common.Interface.UserData;
@@ -17,7 +16,6 @@ namespace GameOfRevenge.WebAdmin.Pages
     {
         public List<PlayerDataReward> Data { get; set; }
 
-
         public static string GetTitle(PlayerDataReward rewardData)
         {
             var reward = new DataReward()
@@ -27,10 +25,10 @@ namespace GameOfRevenge.WebAdmin.Pages
                 Value = rewardData.Value
             };
 
-            return GetProperties(reward).Item1;
+            return reward.GetProperties().Item1;
         }
 
-        public static (string, string, string) GetProperties(DataReward reward)
+/*        public static (string, string, string) GetProperties(DataReward reward)
         {
 //            var percentage = false;
             string value = null;
@@ -45,7 +43,7 @@ namespace GameOfRevenge.WebAdmin.Pages
                     case NewBoostTech.TroopTrainingSpeedMultiplier:
                     case NewBoostTech.KingStaminaRecoverySpeedMultiplier:
                         break;
-                    default:*/
+                    default:* /
                         value = Helper.ChangeSecondsToTimeFormat(reward.Value, false);
 //                        break;
 //                }
@@ -108,7 +106,7 @@ namespace GameOfRevenge.WebAdmin.Pages
                             filename = "Rewards/hero_points_icon";
                             break;
                     }
-                    break;*/
+                    break;* /
                 case DataType.Resource:
                     var type = (ResourceType)reward.ValueId;
                     var resName = Localization.GetText(type.ToString(), Localization.ENUMS);
@@ -130,17 +128,17 @@ namespace GameOfRevenge.WebAdmin.Pages
                     var techType = (NewBoostTech)reward.ValueId;
                     switch (techType)
                     {
-                        case NewBoostTech.TroopTrainingSpeedMultiplier:/*14*/
-                        case NewBoostTech.TroopTrainingTimeBonus:/*18*/
+                        case NewBoostTech.TroopTrainingSpeedMultiplier:/*14* /
+                        case NewBoostTech.TroopTrainingTimeBonus:/*18* /
                             str = Localization.GetText("{0} Training Speedup", Localization.REWARDS);
                             title = string.Format(str, Helper.ChangeSecondsToFormatTimeWords(reward.Value, true));
-                            str2 = Localization.GetText("Reduces the time of training a troop by {0}", Localization.REWARDS);
+                            str2 = Localization.GetText("Reduces troop training time by {0}", Localization.REWARDS);
                             desc = string.Format(str2, Helper.ChangeSecondsToFormatTimeWords(reward.Value));
                             filename = "Rewards/troop_icon";
                             break;
 
-                        case NewBoostTech.TroopRecoverySpeedMultiplier:/*15*/
-                        case NewBoostTech.TroopRecoveryTimeBonus:/*19*/
+                        case NewBoostTech.TroopRecoverySpeedMultiplier:/*15* /
+                        case NewBoostTech.TroopRecoveryTimeBonus:/*19* /
                             if (techType == NewBoostTech.TroopRecoverySpeedMultiplier)
                             {
                                 str = Localization.GetText("{0} Recovery Boost", Localization.REWARDS);
@@ -150,15 +148,22 @@ namespace GameOfRevenge.WebAdmin.Pages
                             else
                             {
                                 str = Localization.GetText("{0} Recovery Speedup", Localization.REWARDS);
-                                str2 = Localization.GetText("Reduces the time of recovery a troop by {0}", Localization.REWARDS);
+                                str2 = Localization.GetText("Reduces the recovery time of a troop by {0}", Localization.REWARDS);
                                 filename = "Rewards/troop_healing_icon";
                             }
                             title = string.Format(str, Helper.ChangeSecondsToFormatTimeWords(reward.Value, true));
                             desc = string.Format(str2, Helper.ChangeSecondsToFormatTimeWords(reward.Value));
                             break;
+                        case NewBoostTech.TroopMarchingReductionMultiplier://27
+                            str = Localization.GetText("{0} Marching Time Reduction", Localization.REWARDS);
+                            title = string.Format(str, reward.Value + "%");
+                            str2 = Localization.GetText("Reduces one-way marching time of the army by {0}", Localization.REWARDS);
+                            desc = string.Format(str2, reward.Value + "%");
+                            filename = "Rewards/troop_icon";
+                            break;
 
-                        case NewBoostTech.BuildingSpeedMultiplier:/*7*/
-                        case NewBoostTech.BuildingTimeBonus:/*20*/
+                        case NewBoostTech.BuildingSpeedMultiplier:/*7* /
+                        case NewBoostTech.BuildingTimeBonus:/*20* /
                             str = Localization.GetText("{0} Construction Speedup", Localization.REWARDS);
                             title = string.Format(str, Helper.ChangeSecondsToFormatTimeWords(reward.Value, true));
                             str2 = Localization.GetText("Reduces the construction time by {0}", Localization.REWARDS);
@@ -166,12 +171,12 @@ namespace GameOfRevenge.WebAdmin.Pages
                             filename = "Rewards/construction2_icon";
                             break;
 
-                        case NewBoostTech.ResearchSpeedMultiplier:/*10*/
-                        case NewBoostTech.ResearchTimeBonus:/*21*/
+                        case NewBoostTech.ResearchSpeedMultiplier:/*10* /
+                        case NewBoostTech.ResearchTimeBonus:/*21* /
                             if (techType == NewBoostTech.ResearchSpeedMultiplier)
                             {
                                 str = Localization.GetText("{0} Research Boost", Localization.REWARDS);
-                                str2 = Localization.GetText("Boost technology research speed for {0}", Localization.REWARDS);
+                                str2 = Localization.GetText("Boosts technology research speed for {0}", Localization.REWARDS);
 //                                texture = CityBoostManager.Instance.GetIcon(CityBoostType.TechBoost);
                             }
                             else
@@ -189,7 +194,7 @@ namespace GameOfRevenge.WebAdmin.Pages
 //            if (filename != null) texture = Resources.Load<Texture>(filename);
 
             return (title, desc, value);
-        }
+        }*/
 
         public _UserRewardsViewModel(List<PlayerDataReward> rewards)
         {
@@ -239,7 +244,7 @@ namespace GameOfRevenge.WebAdmin.Pages
             {
                 var uniqueDataTypes = allRewards.GroupBy(dataReward => dataReward.DataType)
                                     .Select(group => group.Key).OrderBy(x => x).ToList();
-                var allOptions = allRewards.ConvertAll(x => (x.RewardId, x.DataType, x.ValueId, x.Value, GetProperties(x).Item1));
+                var allOptions = allRewards.ConvertAll(x => (x.RewardId, x.DataType, x.ValueId, x.Value, x.GetProperties().Item1));
 
                 var groupedOptions = allOptions.GroupBy(x => x.Item5).Select(group => group.First()).ToList();
 

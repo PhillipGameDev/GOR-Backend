@@ -192,6 +192,7 @@ namespace GameOfRevenge.WebAdmin.Pages
                         case ResourceType.Wood: value = resp.Data.Resources.Wood; break;
                         case ResourceType.Ore: value = resp.Data.Resources.Ore; break;
                         case ResourceType.Gems: value = resp.Data.Resources.Gems; break;
+                        case ResourceType.Gold: value = resp.Data.Resources.Gold; break;
                     }
                     model = new InputResourceModel()
                     {

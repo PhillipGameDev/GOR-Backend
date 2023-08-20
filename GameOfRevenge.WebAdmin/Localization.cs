@@ -1,7 +1,6 @@
-﻿using System;
-namespace GameOfRevenge.WebAdmin
+﻿namespace GameOfRevenge.WebAdmin
 {
-    public static class Localization
+    public static class xLocalization
     {
         public const string MAIN_UI = "MainUI";
         public const string QUESTS = "Quests";
@@ -27,7 +26,7 @@ namespace GameOfRevenge.WebAdmin
         public const string SOLDIER = "Soldier";
         public const string ACCOUNT = "Account";
         public const string PLAYER_PROFILE = "PlayerProfile";
-        public const string CHARACTER_SELECTION = "CharacterSelection";
+        public const string AVATAR_SELECTION = "AvatarSelection";
         public const string KING = "King";
         public const string EQUIPMENT_ID = "Equipment";
         public const string EQUIPMENT_INFO = "Equipment.Info";
@@ -44,12 +43,13 @@ namespace GameOfRevenge.WebAdmin
         public const string MAIL = "Mail";
         public const string FRIENDSHIP = "Friendship";
         public const string SEND_ARMY = "SendArmy";
+        public const string MARCHING_ARMIES = "MarchingArmies";
         public const string COORDINATES = "Coordinates";
         public const string COLUMNS = "Columns";
         public const string LANGUAGE = "Language";
         public const string ENUMS = "Enums";
 
-//        public static string LanguageCode { get; private set; } = DEFAULT_LANGUAGE;
+        //        public static string LanguageCode { get; private set; } = DEFAULT_LANGUAGE;
 
         public static bool IsArabic => false;//(LanguageCode == "AR");
 

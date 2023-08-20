@@ -202,6 +202,18 @@ else if (Helper.IsRegion(ViewData, "HTMLSection"))
                                                 </button>
                                             </td>
                                         </tr>
+                                        <tr>
+                                            <td>Gold</td>
+                                            <td id="resource-gold">
+                                                <label>@Model.Gold.ToString("N0")</label>
+                                                <button class="btn btn-sm btn-primary btn-edit float-right" type="button"
+                                                        data-resource-type="Gold" data-resource-name="Gold"
+                                                        data-resource-value=@Model.Gold
+                                                        data-toggle="modal" data-target="#edit-modal" data-modal="resource">
+                                                    <i class="fa fa-pencil"></i>&nbsp;Edit
+                                                </button>
+                                            </td>
+                                        </tr>
                                     </tbody>
                                 </table>
                             </div>
