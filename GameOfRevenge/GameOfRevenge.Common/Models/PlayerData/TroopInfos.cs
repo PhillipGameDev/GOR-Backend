@@ -1,9 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Runtime.Serialization;
-using GameOfRevenge.Common.Models.Hero;
-using GameOfRevenge.Common.Models.Kingdom;
-//using Newtonsoft.Json;
 
 namespace GameOfRevenge.Common.Models
 {
@@ -49,14 +46,14 @@ namespace GameOfRevenge.Common.Models
         [DataMember(EmitDefaultValue = false)]
         public int Wounded { get; set; }
 
-//        [JsonIgnore]
+        //        [JsonIgnore]
         public int FinalCount//AVAILABLE
         {
             get
             {
                 var count = Count - (InRecoveryCount + InTrainingCount + Wounded);
 
-                return (count > 0)? count: 0;
+                return (count > 0) ? count : 0;
             }
         }
 
@@ -108,95 +105,5 @@ namespace GameOfRevenge.Common.Models
         public int Count { get; set; }
         [DataMember]
         public int BuildingLocId { get; set; }
-    }
-
-    [DataContract]
-    public class MarchingArmy
-    {
-        [DataMember]
-        public long Id { get; set; }
-        [DataMember]
-        public int TargetPlayer { get; set; }
-        [DataMember]
-        public DateTime StartTime { get; set; }
-        [DataMember]
-        public int ReachedTime { get; set; }
-        [DataMember]
-        public int BattleDuration { get; set; }
-        [DataMember]
-        public List<TroopInfos> Troops { get; set; }
-        [DataMember(EmitDefaultValue = false)]
-        public List<HeroType> Heroes { get; set; }
-
-        [DataMember(EmitDefaultValue = false)]
-        public BattleReport Report { get; set; }
-        [DataMember(EmitDefaultValue = false)]
-        public List<TroopDetailsPvP> TroopChanges { get; set; }
-
-        public double TimeLeftForTask
-        {
-            get
-            {
-                DateTime taskTime = StartTime.ToUniversalTime().AddSeconds(ReachedTime);
-                double totalSeconds = (taskTime - DateTime.UtcNow).TotalSeconds;
-                return (totalSeconds > 0) ? totalSeconds : 0;
-            }
-        }
-
-        public bool IsTimeForReturn
-        {
-            get
-            {
-                DateTime returnTime = StartTime.ToUniversalTime().AddSeconds(ReachedTime + BattleDuration);
-                return DateTime.UtcNow > returnTime;
-            }
-        }
-
-        public double TimeLeft
-        {
-            get
-            {
-                DateTime endTime = StartTime.ToUniversalTime().AddSeconds((ReachedTime * 2) + BattleDuration);
-                double totalSecs = (endTime - DateTime.UtcNow).TotalSeconds;
-                return (totalSecs > 0)? totalSecs : 0;
-            }
-        }
-
-        public int[] TroopsToArray()
-        {
-            var list = new List<int>();
-            foreach (var troopClass in Troops)
-            {
-                foreach (var troop in troopClass.TroopData)
-                {
-                    list.Add((int)troopClass.TroopType);
-                    list.Add(troop.Level);
-                    list.Add(troop.Count);
-                }
-            }
-            return list.ToArray();
-        }
-
-        public int[] HeroesToArray(List<UserHeroDetails> userHeroes)
-        {
-            int[] heroes = null;
-            if ((Heroes != null) && (Heroes.Count > 0))
-            {
-                var len = Heroes.Count;
-                var idx = 0;
-                heroes = new int[len * 2];
-                for (int num = 0; num < len; num++)
-                {
-                    var heroType = Heroes[num];
-                    heroes[idx] = (int)heroType;
-                    var userHero = userHeroes.Find(x => (x.HeroType == heroType));
-                    if (userHero != null) heroes[idx + 1] = userHero.Level;
-
-                    idx += 2;
-                }
-            }
-
-            return heroes;
-        }
     }
 }

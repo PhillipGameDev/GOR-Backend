@@ -1,7 +1,5 @@
-﻿using System;
-using System.Collections.Generic;
-using GameOfRevenge.Common.Models.Kingdom;
-using GameOfRevenge.Common.Models.Kingdom.AttackAlertReport;
+﻿using GameOfRevenge.Common.Models.Kingdom;
+using GameOfRevenge.Common.Models.PlayerData;
 
 namespace GameOfRevenge.Common.Models
 {
@@ -9,32 +7,34 @@ namespace GameOfRevenge.Common.Models
     {
         public AttackResponseData AttackData { get; set; }
         public MarchingArmy MarchingArmy { get; set; }
-//        public int WinnerPlayerId => BattleReport.AttackerWon ? AttackerPower.PlayerId : DefenderPower.PlayerId;
 
         public PlayerCompleteData Attacker { get; set; }
         public PlayerCompleteData Defender { get; set; }
         public BattlePower AttackerPower { get; set; }
         public BattlePower DefenderPower { get; set; }
-//        public BattleReport BattleReport { get; set; }
 
         public int State { get; set; }
     }
 
     public class AttackResponseData
     {
+        public long MarchingId { get; set; }
+        public MarchingType MarchingType { get; set; }
+
         public int AttackerId { get; set; }
-        public string AttackerUsername { get; set; }
+        public string AttackerName { get; set; }
 
-        public int EnemyId { get; set; }
-        public string EnemyUsername { get; set; }
-        public int MonsterId { get; set; }
+        public int MonsterId { get; set; }//obsolete, use TargetId
 
-//        public int LocationX { get; set; }
-//        public int LocationY { get; set; }
+        public int TargetId { get; set; }
+        public string TargetName { get; set; }
 
         public string StartTime { get; set; }
-        public int ReachedTime { get; set; }
-        public int BattleDuration { get; set; }
+        public int Recall { get; set; }
+        public int Distance { get; set; }
+        public int AdvanceReduction { get; set; }
+        public int ReturnReduction { get; set; }
+        public int Duration { get; set; }
 
         public byte KingLevel { get; set; }
         public byte WatchLevel { get; set; }
@@ -46,47 +46,50 @@ namespace GameOfRevenge.Common.Models
         {
         }
 
-        public AttackResponseData(PlayerCompleteData attackerCompleteData, MarchingArmy marchingArmy, int enemyId, int monsterId)
+        public AttackResponseData(PlayerCompleteData attackerCompleteData, MarchingArmy marchingArmy, int targetId, int monsterId)
         {
+            MarchingId = marchingArmy.MarchingId;
+            MarchingType = marchingArmy.MarchingType;
+
             AttackerId = attackerCompleteData.PlayerId;
-            AttackerUsername = attackerCompleteData.PlayerName;
+            AttackerName = attackerCompleteData.PlayerName;
 
-            EnemyId = enemyId;
-//            EnemyUsername = null;
-            MonsterId = monsterId;
-
-            //            LocationX = location.X;
-            //            LocationY = location.Y;
-
-//            KingLevel = attackerCompleteData.King.Level;
-//            WatchLevel = watchLevel;
+            TargetId = targetId;
+//            EnemyId = targetId;//obsolete
+            MonsterId = monsterId;//obsolete
 
             StartTime = marchingArmy.StartTime.ToUniversalTime().ToString("s") + "Z";
-            ReachedTime = marchingArmy.ReachedTime;
-            BattleDuration = marchingArmy.BattleDuration;
+            Recall = marchingArmy.Recall;
+            Distance = marchingArmy.Distance;
+            AdvanceReduction = marchingArmy.AdvanceReduction;
+            ReturnReduction = marchingArmy.ReturnReduction;
+            Duration = marchingArmy.Duration;
 
             Troops = marchingArmy.TroopsToArray();
             Heroes = marchingArmy.HeroesToArray(attackerCompleteData.Heroes);
         }
 
-        public AttackResponseData(PlayerCompleteData attackerCompleteData, MarchingArmy marchingArmy, int enemyId, string enemyName, byte watchLevel)
+        public AttackResponseData(PlayerCompleteData attackerCompleteData, MarchingArmy marchingArmy, int targetId, string enemyName, byte watchLevel)
         {
+            MarchingId = marchingArmy.MarchingId;
+            MarchingType = marchingArmy.MarchingType;
+
             AttackerId = attackerCompleteData.PlayerId;
-            AttackerUsername = attackerCompleteData.PlayerName;
+            AttackerName = attackerCompleteData.PlayerName;
 
-            EnemyId = enemyId;
-            EnemyUsername = enemyName;
-//            MonsterId = 0;
-
-//            LocationX = location.X;
-//            LocationY = location.Y;
+            TargetId = targetId;
+//            EnemyId = targetId;//obsolete
+            TargetName = enemyName;//obsolete
 
             KingLevel = attackerCompleteData.King.Level;
             WatchLevel = watchLevel;
 
             StartTime = marchingArmy.StartTime.ToUniversalTime().ToString("s") + "Z";
-            ReachedTime = marchingArmy.ReachedTime;
-            BattleDuration = marchingArmy.BattleDuration;
+            Recall = marchingArmy.Recall;
+            Distance = marchingArmy.Distance;
+            AdvanceReduction = marchingArmy.AdvanceReduction;
+            ReturnReduction = marchingArmy.ReturnReduction;
+            Duration = marchingArmy.Duration;
 
             Troops = marchingArmy.TroopsToArray();
             Heroes = marchingArmy.HeroesToArray(attackerCompleteData.Heroes);

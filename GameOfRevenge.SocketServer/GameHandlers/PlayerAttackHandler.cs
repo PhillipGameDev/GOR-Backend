@@ -1,12 +1,13 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using System.Collections.Generic;
 using ExitGames.Logging;
 using Newtonsoft.Json;
 using GameOfRevenge.Common;
 using GameOfRevenge.Common.Models;
 using GameOfRevenge.Common.Models.Hero;
+using GameOfRevenge.Common.Models.PlayerData;
 using GameOfRevenge.Common.Models.Kingdom.AttackAlertReport;
 using GameOfRevenge.Business.Manager.Base;
 using GameOfRevenge.GameApplication;
@@ -29,21 +30,32 @@ namespace GameOfRevenge.GameHandlers
 
         public async Task<bool> AttackRequestAsync(SendArmyRequest request)
         {
-            log.Debug("@@@@@@@@!!! Attack Request " + JsonConvert.SerializeObject(request));
-            if (GameService.BRealTimeUpdateManager.GetAttackerData(this.attacker.PlayerId) != null)
-            {
-                attacker.SendOperation(OperationCode.AttackRequest, ReturnCode.Failed, null, "Multiple attack is not supported.");
+            return await SendMarchingArmyAsync(request);
+        }
 
-                log.Debug("@@@@@@@@ PROCCESS END - Multiple attack is not supported.");
+        public async Task<bool> SendReinforcementsAsync(SendArmyRequest request)
+        {
+            return await SendMarchingArmyAsync(request, true);
+        }
+
+        private async Task<bool> SendMarchingArmyAsync(SendArmyRequest request, bool reinforcement = false)
+        {
+            log.Debug("@@@@@@@@!!! Send Army Request " + JsonConvert.SerializeObject(request));
+            var attackList = GameService.BRealTimeUpdateManager.GetAllAttackerData(this.attacker.PlayerId);
+            if ((attackList != null) && (attackList.Count >= 10))
+            {
+                attacker.SendOperation(OperationCode.AttackRequest, ReturnCode.Failed, null, "Maximum number of marching troops reached.");
+
+                log.Debug("@@@@@@@@ PROCCESS END - Max 10 marching troops.");
                 return false;
             }
 
             Enemy = attacker.World.PlayersManager.GetPlayer(request.TargetPlayerId);
             if (Enemy == null)
             {
-                attacker.SendOperation(OperationCode.AttackRequest, ReturnCode.Failed, null, "Enemy not found.");
+                attacker.SendOperation(OperationCode.AttackRequest, ReturnCode.Failed, null, "Destination not found.");
 
-                log.Debug("@@@@@@@@ PROCCESS END - Enemy not found.");
+                log.Debug("@@@@@@@@ PROCCESS END - Destination not found.");
                 return false;
             }
 
@@ -96,38 +108,45 @@ namespace GameOfRevenge.GameHandlers
                     delay -= marchingArmy.Heroes.Count * 500;
                 }
                 delay /= 100;
-                if (delay < 5) delay = 5;
+                if (delay < 10) delay = 10;
 
                 marchingArmy.StartTime = timestart;
-                marchingArmy.ReachedTime = (int)dist;
-                marchingArmy.BattleDuration = (int)delay;
-                marchingArmy.TargetPlayer = Enemy.PlayerId;
-
-                var str = "Passing Data attackerId {0} Data {1} defenderId {2} ";
-                log.InfoFormat(str, attacker.PlayerId, JsonConvert.SerializeObject(marchingArmy), Enemy.PlayerId);
+                marchingArmy.Distance = (int)dist;
+                marchingArmy.Duration = (int)delay;
+                marchingArmy.TargetId = Enemy.PlayerId;
 
                 var resp = await BaseUserDataManager.GetFullPlayerData(attacker.PlayerId);
                 if (!resp.IsSuccess || !resp.HasData) throw new DataNotExistExecption(resp.Message);
 
                 AttackResponseData attackData;
                 var attackerCompleteData = resp.Data;
-                if (Enemy.PlayerData.Invaded == 0)
+                if (reinforcement)
                 {
-                    var location = new MapLocation() { X = attacker.WorldRegion.X, Y = attacker.WorldRegion.Y };
-                    var watchLevel = await GameService.BkingdomePvpManager.AttackOtherPlayer(attackerCompleteData, marchingArmy, location, Enemy.PlayerId);
-
-                    attackData = new AttackResponseData(attackerCompleteData, marchingArmy, Enemy.PlayerId, Enemy.PlayerData.Name, watchLevel);
+                    await GameService.BkingdomePvpManager.SendReinforcement(attackerCompleteData, marchingArmy);
+                    attackData = new AttackResponseData(attackerCompleteData, marchingArmy, Enemy.PlayerId, 0);
                 }
                 else
                 {
-                    await GameService.BkingdomePvpManager.AttackMonster(attackerCompleteData, marchingArmy);
-                    attackData = new AttackResponseData(attackerCompleteData, marchingArmy, Enemy.PlayerId, Enemy.PlayerData.Invaded);
+                    if (Enemy.PlayerData.Invaded == 0)
+                    {
+                        var location = new MapLocation() { X = attacker.WorldRegion.X, Y = attacker.WorldRegion.Y };
+                        var watchLevel = await GameService.BkingdomePvpManager.AttackOtherPlayer(attackerCompleteData, marchingArmy, location, Enemy.PlayerId);
+
+                        attackData = new AttackResponseData(attackerCompleteData, marchingArmy, Enemy.PlayerId, Enemy.PlayerData.Name, watchLevel);
+                    }
+                    else
+                    {
+                        await GameService.BkingdomePvpManager.AttackMonster(attackerCompleteData, marchingArmy);
+                        attackData = new AttackResponseData(attackerCompleteData, marchingArmy, Enemy.PlayerId, Enemy.PlayerData.Invaded);
+                    }
                 }
+                var str = "Passing Data attackerId {0} Data {1} defenderId {2} ";
+                log.InfoFormat(str, attacker.PlayerId, JsonConvert.SerializeObject(marchingArmy), Enemy.PlayerId);
 
                 var attackResponse = new AttackResponse(attackData);
                 attacker.SendEvent(EventCode.AttackEvent, attackResponse);
 
-                if (Enemy.PlayerData.Invaded == 0)
+                if (marchingArmy.MarchingType == MarchingType.AttackPlayer)
                 {
                     Enemy.SendEvent(EventCode.UnderAttack, attackResponse);
                 }
@@ -137,7 +156,7 @@ namespace GameOfRevenge.GameHandlers
                     MarchingArmy = marchingArmy,
                     AttackData = attackData
                 };
-                GameService.BRealTimeUpdateManager.AddNewAttackOnWorld(attackStatus);
+                GameService.BRealTimeUpdateManager.AddNewMarchingArmy(attackStatus);
             }
             catch (Exception ex)
             {
@@ -149,6 +168,5 @@ namespace GameOfRevenge.GameHandlers
             log.Debug("@@@@@@@@ PROCCESS END = (" + success + ") " + (DateTime.UtcNow - timestart).TotalSeconds);
             return success;
         }
-
     }
 }

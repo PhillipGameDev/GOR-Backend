@@ -34,6 +34,7 @@
 
         public const string NO = "No";
         public const string YES = "Yes";
+        public const string OK = "OK";
         public const string FREE = "Free";
         public const string TIME_LEFT = "Time Left";
     }

@@ -1,19 +1,20 @@
-﻿using ExitGames.Logging;
-using GameOfRevenge.Business.CacheData;
-using GameOfRevenge.Business.Manager.Base;
-using GameOfRevenge.Common;
-using GameOfRevenge.Common.Interface;
-using GameOfRevenge.Common.Models;
-using GameOfRevenge.Common.Models.Boost;
-using GameOfRevenge.Common.Models.Quest;
-using GameOfRevenge.Common.Models.Quest.Template;
-using GameOfRevenge.Common.Net;
-using GameOfRevenge.Common.Services;
-using Newtonsoft.Json;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using Newtonsoft.Json;
+using ExitGames.Logging;
+using GameOfRevenge.Common;
+using GameOfRevenge.Common.Net;
+using GameOfRevenge.Common.Services;
+using GameOfRevenge.Common.Interface;
+using GameOfRevenge.Common.Models;
+using GameOfRevenge.Common.Models.Boost;
+using GameOfRevenge.Common.Models.PlayerData;
+using GameOfRevenge.Common.Models.Quest;
+using GameOfRevenge.Common.Models.Quest.Template;
+using GameOfRevenge.Business.CacheData;
+using GameOfRevenge.Business.Manager.Base;
 
 namespace GameOfRevenge.Business.Manager.UserData
 {
@@ -531,11 +532,11 @@ namespace GameOfRevenge.Business.Manager.UserData
                         switch (rewardData.DataType)
                         {
                             case DataType.Custom:
-                                switch (rewardData.ValueId)
+                                switch ((CustomType)rewardData.ValueId)
                                 {
-                                    case 1: kingDetails.Experience += rewardData.Value; updateKing = true; break; //king exp
-                                    case 2: kingDetails.MaxStamina += rewardData.Value; updateKing = true; break; //king stamina
-                                    case 3: //vip points
+                                    case CustomType.KingExperiencePoints: kingDetails.Experience += rewardData.Value; updateKing = true; break; //king exp
+                                    case CustomType.KingStaminaPoints: kingDetails.MaxStamina += rewardData.Value; updateKing = true; break; //king stamina
+                                    case CustomType.VIPPoints: //vip points
                                         var vipresp = await manager.GetPlayerData(playerId, DataType.Custom, 1);
                                         if (!vipresp.IsSuccess) throw new Exception(vipresp.Message);
 
@@ -548,7 +549,7 @@ namespace GameOfRevenge.Business.Manager.UserData
                                         var saveResp = await manager.UpdatePlayerDataID(playerId, vipdata.Id, json);
                                         if (!saveResp.IsSuccess) throw new Exception(saveResp.Message);
                                         break;
-                                    case 4: //hero points
+                                    case CustomType.HeroPoints: //hero points
                                         var heroResp = await userHeroManager.AddHeroPoints(playerId, context, rewardData.Value);
                                         if (!heroResp.IsSuccess) throw new Exception(heroResp.Message);
                                         break;
@@ -642,6 +643,39 @@ namespace GameOfRevenge.Business.Manager.UserData
                                             listInRecovery.Remove(troopRecovery);
                                         }
                                         await userTroopManager.UpdateTroops(playerId, troopType, listTroops);
+                                        break;
+
+                                    case NewBoostTech.TroopMarchingReductionMultiplier://27
+                                        long.TryParse(context, out long marchingId);
+                                        if (marchingId == 0) throw new Exception("Invalid marching army");
+
+                                        var marching = await manager.GetPlayerDataById(marchingId); //GetAllPlayerData(playerId, DataType.Marching);
+                                        if (!marching.IsSuccess) throw new Exception(marching.Message);
+
+                                        MarchingArmy marchingArmy = null;
+                                        if (marching.HasData && !string.IsNullOrEmpty(marching.Data.Value))
+                                        {
+                                            try
+                                            {
+                                                marchingArmy = JsonConvert.DeserializeObject<MarchingArmy>(marching.Data.Value);
+                                            }
+                                            catch { }
+                                        }
+                                        if (marchingArmy == null) throw new Exception("Invalid marching data");
+                                        if (marchingArmy.TimeLeft < 2) throw new Exception("Consume reward is not required");
+
+                                        var percentage = (rewardData.Value > 100) ? 100 : rewardData.Value;
+                                        var multiplier = (percentage / 100f);
+                                        if (marchingArmy.IsRetreat || marchingArmy.IsTimeForReturn)
+                                        {
+                                            marchingArmy.ReturnReduction += (int)((marchingArmy.Distance - marchingArmy.ReturnReduction) * multiplier);
+                                        }
+                                        else
+                                        {
+                                            marchingArmy.AdvanceReduction += (int)((marchingArmy.Distance - marchingArmy.AdvanceReduction) * multiplier);
+                                        }
+                                        var marchingJson = JsonConvert.SerializeObject(marchingArmy.Base());
+                                        await manager.UpdatePlayerDataID(playerId, marchingId, marchingJson);
                                         break;
 
                                     case NewBoostTech.ResearchSpeedMultiplier:/*10*/

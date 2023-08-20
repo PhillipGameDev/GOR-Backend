@@ -8,7 +8,6 @@ using GameOfRevenge.Business.CacheData;
 using GameOfRevenge.Business.Manager.Base;
 using GameOfRevenge.Common;
 using GameOfRevenge.Common.Email;
-using GameOfRevenge.Common.Helper;
 using GameOfRevenge.Common.Interface;
 using GameOfRevenge.Common.Interface.UserData;
 using GameOfRevenge.Common.Models;
@@ -17,8 +16,7 @@ using GameOfRevenge.Common.Models.Hero;
 using GameOfRevenge.Common.Models.Kingdom;
 using GameOfRevenge.Common.Models.Kingdom.AttackAlertReport;
 using GameOfRevenge.Common.Models.Structure;
-using GameOfRevenge.Common.Net;
-using GameOfRevenge.Common.Services;
+using GameOfRevenge.Common.Models.PlayerData;
 
 namespace GameOfRevenge.Business.Manager.UserData
 {
@@ -96,9 +94,14 @@ namespace GameOfRevenge.Business.Manager.UserData
                 throw new RequirementExecption("User does not have any army");
             }
 
-            if ((attackerData.MarchingArmy != null) && (attackerData.MarchingArmy.TimeLeft > 0))
+            var marchingArmies = attackerData.MarchingArmies;
+            if (marchingArmies != null)
             {
-                throw new RequirementExecption("Maximum one army marching is allowed");
+                var count = marchingArmies.Sum(x => (x.TimeLeft > 0) ? 1 : 0);
+                if (count >= 10)
+                {
+                    throw new RequirementExecption("Maximum ten army marching are allowed");
+                }
             }
 
             (bool shieldActive, byte watchLevel) = await GetShieldActiveAndWatchTowerLevel(defenderId);
@@ -118,22 +121,38 @@ namespace GameOfRevenge.Business.Manager.UserData
                 throw new RequirementExecption("User does not have required army");
             }
 
-            var armyJson = JsonConvert.SerializeObject(marchingArmy);
-            var response = await manager.AddOrUpdatePlayerData(attackerData.PlayerId, DataType.Marching, 1, armyJson);
+            marchingArmy.MarchingType = MarchingType.AttackPlayer;
+            var armyJson = JsonConvert.SerializeObject(marchingArmy.Base());
+            var slot = 1;
+            if (marchingArmies != null)
+            {
+                var found = false;
+                for (int idx = 1; idx <= 10; idx++)
+                {
+                    if (marchingArmies.Exists(x => (x.MarchingSlot == idx))) continue;
+
+                    slot = idx;
+                    found = true;
+                    break;
+                }
+                if (!found) throw new RequirementExecption("Maximum ten army marching are allowed.");
+            }
+            var response = await manager.AddOrUpdatePlayerData(attackerData.PlayerId, DataType.Marching, slot, armyJson);
             if (!response.IsSuccess) throw new Exception(response.Message);
 
+            marchingArmy.MarchingId = response.Data.Id;
             var report = GenerateAlertMail(attackerData, marchingArmy, location, watchLevel);
             var json = JsonConvert.SerializeObject(report);
             await mailManager.SendMail(defenderId, MailType.UnderAttack, json);
 
-            report.StartTime = marchingArmy.StartTime;
-            report.ReachedTime = marchingArmy.ReachedTime;
-            report.DefenderId = defenderId;
+//            report.StartTime = marchingArmy.StartTime;
+//            report.ReachedTime = marchingArmy.Distance;
+//            report.DefenderId = defenderId;
 
             return watchLevel;
         }
 
-        public async Task AttackMonster(PlayerCompleteData attackerData, MarchingArmy marchingArmy)//, MapLocation location, int defenderId)
+        public async Task AttackMonster(PlayerCompleteData attackerData, MarchingArmy marchingArmy)
         {
             if ((marchingArmy == null) || (marchingArmy.Troops == null) || (marchingArmy.Troops.Count == 0))
             {
@@ -145,9 +164,14 @@ namespace GameOfRevenge.Business.Manager.UserData
                 throw new RequirementExecption("User does not have any army");
             }
 
-            if ((attackerData.MarchingArmy != null) && (attackerData.MarchingArmy.TimeLeft > 0))
+            var marchingArmies = attackerData.MarchingArmies;
+            if (marchingArmies != null)
             {
-                throw new RequirementExecption("Maximum one army marching is allowed");
+                var count = marchingArmies.Sum(x => (x.TimeLeft > 0) ? 1 : 0);
+                if (count >= 10)
+                {
+                    throw new RequirementExecption("Maximum ten army marching are allowed");
+                }
             }
 
 //            (bool shieldActive, byte watchLevel) = await GetShieldActiveAndWatchTowerLevel(defenderId);
@@ -167,10 +191,26 @@ namespace GameOfRevenge.Business.Manager.UserData
                 throw new RequirementExecption("User does not have required army");
             }
 
-            var armyJson = JsonConvert.SerializeObject(marchingArmy);
-            var response = await manager.AddOrUpdatePlayerData(attackerData.PlayerId, DataType.Marching, 1, armyJson);
+            marchingArmy.MarchingType = MarchingType.AttackMonster;
+            var armyJson = JsonConvert.SerializeObject(marchingArmy.Base());
+            var slot = 1;
+            if (marchingArmies != null)
+            {
+                var found = false;
+                for (int idx = 1; idx <= 10; idx++)
+                {
+                    if (marchingArmies.Exists(x => (x.MarchingSlot == idx))) continue;
+
+                    slot = idx;
+                    found = true;
+                    break;
+                }
+                if (!found) throw new RequirementExecption("Maximum ten army marching are allowed.");
+            }
+            var response = await manager.AddOrUpdatePlayerData(attackerData.PlayerId, DataType.Marching, slot, armyJson);
             if (!response.IsSuccess) throw new Exception(response.Message);
 
+            marchingArmy.MarchingId = response.Data.Id;
 //            var report = GenerateAlertMail(attackerData, marchingArmy, location, watchLevel);
 //            var json = JsonConvert.SerializeObject(report);
 //            await mailManager.SendMail(defenderId, MailType.UnderAttack, json);
@@ -182,14 +222,71 @@ namespace GameOfRevenge.Business.Manager.UserData
 //            return watchLevel;
         }
 
-        private UnderAttackReport GenerateAlertMail(PlayerCompleteData attackerData, MarchingArmy marchingArmy, MapLocation location, byte watchLevel)
+        public async Task SendReinforcement(PlayerCompleteData attackerData, MarchingArmy marchingArmy)
         {
-            var attackerMailInfo = new UnderAttackReport()
+            if ((marchingArmy == null) || (marchingArmy.Troops == null) || (marchingArmy.Troops.Count == 0))
+            {
+                throw new RequirementExecption("Zero marching army was sended");
+            }
+
+            if ((attackerData.Troops == null) || (attackerData.Troops.Count == 0))
+            {
+                throw new RequirementExecption("User does not have any army");
+            }
+
+            var marchingArmies = attackerData.MarchingArmies;
+            if (marchingArmies != null)
+            {
+                var count = marchingArmies.Sum(x => (x.TimeLeft > 0) ? 1 : 0);
+                if (count >= 10)
+                {
+                    throw new RequirementExecption("Maximum ten army marching are allowed");
+                }
+            }
+
+            try
+            {
+                ValidateArmyRequired(marchingArmy, attackerData, false);
+            }
+            catch (DataNotExistExecption ex)
+            {
+                throw new RequirementExecption(ex.Message);
+            }
+            catch (Exception)
+            {
+                throw new RequirementExecption("User does not have required army");
+            }
+
+            marchingArmy.MarchingType = MarchingType.ReinforcementPlayer;
+            var armyJson = JsonConvert.SerializeObject(marchingArmy.Base());
+            var slot = 1;
+            if (marchingArmies != null)
+            {
+                var found = false;
+                for (int idx = 1; idx <= 10; idx++)
+                {
+                    if (marchingArmies.Exists(x => (x.MarchingSlot == idx))) continue;
+
+                    slot = idx;
+                    found = true;
+                    break;
+                }
+                if (!found) throw new RequirementExecption("Maximum ten army marching are allowed.");
+            }
+            var response = await manager.AddOrUpdatePlayerData(attackerData.PlayerId, DataType.Marching, slot, armyJson);
+            if (!response.IsSuccess) throw new Exception(response.Message);
+
+            marchingArmy.MarchingId = response.Data.Id;
+        }
+
+        private UnderAttackMail GenerateAlertMail(PlayerCompleteData attackerData, MarchingArmy marchingArmy, MapLocation location, byte watchLevel)
+        {
+            var attackerMailInfo = new UnderAttackMail()
             {
                 AttackerId = attackerData.PlayerId,
                 AttackerUsername = attackerData.PlayerName,
                 Location = location,
-                StartTime = marchingArmy.StartTime.AddSeconds(marchingArmy.ReachedTime),
+                StartTime = marchingArmy.StartTime.AddSeconds(marchingArmy.Distance),
                 KingLevel = attackerData.King.Level,
                 WatchLevel = watchLevel
             };
@@ -265,7 +362,7 @@ namespace GameOfRevenge.Business.Manager.UserData
             {
                 Attacker = attackerPower,
                 Defender = defenderPower,
-                AttackerWon = attackerWon
+                WinnerId = attackerWon? attackerPower.PlayerId : defenderPower.PlayerId
             };
             if (attackerWon)
             {
@@ -275,8 +372,9 @@ namespace GameOfRevenge.Business.Manager.UserData
 
             marchingArmy.Report = report;
             marchingArmy.TroopChanges = attackerPower.TroopChanges;
-            var json = JsonConvert.SerializeObject(marchingArmy);
-            var response = await manager.AddOrUpdatePlayerData(attackerPower.PlayerId, DataType.Marching, 1, json);
+            var json = JsonConvert.SerializeObject(marchingArmy.Base());
+            var response = await manager.UpdatePlayerDataID(attackerPower.PlayerId, marchingArmy.MarchingId, json);
+//                AddOrUpdatePlayerData(attackerPower.PlayerId, DataType.Marching, 1, json);
             if (!response.IsSuccess)
             {
                 Console.WriteLine(response.Message);
@@ -486,6 +584,70 @@ namespace GameOfRevenge.Business.Manager.UserData
             return slots;
         }
 
+        public async Task<bool> ApplyReinforcementChanges(MarchingArmy marchingRequest, PlayerCompleteData playerData, PlayerCompleteData targetPlayerData)
+        {
+            var success = true;
+            var message = playerData.PlayerName + " sent you reinforcements\n";
+            foreach (var marchingTroop in marchingRequest.Troops)
+            {
+                var troopType = marchingTroop.TroopType;
+                try
+                {
+                    //Remove troops
+                    var troops = playerData.Troops.Find(x => (x.TroopType == troopType));
+                    var troopDataList = troops.TroopData;
+                    foreach (var troopGroup in marchingTroop.TroopData)
+                    {
+                        var troopData = troopDataList.Find(x => (x.Level == troopGroup.Level));
+                        troopData.Count -= troopGroup.Count;
+                    }
+                    await userTroopManager.UpdateTroops(playerData.PlayerId, troopType, troopDataList);
+
+                    //Add troops
+                    var total = 0;
+                    troops = targetPlayerData.Troops.Find(x => (x.TroopType == troopType));
+                    troopDataList = ((troops != null) && (troops.TroopData != null)) ? troops.TroopData : new List<TroopDetails>();
+                    foreach (var troopGroup in marchingTroop.TroopData)
+                    {
+                        var troopLevel = troopGroup.Level;
+                        var troopData = troopDataList.Find(x => (x.Level == troopLevel));
+                        if (troopData == null)
+                        {
+                            troopData = new TroopDetails() { Level = troopLevel };
+                            troopDataList.Add(troopData);
+                        }
+                        troopData.Count += troopGroup.Count;
+                        total += troopGroup.Count;
+                    }
+                    await userTroopManager.UpdateTroops(targetPlayerData.PlayerId, troopType, troopDataList);
+                    message += "\n" + troopType.ToString() + " x " + total;
+                }
+                catch (Exception ex)
+                {
+                    log.InfoFormat("Exception transfering troops {0} {1} ", troopType, ex.Message);
+                    success = false;
+                }
+            }
+            await SendSimpleMail(targetPlayerData.PlayerId, "Reinforcements Arrived", message);
+
+            return success;
+        }
+
+        public async Task SendSimpleMail(int targetPlayerId, string subject, string message)
+        {
+            try
+            {
+                var mail = new MailMessage()
+                {
+                    Subject = subject,
+                    Message = message
+                };
+                var json = JsonConvert.SerializeObject(mail);
+                await mailManager.SendMail(targetPlayerId, MailType.Message, json);
+            }
+            catch { }
+        }
+
         private async Task<bool> ApplyDefenderChangesAndSendReport(BattleReport report)
         {
             var defenderPower = (BattlePower)report.Defender;
@@ -625,9 +787,6 @@ namespace GameOfRevenge.Business.Manager.UserData
             var report = marchingArmy.Report;
             var attackerId = report.Attacker.PlayerId;
 
-            log.Debug("1111111");
-            bool attackerWon = report.AttackerWon;
-
             var attackerDataResp = await manager.GetAllPlayerData(attackerId);
             if (!attackerDataResp.IsSuccess || !attackerDataResp.HasData) return false;
 
@@ -672,6 +831,7 @@ namespace GameOfRevenge.Business.Manager.UserData
                 var userHeroes = GetUserHeroes(attackerDataResp.Data);
                 if (userHeroes != null)
                 {
+                    bool attackerWon = report.AttackerWon;
                     foreach (var heroType in marchingArmy.Heroes)
                     {
                         var hero = userHeroes.Find(x => (x.HeroType == heroType));
@@ -740,11 +900,11 @@ namespace GameOfRevenge.Business.Manager.UserData
                     await UserQuestManager.CollectRewards(report.Attacker.PlayerId, report.Attacker.Items);
                 }
 
-                var response = await manager.AddOrUpdatePlayerData(attackerId, DataType.Marching, 1, string.Empty);
+/*                var response = await manager.AddOrUpdatePlayerData(attackerId, DataType.Marching, 1, string.Empty);
                 if (!response.IsSuccess)
                 {
                     log.Debug(response.Message);
-                }
+                }*/
 
                 try
                 {
@@ -953,7 +1113,7 @@ namespace GameOfRevenge.Business.Manager.UserData
                 foreach (var item in troopClass.TroopData)
                 {
                     var troopData = userTroop.TroopData.Find(x => (x.Level == item.Level));
-                    if ((troopData == null) || (troopData.Count < item.Count))
+                    if ((troopData == null) || (troopData.FinalCount < item.Count))
                     {
                         throw new DataNotExistExecption("User does not have enough soldiers for troop " + troopType.ToString());
                     }

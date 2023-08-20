@@ -1,5 +1,6 @@
 ﻿using System.Collections.Generic;
 using GameOfRevenge.Common.Models.Quest;
+using GameOfRevenge.Common.Models.PlayerData;
 
 namespace GameOfRevenge.Common.Models
 {
@@ -19,12 +20,12 @@ namespace GameOfRevenge.Common.Models
         public List<UserRecordBuilderDetails> Workers { get; set; }
 
         public ResourcesList Resources { get; set; }
-        public MarchingArmy MarchingArmy { get; set; }
+//        public MarchingArmy MarchingArmy { get; set; }
+        public List<MarchingArmy> MarchingArmies { get; set; }
 
         public List<StructureInfos> Structures { get; set; }
         public List<TroopInfos> Troops { get; set; }
         public List<TechnologyInfos> Technologies { get; set; }
-//        public List<SubTechnologyInfos> SubTechnologies { get; set; }
         public List<UserItemDetails> Items { get; set; }
         public List<UserRecordNewBoost> Boosts { get; set; }
         public List<UserHeroDetails> Heroes { get; set; }

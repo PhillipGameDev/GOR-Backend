@@ -11,10 +11,10 @@ namespace GameOfRevenge.Model
         [DataMember(Code = (byte)RoomParameterKey.Username, IsOptional = true)]
         public string PlayerUsername { get; set; }
 
-        [DataMember(Code = (byte)RoomParameterKey.TargetPlayerId, IsOptional = true)]
+        [DataMember(Code = (byte)RoomParameterKey.TargetId, IsOptional = true)]
         public int TargetPlayerId { get; set; }
 
-        [DataMember(Code = (byte)RoomParameterKey.TargetUsername, IsOptional = true)]
+        [DataMember(Code = (byte)RoomParameterKey.TargetName, IsOptional = true)]
         public string TargetPlayerUsername { get; set; }
 
         [DataMember(Code = (byte)RoomParameterKey.TroopsData, IsOptional = true)]
@@ -30,10 +30,10 @@ namespace GameOfRevenge.Model
         public ReinforcementsResponse(AttackResponseData res)
         {
             PlayerId = res.AttackerId;
-            PlayerUsername = res.AttackerUsername;
+            PlayerUsername = res.AttackerName;
 
-            TargetPlayerId = res.EnemyId;
-            TargetPlayerUsername = res.EnemyUsername;
+            TargetPlayerId = res.TargetId;
+            TargetPlayerUsername = res.TargetName;
 
             Troops = res.Troops;
 

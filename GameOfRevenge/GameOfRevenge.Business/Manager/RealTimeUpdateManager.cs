@@ -11,6 +11,7 @@ using GameOfRevenge.Common.Interface;
 using GameOfRevenge.Common.Models;
 using GameOfRevenge.Common.Models.Boost;
 using GameOfRevenge.Common.Models.Kingdom;
+using GameOfRevenge.Common.Models.PlayerData;
 using GameOfRevenge.Common.Models.Structure;
 using GameOfRevenge.Common.Services;
 
@@ -27,164 +28,237 @@ namespace GameOfRevenge.Business.Manager
 
         public DelayedAction Disposable;
 
-        public AttackStatusData GetAttackerData(int attackerId)
+        public const int NOTIFY_TARGET = 0;
+        public const int NOTIFY_ATTACKER = 1;
+        public const int NOTIFY_ALL = 2;
+
+        public List<AttackStatusData> GetAllAttackerData(int attackerId)
         {
-            AttackStatusData data = null;
+            List<AttackStatusData> list = null;
             lock (SyncRoot)
             {
-                data = attackInProgress.Find(x => (x.AttackData.AttackerId == attackerId));
+                list = attackInProgress.FindAll(x => (x.AttackData.AttackerId == attackerId));
             }
-            return data;
+
+            return list;
         }
 
-        public AttackStatusData GetAttackDataForDefender(int defenderId)
+        public List<AttackStatusData> GetAllAttackDataForDefender(int defenderId)
         {
-            AttackStatusData data = null;
+            List<AttackStatusData> list = null;
             lock (SyncRoot)
             {
-                data = attackInProgress.Find(x => (x.AttackData.EnemyId == defenderId));
+                list = attackInProgress.FindAll(x => (x.AttackData.TargetId == defenderId));
             }
-            return data;
+
+            return list;
         }
 
-        public void AddNewAttackOnWorld(AttackStatusData data)
+        public void AddNewMarchingArmy(AttackStatusData data)
         {
-            if (data.MarchingArmy.Report != null) data.State = 5;
+            if ((data.MarchingArmy.Report != null) || data.MarchingArmy.IsRetreat) data.State = 5;
+
+            lock (SyncRoot) attackInProgress.Add(data);
+        }
+
+        public bool UpdateMarchingArmy(MarchingArmy marchingArmy)
+        {
+            if (marchingArmy == null) return false;
+
+            var marchingId = marchingArmy.MarchingId;
+            var updated = false;
             lock (SyncRoot)
             {
-                attackInProgress.Add(data);
+                var data = attackInProgress.Find(x => (x.MarchingArmy.MarchingId == marchingId));
+                if (data != null)
+                {
+                    if ((marchingArmy.Report != null) || marchingArmy.IsRetreat) data.State = 5;
+                    data.MarchingArmy = marchingArmy;
+
+                    var attackData = data.AttackData;
+                    if ((attackData.Recall != marchingArmy.Recall) ||
+                        (attackData.AdvanceReduction != marchingArmy.AdvanceReduction) ||
+                        (attackData.ReturnReduction != marchingArmy.ReturnReduction))
+                    {
+                        attackData.Recall = marchingArmy.Recall;
+                        attackData.AdvanceReduction = marchingArmy.AdvanceReduction;
+                        attackData.ReturnReduction = marchingArmy.ReturnReduction;
+                        updated = true;
+                    }
+                }
             }
+
+            return updated;
         }
 
-        public async Task Update(Action<AttackStatusData, bool> attackResultCallback)
+        public MarchingArmy GetMarchingArmy(long marchingId)
+        {
+            MarchingArmy marchingArmy = null;
+            lock (SyncRoot)
+            {
+                var data = attackInProgress.Find(x => (x.MarchingArmy.MarchingId == marchingId));
+                if (data != null) marchingArmy = data.MarchingArmy;
+            }
+
+            return marchingArmy;
+        }
+
+        public async Task Update(Action<AttackStatusData, int> attackResultCallback)
         {
             if (attackInProgress.Count > 0)
             {
                 List<AttackStatusData> list = null;
-                lock (SyncRoot)
-                {
-                    list = attackInProgress.ToList();
-                }
-                if (list != null)
-                {
-                    double timeleft = double.MaxValue;
-                    log.Debug("****** UPDATE BATTLE START ****** x " + list.Count);
-                    foreach (AttackStatusData item in list)
-                    {
-                        try
-                        {
-                            switch (item.State)
-                            {
-                                case 0://marching to target
-                                    if (item.MarchingArmy.TimeLeftForTask <= 0)
-                                    {
-                                        var atkResp = await BaseUserDataManager.GetFullPlayerData(item.AttackData.AttackerId);
-                                        if (!atkResp.IsSuccess) throw new Exception("attacker data not found");
+                lock (SyncRoot) list = attackInProgress.ToList();
 
-                                        item.Attacker = atkResp.Data;
-                                        item.State++;
-                                    }
-                                    break;
-
-                                case 1://pulling data
-                                    if (item.AttackData.MonsterId == 0)
-                                    {
-                                        var defResp = await BaseUserDataManager.GetFullPlayerData(item.AttackData.EnemyId);
-                                        if (!defResp.IsSuccess) throw new Exception("defender data not found");
-
-                                        item.Defender = defResp.Data;
-                                    }
-                                    item.State++;
-                                    break;
-
-                                case 2://prepare data
-                                    log.Debug("------------ PREPARE BATTLE SIMULATION " + item.Attacker.PlayerId + " vs " + item.AttackData.EnemyId);
-
-                                    var attackerPower = new BattlePower(item.Attacker, item.MarchingArmy, CacheTroopDataManager.GetFullTroopData, GetAtkDefMultiplier);
-                                    item.AttackerPower = attackerPower;
-
-                                    BattlePower defenderPower;
-                                    if (item.AttackData.MonsterId > 0)
-                                    {
-                                        var hitPoints = (int)(attackerPower.HitPoints * (new Random().Next(6, 9) / 10f));
-                                        var attack = (int)(attackerPower.Attack * (new Random().Next(8, 11) / 10f));
-                                        var defense = (int)(attackerPower.Defense * 0.7f);
-                                        defenderPower = new BattlePower(item.AttackData.EnemyId, item.AttackData.MonsterId, hitPoints, attack, defense);
-                                    }
-                                    else
-                                    {
-                                        defenderPower = new BattlePower(item.Defender, null, CacheTroopDataManager.GetFullTroopData, GetAtkDefMultiplier);
-                                    }
-                                    item.DefenderPower = defenderPower;
-
-                                    log.Debug("atk pwr= " + attackerPower.HitPoints + " vs def pwr=" + defenderPower.HitPoints);
-                                    item.State++;
-                                    break;
-
-                                case 3://battle simulation
-                                    if ((item.DefenderPower.HitPoints > 0) && (item.AttackerPower.HitPoints > 0))
-                                    {
-                                        if (item.AttackData.MonsterId > 0)
-                                        {
-                                            item.AttackerPower.AttackMonster(item.DefenderPower);
-                                        }
-                                        else
-                                        {
-                                            item.AttackerPower.AttackPlayer(item.DefenderPower);
-                                        }
-                                        log.Debug("atk pwr= " + item.AttackerPower.HitPoints + " xx def pwr=" + item.DefenderPower.HitPoints);
-                                    }
-                                    else
-                                    {
-                                        await pvpManager.FinishBattleData(item.Attacker, item.AttackerPower, item.Defender, item.DefenderPower, item.MarchingArmy);
-//                                        item.BattleReport = reportResp.Result;
-                                        item.State++;
-                                    }
-                                    break;
-
-                                case 4://waiting for return
-                                    if (item.MarchingArmy.IsTimeForReturn)
-                                    {
-                                        if (item.AttackData.MonsterId == 0)
-                                        {
-                                            log.Debug("send defender under attack end event");
-                                            attackResultCallback(item, false);
-                                        }
-                                        item.State++;
-                                    }
-                                    break;
-
-                                case 5://marching to castle
-                                    if (item.MarchingArmy.TimeLeft <= 0)
-                                    {
-                                        //SAVE PLAYER REPORT
-                                        log.Debug("ApplyAttackerChangesAndSendReport!!!");
-                                        await pvpManager.ApplyAttackerChangesAndSendReport(item.MarchingArmy);
-
-                                        log.Debug("send attacker attack end event");
-                                        attackResultCallback(item, true);
-                                        log.Debug("** END ** " + item.AttackData.AttackerId + " vs " + item.AttackData.EnemyId);
-                                        lock (SyncRoot) attackInProgress.Remove(item);
-                                    }
-                                    break;
-                            }
-                            if (item.MarchingArmy.TimeLeft < timeleft) timeleft = item.MarchingArmy.TimeLeft;
-                        }
-                        catch (Exception ex)
-                        {
-                            log.Debug("EXCEPTION " + item.State+"  "+ item.AttackData.AttackerId+" vs "+item.AttackData.EnemyId+"  " +ex.Message);
-                            lock (SyncRoot) attackInProgress.Remove(item);
-                        }
-                    }
-                    log.Debug("****** UPDATE BATTLE END ****** " + timeleft);
-                    list.Clear();
-                    list = null;
-                }
+                await UpdateProgress(list, attackResultCallback);
             }
 
             if (Disposable != null) Disposable.Dispose();
             Disposable = new DelayedAction();
             Disposable.WaitForCallBack(async () => { await Update(attackResultCallback); }, 1000);
+        }
+
+        async Task UpdateProgress(List<AttackStatusData> list, Action<AttackStatusData, int> attackResultCallback)
+        {
+            var timeleft = double.MaxValue;
+            log.Debug("****** UPDATE MARCHING START ****** x " + list.Count);
+            foreach (var item in list)
+            {
+                log.Debug(item.State);
+                try
+                {
+                    var marchingArmy = item.MarchingArmy;
+                    switch (item.State)
+                    {
+                        case 0://marching to target
+                            if (marchingArmy.TimeLeftForTask == 0)
+                            {
+                                var atkResp = await BaseUserDataManager.GetFullPlayerData(item.AttackData.AttackerId);
+                                if (!atkResp.IsSuccess) throw new Exception("attacker data not found");
+
+                                item.Attacker = atkResp.Data;
+                                item.State++;
+                            }
+                            break;
+
+                        case 1://pulling data
+                            item.State++;
+
+                            if ((marchingArmy.MarchingType == MarchingType.AttackPlayer) ||
+                                (marchingArmy.MarchingType == MarchingType.ReinforcementPlayer))
+                            {
+                                var defResp = await BaseUserDataManager.GetFullPlayerData(item.AttackData.TargetId);
+                                if (!defResp.IsSuccess)
+                                {
+                                    if (marchingArmy.MarchingType == MarchingType.AttackPlayer)
+                                    {
+                                        throw new Exception("defender data not found");
+                                    }
+                                    else
+                                    {
+                                        throw new Exception("destination data not found");
+                                    }
+                                }
+
+                                item.Defender = defResp.Data;
+                                if (marchingArmy.MarchingType == MarchingType.ReinforcementPlayer) item.State = 10;
+                            }
+                            break;
+
+                        case 2://prepare data
+                            log.Debug("------------ PREPARE BATTLE SIMULATION " + item.Attacker.PlayerId + " vs " + item.AttackData.TargetId);
+
+                            var attackerPower = new BattlePower(item.Attacker, marchingArmy, CacheTroopDataManager.GetFullTroopData, GetAtkDefMultiplier);
+                            item.AttackerPower = attackerPower;
+
+                            BattlePower defenderPower;
+                            if (marchingArmy.MarchingType == MarchingType.AttackPlayer)
+                            {
+                                defenderPower = new BattlePower(item.Defender, null, CacheTroopDataManager.GetFullTroopData, GetAtkDefMultiplier);
+                            }
+                            else
+                            {
+                                var hitPoints = (int)(attackerPower.HitPoints * (new Random().Next(6, 9) / 10f));
+                                var attack = (int)(attackerPower.Attack * (new Random().Next(8, 11) / 10f));
+                                var defense = (int)(attackerPower.Defense * 0.7f);
+                                defenderPower = new BattlePower(item.AttackData.TargetId, item.AttackData.MonsterId, hitPoints, attack, defense);
+                            }
+                            item.DefenderPower = defenderPower;
+
+                            log.Debug("atk pwr= " + attackerPower.HitPoints + " vs def pwr=" + defenderPower.HitPoints);
+                            item.State++;
+                            break;
+
+                        case 3://battle simulation
+                            if ((item.DefenderPower.HitPoints > 0) && (item.AttackerPower.HitPoints > 0))
+                            {
+                                if (marchingArmy.MarchingType == MarchingType.AttackPlayer)
+                                {
+                                    item.AttackerPower.AttackPlayer(item.DefenderPower);
+                                }
+                                else
+                                {
+                                    item.AttackerPower.AttackMonster(item.DefenderPower);
+                                }
+                                log.Debug("atk pwr= " + item.AttackerPower.HitPoints + " xx def pwr=" + item.DefenderPower.HitPoints);
+                            }
+                            else
+                            {
+                                await pvpManager.FinishBattleData(item.Attacker, item.AttackerPower, item.Defender, item.DefenderPower, marchingArmy);
+                                item.State++;
+                            }
+                            break;
+
+                        case 4://waiting for return
+                            if (marchingArmy.IsTimeForReturn)
+                            {
+                                if (marchingArmy.MarchingType == MarchingType.AttackPlayer)
+                                {
+                                    log.Debug("send defender under attack end event");
+                                    attackResultCallback(item, NOTIFY_TARGET);
+                                }
+                                item.State++;
+                            }
+                            break;
+
+                        case 5://marching to castle
+                            if (marchingArmy.TimeLeft == 0)
+                            {
+                                if (!marchingArmy.IsRetreat)
+                                {
+                                    //SAVE PLAYER REPORT
+                                    log.Debug("ApplyAttackerChangesAndSendReport!!!");
+                                    await pvpManager.ApplyAttackerChangesAndSendReport(marchingArmy);
+                                }
+                                log.Debug("send attacker attack end event");
+                                attackResultCallback(item, NOTIFY_ATTACKER);
+
+                                log.Debug("** END ** " + item.AttackData.AttackerId + " vs " + item.AttackData.TargetId);
+                                lock (SyncRoot) attackInProgress.Remove(item);
+                            }
+                            break;
+
+                        case 10://process reinforcement
+                            var success = await pvpManager.ApplyReinforcementChanges(marchingArmy, item.Attacker, item.Defender);
+
+                            log.Debug("send reinforcement end event");
+                            attackResultCallback(item, NOTIFY_ALL);
+
+                            log.Debug("** END ** " + item.AttackData.AttackerId + " reinforcement " + item.AttackData.TargetId);
+                            lock (SyncRoot) attackInProgress.Remove(item);
+                            break;
+                    }
+                    if (marchingArmy.TimeLeft < timeleft) timeleft = item.MarchingArmy.TimeLeft;
+                }
+                catch (Exception ex)
+                {
+                    log.Debug("EXCEPTION " + item.State+"  "+ item.AttackData.AttackerId+" vs "+ item.AttackData.TargetId+"  " +ex.Message);
+                    lock (SyncRoot) attackInProgress.Remove(item);
+                }
+            }
+            log.Debug("****** UPDATE BATTLE END ****** " + timeleft);
+            list.Clear();
+            list = null;
         }
 
         private List<AttackDefenseMultiplier> GetAtkDefMultiplier(PlayerCompleteData playerData, MarchingArmy marchingArmy)

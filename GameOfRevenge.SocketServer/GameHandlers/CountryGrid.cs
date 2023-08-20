@@ -17,17 +17,17 @@ namespace GameOfRevenge.GameHandlers
     using ExitGames.Logging;
     using ExitGames.Concurrency.Fibers;
     using Newtonsoft.Json;
-    using GameOfRevenge.Common;
-    using GameOfRevenge.Interface;
-    using GameOfRevenge.Model;
     using GameOfRevenge.Common.Models.Kingdom;
     using GameOfRevenge.Common.Models;
-    using GameOfRevenge.GameApplication;
     using GameOfRevenge.Common.Interface;
+    using GameOfRevenge.Common.Models.Structure;
+    using GameOfRevenge.Common.Models.PlayerData;
     using GameOfRevenge.Business.Manager;
     using GameOfRevenge.Business.Manager.UserData;
     using GameOfRevenge.Business.Manager.Base;
-    using GameOfRevenge.Common.Models.Structure;
+    using GameOfRevenge.Interface;
+    using GameOfRevenge.Model;
+    using GameOfRevenge.GameApplication;
 
     /// <summary>
     /// Grid used to divide the world.
@@ -137,7 +137,8 @@ namespace GameOfRevenge.GameHandlers
                         }
                         if (marching == null) continue;
 
-                        var attackerId = (int)data.Id;
+                        marching.MarchingId = data.Id;
+                        var attackerId = data.PlayerId;
                         var task = BaseUserDataManager.GetFullPlayerData(attackerId);
                         task.Wait();
                         if (!task.Result.IsSuccess || !task.Result.HasData)
@@ -148,7 +149,7 @@ namespace GameOfRevenge.GameHandlers
                         }
                         var attackerData = task.Result.Data;
 
-                        var defenderId = marching.TargetPlayer;
+                        var defenderId = marching.TargetId;
                         task = BaseUserDataManager.GetFullPlayerData(defenderId);
                         task.Wait();
                         if (!task.Result.IsSuccess || !task.Result.HasData)
@@ -172,23 +173,26 @@ namespace GameOfRevenge.GameHandlers
 
                         var response = new AttackResponseData()
                         {
-                            AttackerId = attackerId,
-                            EnemyId = defenderId,
+                            MarchingId = marching.MarchingId,
+                            MarchingType = marching.MarchingType,
 
+                            AttackerId = attackerId,
+                            AttackerName = attackerData.PlayerName,
+
+                            KingLevel = attackerData.King.Level,
                             WatchLevel = watchLevel,
 
-                            AttackerUsername = attackerData.PlayerName,
-                            EnemyUsername = defenderData.PlayerName,
-                            KingLevel = attackerData.King.Level,
-//                                LocationX = location.X,
-//                                LocationY = location.Y,
+                            TargetId = defenderId,
+                            TargetName = defenderData.PlayerName,
 
                             Troops = marching.TroopsToArray(),
                             Heroes = marching.HeroesToArray(attackerData.Heroes),
 
-                            StartTime = marching.StartTime.ToUniversalTime().ToString("s") + "Z",// timestart,
-                            ReachedTime = marching.ReachedTime,// reachedTime,
-                            BattleDuration = marching.BattleDuration//battleDuration
+                            StartTime = marching.StartTime.ToUniversalTime().ToString("s") + "Z",
+                            Distance = marching.Distance,
+                            AdvanceReduction = marching.AdvanceReduction,
+                            ReturnReduction = marching.ReturnReduction,
+                            Duration = marching.Duration
                         };
                         var attackStatus = new AttackStatusData()
                         {
@@ -197,7 +201,7 @@ namespace GameOfRevenge.GameHandlers
                         };
 //                            attackStatus.State = 1;
 
-                        GameService.BRealTimeUpdateManager.AddNewAttackOnWorld(attackStatus);
+                        GameService.BRealTimeUpdateManager.AddNewMarchingArmy(attackStatus);
                         count++;
                     }
                     log.InfoFormat("Total attacks running:{0}", count);
@@ -207,7 +211,7 @@ namespace GameOfRevenge.GameHandlers
                     log.Info("Error pulling marching troops");
                 }
 
-                GameService.BRealTimeUpdateManager.Update(InvokeAttackComplete);
+                GameService.BRealTimeUpdateManager.Update(MarchingArmyComplete);
             }
             catch(Exception ex)
             {
@@ -216,21 +220,45 @@ namespace GameOfRevenge.GameHandlers
             }
         }
 
-        void InvokeAttackComplete(AttackStatusData data, bool forAttacker)
+        void MarchingArmyComplete(AttackStatusData data, int notify)
         {
-            var playerId = forAttacker? data.AttackData.AttackerId : data.AttackData.EnemyId;
-            var actor = PlayersManager.GetPlayer(playerId);
-            if (actor != null)
+            var result = new MarchingResultResponse()
             {
-                var result = new AttackResultResponse
+                MarchingId = data.MarchingArmy.MarchingId,
+                MarchingType = data.MarchingArmy.MarchingType.ToString(),
+                AttackerId = data.AttackData.AttackerId,
+                AttackerName = data.AttackData.AttackerName,
+                TargetId = data.AttackData.TargetId,
+                TargetName = data.AttackData.TargetName
+            };
+            if (!data.MarchingArmy.IsRetreat)
+            {
+                if ((data.MarchingArmy.MarchingType == MarchingType.AttackPlayer) ||
+                    (data.MarchingArmy.MarchingType == MarchingType.AttackMonster))
                 {
-                    WinnerId = data.MarchingArmy.Report.AttackerWon? data.AttackData.AttackerId : data.AttackData.EnemyId
-                };
-                actor.SendEvent(EventCode.AttackResult, result);
+                    if (data.MarchingArmy.Report != null) result.WinnerId = data.MarchingArmy.Report.WinnerId;
+                }
+                else if (data.MarchingArmy.MarchingType == MarchingType.ReinforcementPlayer)
+                {
+                    result.WinnerId = data.AttackData.TargetId;
+                }
             }
-            if (forAttacker)
+
+            var notifyAttacker = (notify != RealTimeUpdateManager.NOTIFY_TARGET);
+            var playerId = notifyAttacker ? result.AttackerId : result.TargetId;
+            var actor = PlayersManager.GetPlayer(playerId);
+            if (actor != null) actor.SendEvent(EventCode.MarchingResult, result);
+
+            if (notify == RealTimeUpdateManager.NOTIFY_ALL)
             {
-                actor.SendOperation(OperationCode.PlayerConnectToServer, ReturnCode.OK);
+                actor = PlayersManager.GetPlayer(result.TargetId);
+                if (actor != null) actor.SendEvent(EventCode.MarchingResult, result);
+            }
+
+            if (data.MarchingArmy.MarchingType == MarchingType.ReinforcementPlayer)
+            {
+//                await UpdatePlayerData(playerData);
+//                await UpdatePlayerData(targetPlayerData);
             }
         }
 

@@ -1,8 +1,8 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Text.RegularExpressions;
 using System.Linq;
 using System.Threading.Tasks;
+using System.Collections.Generic;
+using System.Text.RegularExpressions;
 using Newtonsoft.Json;
 using Photon.SocketServer;
 using ExitGames.Logging;
@@ -13,6 +13,7 @@ using GameOfRevenge.Common.Net;
 using GameOfRevenge.Common.Models;
 using GameOfRevenge.Common.Models.Quest;
 using GameOfRevenge.Common.Models.Quest.Template;
+using GameOfRevenge.Common.Models.PlayerData;
 using GameOfRevenge.Common.Services;
 using GameOfRevenge.Common.Interface.UserData;
 using GameOfRevenge.Common.Email;
@@ -24,6 +25,7 @@ using GameOfRevenge.Helpers;
 using GameOfRevenge.Interface;
 using GameOfRevenge.Model;
 using GameOfRevenge.Buildings.Handlers;
+using GameOfRevenge.Model.Common;
 
 namespace GameOfRevenge.GameHandlers
 {
@@ -97,9 +99,11 @@ new string[]{
                     case OperationCode.HelpStructureRequest: return await HandleHelpStructure(peer, operationRequest);//28
 
                     case OperationCode.UpdatePlayerData: return await HandleUpdatePlayerData(peer, operationRequest);//30
+                    case OperationCode.UpdateMarchingArmy: return await HandleUpdateMarchingArmy(peer, operationRequest);//36
+                    case OperationCode.RetreatMarchingArmy: return await HandleRetreatMarchingArmy(peer, operationRequest);//37
 
-                    case OperationCode.SendFriendRequest: return await HandleSendFriendRequest(peer, operationRequest);
-                    case OperationCode.RespondToFriendRequest: return await HandleRespondToFriendRequest(peer, operationRequest);
+                    case OperationCode.SendFriendRequest: return await HandleSendFriendRequest(peer, operationRequest);//34
+                    case OperationCode.RespondToFriendRequest: return await HandleRespondToFriendRequest(peer, operationRequest);//35
 //                    OperationCode.CheckUnderAttack = 22
                     default: return peer.SendOperation(operationRequest.OperationCode, ReturnCode.InvalidOperation);
                 }
@@ -115,22 +119,87 @@ new string[]{
         async Task<PlayerUserQuestData> UpdatePlayerData(MmoActor actor)
         {
             log.Info("player " + actor.PlayerId + " data changed - ENTER");
-            var plyData = GameService.RealTimeUpdateManagerQuestValidator.GetPlayerData(actor.PlayerId);
+            var plyData = GameService.RealTimeUpdateManagerQuestValidator.GetCachedPlayerData(actor.PlayerId);
             if (plyData == null)
             {
                 log.Info("player " + actor.PlayerId + " offline - EXIT");
                 return null;
             }
 
-            var data = await GameService.RealTimeUpdateManagerQuestValidator.PlayerDataChanged(plyData);
-            if (data != null) actor.InternalPlayerDataManager.UpdateData(data);
+            var data = await GameService.RealTimeUpdateManagerQuestValidator.UpdatePlayerData(plyData);
+            if (data != null)
+            {
+                actor.InternalPlayerDataManager.UpdateData(data);
+                UpdateMarchingArmies(actor, data);
+            }
 
             return plyData;
         }
 
+        void UpdateMarchingArmies(MmoActor actor, PlayerCompleteData completeData)
+        {
+            var marchingArmies = completeData.MarchingArmies;
+            if (marchingArmies == null) return;
+
+            foreach (var item in marchingArmies)
+            {
+                if (!GameService.BRealTimeUpdateManager.UpdateMarchingArmy(item)) continue;
+
+                var target = actor.World.PlayersManager.GetPlayer(item.TargetId);
+                var updateMarching = new UpdateMarchingArmyEvent(item);
+                actor.SendEvent(EventCode.UpdateMarchingArmyEvent, updateMarching);
+                target.SendEvent(EventCode.UpdateMarchingArmyEvent, updateMarching);
+            }
+        }
+
         private async Task<SendResult> HandleUpdatePlayerData(IGorMmoPeer peer, OperationRequest operationRequest)
         {
-            await UpdatePlayerData(peer.Actor);
+            var plyData = await UpdatePlayerData(peer.Actor);
+
+            return peer.SendOperation(operationRequest.OperationCode, (plyData != null)? ReturnCode.OK : ReturnCode.Failed);
+        }
+
+        private async Task<SendResult> HandleUpdateMarchingArmy(IGorMmoPeer peer, OperationRequest operationRequest)
+        {
+            var plyData = await UpdatePlayerData(peer.Actor);
+
+            return peer.SendOperation(operationRequest.OperationCode, (plyData != null) ? ReturnCode.OK : ReturnCode.Failed);
+        }
+
+        private async Task<SendResult> HandleRetreatMarchingArmy(IGorMmoPeer peer, OperationRequest operationRequest)
+        {
+            log.Info("**************** HandleRetreatMarchingArmy Start************************");
+            var operation = new RetreatMarchingArmyRequest(peer.Protocol, operationRequest);
+            if (!operation.IsValid) return peer.SendOperation(operationRequest.OperationCode, ReturnCode.InvalidOperation, debuMsg: operation.GetErrorMessage());
+
+            var marchingId = operation.MarchingId;
+            var marchingArmy = GameService.BRealTimeUpdateManager.GetMarchingArmy(marchingId);
+            if (marchingArmy == null) return peer.SendOperation(operationRequest.OperationCode, ReturnCode.InvalidOperation);
+
+            if (!marchingArmy.IsRetreat)
+            {
+                var army = marchingArmy.Base();
+                army.ReturnReduction = (int)marchingArmy.TimeLeftForTask;
+                army.Recall = marchingArmy.Distance - army.ReturnReduction;
+
+                var armyJson = JsonConvert.SerializeObject(army);
+                var resp = await GameService.BPlayerManager.UpdatePlayerDataID(peer.Actor.PlayerId, marchingId, armyJson);
+                if (!resp.IsSuccess)
+                {
+                    return peer.SendOperation(operationRequest.OperationCode, ReturnCode.Failed, debuMsg: resp.Message);
+                }
+                marchingArmy.ReturnReduction = army.ReturnReduction;
+                marchingArmy.Recall = army.Recall;
+            }
+
+            GameService.BRealTimeUpdateManager.UpdateMarchingArmy(marchingArmy);
+//            var updateResp = new UpdateMarchingArmyEvent(marchingArmy)
+//            {
+//                MarchingId = operation.MarchingId
+//            };
+            log.Info("**************** HandleRetreatMarchingArmy End************************");
+            var updateMarching = new UpdateMarchingArmyEvent(marchingArmy);
+            peer.Actor.SendEvent(EventCode.UpdateMarchingArmyEvent, updateMarching);
 
             return peer.SendOperation(operationRequest.OperationCode, ReturnCode.OK);
         }
@@ -728,7 +797,7 @@ new string[]{
             };
             log.Info(">>>>>>>>> data to send >" + JsonConvert.SerializeObject(uresponse));
 
-            var playerData = GameService.RealTimeUpdateManagerQuestValidator.GetPlayerData(peer.Actor.PlayerId);
+            var playerData = GameService.RealTimeUpdateManagerQuestValidator.GetCachedPlayerData(peer.Actor.PlayerId);
             _ = GameService.BUserQuestManager.CheckQuestProgressForCollectResourceAsync(playerData, resourceType, resourceCollected.Collected);
 
             return peer.SendOperation(operationRequest.OperationCode, ReturnCode.OK, uresponse.GetDictionary(), debuMsg: response.Message);
@@ -804,202 +873,21 @@ new string[]{
         public async Task<SendResult> HandleSendReinforcementsRequest(IGorMmoPeer peer, OperationRequest operationRequest)
         {
             log.Debug("@@@@@@@ HANDLE SEND REINFORCEMENTS REQUEST FROM " + peer.Actor.PlayerId);
+            string errMsg = null;
             var operation = new SendArmyRequest(peer.Protocol, operationRequest);
             if (operation.IsValid)
             {
-                var errMsg = await SendReinforcementsAsync(peer, operation);
-                if (errMsg == null)
-                {
-                    return SendResult.Ok;
-                }
-                else
-                {
-                    return peer.SendOperation(operationRequest.OperationCode, ReturnCode.Failed, debuMsg: errMsg);
-                }
+                var success = await peer.Actor.PlayerAttackHandler.SendReinforcementsAsync(operation);
+                if (!success) return SendResult.Failed;
+
+                return SendResult.Ok;
             }
+            if (errMsg == null) errMsg = operation.GetErrorMessage();
 
             log.Debug("@@@@ SEND REINFORCEMENTS INVALID");
-            var msg = operation.GetErrorMessage();
-            return peer.SendOperation(operationRequest.OperationCode, ReturnCode.InvalidOperation, debuMsg: msg);
+//            var msg = operation.GetErrorMessage();
+            return peer.SendOperation(operationRequest.OperationCode, ReturnCode.InvalidOperation, debuMsg: errMsg);
         }
-
-        public async Task<string> SendReinforcementsAsync(IGorMmoPeer peer, SendArmyRequest request)
-        {
-            log.Debug("@@@@@@@@!!! Send Reinforcements Request " + JsonConvert.SerializeObject(request));
-
-            string errMsg = null;
-            var player = peer.Actor;
-            var targetPlayer = peer.Actor.World.PlayersManager.GetPlayer(request.TargetPlayerId);
-            if (targetPlayer == null)
-            {
-                errMsg = "Destination player not found.";
-
-                log.Debug("@@@@@@@@ PROCCESS END - Target player not found.");
-                return errMsg;
-            }
-
-            DateTime timestart = DateTime.UtcNow.AddSeconds(2);
-            double dist = player.World.GetDistanceBw2Points(targetPlayer.WorldRegion, player.WorldRegion) * 100;// / 0.2f;
-            int reachedTime = (int)dist;
-
-            try
-            {
-                var marchingRequest = new MarchingArmy()
-                {
-                    Troops = new List<TroopInfos>()
-                };
-                var len = request.Troops.Length;
-                for (var idx = 0; idx < len; idx += 3)
-                {
-                    var troopType = (TroopType)request.Troops[idx];
-                    TroopInfos troopInfo = marchingRequest.Troops.Find(x => (x.TroopType == troopType));
-                    if (troopInfo == null)
-                    {
-                        troopInfo = new TroopInfos()
-                        {
-                            TroopType = troopType,
-                            TroopData = new List<TroopDetails>()
-                        };
-                        marchingRequest.Troops.Add(troopInfo);
-                    }
-                    var troop = new TroopDetails()
-                    {
-                        Level = request.Troops[idx + 1],
-                        Count = request.Troops[idx + 2]
-                    };
-                    troopInfo.TroopData.Add(troop);
-                }
-
-                //                log.InfoFormat("Passing Data attackerId {0} Data {1} defenderId {2} ", attacker.PlayerId, JsonConvert.SerializeObject(marchingRequest), Enemy.PlayerId);
-
-
-                if (marchingRequest.Troops.Count == 0)
-                {
-                    throw new RequirementExecption("Zero marching army was sended");
-                }
-
-                var resp = await BaseUserDataManager.GetFullPlayerData(player.PlayerId);
-                if (!resp.IsSuccess || !resp.HasData) throw new DataNotExistExecption(resp.Message);
-
-                var playerData = resp.Data;
-                resp = await BaseUserDataManager.GetFullPlayerData(request.TargetPlayerId);
-                if (!resp.IsSuccess || !resp.HasData) throw new DataNotExistExecption(resp.Message);
-
-                var targetPlayerData = resp.Data;
-                if ((playerData.Troops == null) || (playerData.Troops.Count == 0))
-                {
-                    throw new RequirementExecption("User does not have any army");
-                }
-
-                try
-                {
-                    KingdomPvPManager.ValidateArmyRequired(marchingRequest, playerData, false);
-                }
-                catch (DataNotExistExecption ex)
-                {
-                    throw new RequirementExecption(ex.Message);
-                }
-                catch (Exception)
-                {
-                    throw new RequirementExecption("User does not have required army");
-                }
-                log.InfoFormat("army {0}", JsonConvert.SerializeObject(marchingRequest));
-
-
-                var message = player.PlayerData.Name + " sent you reinforcements\n";
-                bool errorTransfering = false;
-                foreach (var marchingTroop in marchingRequest.Troops)
-                {
-                    var troopType = marchingTroop.TroopType;
-                    try
-                    {
-                        //Remove troops
-                        var troops = playerData.Troops.Find(x => (x.TroopType == troopType));
-                        var troopDataList = troops.TroopData;
-                        foreach (var troopGroup in marchingTroop.TroopData)
-                        {
-                            var troopData = troopDataList.Find(x => (x.Level == troopGroup.Level));
-                            troopData.Count -= troopGroup.Count;
-                        }
-                        await _userTroopManager.UpdateTroops(player.PlayerId, troopType, troopDataList);
-
-                        //Add troops
-                        var total = 0;
-                        troops = targetPlayerData.Troops.Find(x => (x.TroopType == troopType));
-                        troopDataList = ((troops != null) && (troops.TroopData != null)) ? troops.TroopData : new List<TroopDetails>();
-                        foreach (var troopGroup in marchingTroop.TroopData)
-                        {
-                            var troopLevel = troopGroup.Level;
-                            var troopData = troopDataList.Find(x => (x.Level == troopLevel));
-                            if (troopData == null)
-                            {
-                                troopData = new TroopDetails() { Level = troopLevel };
-                                troopDataList.Add(troopData);
-                            }
-                            troopData.Count += troopGroup.Count;
-                            total += troopGroup.Count;
-                        }
-                        await _userTroopManager.UpdateTroops(request.TargetPlayerId, troopType, troopDataList);
-                        message += "\n" + troopType.ToString() + " x " + total;
-                    }
-                    catch (Exception ex)
-                    {
-                        log.InfoFormat("Exception transfering troops {0} {1} ", troopType, ex.Message);
-                        errorTransfering = true;
-                    }
-                }
-                if (errorTransfering) throw new Exception();
-
-                await UpdatePlayerData(player);
-                await UpdatePlayerData(targetPlayer);
-
-                var reinforcementResponse = new ReinforcementsResponse()
-                {
-                    PlayerId = player.PlayerId,
-                    PlayerUsername = player.PlayerData.Name,
-                    TargetPlayerId = targetPlayerData.PlayerId,
-                    TargetPlayerUsername = targetPlayerData.PlayerName,
-                    Troops = request.Troops
-                };
-                player.SendEvent(EventCode.ReinforcementsEvent, reinforcementResponse);
-
-                await SendSimpleMail(targetPlayer.PlayerId, "Reinforcements Arrived", message);
-                targetPlayer.SendEvent(EventCode.ReinforcementsEvent, reinforcementResponse);
-            }
-            catch (RequirementExecption ex)
-            {
-                errMsg = ex.Message;
-            }
-            catch (DataNotExistExecption ex)
-            {
-                errMsg = ex.Message;
-            }
-            catch (Exception ex)
-            {
-                log.InfoFormat("Exception transfering troops {0} {1} ", new object[2] { ex.Message, ex.StackTrace });
-                errMsg = "Error transfering army";
-            }
-
-            log.Debug("@@@@@@@@ PROCCESS END = (" + errMsg + ") " + (DateTime.UtcNow - timestart).TotalSeconds);
-            return errMsg;
-        }
-
-        private async Task SendSimpleMail(int targetPlayerId, string subject, string message)
-        {
-            try
-            {
-                var mail = new MailMessage()
-                {
-                    Subject = subject,
-                    Message = message
-                };
-                var json = JsonConvert.SerializeObject(mail);
-                await mailManager.SendMail(targetPlayerId, MailType.Message, json);
-            }
-            catch { }
-        }
-
-
 
         public async Task<SendResult> HandlPlayerConnectToGameServer(IGorMmoPeer peer, OperationRequest operationRequest)
         {
@@ -1089,15 +977,21 @@ new string[]{
             });
 
 
-            var attackData = GameService.BRealTimeUpdateManager.GetAttackDataForDefender(actor.PlayerId);
-            if (attackData != null)
+            var attackList = GameService.BRealTimeUpdateManager.GetAllAttackDataForDefender(actor.PlayerId);
+            if ((attackList != null) && (attackList.Count > 0))
             {
-                attackData.AttackData.WatchLevel = KingdomPvPManager.GetWatchLevel(playerData);
-                var attackResponse = new AttackResponse(attackData.AttackData);//attack / under attack event
-                actor.SendEvent(EventCode.UnderAttack, attackResponse);
+                var watchLevel = KingdomPvPManager.GetWatchLevel(playerData);
+                foreach (var item in attackList)
+                {
+                    item.AttackData.WatchLevel = watchLevel;
+                    var attackResponse = new AttackResponse(item.AttackData);//attack / under attack event
+                    actor.SendEvent(EventCode.UnderAttack, attackResponse);
+                }
             }
             else
+            {
                 log.InfoFormat("Under attack data not found for this user when join game {0} ", actor.PlayerId);
+            }
 
             log.Debug("@@@@ END PLAYER CONNECT "+actor.PlayerId);
             return peer.SendOperation(operationRequest.OperationCode, ReturnCode.OK);
@@ -1170,6 +1064,7 @@ new string[]{
                 }
                 else
                 {
+                    log.Info($"Move to x:{x} y:{y}");
                     peer.Actor.InterestArea.CameraMove(regions[x][y]);
                     return peer.SendOperation(operationRequest.OperationCode, ReturnCode.OK);
                 }

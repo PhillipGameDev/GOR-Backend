@@ -1,10 +1,11 @@
-﻿using GameOfRevenge.Common.Interface.Model;
-using GameOfRevenge.Common.Interface.Model.Table;
-using GameOfRevenge.Common.Models.Table;
-using Newtonsoft.Json;
-using System;
+﻿using System;
 using System.Data;
 using System.Runtime.Serialization;
+using Newtonsoft.Json;
+using GameOfRevenge.Common.Helper;
+using GameOfRevenge.Common.Models.Table;
+using GameOfRevenge.Common.Models.Boost;
+using GameOfRevenge.Common.Interface.Model.Table;
 
 namespace GameOfRevenge.Common.Models
 {
@@ -30,6 +31,8 @@ namespace GameOfRevenge.Common.Models
         public int QuestId { get; set; }
         [DataMember, JsonProperty(Order = 10)]
         public int Count { get; set; }
+
+        public static ILocalizationBase Localization = new Localization();
 
         public override void LoadFromDataReader(IDataReader reader)
         {
@@ -59,6 +62,134 @@ namespace GameOfRevenge.Common.Models
         public override string ToString()
         {
             return DataType.ToString() + ": " + ValueId + ": " + Value + "x " + Count;
+        }
+
+        public (string, string, string) GetProperties() => GetProperties(this);
+
+        public static (string, string, string) GetProperties(DataReward reward)
+        {
+            string value;
+            if (reward.DataType == DataType.Technology)
+            {
+                if ((NewBoostTech)reward.ValueId != NewBoostTech.TroopMarchingReductionMultiplier)
+                {
+                    value = TimeHelper.ChangeSecondsToTimeFormat(reward.Value, false);
+                }
+                else
+                {
+                    value = reward.Value.ToString();
+                }
+            }
+            else
+            {
+                value = (reward.Value >= 1000)? AmountHelper.ToKMB(reward.Value) : string.Format("{0:N0}", reward.Value);
+            }
+
+            string str;
+            string title = null;
+            string desc = null;
+            switch (reward.DataType)
+            {
+                case DataType.Custom:
+                    switch (reward.ValueId)
+                    {
+                        case 1:
+                            str = Localization.GetText("{0} Experience Points for your King", Helper.Localization.REWARDS);
+                            title = string.Format(str, value);
+                            str = Localization.GetText("Use this item to add {0:N0} Experience Points to your King", Helper.Localization.REWARDS);
+                            desc = string.Format(str, reward.Value);
+                            break;
+                        case 2:
+                            str = Localization.GetText("{0} Stamina Points for your King", Helper.Localization.REWARDS);
+                            title = string.Format(str, value);
+                            str = Localization.GetText("Use this item to add {0:N0} Stamina Points to your King", Helper.Localization.REWARDS);
+                            desc = string.Format(str, reward.Value);
+                            break;
+                        case 3:
+                            str = Localization.GetText("{0} VIP Points", Helper.Localization.REWARDS);
+                            title = string.Format(str, value);
+                            str = Localization.GetText("Use this item to receive {0:N0} VIP Points", Helper.Localization.REWARDS);
+                            desc = string.Format(str, reward.Value);
+                            break;
+                        case 4:
+                            str = Localization.GetText("{0} Hero Points", Helper.Localization.REWARDS);
+                            title = string.Format(str, value);
+                            str = Localization.GetText("Use this item to receive {0:N0} Hero Points", Helper.Localization.REWARDS);
+                            desc = string.Format(str, reward.Value);
+                            break;
+                    }
+                    break;
+                case DataType.Resource:
+                    var type = (ResourceType)reward.ValueId;
+                    var resName = Localization.GetText(type.ToString(), Helper.Localization.ENUMS);
+                    str = Localization.GetText("{0} {1}", Helper.Localization.REWARDS);
+                    title = string.Format(str, value, resName);
+                    str = Localization.GetText("Use it to receive {0:N0} {1}", Helper.Localization.REWARDS);
+                    desc = string.Format(str, reward.Value, resName);
+                    break;
+                case DataType.Technology:
+                    string str2;
+                    var techType = (NewBoostTech)reward.ValueId;
+                    switch (techType)
+                    {
+                        case NewBoostTech.TroopTrainingSpeedMultiplier:/*14*/
+                        case NewBoostTech.TroopTrainingTimeBonus:/*18*/
+                            str = Localization.GetText("{0} Training Speedup", Helper.Localization.REWARDS);
+                            title = string.Format(str, TimeHelper.ChangeSecondsToFormatTimeWords(reward.Value, true));
+                            str2 = Localization.GetText("Reduces troop training time by {0}", Helper.Localization.REWARDS);
+                            desc = string.Format(str2, TimeHelper.ChangeSecondsToFormatTimeWords(reward.Value));
+                            break;
+
+                        case NewBoostTech.TroopRecoverySpeedMultiplier:/*15*/
+                        case NewBoostTech.TroopRecoveryTimeBonus:/*19*/
+                            if (techType == NewBoostTech.TroopRecoverySpeedMultiplier)
+                            {
+                                str = Localization.GetText("{0} Recovery Boost", Helper.Localization.REWARDS);
+                                str2 = Localization.GetText("Boost troop recovery speed for {0}", Helper.Localization.REWARDS);
+                            }
+                            else
+                            {
+                                str = Localization.GetText("{0} Recovery Speedup", Helper.Localization.REWARDS);
+                                str2 = Localization.GetText("Reduces the recovery time of a troop by {0}", Helper.Localization.REWARDS);
+                            }
+                            title = string.Format(str, TimeHelper.ChangeSecondsToFormatTimeWords(reward.Value, true));
+                            desc = string.Format(str2, TimeHelper.ChangeSecondsToFormatTimeWords(reward.Value));
+                            break;
+                        case NewBoostTech.TroopMarchingReductionMultiplier://27
+                            str = Localization.GetText("{0} Marching Time Reduction", Helper.Localization.REWARDS);
+                            title = string.Format(str, reward.Value + "%");
+                            str2 = Localization.GetText("Reduces one-way marching time of the army by {0}", Helper.Localization.REWARDS);
+                            desc = string.Format(str2, reward.Value + "%");
+                            break;
+
+                        case NewBoostTech.BuildingSpeedMultiplier:/*7*/
+                        case NewBoostTech.BuildingTimeBonus:/*20*/
+                            str = Localization.GetText("{0} Construction Speedup", Helper.Localization.REWARDS);
+                            title = string.Format(str, TimeHelper.ChangeSecondsToFormatTimeWords(reward.Value, true));
+                            str2 = Localization.GetText("Reduces the construction time by {0}", Helper.Localization.REWARDS);
+                            desc = string.Format(str2, TimeHelper.ChangeSecondsToFormatTimeWords(reward.Value));
+                            break;
+
+                        case NewBoostTech.ResearchSpeedMultiplier:/*10*/
+                        case NewBoostTech.ResearchTimeBonus:/*21*/
+                            if (techType == NewBoostTech.ResearchSpeedMultiplier)
+                            {
+                                str = Localization.GetText("{0} Research Boost", Helper.Localization.REWARDS);
+                                str2 = Localization.GetText("Boosts technology research speed for {0}", Helper.Localization.REWARDS);
+                            }
+                            else
+                            {
+                                str = Localization.GetText("{0} Research Speedup", Helper.Localization.REWARDS);
+                                str2 = Localization.GetText("Reduces the research time by {0}", Helper.Localization.REWARDS);
+                            }
+                            title = string.Format(str, TimeHelper.ChangeSecondsToFormatTimeWords(reward.Value, true));
+                            desc = string.Format(str2, TimeHelper.ChangeSecondsToFormatTimeWords(reward.Value));
+                            break;
+                    }
+                    break;
+            }
+
+            return (title, desc, value);
         }
     }
 }

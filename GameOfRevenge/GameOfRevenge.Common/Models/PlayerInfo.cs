@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Data;
 using GameOfRevenge.Common.Models.Table;
+using Newtonsoft.Json;
 
 namespace GameOfRevenge.Common.Models
 {
@@ -22,6 +23,7 @@ namespace GameOfRevenge.Common.Models
         public DateTime RegisteredDate { get; set; }
         public DateTime LastLogin { get; set; }
 
+        [JsonIgnore]
         public int VIPLevel => UserVIPDetails.VIPLevel(VIPPoints);
 
         public void LoadFromDataReader(IDataReader reader)

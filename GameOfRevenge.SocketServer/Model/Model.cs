@@ -6,6 +6,6 @@ namespace GameOfRevenge.Model
 
     public class BoostUpResource : TimerBase
     {
-        public int Percentage { get; set; }
+        public new int Percentage { get; set; }
     }
 }

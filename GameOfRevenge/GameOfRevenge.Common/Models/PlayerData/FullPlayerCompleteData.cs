@@ -29,6 +29,7 @@ namespace GameOfRevenge.Common.Models
         public long Wood => (Resources != null) ? Resources.Wood : 0;
         public long Ore => (Resources != null) ? Resources.Ore : 0;
         public long Gems => (Resources != null) ? Resources.Gems : 0;
+        public long Gold => (Resources != null) ? Resources.Gold : 0;
 
         public FullPlayerCompleteData()
         {
@@ -49,7 +50,7 @@ namespace GameOfRevenge.Common.Models
             Workers = data.Workers;
 
             Resources = data.Resources;
-            MarchingArmy = data.MarchingArmy;
+            MarchingArmies = data.MarchingArmies;
 
             Structures = data.Structures;
             Troops = data.Troops;

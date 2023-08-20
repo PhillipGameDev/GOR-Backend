@@ -69,11 +69,14 @@ namespace GameOfRevenge.GameHandlers
                 var response = new IaEnterResponse(actor);
 
                 Owner.SendEvent(EventCode.IaEnter, response);
-                var attackData = GameService.BRealTimeUpdateManager.GetAttackerData(actor.PlayerId);
-                if (attackData != null)
+                var attackList = GameService.BRealTimeUpdateManager.GetAllAttackerData(actor.PlayerId);
+                if ((attackList != null) && (attackList.Count > 0))
                 {
-                    var attackResponse = new AttackResponse(attackData.AttackData);
-                    Owner.SendEvent(EventCode.AttackEvent, attackResponse);
+                    foreach (var item in attackList)
+                    {
+                        var attackResponse = new AttackResponse(item.AttackData);
+                        Owner.SendEvent(EventCode.AttackEvent, attackResponse);
+                    }
                 }
             }
         }

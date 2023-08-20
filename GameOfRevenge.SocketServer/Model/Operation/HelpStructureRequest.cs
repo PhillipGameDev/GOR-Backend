@@ -8,7 +8,7 @@ namespace GameOfRevenge.Model
     {
         public HelpStructureRequest(IRpcProtocol protocol, OperationRequest request) : base(protocol, request) { }
 
-        [DataMember(Code = (byte)RoomParameterKey.TargetPlayerId, IsOptional = false)]
+        [DataMember(Code = (byte)RoomParameterKey.TargetId, IsOptional = false)]
         public int TargetPlayerId { get; set; }
 
         [DataMember(Code = (byte)RoomParameterKey.StructureType, IsOptional = false)]
@@ -26,7 +26,7 @@ namespace GameOfRevenge.Model
         [DataMember(Code = (byte)RoomParameterKey.PlayerId, IsOptional = false)]
         public int PlayerId { get; set; }
 
-        [DataMember(Code = (byte)RoomParameterKey.TargetPlayerId, IsOptional = false)]
+        [DataMember(Code = (byte)RoomParameterKey.TargetId, IsOptional = false)]
         public int TargetPlayerId { get; set; }
 
         [DataMember(Code = (byte)RoomParameterKey.StructureType, IsOptional = false)]

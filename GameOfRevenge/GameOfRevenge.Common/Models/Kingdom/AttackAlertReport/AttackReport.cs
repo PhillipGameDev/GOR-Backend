@@ -18,14 +18,13 @@ namespace GameOfRevenge.Common.Models.Kingdom.AttackAlertReport
         [DataMember]
         public DateTime StartTime { get; set; }
         [DataMember(EmitDefaultValue = false)]
-        public int ReachedTime { get; set; }
+        public int Distance { get; set; }
 
         [DataMember(EmitDefaultValue = false)]
         public byte KingLevel { get; set; }
         [DataMember(EmitDefaultValue = false)]
         public byte WatchLevel { get; set; }
 
-        //        public int TotalTroopSize { get; set; }
         [DataMember]
         public List<TroopData> Troops { get; set; }
 
@@ -37,7 +36,7 @@ namespace GameOfRevenge.Common.Models.Kingdom.AttackAlertReport
     }
 
     [DataContract]
-    public class UnderAttackReport : AttackReport
+    public class UnderAttackMail : AttackReport
     {
         [DataMember]
         public MapLocation Location { get; set; }

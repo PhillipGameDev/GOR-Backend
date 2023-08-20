@@ -18,7 +18,7 @@
         StructureLevel = 14,
         ResourceId = 15,
         ResourceCollected = 16,
-        BuildingBuildTime = 17,
+        TimeLeft = 17,
         TotalTime = 18,
         TroopCount = 19,
         TroopType = 20,
@@ -26,9 +26,9 @@
         TrainingTime = 22,
         BoostUpTime = 23,
         Percentage = 24,
-        TargetPlayerId = 25,
+        TargetId = 25,
         AttackerId = 26,
-        ReachedTime = 27,
+        Distance = 27,
         WinnerId = 28,
         Timestamp = 29,
         IsAttacking = 30,
@@ -51,7 +51,7 @@
         AllianceId = 47,
         KingLevel = 48,
         StartTime = 49,
-        TargetUsername = 50,
+        TargetName = 50,
         ChatId = 51,
         ChatMessage = 52,
         Duration = 53,
@@ -67,6 +67,11 @@
         Value = 63,
         WatchLevel = 64,
         ShieldEndTime = 65,
-        Invaded = 66
+        Invaded = 66,
+        MarchingId = 67,
+        MarchingType = 68,
+        Recall = 69,
+        AdvanceReduction = 70,
+        ReturnReduction = 71
     }
 }

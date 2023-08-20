@@ -6,5 +6,6 @@ namespace GameOfRevenge.Interface
     public interface IPlayerAttackHandler
     {
         Task<bool> AttackRequestAsync(SendArmyRequest request);
+        Task<bool> SendReinforcementsAsync(SendArmyRequest request);
     }
 }

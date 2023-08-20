@@ -48,33 +48,35 @@ namespace GameOfRevenge.GameHandlers
             var eC = new Vector(Math.Min(maxPosX - 1, ecXPos), Math.Min(maxPosX - 1, ecYPos));    // last cordinate position of tiles which is part of IA
             var sC = new Vector(Math.Max(0, scXPos), Math.Max(0, scYPos));   //start cordinate position of tiles which is part of IA
 
-            var enemyId = 0;
-            var attackData = GameService.BRealTimeUpdateManager.GetAttackerData(this.Owner.PlayerId);
-            if (attackData != null)
+            var attackList = GameService.BRealTimeUpdateManager.GetAllAttackerData(this.Owner.PlayerId);
+            if ((attackList != null) && (attackList.Count > 0))
             {
-                enemyId = attackData.AttackData.EnemyId;
-                var found = false;
-                for (int i = 0; i < maxPosX; i++)   //loop for x coordinate
+                foreach (var item in attackList)
                 {
-                    for (int j = 0; j < maxPosY; j++)   // loop for y coordinate
+                    var targetId = item.AttackData.TargetId;
+                    var found = false;
+                    for (int i = 0; i < maxPosX; i++)   //loop for x coordinate
                     {
-                        var r = this.World.WorldRegions[i][j];
-                        if ((r.Owner == null) || (r.Owner.PlayerId != enemyId)) continue;
-
-                        if (!this.Regions.Contains(r))
+                        for (int j = 0; j < maxPosY; j++)   // loop for y coordinate
                         {
-                            this.Regions.Add(r);
-                            if (r.IsBooked && (r.Owner != null) && !this.Owner.InterestUsers.ContainsKey(r.Owner.PlayerId))
+                            var r = this.World.WorldRegions[i][j];
+                            if ((r.Owner == null) || (r.Owner.PlayerId != targetId)) continue;
+
+                            if (!this.Regions.Contains(r))
                             {
-                                this.Owner.InterestUsers.TryAdd(r.Owner.PlayerId, r.Owner);
-                                if (isLocatedNewLocation) r.OnEnterPlayer(this.Owner); // new player instanstiate
-                                if (this.Owner.IsInKingdomView) this.SendOnEnterEvent(r);
+                                this.Regions.Add(r);
+                                if (r.IsBooked && (r.Owner != null) && !this.Owner.InterestUsers.ContainsKey(r.Owner.PlayerId))
+                                {
+                                    this.Owner.InterestUsers.TryAdd(r.Owner.PlayerId, r.Owner);
+                                    if (isLocatedNewLocation) r.OnEnterPlayer(this.Owner); // new player instanstiate
+                                    if (this.Owner.IsInKingdomView) this.SendOnEnterEvent(r);
+                                }
                             }
+                            found = true;
+                            break;
                         }
-                        found = true;
-                        break;
+                        if (found) break;
                     }
-                    if (found) break;
                 }
             }
 
@@ -105,13 +107,13 @@ namespace GameOfRevenge.GameHandlers
                     if (!Regions.Contains(r)) continue;
                     if (r.Owner != null)
                     {
-                        if (r.Owner.PlayerId == this.Owner.PlayerId) continue;
-                        if ((attackData != null) && (r.Owner.PlayerId == enemyId)) continue;
+                        var tilePlayerId = r.Owner.PlayerId;
+                        if (tilePlayerId == this.Owner.PlayerId) continue;
+                        if ((attackList != null) && attackList.Exists(x => (x.AttackData.TargetId == tilePlayerId))) continue;
                     }
 
                     Regions.Remove(r);
-                    if (r.IsBooked && (r.Owner != null) &&
-                        Owner.InterestUsers.ContainsKey(r.Owner.PlayerId))
+                    if (r.IsBooked && (r.Owner != null) && Owner.InterestUsers.ContainsKey(r.Owner.PlayerId))
                     {
                         log.InfoFormat("Send Exit Tiles to ");
                         this.Owner.InterestUsers.TryRemove(r.Owner.PlayerId, out MmoActor o);
@@ -185,10 +187,17 @@ namespace GameOfRevenge.GameHandlers
         public void CameraMove(Region r)
         {
 //            log.InfoFormat("Camera Move Request {0} ", this.Owner.PlayerId);
-            if (this.CameraRegion == null || this.CameraRegion != r)
+            try
             {
-                this.CameraRegion = r;
-                this.AddUpdateIntArea();
+                if (this.CameraRegion == null || this.CameraRegion != r)
+                {
+                    this.CameraRegion = r;
+                    this.AddUpdateIntArea();
+                }
+            }
+            catch (Exception ex)
+            {
+                log.Info("Exception!! " + ex.Message);
             }
         }
         public void JoinKingdomView()
@@ -212,11 +221,14 @@ namespace GameOfRevenge.GameHandlers
                 }*/
                 this.SendOnEnterEvent(r);
             }
-            var attackData = GameService.BRealTimeUpdateManager.GetAttackerData(this.Owner.PlayerId);
-            if (attackData != null)
+            var attackList = GameService.BRealTimeUpdateManager.GetAllAttackerData(this.Owner.PlayerId);
+            if ((attackList != null) && (attackList.Count > 0))
             {
-                var attackResponse = new AttackResponse(attackData.AttackData);
-                this.Owner.SendEvent(EventCode.AttackEvent, attackResponse);
+                foreach (var item in attackList)
+                {
+                    var attackResponse = new AttackResponse(item.AttackData);
+                    this.Owner.SendEvent(EventCode.AttackEvent, attackResponse);
+                }
             }
             else
             {

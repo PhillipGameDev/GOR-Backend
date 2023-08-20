@@ -51,7 +51,7 @@ namespace GameOfRevenge.Business.Manager
             }
         }
 
-        public async Task<PlayerCompleteData> PlayerDataChanged(PlayerUserQuestData data)
+        public async Task<PlayerCompleteData> UpdatePlayerData(PlayerUserQuestData data)
         {
             var playerId = data.PlayerId;
             var userData = await BaseUserDataManager.GetFullPlayerData(playerId);
@@ -63,6 +63,7 @@ namespace GameOfRevenge.Business.Manager
                 if (userQuestData.IsSuccess) data.QuestData = userQuestData.Data;
             }
             log.Info("player " + playerId + " data changed EXIT");
+
             return userData.Data;
         }
 
@@ -93,7 +94,7 @@ namespace GameOfRevenge.Business.Manager
             return list;
         }*/
 
-        public PlayerUserQuestData GetPlayerData(int playerId)
+        public PlayerUserQuestData GetCachedPlayerData(int playerId)
         {
             allPlayerDatas.TryGetValue(playerId, out var data);
 

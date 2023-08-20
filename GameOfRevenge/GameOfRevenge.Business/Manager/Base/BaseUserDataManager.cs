@@ -159,16 +159,16 @@ namespace GameOfRevenge.Business.Manager.Base
 
                 line = "5";
 
-                var userResources = response.Data.Where(x => x.DataType == DataType.Resource)?.ToList();
-                var userStructures = response.Data.Where(x => x.DataType == DataType.Structure)?.ToList();
-                var userTroops = response.Data.Where(x => x.DataType == DataType.Troop)?.ToList();
-                var userMarching = response.Data.Find(x => (x.DataType == DataType.Marching));
-                var userTechnologies = response.Data.Where(x => x.DataType == DataType.Technology)?.ToList();
-//                var userSubTechs = response.Data.Where(x => x.DataType == DataType.SubTechnology)?.ToList();
-                var userItems = response.Data.Where(x => x.DataType == DataType.Inventory)?.ToList();
-                var userBoosts = response.Data.Where(x => x.DataType == DataType.ActiveBoost)?.ToList();
-                var userHeroData = response.Data.Where(x => x.DataType == DataType.Hero)?.ToList();
-                var userActivities = response.Data.Where(x => x.DataType == DataType.Activity)?.ToList();
+                var userResources = response.Data.Where(x => (x.DataType == DataType.Resource))?.ToList();
+                var userStructures = response.Data.Where(x => (x.DataType == DataType.Structure))?.ToList();
+                var userTroops = response.Data.Where(x => (x.DataType == DataType.Troop))?.ToList();
+                var userMarchingArmies = response.Data.Where(x => (x.DataType == DataType.Marching))?.ToList();
+                var userTechnologies = response.Data.Where(x => (x.DataType == DataType.Technology))?.ToList();
+//                var userSubTechs = response.Data.Where(x => (x.DataType == DataType.SubTechnology))?.ToList();
+                var userItems = response.Data.Where(x => (x.DataType == DataType.Inventory))?.ToList();
+                var userBoosts = response.Data.Where(x => (x.DataType == DataType.ActiveBoost))?.ToList();
+                var userHeroData = response.Data.Where(x => (x.DataType == DataType.Hero))?.ToList();
+                var userActivities = response.Data.Where(x => (x.DataType == DataType.Activity))?.ToList();
                 line = "6";
 
                 if (userActivities != null)
@@ -249,35 +249,39 @@ namespace GameOfRevenge.Business.Manager.Base
                 }
 
                 line = "10";
-                if ((userMarching != null) && !string.IsNullOrEmpty(userMarching.Value))
+                if (userMarchingArmies != null)
                 {
-                    var marching = JsonConvert.DeserializeObject<MarchingArmy>(userMarching.Value);
-                    if (marching != null)
+                    List<MarchingArmy> list = null;
+                    foreach (var item in userMarchingArmies)
                     {
-                        if (marching.TimeLeft > 0)
+                        if ((item == null) || string.IsNullOrEmpty(item.Value)) continue;
+
+                        MarchingArmy marching = null;
+                        try
                         {
-                            marching.Id = userMarching.Id;
-                            finalData.Data.MarchingArmy = marching;
+                            marching = JsonConvert.DeserializeObject<MarchingArmy>(item.Value);
                         }
-/*                        else
-                        {
-                            await manager.UpdatePlayerDataID(playerId, userMarching.Id, string.Empty);
-                            //AddOrUpdatePlayerData(playerId, DataType.Custom, 2, json);
-                        }*/
+                        catch { }
+                        if ((marching == null) || (marching.TimeLeft == 0)) continue;
+
+                        marching.MarchingId = item.Id;
+                        marching.MarchingSlot = item.ValueId;
+                        if (list == null) list = new List<MarchingArmy>();
+                        list.Add(marching);
                     }
+                    finalData.Data.MarchingArmies = list;
                 }
 
-
                 //POPULATE TECHNOLOGIES
-/*                    var techs = CacheTechnologyDataManager.TechnologyInfos;
-                foreach (var tech in techs)
-                {
-                    finalData.Data.Technologies.Add(new TechnologyInfos()
-                    {
-                        TechnologyType = tech.Info.Code,
-                        Level = 0
-                    });
-                }*/
+                /*                    var techs = CacheTechnologyDataManager.TechnologyInfos;
+                                foreach (var tech in techs)
+                                {
+                                    finalData.Data.Technologies.Add(new TechnologyInfos()
+                                    {
+                                        TechnologyType = tech.Info.Code,
+                                        Level = 0
+                                    });
+                                }*/
 
                 line = "11";
                 if (userTechnologies != null)
@@ -366,9 +370,12 @@ namespace GameOfRevenge.Business.Manager.Base
                 if (userHeroData != null)
                 {
                     List<HeroType> marchingHeroes = null;
-                    if (finalData.Data.MarchingArmy != null)
+                    if (finalData.Data.MarchingArmies != null)
                     {
-                        marchingHeroes = finalData.Data.MarchingArmy.Heroes;
+                        marchingHeroes = finalData.Data.MarchingArmies
+                            .Where(marchingArmy => (marchingArmy.Heroes != null))
+                            .SelectMany(marchingArmy => marchingArmy.Heroes)
+                            .ToList();
                     }
 
                     foreach (var heroInfo in CacheHeroDataManager.HeroInfos)
@@ -394,7 +401,7 @@ namespace GameOfRevenge.Business.Manager.Base
                         };
                         if (marchingHeroes != null)
                         {
-                            data.IsMarching = marchingHeroes.Exists(x => (x.ToString() == heroInfo.Info.Code));//(int)heroType);
+                            data.IsMarching = marchingHeroes.Exists(x => (x == data.HeroType));
                         }
                         finalData.Data.Heroes.Add(data);
                     }

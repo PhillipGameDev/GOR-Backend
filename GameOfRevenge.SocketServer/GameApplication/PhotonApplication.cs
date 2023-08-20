@@ -52,7 +52,15 @@ namespace GameOfRevenge.GameApplication
 
         public void Initialize()
         {
-            GameService.StartInstance();
+            try
+            {
+                GameService.StartInstance();
+            }
+            catch (Exception ex)
+            {
+                log.Info("Server Exception "+ex.Message);
+                return;
+            }
             log.Info("GOR SERVER STARTED");
             setupCompleted = true;
         }

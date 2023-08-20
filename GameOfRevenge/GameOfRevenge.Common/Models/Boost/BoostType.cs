@@ -99,6 +99,7 @@ namespace GameOfRevenge.Common.Models.Boost
         SiegePowerMultiplier,
         CavalryPowerMultiplier,
         BowmenPowerMultiplier,
+        TroopMarchingReductionMultiplier,
 
         AttackPower = 40,
         TroopAttackMultiplier,

@@ -6,6 +6,7 @@ using GameOfRevenge.Common.Models.Troop;
 using GameOfRevenge.Common.Models.Kingdom.AttackAlertReport;
 using GameOfRevenge.Common.Models.Hero;
 using GameOfRevenge.Common.Models.Structure;
+using GameOfRevenge.Common.Models.PlayerData;
 
 namespace GameOfRevenge.Common.Models.Kingdom
 {
@@ -16,7 +17,6 @@ namespace GameOfRevenge.Common.Models.Kingdom
         public List<AttackDefenseMultiplier> Multipliers { get; set; }
         public int GateHP { get; set; }
 
-//        public new List<HeroType> Heroes { get; set; }
         public List<TroopInfos> Troops { get; set; }
         public List<TroopDetailsPvP> TroopChanges { get; set; }
 
@@ -290,12 +290,14 @@ namespace GameOfRevenge.Common.Models.Kingdom
         public int Dead { get; set; }
         public int Survived => (TotalArmy - Dead);
 
-/*        [DataMember(EmitDefaultValue = false)]
+#if UNITY_2017_1_OR_NEWER
+        [DataMember(EmitDefaultValue = false)]
         public int Food { get; set; }
         [DataMember(EmitDefaultValue = false)]
         public int Wood { get; set; }
         [DataMember(EmitDefaultValue = false)]
-        public int Ore { get; set; }*/
+        public int Ore { get; set; }
+#endif
 
         [DataMember(EmitDefaultValue = false)]
         public List<HeroData> Heroes { get; set; }

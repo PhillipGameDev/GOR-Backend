@@ -8,9 +8,10 @@
         UpdateResource = 4,
         CompleteTimer = 5,
         AttackEvent = 6,
-        AttackResult = 7,
+        MarchingResult = 7,
         UpdateQuest = 8,
         UnderAttack = 9,
-        ReinforcementsEvent = 10
+        ReinforcementsEvent = 10,
+        UpdateMarchingArmyEvent = 11
     }
 }

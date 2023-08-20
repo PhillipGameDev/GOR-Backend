@@ -53,7 +53,11 @@ namespace GameOfRevenge.GameApplication
 
         public static void StartInstance()
         {
-            if (instance != null) return;
+            if (instance != null)
+            {
+                log.InfoFormat("Server already initialized");
+                return;
+            }
 
             GameBuildingManagerInstances = new Dictionary<StructureType, IGameBuildingManager>();
             Troops = new Dictionary<TroopType, IGameTroop>();

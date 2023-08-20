@@ -184,6 +184,7 @@ namespace GameOfRevenge.GameHandlers
                 case ResourceType.Wood: resInfo = CacheResourceDataManager.Wood; break;
                 case ResourceType.Ore: resInfo = CacheResourceDataManager.Ore; break;
                 case ResourceType.Gems: resInfo = CacheResourceDataManager.Gems; break;
+                case ResourceType.Gold: resInfo = CacheResourceDataManager.Gold; break;
             }
             if (resInfo != null) 
             {

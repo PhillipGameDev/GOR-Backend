@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using ExitGames.Logging;
 using GameOfRevenge.Business.Manager;
 using GameOfRevenge.Business.Manager.GameDef;
 using GameOfRevenge.Common;
