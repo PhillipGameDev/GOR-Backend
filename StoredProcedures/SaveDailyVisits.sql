@@ -1,6 +1,6 @@
 USE [GameOfRevenge]
 GO
-/****** Object:  StoredProcedure [dbo].[SaveDailyVisits]    Script Date: 12/21/2022 11:23:59 AM ******/
+/****** Object:  StoredProcedure [dbo].[SaveDailyVisits]    Script Date: 8/28/2023 7:03:35 AM ******/
 SET ANSI_NULLS ON
 GO
 SET QUOTED_IDENTIFIER ON
@@ -18,13 +18,13 @@ BEGIN
 		DECLARE @yesterday DATE = CONVERT(DATE, DATEADD(DAY, -1, @time));
 		DECLARE @total INT;
 
-		IF NOT EXISTS (SELECT 1 FROM dbo.[DailyVisits] WHERE VisitDate = @yesterday)
+		IF NOT EXISTS (SELECT 1 FROM [dbo].[DailyVisits] dv WHERE dv.VisitDate = @yesterday)
 		    BEGIN
-		        SELECT @total = COUNT(DISTINCT PlayerId)
-		        FROM [GameOfRevenge].[dbo].[Player]
-		        WHERE CONVERT(DATE, LastLogin) = @yesterday;
+		        SELECT @total = COUNT(DISTINCT p.PlayerId)
+		        FROM [dbo].[Player] p
+		        WHERE CONVERT(DATE, p.LastLogin) = @yesterday;
 
-		        INSERT INTO dbo.[DailyVisits] VALUES (@yesterday, @total);
+		        INSERT INTO [dbo].[DailyVisits] VALUES (@yesterday, @total);
 
 		        SET @case = 100;
 		        SET @message = 'Daily visits generated';

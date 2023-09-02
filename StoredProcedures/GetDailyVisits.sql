@@ -1,6 +1,6 @@
 USE [GameOfRevenge]
 GO
-/****** Object:  StoredProcedure [dbo].[GetDailyVisits]    Script Date: 12/21/2022 11:23:59 AM ******/
+/****** Object:  StoredProcedure [dbo].[GetDailyVisits]    Script Date: 8/28/2023 6:58:43 AM ******/
 SET ANSI_NULLS ON
 GO
 SET QUOTED_IDENTIFIER ON
@@ -26,9 +26,9 @@ BEGIN
             WHERE Date < @EndDate
         ),
         DailyVisitsData AS (
-            SELECT DateRange.Date, COALESCE(DailyVisits.Total, 0) AS Total
-            FROM DateRange
-            LEFT JOIN DailyVisits ON DateRange.Date = DailyVisits.VisitDate
+            SELECT dr.Date, COALESCE(dv.Total, 0) AS Total
+            FROM DateRange dr
+            LEFT JOIN [dbo].[DailyVisits] dv ON dr.Date = dv.VisitDate
         )
 
         SELECT
@@ -39,7 +39,7 @@ BEGIN
                 dr.Date,
                 COUNT(CASE WHEN DATEDIFF(DAY, p.[CreateDate], dr.Date) = 0 THEN p.[PlayerId] END) AS new_users
             FROM DateRange dr
-            LEFT JOIN dbo.[Player] p ON CONVERT(DATE, p.[LastLogin]) = dr.Date
+            LEFT JOIN [dbo].[Player] p ON CONVERT(DATE, p.[LastLogin]) = dr.Date
             GROUP BY dr.Date
         ) AS NewUsersData
         LEFT JOIN DailyVisitsData dv ON NewUsersData.Date = dv.Date;
