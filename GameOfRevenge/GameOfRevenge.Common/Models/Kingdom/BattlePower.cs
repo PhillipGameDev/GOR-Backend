@@ -46,7 +46,7 @@ namespace GameOfRevenge.Common.Models.Kingdom
         {
             PlayerId = completeData.PlayerId;
             Username = completeData.PlayerName;
-
+            
             var troops = (marchingArmy != null)? marchingArmy.Troops : completeData.Troops;
             if ((troops != null) && (troops.Count > 0))
             {

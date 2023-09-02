@@ -287,13 +287,16 @@ namespace GameOfRevenge.Common.Models
             float value = 0;
 //            if (StartLevel > 1) level -= StartLevel - 1;
 
-            for (int lvl = level; lvl > 0; lvl--)
+            if (Levels != null)
             {
-                if (!Levels.ContainsKey((byte)lvl)) continue;
+                for (int lvl = level; lvl > 0; lvl--)
+                {
+                    if (!Levels.ContainsKey((byte)lvl)) continue;
 
-                float.TryParse(Levels[(byte)lvl].ToString(), out float val);
-                value = val;
-                break;
+                    float.TryParse(Levels[(byte)lvl].ToString(), out float val);
+                    value = val;
+                    break;
+                }
             }
 
             return value;

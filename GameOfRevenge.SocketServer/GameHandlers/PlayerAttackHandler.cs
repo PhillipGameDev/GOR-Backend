@@ -107,8 +107,15 @@ namespace GameOfRevenge.GameHandlers
                     marchingArmy.Heroes = Array.ConvertAll(request.HeroIds, x => (HeroType)x).ToList();
                     delay -= marchingArmy.Heroes.Count * 500;
                 }
-                delay /= 100;
-                if (delay < 10) delay = 10;
+                if (reinforcement)
+                {
+                    delay = 0;
+                }
+                else
+                {
+                    delay /= 100;
+                    if (delay < 10) delay = 10;
+                }
 
                 marchingArmy.StartTime = timestart;
                 marchingArmy.Distance = (int)dist;

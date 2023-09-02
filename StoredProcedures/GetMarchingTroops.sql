@@ -1,6 +1,6 @@
 USE [GameOfRevenge]
 GO
-/****** Object:  StoredProcedure [dbo].[GetMarchingTroops]    Script Date: 6/16/2023 1:31:02 PM ******/
+/****** Object:  StoredProcedure [dbo].[GetMarchingTroops]    Script Date: 9/1/2023 11:05:45 AM ******/
 SET ANSI_NULLS ON
 GO
 SET QUOTED_IDENTIFIER ON
@@ -20,7 +20,7 @@ BEGIN
 	BEGIN TRY
 		IF (@userId IS NULL)
 			BEGIN
-				SELECT CAST([PlayerId] AS BIGINT) AS 'PlayerId', 'Marching' AS 'DataType', [ValueId], [Value] FROM [dbo].[PlayerData] 
+				SELECT [PlayerDataId], [PlayerId], 'Marching' AS 'DataType', [ValueId], [Value] FROM [dbo].[PlayerData] 
 				WHERE [DataTypeId] = 4 AND [Value] IS NOT NULL AND [Value] <> '';
 
 				SET @case = 100;

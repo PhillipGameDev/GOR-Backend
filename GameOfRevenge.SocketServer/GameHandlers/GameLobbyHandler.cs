@@ -100,7 +100,7 @@ new string[]{
 
                     case OperationCode.UpdatePlayerData: return await HandleUpdatePlayerData(peer, operationRequest);//30
                     case OperationCode.UpdateMarchingArmy: return await HandleUpdateMarchingArmy(peer, operationRequest);//36
-                    case OperationCode.RetreatMarchingArmy: return await HandleRetreatMarchingArmy(peer, operationRequest);//37
+                    case OperationCode.RecallMarchingArmy: return await HandleRecallMarchingArmy(peer, operationRequest);//37
 
                     case OperationCode.SendFriendRequest: return await HandleSendFriendRequest(peer, operationRequest);//34
                     case OperationCode.RespondToFriendRequest: return await HandleRespondToFriendRequest(peer, operationRequest);//35
@@ -166,9 +166,9 @@ new string[]{
             return peer.SendOperation(operationRequest.OperationCode, (plyData != null) ? ReturnCode.OK : ReturnCode.Failed);
         }
 
-        private async Task<SendResult> HandleRetreatMarchingArmy(IGorMmoPeer peer, OperationRequest operationRequest)
+        private async Task<SendResult> HandleRecallMarchingArmy(IGorMmoPeer peer, OperationRequest operationRequest)
         {
-            log.Info("**************** HandleRetreatMarchingArmy Start************************");
+            log.Info("**************** HandleRecallMarchingArmy Start************************");
             var operation = new RetreatMarchingArmyRequest(peer.Protocol, operationRequest);
             if (!operation.IsValid) return peer.SendOperation(operationRequest.OperationCode, ReturnCode.InvalidOperation, debuMsg: operation.GetErrorMessage());
 
@@ -176,7 +176,7 @@ new string[]{
             var marchingArmy = GameService.BRealTimeUpdateManager.GetMarchingArmy(marchingId);
             if (marchingArmy == null) return peer.SendOperation(operationRequest.OperationCode, ReturnCode.InvalidOperation);
 
-            if (!marchingArmy.IsRetreat)
+            if (!marchingArmy.IsRecall)
             {
                 var army = marchingArmy.Base();
                 army.ReturnReduction = (int)marchingArmy.TimeLeftForTask;
@@ -197,7 +197,7 @@ new string[]{
 //            {
 //                MarchingId = operation.MarchingId
 //            };
-            log.Info("**************** HandleRetreatMarchingArmy End************************");
+            log.Info("**************** HandleRecallMarchingArmy End************************");
             var updateMarching = new UpdateMarchingArmyEvent(marchingArmy);
             peer.Actor.SendEvent(EventCode.UpdateMarchingArmyEvent, updateMarching);
 

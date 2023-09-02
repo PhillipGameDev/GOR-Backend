@@ -120,6 +120,7 @@ namespace GameOfRevenge.GameHandlers
                 {
                     count = 0;
                     var list = taskMarching.Result.Data;
+                    log.Info("marching troops = "+list.Count);
                     foreach (var data in list)
                     {
                         MarchingArmy marching = null;
@@ -131,7 +132,7 @@ namespace GameOfRevenge.GameHandlers
                             }
                             catch (Exception ex)
                             {
-                                log.Info("Error: "+ex.Message);
+                                log.Error("Error: "+ex.Message);
                                 log.Info("Error deserializing marching army: " + data.Value);
                             }
                         }
@@ -143,9 +144,8 @@ namespace GameOfRevenge.GameHandlers
                         task.Wait();
                         if (!task.Result.IsSuccess || !task.Result.HasData)
                         {
-                            //delete marching
+                            log.Error("Error: attacker "+attackerId+" data not found");
                             continue;
-//                                throw new DataNotExistExecption(task.Result.Message);
                         }
                         var attackerData = task.Result.Data;
 
@@ -154,6 +154,7 @@ namespace GameOfRevenge.GameHandlers
                         task.Wait();
                         if (!task.Result.IsSuccess || !task.Result.HasData)
                         {
+                            log.Error("Error: defender "+defenderId+" data not found");
                             continue;
                         }
                         var defenderData = task.Result.Data;
@@ -222,23 +223,24 @@ namespace GameOfRevenge.GameHandlers
 
         void MarchingArmyComplete(AttackStatusData data, int notify)
         {
+            var marchingArmy = data.MarchingArmy;
             var result = new MarchingResultResponse()
             {
-                MarchingId = data.MarchingArmy.MarchingId,
-                MarchingType = data.MarchingArmy.MarchingType.ToString(),
+                MarchingId = marchingArmy.MarchingId,
+                MarchingType = marchingArmy.MarchingType.ToString(),
                 AttackerId = data.AttackData.AttackerId,
                 AttackerName = data.AttackData.AttackerName,
                 TargetId = data.AttackData.TargetId,
                 TargetName = data.AttackData.TargetName
             };
-            if (!data.MarchingArmy.IsRetreat)
+            if (!marchingArmy.IsRecall)
             {
-                if ((data.MarchingArmy.MarchingType == MarchingType.AttackPlayer) ||
-                    (data.MarchingArmy.MarchingType == MarchingType.AttackMonster))
+                if ((marchingArmy.MarchingType == MarchingType.AttackPlayer) ||
+                    (marchingArmy.MarchingType == MarchingType.AttackMonster))
                 {
-                    if (data.MarchingArmy.Report != null) result.WinnerId = data.MarchingArmy.Report.WinnerId;
+                    if (marchingArmy.Report != null) result.WinnerId = marchingArmy.Report.WinnerId;
                 }
-                else if (data.MarchingArmy.MarchingType == MarchingType.ReinforcementPlayer)
+                else if (marchingArmy.MarchingType == MarchingType.ReinforcementPlayer)
                 {
                     result.WinnerId = data.AttackData.TargetId;
                 }
@@ -255,10 +257,20 @@ namespace GameOfRevenge.GameHandlers
                 if (actor != null) actor.SendEvent(EventCode.MarchingResult, result);
             }
 
-            if (data.MarchingArmy.MarchingType == MarchingType.ReinforcementPlayer)
+            if (marchingArmy.MarchingType == MarchingType.ReinforcementPlayer)
             {
 //                await UpdatePlayerData(playerData);
 //                await UpdatePlayerData(targetPlayerData);
+            }
+
+            if (notifyAttacker)
+            {
+                var task = manager.UpdatePlayerDataID(result.AttackerId, marchingArmy.MarchingId, string.Empty);
+                task.Wait();
+                if (!task.Result.IsSuccess)
+                {
+                    log.Debug(task.Result.Message);
+                }
             }
         }
 

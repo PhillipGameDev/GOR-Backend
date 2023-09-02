@@ -56,7 +56,7 @@ namespace GameOfRevenge.Business.Manager
 
         public void AddNewMarchingArmy(AttackStatusData data)
         {
-            if ((data.MarchingArmy.Report != null) || data.MarchingArmy.IsRetreat) data.State = 5;
+            if ((data.MarchingArmy.Report != null) || data.MarchingArmy.IsRecall) data.State = 5;
 
             lock (SyncRoot) attackInProgress.Add(data);
         }
@@ -72,7 +72,7 @@ namespace GameOfRevenge.Business.Manager
                 var data = attackInProgress.Find(x => (x.MarchingArmy.MarchingId == marchingId));
                 if (data != null)
                 {
-                    if ((marchingArmy.Report != null) || marchingArmy.IsRetreat) data.State = 5;
+                    if ((marchingArmy.Report != null) || marchingArmy.IsRecall) data.State = 5;
                     data.MarchingArmy = marchingArmy;
 
                     var attackData = data.AttackData;
@@ -120,7 +120,8 @@ namespace GameOfRevenge.Business.Manager
 
         async Task UpdateProgress(List<AttackStatusData> list, Action<AttackStatusData, int> attackResultCallback)
         {
-            var timeleft = double.MaxValue;
+            var timeleftTask = double.MaxValue;
+            var timeleftTotal = double.MaxValue;
             log.Debug("****** UPDATE MARCHING START ****** x " + list.Count);
             foreach (var item in list)
             {
@@ -137,6 +138,7 @@ namespace GameOfRevenge.Business.Manager
                                 if (!atkResp.IsSuccess) throw new Exception("attacker data not found");
 
                                 item.Attacker = atkResp.Data;
+                                item.AttackData.AttackerName = item.Attacker.PlayerName;
                                 item.State++;
                             }
                             break;
@@ -161,6 +163,7 @@ namespace GameOfRevenge.Business.Manager
                                 }
 
                                 item.Defender = defResp.Data;
+                                item.AttackData.TargetName = item.Defender.PlayerName;
                                 if (marchingArmy.MarchingType == MarchingType.ReinforcementPlayer) item.State = 10;
                             }
                             break;
@@ -170,7 +173,6 @@ namespace GameOfRevenge.Business.Manager
 
                             var attackerPower = new BattlePower(item.Attacker, marchingArmy, CacheTroopDataManager.GetFullTroopData, GetAtkDefMultiplier);
                             item.AttackerPower = attackerPower;
-
                             BattlePower defenderPower;
                             if (marchingArmy.MarchingType == MarchingType.AttackPlayer)
                             {
@@ -224,7 +226,7 @@ namespace GameOfRevenge.Business.Manager
                         case 5://marching to castle
                             if (marchingArmy.TimeLeft == 0)
                             {
-                                if (!marchingArmy.IsRetreat)
+                                if (!marchingArmy.IsRecall)
                                 {
                                     //SAVE PLAYER REPORT
                                     log.Debug("ApplyAttackerChangesAndSendReport!!!");
@@ -248,7 +250,8 @@ namespace GameOfRevenge.Business.Manager
                             lock (SyncRoot) attackInProgress.Remove(item);
                             break;
                     }
-                    if (marchingArmy.TimeLeft < timeleft) timeleft = item.MarchingArmy.TimeLeft;
+                    if (marchingArmy.TimeLeftForTask < timeleftTask) timeleftTask = item.MarchingArmy.TimeLeftForTask;
+                    if (marchingArmy.TimeLeft < timeleftTotal) timeleftTotal = item.MarchingArmy.TimeLeft;
                 }
                 catch (Exception ex)
                 {
@@ -256,7 +259,17 @@ namespace GameOfRevenge.Business.Manager
                     lock (SyncRoot) attackInProgress.Remove(item);
                 }
             }
-            log.Debug("****** UPDATE BATTLE END ****** " + timeleft);
+            var timeleftTxt = "";
+            var timeleftTotalTxt = "";
+            if (timeleftTask != double.MaxValue)
+            {
+                timeleftTxt = (int)timeleftTask + "(" + Common.Helper.TimeHelper.ChangeSecondsToTimeFormat(timeleftTask) + ")";
+            }
+            if (timeleftTotal != double.MaxValue)
+            {
+                timeleftTotalTxt = (int)timeleftTotal + "(" + Common.Helper.TimeHelper.ChangeSecondsToTimeFormat(timeleftTotal) + ")";
+            }
+            log.Debug("****** UPDATE BATTLE END ****** " + timeleftTxt + " / " + timeleftTotalTxt);
             list.Clear();
             list = null;
         }
@@ -273,54 +286,49 @@ namespace GameOfRevenge.Business.Manager
             float defense = 1;
 //            techInfo = data.Technologies.Where(x => x.TechnologyType == TechnologyType.ArmyDefense)?.FirstOrDefault();
 //            if (techInfo != null) defense = techInfo.Level;
-
-            StructureDetails castleBuilding = null;
-            foreach (var boost in playerData.Boosts)
+            if (playerData.Boosts != null)
             {
-//                var boost = playerData.Boosts.Find(x => (byte)x.Type == (byte)CityBoostType.Blessing);
-                if ((boost == null) || (boost.TimeLeft <= 0)) continue;
-
-                var specBoostData = CacheBoostDataManager.SpecNewBoostDatas.FirstOrDefault(x => (x.Type == boost.Type));
-                if (specBoostData == null) continue;//.Table == 0)
-
-                var lvl = boost.Level;
-                if (lvl == 0)//get level from castle
+                foreach (var boost in playerData.Boosts)
                 {
-                    if (castleBuilding == null)
+                    //                var boost = playerData.Boosts.Find(x => (byte)x.Type == (byte)CityBoostType.Blessing);
+                    if ((boost == null) || (boost.TimeLeft <= 0)) continue;
+
+                    var specBoostData = CacheBoostDataManager.SpecNewBoostDatas.FirstOrDefault(x => (x.Type == boost.Type));
+                    if (specBoostData == null) continue;//.Table == 0)
+
+                    var lvl = boost.Level;
+                    if (lvl == 0)//get level from castle
                     {
                         var castleData = playerData.Structures.Find(x => (x.StructureType == StructureType.CityCounsel));
-                        castleBuilding = castleData?.Buildings.FirstOrDefault();
+                        var castleBuilding = castleData?.Buildings.FirstOrDefault();
+                        if (castleBuilding != null) lvl = (byte)castleBuilding.CurrentLevel;
                     }
-                    if (castleBuilding != null) lvl = (byte)castleBuilding.CurrentLevel;
-                }
 
-                float boostAtkValue = 0;
-                float boostDefValue = 0;
-                foreach (var tech in specBoostData.Techs)
-                {
-                    if (!tech.Levels.ContainsKey(lvl)) continue;
-                    if (!float.TryParse(tech.Levels[lvl].ToString(), out float levelVal)) continue;
-
-                    if (marchingArmy != null)
+                    float boostAtkValue = 0;
+                    float boostDefValue = 0;
+                    foreach (var tech in specBoostData.Techs)
                     {
-                        switch (tech.Tech)
+                        if (marchingArmy != null)
                         {
-                            case NewBoostTech.TroopAttackMultiplier: boostAtkValue += levelVal; break;
-                            case NewBoostTech.TroopDefenseMultiplier: boostDefValue += levelVal; break;
+                            switch (tech.Tech)
+                            {
+                                case NewBoostTech.TroopAttackMultiplier: boostAtkValue += tech.GetValue(lvl); break;
+                                case NewBoostTech.TroopDefenseMultiplier: boostDefValue += tech.GetValue(lvl); break;
+                            }
+                        }
+                        else
+                        {
+                            switch (tech.Tech)
+                            {
+                                case NewBoostTech.CityTroopAttackMultiplier: boostAtkValue += tech.GetValue(lvl); break;
+                                case NewBoostTech.CityTroopDefenseMultiplier: boostDefValue += tech.GetValue(lvl); break;
+                            }
                         }
                     }
-                    else
-                    {
-                        switch (tech.Tech)
-                        {
-                            case NewBoostTech.CityTroopAttackMultiplier: boostAtkValue += levelVal; break;
-                            case NewBoostTech.CityTroopDefenseMultiplier: boostDefValue += levelVal; break;
-                        }
-                    }
-                }
 
-                attack += boostAtkValue / 100f;
-                defense += boostDefValue / 100f;
+                    attack += boostAtkValue / 100f;
+                    defense += boostDefValue / 100f;
+                }
             }
             float atkPercentage = 0;
             float defPercentage = 0;

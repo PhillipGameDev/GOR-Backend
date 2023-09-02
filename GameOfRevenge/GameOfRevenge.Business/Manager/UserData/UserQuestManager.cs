@@ -525,7 +525,7 @@ namespace GameOfRevenge.Business.Manager.UserData
                                 kingDetails = JsonConvert.DeserializeObject<UserKingDetails>(kingresp.Data.Value);
                                 kingDetailsId = kingresp.Data.Id;
                             }
-                            if (kingDetails == null) throw new Exception("King data corrupted");
+                            if (kingDetails == null) throw new InvalidModelExecption("King data corrupted");
                         }
 
                         bool updateKing = false;
@@ -534,31 +534,31 @@ namespace GameOfRevenge.Business.Manager.UserData
                             case DataType.Custom:
                                 switch ((CustomType)rewardData.ValueId)
                                 {
-                                    case CustomType.KingExperiencePoints: kingDetails.Experience += rewardData.Value; updateKing = true; break; //king exp
-                                    case CustomType.KingStaminaPoints: kingDetails.MaxStamina += rewardData.Value; updateKing = true; break; //king stamina
-                                    case CustomType.VIPPoints: //vip points
+                                    case CustomType.KingExperiencePoints: kingDetails.Experience += rewardData.Value; updateKing = true; break;
+                                    case CustomType.KingStaminaPoints: kingDetails.MaxStamina += rewardData.Value; updateKing = true; break;
+                                    case CustomType.VIPPoints:
                                         var vipresp = await manager.GetPlayerData(playerId, DataType.Custom, 1);
-                                        if (!vipresp.IsSuccess) throw new Exception(vipresp.Message);
+                                        if (!vipresp.IsSuccess) throw new InvalidModelExecption(vipresp.Message);
 
                                         var vipdata = vipresp.Data;
-                                        if (vipdata == null) throw new Exception("VIP data missing");
+                                        if (vipdata == null) throw new InvalidModelExecption("VIP data missing");
 
                                         var vipdetails = JsonConvert.DeserializeObject<UserVIPDetails>(vipdata.Value);
                                         vipdetails.Points += rewardData.Value;//TODO: add vippoints to player info
                                         var json = JsonConvert.SerializeObject(vipdetails);
                                         var saveResp = await manager.UpdatePlayerDataID(playerId, vipdata.Id, json);
-                                        if (!saveResp.IsSuccess) throw new Exception(saveResp.Message);
+                                        if (!saveResp.IsSuccess) throw new InvalidModelExecption(saveResp.Message);
                                         break;
                                     case CustomType.HeroPoints: //hero points
                                         var heroResp = await userHeroManager.AddHeroPoints(playerId, context, rewardData.Value);
-                                        if (!heroResp.IsSuccess) throw new Exception(heroResp.Message);
+                                        if (!heroResp.IsSuccess) throw new InvalidModelExecption(heroResp.Message);
                                         break;
                                 }
                                 
                                 break;
                             case DataType.Resource:
                                 var sumResp = await resmanager.SumResource(playerId, rewardData.ValueId, rewardData.Value);
-                                if (!sumResp.IsSuccess) throw new Exception(sumResp.Message);
+                                if (!sumResp.IsSuccess) throw new InvalidModelExecption(sumResp.Message);
                                 break;
                             case DataType.Technology:
                                 int location = 0;
@@ -570,10 +570,10 @@ namespace GameOfRevenge.Business.Manager.UserData
 //                                    case NewBoostTech.TroopTrainingSpeedMultiplier:/*14*/
                                     case NewBoostTech.TroopTrainingTimeBonus:/*18*/
                                         int.TryParse(context, out location);
-                                        if (location <= 0) throw new Exception("Invalid Troop location");
+                                        if (location <= 0) throw new InvalidModelExecption("Invalid Troop location");
 
                                         fullPlayerData = await BaseUserDataManager.GetFullPlayerData(playerId);
-                                        if (!fullPlayerData.IsSuccess) throw new Exception(fullPlayerData.Message);
+                                        if (!fullPlayerData.IsSuccess) throw new InvalidModelExecption(fullPlayerData.Message);
 
                                         List<UnavaliableTroopInfo> listInTraining = null;
                                         UnavaliableTroopInfo troopTraining = null;
@@ -594,7 +594,7 @@ namespace GameOfRevenge.Business.Manager.UserData
 
                                             return troopDetails != null;
                                         });
-                                        if (troopTraining == null) throw new Exception("Training troop not found");
+                                        if (troopTraining == null) throw new InvalidModelExecption("Training troop not found");
 
                                         troopTraining.Duration -= rewardData.Value;
                                         if (troopTraining.Duration < 0)
@@ -606,15 +606,15 @@ namespace GameOfRevenge.Business.Manager.UserData
 
                                     case NewBoostTech.TroopRecoverySpeedMultiplier:/*15*/
                                         var boostResp2 = await boostManager.ActivateBoost(playerId, CityBoostType.LifeSaver, rewardData.Value, 0);
-                                        if (!boostResp2.IsSuccess) throw new Exception(boostResp2.Message);
+                                        if (!boostResp2.IsSuccess) throw new InvalidModelExecption(boostResp2.Message);
                                         break;
 
                                     case NewBoostTech.TroopRecoveryTimeBonus:/*19*/
                                         int.TryParse(context, out location);
-                                        if (location <= 0) throw new Exception("Invalid Troop location");
+                                        if (location <= 0) throw new InvalidModelExecption("Invalid Troop location");
 
                                         fullPlayerData = await BaseUserDataManager.GetFullPlayerData(playerId);
-                                        if (!fullPlayerData.IsSuccess) throw new Exception(fullPlayerData.Message);
+                                        if (!fullPlayerData.IsSuccess) throw new InvalidModelExecption(fullPlayerData.Message);
 
                                         List<UnavaliableTroopInfo> listInRecovery = null;
                                         UnavaliableTroopInfo troopRecovery = null;
@@ -635,7 +635,7 @@ namespace GameOfRevenge.Business.Manager.UserData
 
                                             return troopDetails != null;
                                         });
-                                        if (troopRecovery == null) throw new Exception("Injured troop not found");
+                                        if (troopRecovery == null) throw new InvalidModelExecption("Injured troop not found");
 
                                         troopRecovery.Duration -= rewardData.Value;
                                         if (troopRecovery.Duration < 0)
@@ -647,10 +647,10 @@ namespace GameOfRevenge.Business.Manager.UserData
 
                                     case NewBoostTech.TroopMarchingReductionMultiplier://27
                                         long.TryParse(context, out long marchingId);
-                                        if (marchingId == 0) throw new Exception("Invalid marching army");
+                                        if (marchingId == 0) throw new InvalidModelExecption("Invalid marching army");
 
                                         var marching = await manager.GetPlayerDataById(marchingId); //GetAllPlayerData(playerId, DataType.Marching);
-                                        if (!marching.IsSuccess) throw new Exception(marching.Message);
+                                        if (!marching.IsSuccess) throw new InvalidModelExecption(marching.Message);
 
                                         MarchingArmy marchingArmy = null;
                                         if (marching.HasData && !string.IsNullOrEmpty(marching.Data.Value))
@@ -661,18 +661,20 @@ namespace GameOfRevenge.Business.Manager.UserData
                                             }
                                             catch { }
                                         }
-                                        if (marchingArmy == null) throw new Exception("Invalid marching data");
-                                        if (marchingArmy.TimeLeft < 2) throw new Exception("Consume reward is not required");
+                                        if (marchingArmy == null) throw new InvalidModelExecption("Invalid marching data");
+                                        var returning = marchingArmy.IsRecall || marchingArmy.IsTimeForReturn;
+                                        var timeLeft = returning? marchingArmy.TimeLeft : marchingArmy.TimeLeftForTask;
+                                        if (timeLeft < 5) throw new InvalidModelExecption("Consume reward is not required");
 
                                         var percentage = (rewardData.Value > 100) ? 100 : rewardData.Value;
-                                        var multiplier = (percentage / 100f);
-                                        if (marchingArmy.IsRetreat || marchingArmy.IsTimeForReturn)
+                                        var reduction = (int)(timeLeft * (percentage / 100f));
+                                        if (returning)
                                         {
-                                            marchingArmy.ReturnReduction += (int)((marchingArmy.Distance - marchingArmy.ReturnReduction) * multiplier);
+                                            marchingArmy.ReturnReduction += reduction;
                                         }
                                         else
                                         {
-                                            marchingArmy.AdvanceReduction += (int)((marchingArmy.Distance - marchingArmy.AdvanceReduction) * multiplier);
+                                            marchingArmy.AdvanceReduction += reduction;
                                         }
                                         var marchingJson = JsonConvert.SerializeObject(marchingArmy.Base());
                                         await manager.UpdatePlayerDataID(playerId, marchingId, marchingJson);
@@ -680,17 +682,17 @@ namespace GameOfRevenge.Business.Manager.UserData
 
                                     case NewBoostTech.ResearchSpeedMultiplier:/*10*/
                                         var boostResp3 = await boostManager.ActivateBoost(playerId, CityBoostType.TechBoost, rewardData.Value, 0);
-                                        if (!boostResp3.IsSuccess) throw new Exception(boostResp3.Message);
+                                        if (!boostResp3.IsSuccess) throw new InvalidModelExecption(boostResp3.Message);
                                         break;
                                     case NewBoostTech.ResearchTimeBonus:/*21*/
                                         int.TryParse(context, out location);
-                                        if (location <= 0) throw new Exception("Invalid building location");
+                                        if (location <= 0) throw new InvalidModelExecption("Invalid building location");
 
                                         fullPlayerData = await BaseUserDataManager.GetFullPlayerData(playerId);
-                                        if (!fullPlayerData.IsSuccess) throw new Exception(fullPlayerData.Message);
+                                        if (!fullPlayerData.IsSuccess) throw new InvalidModelExecption(fullPlayerData.Message);
 
                                         var userTech = fullPlayerData.Data.Technologies.Find(x => (x.TimeLeft > 0));
-                                        if (userTech == null) throw new Exception("There are no active researches");
+                                        if (userTech == null) throw new InvalidModelExecption("There are no active researches");
 
                                         userTech.Duration -= rewardData.Value;
                                         if (userTech.Duration < 0) userTech.Duration = 0;
@@ -703,86 +705,29 @@ namespace GameOfRevenge.Business.Manager.UserData
 //                                    case NewBoostTech.BuildingSpeedMultiplier:/*7*/
                                     case NewBoostTech.BuildingTimeBonus:/*20*/
                                         int.TryParse(context, out location);
-                                        if (location <= 0) throw new Exception("Invalid Building location");
+                                        if (location <= 0) throw new InvalidModelExecption("Invalid Building location");
 
                                         var speedupResp = await userStructureManager.SpeedupBuilding(playerId, location, rewardData.Value);
-                                        if (!speedupResp.IsSuccess) throw new Exception(speedupResp.Message);
+                                        if (!speedupResp.IsSuccess) throw new InvalidModelExecption(speedupResp.Message);
                                         break;
                                     default:
-                                        throw new Exception("Can't consume the reward on this place");
+                                        throw new InvalidModelExecption("Can't consume the reward on this place");
                                 }
                                 break;
-/*                            case DataType.Hero://DEPRECATED
-                                switch (rewardData.ValueId)
-                                {
-                                    case 1: //hero points
-                                        var heroResp = await userHeroManager.AddHeroPoints(playerId, context, rewardData.Value);
-                                        if (!heroResp.IsSuccess) throw new Exception(heroResp.Message);
-                                        break;
-                                }
-                                break;
-                            case DataType.Structure://DEPRECATED
-                                int.TryParse(context, out int locationId);
-                                if (locationId > 0)
-                                {
-                                    var speedupResp = await userStructureManager.SpeedupBuilding(playerId, locationId, rewardData.Value);
-                                    if (speedupResp.IsSuccess) throw new Exception(speedupResp.Message);
-                                }
-                                else
-                                {
-                                    throw new Exception("Invalid Building location");
-                                }
-                                break;
-                            case DataType.Troop://DEPRECATED
-                                int.TryParse(context, out int placementId);
-                                if (placementId > 0)
-                                {
-                                    fullPlayerData = await userTroopManager.GetFullPlayerData(playerId);
-                                    if (!fullPlayerData.IsSuccess) throw new Exception(fullPlayerData.Message);
-
-                                    List<UnavaliableTroopInfo> listInTraining = null;
-                                    UnavaliableTroopInfo troopTraining = null;
-                                    fullPlayerData.Data.Troops.Find(troop =>
-                                    {
-                                        TroopDetails troopDetails = null;
-                                        if (troop.TroopData != null)
-                                        {
-                                            troopType = troop.TroopType;
-                                            listTroops = troop.TroopData;
-                                            troopDetails = listTroops?.Find((data) =>
-                                            {
-                                                listInTraining = data.InTraning;
-                                                troopTraining = listInTraining?.Find((info) => (info.BuildingLocId == placementId));
-                                                return troopTraining != null;
-                                            });
-                                        }
-
-                                        return troopDetails != null;
-                                    });
-                                    if (troopTraining == null) throw new Exception("Training troop not found");
-
-                                    troopTraining.Duration -= rewardData.Value;
-                                    if (troopTraining.Duration < 0)
-                                    {
-                                        listInTraining.Remove(troopTraining);
-                                    }
-                                    await userTroopManager.UpdateTroops(playerId, troopType, listTroops);
-                                }
-                                else
-                                {
-                                    throw new Exception("Invalid Troop location");
-                                }
-                                break;*/
                         }
 
                         if (updateKing)
                         {
                             var kingjson = JsonConvert.SerializeObject(kingDetails);
                             var kingResp = await manager.UpdatePlayerDataID(playerId, kingDetailsId, kingjson);
-                            if (!kingResp.IsSuccess) throw new Exception(kingResp.Message);
+                            if (!kingResp.IsSuccess) throw new InvalidModelExecption(kingResp.Message);
                         }
                     }
-                    catch
+                    catch (InvalidModelExecption ex)
+                    {
+                        return new Response<PlayerDataTableUpdated>(205, ex.Message);
+                    }
+                    catch (Exception ex)
                     {
                         return new Response<PlayerDataTableUpdated>(205, "Error consuming reward");
                     }

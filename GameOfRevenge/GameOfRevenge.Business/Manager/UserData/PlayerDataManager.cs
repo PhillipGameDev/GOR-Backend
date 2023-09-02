@@ -681,15 +681,15 @@ namespace GameOfRevenge.Business.Manager.UserData
             }
         }
 
-        public async Task<Response<List<PlayerDataTable>>> GetAllMarchingTroops()
+        public async Task<Response<List<PlayerIdDataTable>>> GetAllMarchingTroops()
         {
             try
             {
-                return await Db.ExecuteSPMultipleRow<PlayerDataTable>("GetMarchingTroops", null);
+                return await Db.ExecuteSPMultipleRow<PlayerIdDataTable>("GetMarchingTroops", null);
             }
             catch (InvalidModelExecption ex)
             {
-                return new Response<List<PlayerDataTable>>()
+                return new Response<List<PlayerIdDataTable>>()
                 {
                     Case = 200,
                     Data = null,
@@ -698,7 +698,7 @@ namespace GameOfRevenge.Business.Manager.UserData
             }
             catch (Exception ex)
             {
-                return new Response<List<PlayerDataTable>>()
+                return new Response<List<PlayerIdDataTable>>()
                 {
                     Case = 0,
                     Data = null,

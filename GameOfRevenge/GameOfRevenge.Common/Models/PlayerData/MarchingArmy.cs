@@ -75,7 +75,7 @@ namespace GameOfRevenge.Common.Models.PlayerData
         [DataMember(EmitDefaultValue = false)]
         public List<TroopDetailsPvP> TroopChanges { get; set; }
 
-        public bool IsRetreat => (Recall > 0);
+        public bool IsRecall => (Recall > 0);
         public bool IsTimeForReturn => (TimeLeftForReturn == 0);
 
         public double TimeLeftForTask => TimeLeftFor(Distance - AdvanceReduction);
@@ -85,7 +85,11 @@ namespace GameOfRevenge.Common.Models.PlayerData
             get
             {
                 int value = Recall + Distance - ReturnReduction;
-                if (Recall == 0) value += Distance - AdvanceReduction + Duration;
+                if (Recall == 0)
+                {
+                    var returnDist = ((MarchingType != MarchingType.ReinforcementPlayer)? Distance : 0);
+                    value += returnDist - AdvanceReduction + Duration;
+                }
 
                 return TimeLeftFor(value);
             }

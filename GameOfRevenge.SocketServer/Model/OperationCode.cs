@@ -40,7 +40,7 @@
         HelpStructureRequest = 31,
         SendReinforcementsRequest = 33,
         UpdateMarchingArmy = 36,
-        RetreatMarchingArmy = 37,
+        RecallMarchingArmy = 37,
 
         SendFriendRequest = 34,
         RespondToFriendRequest = 35

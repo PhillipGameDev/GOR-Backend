@@ -668,24 +668,28 @@ namespace GameOfRevenge.Business.Manager.UserData
                     log.Debug(response.Message);
                 }
 
-                var food = 0;
-                var wood = 0;
-                var ore = 0;
-                foreach (var item in defenderPower.Items)
+                if (defenderPower.Items != null)
                 {
-                    if (item.DataType != DataType.Resource) continue;
-
-                    switch ((ResourceType)item.ValueId)
+                    var food = 0;
+                    var wood = 0;
+                    var ore = 0;
+                    foreach (var item in defenderPower.Items)
                     {
-                        case ResourceType.Food: food += item.Value * item.Count; break;
-                        case ResourceType.Wood: wood += item.Value * item.Count; break;
-                        case ResourceType.Ore: ore += item.Value * item.Count; break;
+                        if (item.DataType != DataType.Resource) continue;
+
+                        switch ((ResourceType)item.ValueId)
+                        {
+                            case ResourceType.Food: food += item.Value * item.Count; break;
+                            case ResourceType.Wood: wood += item.Value * item.Count; break;
+                            case ResourceType.Ore: ore += item.Value * item.Count; break;
+                        }
+                        log.Debug("defender item = " + item.RewardId + "  " + item.DataType + " " + item.ValueId + "  " + item.Value + "  " + item.Count);
                     }
-                }
-                var respResources = await resManager.SumMainResource(defenderPower.PlayerId, food, wood, ore, 0, 0);
-                if (!respResources.IsSuccess)
-                {
-                    log.Debug(respResources.Message);
+                    var respResources = await resManager.SumMainResource(defenderPower.PlayerId, food, wood, ore, 0, 0);
+                    if (!respResources.IsSuccess)
+                    {
+                        log.Debug(respResources.Message);
+                    }
                 }
 
                 try
@@ -895,16 +899,10 @@ namespace GameOfRevenge.Business.Manager.UserData
                 {
                     foreach (var item in report.Attacker.Items)
                     {
-                        log.Debug("reward = " + item.RewardId + "  " + item.DataType+" "+ item.ValueId +"  "+ item.Value + "  " + item.Count);
+                        log.Debug("attacker item = " + item.RewardId + "  " + item.DataType+" "+ item.ValueId +"  "+ item.Value + "  " + item.Count);
                     }
                     await UserQuestManager.CollectRewards(report.Attacker.PlayerId, report.Attacker.Items);
                 }
-
-/*                var response = await manager.AddOrUpdatePlayerData(attackerId, DataType.Marching, 1, string.Empty);
-                if (!response.IsSuccess)
-                {
-                    log.Debug(response.Message);
-                }*/
 
                 try
                 {
@@ -924,6 +922,7 @@ namespace GameOfRevenge.Business.Manager.UserData
 
         private async Task ApplyTroopChanges(int playerId, List<PlayerDataTable> allPlayerData, List<TroopDetailsPvP> troopChanges, bool SAVE)
         {
+            log.Debug("ApplyTroopChanges "+playerId);
             if (troopChanges == null) return;
 
             var troops = GetUserTroops(allPlayerData);
