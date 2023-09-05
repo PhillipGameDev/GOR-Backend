@@ -56,7 +56,7 @@ namespace GameOfRevenge.Business.Manager
 
         public void AddNewMarchingArmy(AttackStatusData data)
         {
-            if ((data.MarchingArmy.Report != null) || data.MarchingArmy.IsRecall) data.State = 5;
+            if ((data.MarchingArmy.Report != null) || data.MarchingArmy.IsRecalling) data.State = 5;
 
             lock (SyncRoot) attackInProgress.Add(data);
         }
@@ -72,7 +72,7 @@ namespace GameOfRevenge.Business.Manager
                 var data = attackInProgress.Find(x => (x.MarchingArmy.MarchingId == marchingId));
                 if (data != null)
                 {
-                    if ((marchingArmy.Report != null) || marchingArmy.IsRecall) data.State = 5;
+                    if ((marchingArmy.Report != null) || marchingArmy.IsRecalling) data.State = 5;
                     data.MarchingArmy = marchingArmy;
 
                     var attackData = data.AttackData;
@@ -226,7 +226,7 @@ namespace GameOfRevenge.Business.Manager
                         case 5://marching to castle
                             if (marchingArmy.TimeLeft == 0)
                             {
-                                if (!marchingArmy.IsRecall)
+                                if (!marchingArmy.IsRecalling)
                                 {
                                     //SAVE PLAYER REPORT
                                     log.Debug("ApplyAttackerChangesAndSendReport!!!");

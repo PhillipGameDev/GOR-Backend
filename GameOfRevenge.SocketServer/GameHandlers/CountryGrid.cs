@@ -233,7 +233,7 @@ namespace GameOfRevenge.GameHandlers
                 TargetId = data.AttackData.TargetId,
                 TargetName = data.AttackData.TargetName
             };
-            if (!marchingArmy.IsRecall)
+            if (!marchingArmy.IsRecalling)
             {
                 if ((marchingArmy.MarchingType == MarchingType.AttackPlayer) ||
                     (marchingArmy.MarchingType == MarchingType.AttackMonster))

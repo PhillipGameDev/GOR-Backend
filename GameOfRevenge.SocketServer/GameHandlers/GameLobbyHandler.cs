@@ -176,7 +176,7 @@ new string[]{
             var marchingArmy = GameService.BRealTimeUpdateManager.GetMarchingArmy(marchingId);
             if (marchingArmy == null) return peer.SendOperation(operationRequest.OperationCode, ReturnCode.InvalidOperation);
 
-            if (!marchingArmy.IsRecall)
+            if (!marchingArmy.IsRecalling)
             {
                 var army = marchingArmy.Base();
                 army.ReturnReduction = (int)marchingArmy.TimeLeftForTask;

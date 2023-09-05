@@ -284,7 +284,7 @@ namespace GameOfRevenge.Business.Manager.UserData
             var attackerMailInfo = new UnderAttackMail()
             {
                 AttackerId = attackerData.PlayerId,
-                AttackerUsername = attackerData.PlayerName,
+                AttackerName = attackerData.PlayerName,
                 Location = location,
                 StartTime = marchingArmy.StartTime.AddSeconds(marchingArmy.Distance),
                 KingLevel = attackerData.King.Level,

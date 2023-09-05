@@ -662,7 +662,7 @@ namespace GameOfRevenge.Business.Manager.UserData
                                             catch { }
                                         }
                                         if (marchingArmy == null) throw new InvalidModelExecption("Invalid marching data");
-                                        var returning = marchingArmy.IsRecall || marchingArmy.IsTimeForReturn;
+                                        var returning = marchingArmy.IsRecalling || marchingArmy.IsTimeForReturn;
                                         var timeLeft = returning? marchingArmy.TimeLeft : marchingArmy.TimeLeftForTask;
                                         if (timeLeft < 5) throw new InvalidModelExecption("Consume reward is not required");
 

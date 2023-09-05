@@ -10,10 +10,10 @@ namespace GameOfRevenge.Common.Models.Kingdom.AttackAlertReport
         [DataMember]
         public int AttackerId { get; set; }
         [DataMember(EmitDefaultValue = false)]
-        public int DefenderId { get; set; }
+        public int TargetId { get; set; }
 
         [DataMember]
-        public string AttackerUsername { get; set; }
+        public string AttackerName { get; set; }
 
         [DataMember]
         public DateTime StartTime { get; set; }

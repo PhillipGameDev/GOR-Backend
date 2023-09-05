@@ -27,7 +27,7 @@ namespace GameOfRevenge.Business.Manager
         {
             try
             {
-//                if (version < 904) throw new DataNotExistExecption("Server under maintenance, sorry for the inconvenience!");//"Update Required");
+//                if (version < 906) throw new DataNotExistExecption("Server under maintenance, sorry for the inconvenience!");//"Update Required");
                 if (version < 904) throw new DataNotExistExecption("Update Required");
                 if (string.IsNullOrWhiteSpace(identifier))
                 {
