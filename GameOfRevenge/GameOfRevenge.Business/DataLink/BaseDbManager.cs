@@ -24,7 +24,10 @@ namespace GameOfRevenge.Business.DataLink
             }
         }
 
-        public string ConnectionString { get => string.IsNullOrWhiteSpace(connectionString) ? Config.ConnectionString : connectionString; set => connectionString = value; }
+        public string ConnectionString {
+            get => string.IsNullOrWhiteSpace(connectionString) ? Config.ConnectionString : connectionString;
+            set => connectionString = value;
+        }
 
         string IBaseDbManager.ConnectionString => throw new NotImplementedException();
 

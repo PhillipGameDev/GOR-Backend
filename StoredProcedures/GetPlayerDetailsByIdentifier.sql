@@ -11,8 +11,10 @@ ALTER   PROCEDURE [dbo].[GetPlayerDetailsByIdentifier]
 	@Identifier VARCHAR(1000)
 AS
 BEGIN
-	DECLARE @tIdentifier VARCHAR(1000) = LTRIM(RTRIM(@Identifier))
+	DECLARE @tIdentifier VARCHAR(1000) = LTRIM(RTRIM(@Identifier));
 	DECLARE @id INT = NULL;
-	SELECT @id = p.[PlayerId] FROM [dbo].[Player] AS p WHERE p.[PlayerIdentifier] = @tIdentifier;
-	EXEC [dbo].[GetPlayerDetailsById] @id
+
+	SELECT @id = p.[PlayerId] FROM [dbo].[Player] AS p WHERE (p.[PlayerIdentifier] = @tIdentifier) OR (p.[FirebaseId] = @tIdentifier);
+	
+	EXEC [dbo].[GetPlayerDetailsById] @id;
 END

@@ -296,7 +296,7 @@ namespace GameOfRevenge.WebAdmin.Pages
 
                     foreach (var ply in playersResp.Data)
                     {
-                        if (ply.Invaded > 0) continue;
+//                        if (ply.Invaded > 0) continue;
 
                         var resp = await pdm.IncrementPlayerData(ply.PlayerId, DataType.Reward, rewardId, count);
                         if (!resp.IsSuccess)

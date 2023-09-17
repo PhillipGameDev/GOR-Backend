@@ -67,9 +67,11 @@ BEGIN
 		SET @message = ERROR_MESSAGE();
 	END CATCH
 
-	SELECT p.[PlayerId], p.[PlayerIdentifier], p.[FirebaseId], p.[AcceptedTermAndCondition], p.[IsAdmin], p.[IsDeveloper], p.[WorldTileId], p.[Name], p.[VIPPoints], 'Info' = NULL
-	FROM [dbo].[Player] AS p WHERE p.[PlayerId] = @userId;
-
+	SELECT p.[PlayerId], p.[PlayerIdentifier], p.[FirebaseId], p.[AcceptedTermAndCondition], p.[IsAdmin], p.[IsDeveloper],
+			wt.[X], wt.[Y], p.[WorldTileId], p.[Name], p.[VIPPoints], 'Info' = NULL
+	FROM [dbo].[Player] AS p 
+	LEFT JOIN [dbo].[WorldTileData] AS wt ON wt.[WorldTileDataId] = p.[WorldTileId]
+	WHERE p.[PlayerId] = @userId;
 
 	EXEC [dbo].[GetMessage] @userId, @message, @case, @error, @time, 1, 1;
 END

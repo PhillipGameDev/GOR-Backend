@@ -26,14 +26,14 @@ namespace GameOfRevenge.Common.Models.Boost
             int index = 0;
             BoostTypeId = reader.GetValue(index) == DBNull.Value ? 0 : reader.GetInt32(index); index++;
             Name = reader.GetValue(index) == DBNull.Value ? string.Empty : reader.GetString(index); index++;
-            if (reader.GetValue(index) == DBNull.Value)
-            {
-                BoostType = NewBoostType.Unknown;
-            }
-            else
+            if (reader.GetValue(index) != DBNull.Value)
             {
                 string code = reader.GetString(index);// index++;
                 BoostType = code.ToEnum<NewBoostType>();
+            }
+            else
+            {
+                BoostType = NewBoostType.Unknown;
             }
 //            Description = reader.GetValue(index) == DBNull.Value ? string.Empty : reader.GetString(index);
         }

@@ -38,13 +38,13 @@ namespace GameOfRevenge.GameHandlers
 
         public void AddUpdateIntArea(bool isLocatedNewLocation = false)
         {
-            List<Region> regions = new List<Region>();
-            var maxPosX = this.World.Area.Size.X / this.World.TileDimensions.X;   //max position of X cordinate in our world
-            var maxPosY = this.World.Area.Size.Y / this.World.TileDimensions.Y;   //max position of Y cordinate in our world
-            var ecXPos = this.CameraRegion.X + (1 * (GlobalConst.TilesIaX));
-            var ecYPos = this.CameraRegion.Y + (1 * (GlobalConst.TilesIaY));
-            var scXPos = this.CameraRegion.X + (-1 * (GlobalConst.TilesIaX));
-            var scYPos = this.CameraRegion.Y + (-1 * (GlobalConst.TilesIaY));
+            var regions = new List<Region>();
+            var maxPosX = World.SizeX / World.TileDimensions.X;   //max position of X cordinate in our world
+            var maxPosY = World.SizeY / World.TileDimensions.Y;   //max position of Y cordinate in our world
+            var ecXPos = CameraRegion.X + (1 * (GlobalConst.TilesIaX));
+            var ecYPos = CameraRegion.Y + (1 * (GlobalConst.TilesIaY));
+            var scXPos = CameraRegion.X + (-1 * (GlobalConst.TilesIaX));
+            var scYPos = CameraRegion.Y + (-1 * (GlobalConst.TilesIaY));
             var eC = new Vector(Math.Min(maxPosX - 1, ecXPos), Math.Min(maxPosX - 1, ecYPos));    // last cordinate position of tiles which is part of IA
             var sC = new Vector(Math.Max(0, scXPos), Math.Max(0, scYPos));   //start cordinate position of tiles which is part of IA
 

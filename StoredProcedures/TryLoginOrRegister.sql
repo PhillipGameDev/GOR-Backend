@@ -9,7 +9,6 @@ GO
 
 ALTER   PROCEDURE [dbo].[TryLoginOrRegister]
 	@Identifier VARCHAR(1000),
-	@Accepted BIT,
 	@Version INT = NULL
 AS
 BEGIN
@@ -20,7 +19,6 @@ BEGIN
 	DECLARE @userId INT = NULL;
 
 	DECLARE @tempIdentifier VARCHAR(1000) = LTRIM(RTRIM(ISNULL(@Identifier, '')));
-	DECLARE @tempAccepted INT = ISNULL(@Accepted, 0);
 	DECLARE @tempVersion INT = ISNULL(@Version, 0);
 
 	DECLARE @existingAccount INT = NULL;
@@ -34,53 +32,39 @@ BEGIN
 				SET @case = 200;
 				SET @message = 'Invalid Identifier';
 			END
-		ELSE IF (@tempAccepted = 0)
-			BEGIN
-				SET @case = 201;
-				SET @message = 'Accept terms and condition first';
-			END
 		ELSE
 			BEGIN
 				SELECT @existingAccount = p.[PlayerId], @existingFirebaseId = p.[FirebaseId], @existingVersion = p.[Version] 
 				FROM [dbo].[Player] AS p WHERE (p.[FirebaseId] = @tempIdentifier) OR (p.[PlayerIdentifier] = @tempIdentifier);
+
 				IF (@existingAccount IS NULL)
 					BEGIN
-						DECLARE @count INT = 0;
-						SELECT @count = COUNT(*) FROM [dbo].[WorldTileData];
-						IF (@count < 10000)
-							BEGIN
-								DECLARE @username VARCHAR(50);
-								DECLARE @attempt INT = 1;
-								DECLARE @maxAttempts INT = 5;
-								DECLARE @val INT = 1000;
+						DECLARE @username VARCHAR(50);
+						DECLARE @attempt INT = 1;
+						DECLARE @maxAttempts INT = 5;
+						DECLARE @val INT = 1000;
 
-								WHILE (@attempt <= @maxAttempts) BEGIN
-								    DECLARE @num INT = (ABS(CHECKSUM(NEWID())) % (@val * 9)) + @val
-								    SET @username = 'Guest' + CAST(@num AS VARCHAR)
-								    IF NOT EXISTS (SELECT 1 FROM Player WHERE Name = @username) BREAK;
+						WHILE (@attempt <= @maxAttempts) BEGIN
+						    DECLARE @num INT = (ABS(CHECKSUM(NEWID())) % (@val * 9)) + @val
+						    SET @username = 'Guest' + CAST(@num AS VARCHAR)
+						    IF NOT EXISTS (SELECT 1 FROM Player WHERE Name = @username) BREAK;
 
-								    SET @attempt = @attempt + 1
-								    IF (@attempt = 6) OR (@attempt = 11)
-								    BEGIN
-									    SET @maxAttempts = @maxAttempts + 5;
-									    SET @val = @val * 10;
-								    END
-								END
+						    SET @attempt = @attempt + 1
+						    IF (@attempt = 6) OR (@attempt = 11)
+						    BEGIN
+							    SET @maxAttempts = @maxAttempts + 5;
+							    SET @val = @val * 10;
+						    END
+						END
 
-								INSERT INTO [dbo].[Player] (PlayerIdentifier, Name, AcceptedTermAndCondition, IsAdmin, IsDeveloper, VIPPoints, Version, LastLogin) 
-								VALUES (@tempIdentifier, @username, @tempAccepted, 0, 0, 0, @tempVersion, @time);
+						INSERT INTO [dbo].[Player] (PlayerIdentifier, Name, AcceptedTermAndCondition, IsAdmin, IsDeveloper, VIPPoints, Version, LastLogin) 
+						VALUES (@tempIdentifier, @username, 1, 0, 0, 0, @tempVersion, @time);
 
-								SELECT @existingAccount = p.[PlayerId] FROM [dbo].[Player] AS p WHERE p.[PlayerIdentifier] = @tempIdentifier; 
-								EXEC [dbo].[AddFirstTimeData] @existingAccount;
+						SELECT @existingAccount = p.[PlayerId] FROM [dbo].[Player] AS p WHERE p.[PlayerIdentifier] = @tempIdentifier; 
+						EXEC [dbo].[AddFirstTimeData] @existingAccount;
 
-								SET @case = 100;
-								SET @message = 'Created new account succesfully';
-							END
-						ELSE
-							BEGIN
-								SET @case = 202;
-								SET @message = 'Server capacity reached';
-							END
+						SET @case = 100;
+						SET @message = 'Created new account succesfully';
 					END
 				ELSE
 					BEGIN
@@ -96,7 +80,6 @@ BEGIN
 							CastleLevel TINYINT,
 							WatchLevel TINYINT,
 							ShieldEndTime DATETIME,
-							Invaded INT,
 							VIPPoints INT,
 							ClanId INT,
 							RegisteredDate DATETIME,
@@ -116,9 +99,11 @@ BEGIN
 		SET @message = ERROR_MESSAGE();
 	END CATCH
 
-	SELECT p.[PlayerId], p.[PlayerIdentifier], p.[FirebaseId], p.[AcceptedTermAndCondition], 
-			p.[IsAdmin], p.[IsDeveloper], p.[WorldTileId], p.[Name], p.[VIPPoints], 'Info' = @info
-	FROM [dbo].[Player] AS p WHERE p.[PlayerId] = @existingAccount;
+	SELECT p.[PlayerId], p.[PlayerIdentifier], p.[FirebaseId], p.[AcceptedTermAndCondition], p.[IsAdmin], p.[IsDeveloper],
+			p.[WorldTileId], wt.[X], wt.[Y], p.[Name], p.[VIPPoints], 'Info' = @info
+	FROM [dbo].[Player] AS p
+	LEFT JOIN [dbo].[WorldTileData] AS wt ON wt.[WorldTileDataId] = p.[WorldTileId]
+	WHERE p.[PlayerId] = @existingAccount;
 
 	EXEC [dbo].[GetMessage] @userId, @message, @case, @error, @time, 1, 1;
 END

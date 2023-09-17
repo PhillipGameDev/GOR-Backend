@@ -1,19 +1,20 @@
 ﻿using System;
+using System.Linq;
 using System.Threading.Tasks;
-using GameOfRevenge.Common.Services;
-using GameOfRevenge.Common;
-using GameOfRevenge.Business.Manager.UserData;
 using System.Collections.Generic;
-using GameOfRevenge.Business.Manager.Base;
+using Newtonsoft.Json;
+using GameOfRevenge.Common;
 using GameOfRevenge.Common.Net;
+using GameOfRevenge.Common.Services;
 using GameOfRevenge.Common.Interface;
 using GameOfRevenge.Common.Interface.UserData;
 using GameOfRevenge.Common.Models;
-using GameOfRevenge.Common.Models.Structure;
-using System.Linq;
-using Newtonsoft.Json;
-using GameOfRevenge.Common.Models.Quest.Template;
 using GameOfRevenge.Common.Models.Quest;
+using GameOfRevenge.Common.Models.Quest.Template;
+using GameOfRevenge.Common.Models.Structure;
+using GameOfRevenge.Business.Manager.Base;
+using GameOfRevenge.Business.Manager.UserData;
+using GameOfRevenge.Business.Manager.Kingdom;
 
 namespace GameOfRevenge.Business.Manager
 {
@@ -22,118 +23,102 @@ namespace GameOfRevenge.Business.Manager
         private readonly IUserResourceManager resManager = new UserResourceManager();
         private readonly IUserStructureManager strManager = new UserStructureManager();
         private readonly IUserQuestManager questManager = new UserQuestManager();
+        private readonly IKingdomManager kingdomManager = new KingdomManager();
+        private readonly IPlayerDataManager dataManager = new PlayerDataManager();
 
         public async Task<Response<Player>> TryLoginOrRegister(string identifier, bool accepted, int version)
         {
+            var updateAvailable = false;
             try
             {
-//                if (version < 906) throw new DataNotExistExecption("Server under maintenance, sorry for the inconvenience!");//"Update Required");
-                if (version < 904) throw new DataNotExistExecption("Update Required");
+//                if (version < 906) throw new InvalidModelExecption("Server under maintenance, sorry for the inconvenience!");//"Update Required");
+                if (version < 904) throw new InvalidModelExecption("Update Required");
+                if (version < 905) updateAvailable = true;
+
                 if (string.IsNullOrWhiteSpace(identifier))
                 {
                     throw new InvalidModelExecption("Invalid identifier was provided");
                 }
+                if (!accepted) throw new RequirementExecption("Kindly accept terms and condition");
+
+                var worldResp = await kingdomManager.GetWorld(Config.DefaultWorldCode);
+                if (!worldResp.IsSuccess) throw new DataNotExistExecption();
+                if (!worldResp.HasData) throw new DataNotExistExecption("Unable to assign world");
+                var world = worldResp.Data;
 
                 identifier = identifier.Trim();
-                /*                if ((identifier == "21886937eabae07847de33d5ad5bbf20") ||
-                                    (identifier == "Bu3gC5191gftKiUYF0QmgSmRHDk2"))
-                                {
-                                    throw new DataNotExistExecption("Under Maintenance");
-                                }
-                                if (identifier == "test") identifier = "21886937eabae07847de33d5ad5bbf20";*/
+                var zoneCapacity = (world.ZoneSize * world.ZoneSize) - 4;
+                var respInfo = await GetAccountInfo(identifier);
+                if (!respInfo.IsSuccess)
+                {
+                    var respCount = await kingdomManager.GetWorldTileCount(world.Id);
+                    if (!respCount.IsSuccess || !respCount.HasData)
+                    {
+                        throw new DataNotExistExecption("Unable to assign world");
+                    }
 
-                if (!accepted) throw new RequirementExecption("Kindly accept terms and condition");
+                    if (respCount.Data.Value >= (zoneCapacity * world.TotalZones))
+                    {
+                        throw new InvalidModelExecption("Server capacity reached.");
+                    }
+                }
 
                 var spParams = new Dictionary<string, object>()
                 {
                     { "Identifier", identifier },
-                    { "Accepted", accepted },
                     { "Version", version }
                 };
                 var response = await Db.ExecuteSPSingleRow<Player>("TryLoginOrRegister", spParams);
-
                 if (!response.IsSuccess) throw new InvalidModelExecption(response.Message);
-                if (!response.HasData) throw new InvalidModelExecption("Unable to validate your user account.");
+                if (!response.HasData)
+                {
+                    throw new InvalidModelExecption("Unable to validate your user account.");
+                }
 
                 int playerId = response.Data.PlayerId;
+                if (response.Data.WorldTileId == 0)
+                {
+                    var offsetX = (world.CurrentZone % world.ZoneX) * world.ZoneSize;
+                    var offsetY = (int)Math.Ceiling(world.CurrentZone / (float)world.ZoneY) * world.ZoneSize;
+                    var maxX = (offsetX + world.ZoneSize) - 1;
+                    var maxY = (offsetY + world.ZoneSize) - 1;
+                    var zonePlyResp = await kingdomManager.GetWorldZonePlayers(offsetX, offsetY, maxX, maxY);
+                    if (!zonePlyResp.IsSuccess || !zonePlyResp.HasData)
+                    {
+                        throw new DataNotExistExecption("Unable to assign world");
+                    }
+
+                    var zonePlayers = zonePlyResp.Data;
+                    foreach (var zonePly in zonePlayers)
+                    {
+                        zonePly.X -= offsetX;
+                        zonePly.Y -= offsetY;
+                    }
+                    var data = AddPlayerToZone(playerId, world.ZoneSize, zonePlayers);
+                    if (data == null) throw new Exception("Unable to assign world position");
+
+                    var finalX = offsetX + data.X;
+                    var finalY = offsetY + data.Y;
+                    var updateResp = await kingdomManager.UpdateWorldTileData(finalX, finalY, worldId: world.Id);
+                    if (!updateResp.IsSuccess) throw new Exception("Unable to assign world position");
+
+                    var updatePlyResp = await SetProperties(playerId, worldTileId: updateResp.Data.WorldTileId);
+                    if (!updatePlyResp.IsSuccess) throw new Exception("Unable to assign world position");
+
+                    response.Data.WorldTileId = updatePlyResp.Data.WorldTileId;
+                    response.Data.X = finalX;
+                    response.Data.Y = finalY;
+
+                    if (zonePlayers.Count >= zoneCapacity)
+                    {
+                        await kingdomManager.UpdateWorld(world.Id, world.CurrentZone + 1);
+                    }
+                    zonePlayers.Clear();
+                }
+
                 if (response.Case == 100)// new account
                 {
-                    //todo add in database
-                    var structureData = CacheData.CacheStructureDataManager.GetFullStructureData(StructureType.CityCounsel);
-                    var cityCounselHealth = structureData.Levels.OrderBy(x => x.Data.Level).FirstOrDefault().Data.HitPoint;
-                    var cityCounselLoc = 1;//structureData.Locations.FirstOrDefault();
-
-                    structureData = CacheData.CacheStructureDataManager.GetFullStructureData(StructureType.Gate);
-                    var gateHealth = structureData.Levels.OrderBy(x => x.Data.Level).FirstOrDefault().Data.HitPoint;
-                    var gateLoc = 2;
-
-                    structureData = CacheData.CacheStructureDataManager.GetFullStructureData(StructureType.WatchTower);
-                    var wtHealth = structureData.Levels.OrderBy(x => x.Data.Level).FirstOrDefault().Data.HitPoint;
-                    var wtLoc = 4;
-
-                    structureData = CacheData.CacheStructureDataManager.GetFullStructureData(StructureType.TrainingHeroes);
-                    var thHealth = structureData.Levels.OrderBy(x => x.Data.Level).FirstOrDefault().Data.HitPoint;
-                    var thLoc = 3;
-
-                    int fhHealth = 0;
-                    int fhLoc = 0;
-
-                    if (version > 901)
-                    {
-                        structureData = CacheData.CacheStructureDataManager.GetFullStructureData(StructureType.FriendshipHall);
-                        fhHealth = structureData.Levels.OrderBy(x => x.Data.Level).FirstOrDefault().Data.HitPoint;
-                        fhLoc = 5;
-                    }
-                    //#if DEBUG
-                    //                    await resManager.SumMainResource(playerId, 100000, 100000, 100000, 10000);
-                    //#else
-                    await resManager.SumMainResource(playerId, 10000, 10000, 10000, 500, 200);
-                    //#endif
-                    var dataManager = new PlayerDataManager();
-                    var json = JsonConvert.SerializeObject(new UserKingDetails());
-                    await dataManager.AddOrUpdatePlayerData(playerId, DataType.Custom, 1, json);
-
-                    json = JsonConvert.SerializeObject(new UserBuilderDetails());
-                    await dataManager.AddOrUpdatePlayerData(playerId, DataType.Custom, 2, json);
-
-                    json = JsonConvert.SerializeObject(new UserVIPDetails(100));
-                    await dataManager.AddOrUpdatePlayerData(playerId, DataType.Custom, 3, json);
-
-                    var timestamp = DateTime.UtcNow;
-                    var dataList = new List<StructureDetails>();
-                    dataList.Add(new StructureDetails()
-                    {
-                        Level = 1,
-                        StartTime = timestamp,
-                        Location = cityCounselLoc,
-                        HitPoints = cityCounselHealth,
-                    });
-                    json = JsonConvert.SerializeObject(dataList);
-                    await dataManager.AddOrUpdatePlayerData(playerId, DataType.Structure, (int)StructureType.CityCounsel, json);
-
-                    dataList[0].Location = gateLoc;
-                    dataList[0].HitPoints = gateHealth;
-                    json = JsonConvert.SerializeObject(dataList);
-                    await dataManager.AddOrUpdatePlayerData(playerId, DataType.Structure, (int)StructureType.Gate, json);
-
-                    dataList[0].Location = wtLoc;
-                    dataList[0].HitPoints = wtHealth;
-                    json = JsonConvert.SerializeObject(dataList);
-                    await dataManager.AddOrUpdatePlayerData(playerId, DataType.Structure, (int)StructureType.WatchTower, json);
-
-                    dataList[0].Location = thLoc;
-                    dataList[0].HitPoints = thHealth;
-                    json = JsonConvert.SerializeObject(dataList);
-                    await dataManager.AddOrUpdatePlayerData(playerId, DataType.Structure, (int)StructureType.TrainingHeroes, json);
-
-                    if (version > 901)
-                    {
-                        dataList[0].Location = fhLoc;
-                        dataList[0].HitPoints = fhHealth;
-                        json = JsonConvert.SerializeObject(dataList);
-                        await dataManager.AddOrUpdatePlayerData(playerId, DataType.Structure, (int)StructureType.FriendshipHall, json);
-                    }
-
+                    await SetNewAccount(playerId, version);
                     await CreateBackup(playerId);
                 }
                 else if (response.Case == 101)// && (version > 0))
@@ -142,7 +127,6 @@ namespace GameOfRevenge.Business.Manager
 
                     try
                     {
-                        var dataManager = new PlayerDataManager();
                         var resp = await dataManager.GetPlayerData(playerId, DataType.Structure, (int)StructureType.FriendshipHall);
                         if (resp.IsSuccess)
                         {
@@ -205,6 +189,7 @@ namespace GameOfRevenge.Business.Manager
                     await CreateBackup(playerId);
                 }
                 await CompleteAccountQuest(playerId, AccountTaskType.SignIn);
+                if (updateAvailable) response.Case += 50;
 
                 return response;
             }
@@ -224,6 +209,125 @@ namespace GameOfRevenge.Business.Manager
             {
                 return new Response<Player>() { Case = 0, Data = null, Message = ErrorManager.ShowError(ex) };
             }
+        }
+
+        async Task SetNewAccount(int playerId, int version)
+        {
+            var structureData = CacheData.CacheStructureDataManager.GetFullStructureData(StructureType.CityCounsel);
+            var cityCounselHealth = structureData.Levels.OrderBy(x => x.Data.Level).FirstOrDefault().Data.HitPoint;
+            var cityCounselLoc = 1;//structureData.Locations.FirstOrDefault();
+
+            structureData = CacheData.CacheStructureDataManager.GetFullStructureData(StructureType.Gate);
+            var gateHealth = structureData.Levels.OrderBy(x => x.Data.Level).FirstOrDefault().Data.HitPoint;
+            var gateLoc = 2;
+
+            structureData = CacheData.CacheStructureDataManager.GetFullStructureData(StructureType.WatchTower);
+            var wtHealth = structureData.Levels.OrderBy(x => x.Data.Level).FirstOrDefault().Data.HitPoint;
+            var wtLoc = 4;
+
+            structureData = CacheData.CacheStructureDataManager.GetFullStructureData(StructureType.TrainingHeroes);
+            var thHealth = structureData.Levels.OrderBy(x => x.Data.Level).FirstOrDefault().Data.HitPoint;
+            var thLoc = 3;
+
+            int fhHealth = 0;
+            int fhLoc = 0;
+
+            if (version > 901)
+            {
+                structureData = CacheData.CacheStructureDataManager.GetFullStructureData(StructureType.FriendshipHall);
+                fhHealth = structureData.Levels.OrderBy(x => x.Data.Level).FirstOrDefault().Data.HitPoint;
+                fhLoc = 5;
+            }
+            //#if DEBUG
+            //    await resManager.SumMainResource(playerId, 100000, 100000, 100000, 10000);
+            //#else
+            await resManager.SumMainResource(playerId, 10000, 10000, 10000, 500, 200);
+            //#endif
+            var dataManager = new PlayerDataManager();
+            var json = JsonConvert.SerializeObject(new UserKingDetails());
+            await dataManager.AddOrUpdatePlayerData(playerId, DataType.Custom, 1, json);
+
+            json = JsonConvert.SerializeObject(new UserBuilderDetails());
+            await dataManager.AddOrUpdatePlayerData(playerId, DataType.Custom, 2, json);
+
+            json = JsonConvert.SerializeObject(new UserVIPDetails(100));
+            await dataManager.AddOrUpdatePlayerData(playerId, DataType.Custom, 3, json);
+
+            var dataList = new List<StructureDetails>();
+            dataList.Add(new StructureDetails()
+            {
+                Level = 1,
+                StartTime = DateTime.UtcNow,
+                Location = cityCounselLoc,
+                HitPoints = cityCounselHealth,
+            });
+            json = JsonConvert.SerializeObject(dataList);
+            await dataManager.AddOrUpdatePlayerData(playerId, DataType.Structure, (int)StructureType.CityCounsel, json);
+
+            dataList[0].Location = gateLoc;
+            dataList[0].HitPoints = gateHealth;
+            json = JsonConvert.SerializeObject(dataList);
+            await dataManager.AddOrUpdatePlayerData(playerId, DataType.Structure, (int)StructureType.Gate, json);
+
+            dataList[0].Location = wtLoc;
+            dataList[0].HitPoints = wtHealth;
+            json = JsonConvert.SerializeObject(dataList);
+            await dataManager.AddOrUpdatePlayerData(playerId, DataType.Structure, (int)StructureType.WatchTower, json);
+
+            dataList[0].Location = thLoc;
+            dataList[0].HitPoints = thHealth;
+            json = JsonConvert.SerializeObject(dataList);
+            await dataManager.AddOrUpdatePlayerData(playerId, DataType.Structure, (int)StructureType.TrainingHeroes, json);
+
+            if (version > 901)
+            {
+                dataList[0].Location = fhLoc;
+                dataList[0].HitPoints = fhHealth;
+                json = JsonConvert.SerializeObject(dataList);
+                await dataManager.AddOrUpdatePlayerData(playerId, DataType.Structure, (int)StructureType.FriendshipHall, json);
+            }
+        }
+
+        public PlayerID AddPlayerToZone(int playerId, int zoneSize, List<PlayerID> list)
+        {
+            var random = new Random();
+            var half = zoneSize / 2;
+            var x = 0;
+            var y = 0;
+            var tries = 1000;
+            do
+            {
+                x = random.Next(zoneSize);
+                y = random.Next(zoneSize);
+                tries--;
+                if (tries == 0) break;
+            } while (Invalid(x, y, half, list));
+
+            if (tries == 0)
+            {
+                var total = zoneSize * zoneSize;
+                int pos = random.Next(0, total);
+                do
+                {
+                    pos++;
+                    x = pos % zoneSize;
+                    y = (int)Math.Ceiling(pos / (float)zoneSize);
+                    if (!Invalid(x, y, half, list)) break;
+                    total--;
+                } while (total > 0);
+                if (total == 0) return null;
+            }
+
+            var data = new PlayerID(playerId, x, y);
+            list.Add(data);
+
+            return data;
+        }
+
+        bool Invalid(int x, int y, int half, List<PlayerID> list)
+        {
+            return list.Exists(ply => (ply.X == x) && (ply.Y == y)) ||
+                    ((x >= (half - 1)) && (x <= half) && (y >= (half - 1)) && (y <= half));
         }
 
         private async Task<Response> CreateBackup(int playerId)
@@ -345,7 +449,9 @@ namespace GameOfRevenge.Business.Manager
 
         public async Task<Response> Debug(int playerId, int dip)
         {
-            try
+            return new Response() { Case = 100, Message = "success" };
+
+/*            try
             {
                 if (playerId <= 0) throw new InvalidModelExecption("Invalid player id was provided");
 
@@ -409,7 +515,20 @@ namespace GameOfRevenge.Business.Manager
             catch (Exception ex)
             {
                 return new Response() { Case = 0, Message = ErrorManager.ShowError(ex) };
-            }
+            }*/
+        }
+
+        public async Task<Response<List<PlayerID>>> GetAllPlayerIDs(int? playerId = null, int length = 0, bool includeTileId = false)
+        {
+            var spParams = new Dictionary<string, object>()
+            {
+                { "Length", length },
+                { "GetCoords", 1 }
+            };
+            if (playerId != null) spParams.Add("PlayerId", playerId);
+            if (includeTileId) spParams.Add("GetTileId", 1);
+
+            return await Db.ExecuteSPMultipleRow<PlayerID>("GetPlayerIDs", spParams);
         }
 
         public async Task<Response<PlayerInfo>> GetAccountInfo(string identifier)

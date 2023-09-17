@@ -1,6 +1,6 @@
 USE [GameOfRevenge]
 GO
-/****** Object:  StoredProcedure [dbo].[GetPlayerIDs]    Script Date: 3/18/2023 3:35:18 PM ******/
+/****** Object:  StoredProcedure [dbo].[GetPlayerIDs]    Script Date: 9/14/2023 8:27:04 AM ******/
 SET ANSI_NULLS ON
 GO
 SET QUOTED_IDENTIFIER ON
@@ -10,6 +10,8 @@ GO
 ALTER   PROCEDURE [dbo].[GetPlayerIDs]
 	@PlayerId BIGINT = NULL,
 	@Length INT = NULL,
+	@GetCoords BIT = 0,
+	@GetTileId BIT = 0,
 	@Log BIT = 1
 AS
 BEGIN
@@ -17,20 +19,38 @@ BEGIN
 	DECLARE @message NVARCHAR(MAX) = NULL;
 	DECLARE @time DATETIME = GETUTCDATE();
 
-	DECLARE @tplayerId BIGINT = ISNULL(@PlayerId, 0);
+	DECLARE @tplayerId BIGINT = ISNULL(@PlayerId, 1);
 	DECLARE @tlen INT = ISNULL(@Length, 10);
 
 	SET @case = 100;
 	SET @message = 'Players';
 
 	IF (@tlen = 0)
-		SELECT [PlayerId], (CASE WHEN DATEDIFF(DAY, [LastLogin], @time) > (30 * 6) THEN 1 ELSE 0 END) AS 'Invaded'
-		FROM [dbo].[Player] WHERE [PlayerId] > @tplayerId;
-/*		SELECT [PlayerId], [LastLogin] FROM [dbo].[Player] WHERE [PlayerId] > @tplayerId;*/
+		IF (@GetCoords = 1)
+			IF (@GetTileId = 1)
+				SELECT p.[PlayerId], wt.[X], wt.[Y], wt.[WorldTileDataId] FROM [dbo].[Player] AS p 
+				INNER JOIN [dbo].[WorldTileData] AS wt ON wt.[WorldTileDataId] = p.[WorldTileId]
+				WHERE p.[PlayerId] >= @tplayerId;
+			ELSE
+				SELECT p.[PlayerId], wt.[X], wt.[Y] FROM [dbo].[Player] AS p 
+				INNER JOIN [dbo].[WorldTileData] AS wt ON wt.[WorldTileDataId] = p.[WorldTileId]
+				WHERE p.[PlayerId] >= @tplayerId;
+		ELSE
+			SELECT p.[PlayerId] FROM [dbo].[Player] AS p
+			WHERE p.[PlayerId] >= @tplayerId;
 	ELSE
-		SELECT TOP (@tlen) [PlayerId], (CASE WHEN DATEDIFF(DAY, [LastLogin], @time) > (30 * 6) THEN 1 ELSE 0 END) AS 'Invaded'
-		FROM [dbo].[Player] WHERE [PlayerId] > @tplayerId;
-/*	ORDER BY [PlayerId] DESC;*/
+		IF (@GetCoords = 1)
+			IF (@GetTileId = 1)
+				SELECT TOP (@tlen) p.[PlayerId], wt.[X], wt.[Y], wt.[WorldTileDataId] FROM [dbo].[Player] AS p
+				INNER JOIN [dbo].[WorldTileData] AS wt ON wt.[WorldTileDataId] = p.[WorldTileId]
+				WHERE p.[PlayerId] >= @tplayerId;
+			ELSE
+				SELECT TOP (@tlen) p.[PlayerId], wt.[X], wt.[Y] FROM [dbo].[Player] AS p
+				INNER JOIN [dbo].[WorldTileData] AS wt ON wt.[WorldTileDataId] = p.[WorldTileId]
+				WHERE p.[PlayerId] >= @tplayerId;
+		ELSE
+			SELECT TOP (@tlen) p.[PlayerId] FROM [dbo].[Player] AS p
+			WHERE p.[PlayerId] >= @tplayerId;
 
 	IF (@Log = 1) EXEC [dbo].[GetMessage] NULL, @message, @case, @error, @time, 1, 1;
 END

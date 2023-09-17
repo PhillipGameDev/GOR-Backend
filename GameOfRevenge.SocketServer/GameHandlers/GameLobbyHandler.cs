@@ -1026,8 +1026,8 @@ new string[]{
             peer.Actor.InterestArea.JoinKingdomView();
             var joinResp = new JoinKingdomResponse()
             {
-                WorldSizeX = (short)peer.Actor.World.Area.Max.X,
-                WorldSizeY = (short)peer.Actor.World.Area.Max.Y
+                WorldSizeX = (short)peer.Actor.World.SizeX,
+                WorldSizeY = (short)peer.Actor.World.SizeY
             };
             var data = joinResp.GetDictionary();
 

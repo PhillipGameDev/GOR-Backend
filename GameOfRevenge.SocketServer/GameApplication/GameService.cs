@@ -5,7 +5,6 @@ using ExitGames.Logging;
 using GameOfRevenge.Common;
 using GameOfRevenge.Common.Interface;
 using GameOfRevenge.Common.Interface.UserData;
-using GameOfRevenge.Common.Models.Kingdom;
 using GameOfRevenge.Common.Models.Structure;
 using GameOfRevenge.Business;
 using GameOfRevenge.Business.CacheData;
@@ -78,7 +77,6 @@ namespace GameOfRevenge.GameApplication
             CacheTroopDataManager.LoadCacheMemory();
             log.InfoFormat("Cache data loaded");
 
-            WorldHandler = new WorldHandler();
             GameLobby = new GameLobbyHandler();
 
             //Business Interfaces
@@ -104,29 +102,8 @@ namespace GameOfRevenge.GameApplication
 
             instance = new object();
 
-            List<WorldDataTable> worldData = null;
-
-            var task = BKingdomManager.GetWorld(Config.DefaultWorldCode);
-            task.Wait();
-            var world = task.Result;
-            log.InfoFormat("6 world="+(world != null));
-            //if (!world.IsSuccess) world = BKingdomManager.CreateWorld(Config.DefaultWorldCode).Result;
-            //else
-            //{
-            //    log.InfoFormat("Get World {0} ", JsonConvert.SerializeObject(world));
-            //    worldData = BKingdomManager.GetWorldTileData(world.Data.Id).Result.Data;
-            //}
-
-            //if (!world.IsSuccess || !world.HasData) throw new Exception(world.Message);
-            //else
-            //{
-            var task2 = BKingdomManager.GetWorldTilesData(world.Data.Id);
-            task2.Wait();
-            worldData = task2.Result.Data;
-            //}
-            log.InfoFormat("7 worlddata=" + (worldData != null));
-
-            WorldHandler.SetupPvpWorld(world.Data.Id, worldData);
+            WorldHandler = new WorldHandler();
+            WorldHandler.SetupWorld(Config.DefaultWorldCode);
 
             // GetAllTroopsOnSocketServer();
             var troops = CacheTroopDataManager.TroopInfos;

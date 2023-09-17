@@ -47,7 +47,7 @@ namespace GameOfRevenge.Model
             CastleLevel = actor.PlayerData.CastleLevel;
             WatchLevel = actor.PlayerData.WatchLevel;
             ShieldEndTime = actor.PlayerData.ShieldEndTime.ToUniversalTime().ToString("s") + "Z";
-            Invaded = actor.PlayerData.Invaded;
+            Invaded = 0;
 
             VIPPoints = actor.PlayerData.VIPPoints;
             AllianceId = actor.PlayerData.AllianceId;

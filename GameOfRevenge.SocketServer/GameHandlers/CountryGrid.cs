@@ -47,177 +47,179 @@ namespace GameOfRevenge.GameHandlers
         private static readonly IAccountManager accountManager = new AccountManager();
         private static readonly IPlayerDataManager manager = new PlayerDataManager();
 
-        public int WorldId { get; set; }
-        public string Name { get; set; }
+        public int WorldId { get; private set; }
+        public string Name { get; private set; }
+        public int SizeX { get; private set; }
+        public int SizeY { get; private set; }
+
         public Region[][] WorldRegions { get; set; }
-        public BoundingBox Area { get; private set; }
         public Vector TileDimensions { get; private set; }
-        public int TileX { get; private set; }
-        public int TileY { get; private set; }
         public IPlayersManager PlayersManager { get; set; }
-        public List<WorldDataTable> WorldData { get; private set; }
+        public List<PlayerID> WorldPlayers { get; private set; }
         public IFiber WorldFiber { get; private set; }
         private readonly Random rd = new Random();
 
-        public CountryGrid(string name, BoundingBox area, Vector tileDimensions, int worldId, List<WorldDataTable> worldData)
+        public CountryGrid(WorldTable world, List<PlayerID> worldPlayers)
         {
+            var w = GlobalConst.GetPopWorld(world.ZoneX, world.ZoneY);
+            var worldId = world.Id;
+
             try
             {
-                this.WorldData = worldData;
-                this.WorldId = worldId;
-                this.Name = name;
-                this.WorldFiber = new PoolFiber();
-                this.WorldFiber.Start();
-                this.PlayersManager = new PlayersManager();
-                this.Area = area;
-                this.TileDimensions = tileDimensions;
-                log.InfoFormat("world size = {0},{1}", Area.Size.X, Area.Size.Y);
-                log.InfoFormat("tile size = {0},{1}", tileDimensions.X, tileDimensions.Y);
-                this.TileX = (int)Math.Ceiling(Area.Size.X / (double)tileDimensions.X);
-                this.TileY = (int)Math.Ceiling(Area.Size.Y / (double)tileDimensions.Y);
-                log.InfoFormat("tile xy = {0},{1}", TileX, TileY);
+                Name = w.worldName;
+                SizeX = world.ZoneX * world.ZoneSize;
+                SizeY = world.ZoneY * world.ZoneSize;
+                log.InfoFormat("world size = {0},{1}", SizeX, SizeY);
+
+                WorldId = worldId;
+                WorldPlayers = worldPlayers;
+                WorldFiber = new PoolFiber();
+                WorldFiber.Start();
 
                 var count = 0;
-                this.WorldRegions = new Region[TileX][];
-                log.Info("region len = "+WorldRegions.Length);
-                for (int x = 0; x < TileX; x++)
+                PlayersManager = new PlayersManager();
+                WorldRegions = new Region[SizeX][];
+                for (int x = 0; x < SizeX; x++)
                 {
-                    this.WorldRegions[x] = new Region[TileY];
-                    for (int y = 0; y < TileY; y++)
+                    WorldRegions[x] = new Region[SizeY];
+                    for (int y = 0; y < SizeY; y++)
                     {
                         var worldRegion = new Region(x, y, TileDimensions, worldId, this);
-                        var worldPlayer = worldData.Find(wd => (wd.X == x) && (wd.Y == y));
-                        if (worldPlayer != null)
+                        WorldRegions[x][y] = worldRegion;
+
+                        var worldPlayer = WorldPlayers.Find(wd => (wd.X == x) && (wd.Y == y));
+                        if (worldPlayer == null) continue;
+
+                        int playerId = worldPlayer.PlayerId;
+                        var task = accountManager.GetAccountInfo(playerId);
+                        task.Wait();
+                        if (task.Result.IsSuccess && task.Result.HasData)
                         {
-                            PlayerInfo plyInfo = null;
-                            int playerId = worldPlayer.TileData.PlayerId;
-                            var task = accountManager.GetAccountInfo(playerId);
-                            task.Wait();
-                            if (task.Result.IsSuccess && task.Result.HasData)
-                            {
-                                plyInfo = task.Result.Data;
-
-                                var actor = new MmoActor(playerId, plyInfo, this, worldRegion);
-                                actor.WorldRegion.SetPlayerInRegion(actor);
-                                this.PlayersManager.AddPlayer(playerId, actor);
-
-                                count++;
-                            }
-                            else
-                            {
-                                log.InfoFormat("player {0} missing for tile {1} ({2},{3})", playerId, worldPlayer.Id, worldPlayer.X, worldPlayer.Y);
-                            }
+                            var plyInfo = task.Result.Data;
+                            var actor = new MmoActor(playerId, plyInfo, this, worldRegion);
+                            actor.WorldRegion.SetPlayerInRegion(actor);
+                            PlayersManager.AddPlayer(playerId, actor);
+                            count++;
                         }
-                        this.WorldRegions[x][y] = worldRegion;
+                        else
+                        {
+                            log.InfoFormat("player data {0} missing for tile ({1},{2})", playerId, x, y);
+                        }
                     }
                 }
                 log.InfoFormat("Total users in world {0}", count);
 
-                var marchingList = new List<MarchingArmy>();
-                var taskMarching = manager.GetAllMarchingTroops();
-                taskMarching.Wait();
-                if (taskMarching.Result.IsSuccess && taskMarching.Result.HasData)
-                {
-                    count = 0;
-                    var list = taskMarching.Result.Data;
-                    log.Info("marching troops = "+list.Count);
-                    foreach (var data in list)
-                    {
-                        MarchingArmy marching = null;
-                        if (!string.IsNullOrEmpty(data.Value))
-                        {
-                            try
-                            {
-                                marching = JsonConvert.DeserializeObject<MarchingArmy>(data.Value);
-                            }
-                            catch (Exception ex)
-                            {
-                                log.Error("Error: "+ex.Message);
-                                log.Info("Error deserializing marching army: " + data.Value);
-                            }
-                        }
-                        if (marching == null) continue;
-
-                        marching.MarchingId = data.Id;
-                        var attackerId = data.PlayerId;
-                        var task = BaseUserDataManager.GetFullPlayerData(attackerId);
-                        task.Wait();
-                        if (!task.Result.IsSuccess || !task.Result.HasData)
-                        {
-                            log.Error("Error: attacker "+attackerId+" data not found");
-                            continue;
-                        }
-                        var attackerData = task.Result.Data;
-
-                        var defenderId = marching.TargetId;
-                        task = BaseUserDataManager.GetFullPlayerData(defenderId);
-                        task.Wait();
-                        if (!task.Result.IsSuccess || !task.Result.HasData)
-                        {
-                            log.Error("Error: defender "+defenderId+" data not found");
-                            continue;
-                        }
-                        var defenderData = task.Result.Data;
-
-                        byte watchLevel = 0;
-                        foreach (var structures in defenderData.Structures)
-                        {
-                            if (structures.StructureType != StructureType.WatchTower) continue;
-
-                            var watchTowers = structures.Buildings;
-                            if (watchTowers?.Count > 0)
-                            {
-                                watchLevel = (byte)watchTowers.Max(x => x.CurrentLevel);
-                            }
-                            break;
-                        }
-
-                        var response = new AttackResponseData()
-                        {
-                            MarchingId = marching.MarchingId,
-                            MarchingType = marching.MarchingType,
-
-                            AttackerId = attackerId,
-                            AttackerName = attackerData.PlayerName,
-
-                            KingLevel = attackerData.King.Level,
-                            WatchLevel = watchLevel,
-
-                            TargetId = defenderId,
-                            TargetName = defenderData.PlayerName,
-
-                            Troops = marching.TroopsToArray(),
-                            Heroes = marching.HeroesToArray(attackerData.Heroes),
-
-                            StartTime = marching.StartTime.ToUniversalTime().ToString("s") + "Z",
-                            Distance = marching.Distance,
-                            AdvanceReduction = marching.AdvanceReduction,
-                            ReturnReduction = marching.ReturnReduction,
-                            Duration = marching.Duration
-                        };
-                        var attackStatus = new AttackStatusData()
-                        {
-                            MarchingArmy = marching,
-                            AttackData = response
-                        };
-//                            attackStatus.State = 1;
-
-                        GameService.BRealTimeUpdateManager.AddNewMarchingArmy(attackStatus);
-                        count++;
-                    }
-                    log.InfoFormat("Total attacks running:{0}", count);
-                }
-                else
-                {
-                    log.Info("Error pulling marching troops");
-                }
+                InstantiateMarchingTroops();
 
                 GameService.BRealTimeUpdateManager.Update(MarchingArmyComplete);
             }
             catch(Exception ex)
             {
                 log.InfoFormat("Exception in CountryGrid Constructor {0} {1} {2} ", ex.Message, ex.StackTrace,
-                    JsonConvert.SerializeObject(worldData));
+                    JsonConvert.SerializeObject(worldPlayers));
+                throw ex;
+            }
+        }
+
+        void InstantiateMarchingTroops()
+        {
+            var marchingList = new List<MarchingArmy>();
+            var taskMarching = manager.GetAllMarchingTroops();
+            taskMarching.Wait();
+            if (taskMarching.Result.IsSuccess && taskMarching.Result.HasData)
+            {
+                var count = 0;
+                var list = taskMarching.Result.Data;
+                log.Info("marching troops = " + list.Count);
+                foreach (var data in list)
+                {
+                    MarchingArmy marching = null;
+                    if (!string.IsNullOrEmpty(data.Value))
+                    {
+                        try
+                        {
+                            marching = JsonConvert.DeserializeObject<MarchingArmy>(data.Value);
+                        }
+                        catch (Exception ex)
+                        {
+                            log.Error("Error: " + ex.Message);
+                            log.Info("Error deserializing marching army: " + data.Value);
+                        }
+                    }
+                    if (marching == null) continue;
+
+                    marching.MarchingId = data.Id;
+                    var attackerId = data.PlayerId;
+                    var task = BaseUserDataManager.GetFullPlayerData(attackerId);
+                    task.Wait();
+                    if (!task.Result.IsSuccess || !task.Result.HasData)
+                    {
+                        log.Error("Error: attacker " + attackerId + " data not found");
+                        continue;
+                    }
+                    var attackerData = task.Result.Data;
+
+                    var defenderId = marching.TargetId;
+                    task = BaseUserDataManager.GetFullPlayerData(defenderId);
+                    task.Wait();
+                    if (!task.Result.IsSuccess || !task.Result.HasData)
+                    {
+                        log.Error("Error: defender " + defenderId + " data not found");
+                        continue;
+                    }
+                    var defenderData = task.Result.Data;
+
+                    byte watchLevel = 0;
+                    foreach (var structures in defenderData.Structures)
+                    {
+                        if (structures.StructureType != StructureType.WatchTower) continue;
+
+                        var watchTowers = structures.Buildings;
+                        if (watchTowers?.Count > 0)
+                        {
+                            watchLevel = (byte)watchTowers.Max(x => x.CurrentLevel);
+                        }
+                        break;
+                    }
+
+                    var response = new AttackResponseData()
+                    {
+                        MarchingId = marching.MarchingId,
+                        MarchingType = marching.MarchingType,
+
+                        AttackerId = attackerId,
+                        AttackerName = attackerData.PlayerName,
+
+                        KingLevel = attackerData.King.Level,
+                        WatchLevel = watchLevel,
+
+                        TargetId = defenderId,
+                        TargetName = defenderData.PlayerName,
+
+                        Troops = marching.TroopsToArray(),
+                        Heroes = marching.HeroesToArray(attackerData.Heroes),
+
+                        StartTime = marching.StartTime.ToUniversalTime().ToString("s") + "Z",
+                        Distance = marching.Distance,
+                        AdvanceReduction = marching.AdvanceReduction,
+                        ReturnReduction = marching.ReturnReduction,
+                        Duration = marching.Duration
+                    };
+                    var attackStatus = new AttackStatusData()
+                    {
+                        MarchingArmy = marching,
+                        AttackData = response
+                    };
+                    //                            attackStatus.State = 1;
+
+                    GameService.BRealTimeUpdateManager.AddNewMarchingArmy(attackStatus);
+                    count++;
+                }
+                log.InfoFormat("Total attacks running:{0}", count);
+            }
+            else
+            {
+                log.Info("Error pulling marching troops");
             }
         }
 
@@ -274,7 +276,7 @@ namespace GameOfRevenge.GameHandlers
             }
         }
 
-        public Region FindFreeRegion()
+/*        public Region FindFreeRegion()
         {
             int mapSize = WorldRegions.Length;
             //find randomly
@@ -302,7 +304,7 @@ namespace GameOfRevenge.GameHandlers
             {
                 pos++;
                 int x = pos % mapSize;
-                int y = (int)(pos / mapSize) % mapSize;
+                int y = (int)Math.Ceiling(pos / (float)mapSize);
                 if (!WorldRegions[x][y].IsBooked)
                 {
                     return WorldRegions[x][y];
@@ -312,7 +314,7 @@ namespace GameOfRevenge.GameHandlers
 
 
             return null;
-        }
+        }*/
 
 /*        public (Region region, MmoActor actor, IInterestArea iA) GetPlayerPosition(int playerId, PlayerInfo playerInfo)
         {
@@ -355,48 +357,27 @@ namespace GameOfRevenge.GameHandlers
             IInterestArea interestArea = null;
             var actor = PlayersManager.GetPlayer(playerId);
             log.Info("actor =" + (actor != null));
-            var data = WorldData.Find(d => (d.TileData.PlayerId == playerId));
+            log.Info("worlddata = "+(WorldPlayers != null));
+            var data = WorldPlayers.Find(wd => (wd.PlayerId == playerId));
             if (data == null)
             {
                 log.Info("data null");
-
-                var region = FindFreeRegion();
-                if (region != null)
+                var plyResp = await GameService.BAccountManager.GetAllPlayerIDs(playerId: playerId, length: 1);
+                if (plyResp.IsSuccess && plyResp.HasData && (plyResp.Data.Count > 0))
                 {
-                    log.Info("region ok");
-                    var tileData = new WorldTileData(playerId);
-                    var resp = await GameService.BKingdomManager.UpdateWorldTileData(WorldId, region.X, region.Y, tileData);
-                    if (resp.IsSuccess && resp.HasData)
-                    {
-                        log.Info("ok set properties tile="+resp.Data.Id);
-                        var setResp = await GameService.BAccountManager.SetProperties(playerId, worldTileId: resp.Data.Id);
-                        if (setResp.IsSuccess)
-                        {
-                            log.Info("ok!!");
-                            data = new WorldDataTable()
-                            {
-                                WorldId = WorldId,
-                                X = region.X,
-                                Y = region.Y,
-                                TileData = tileData
-                            };
-                            WorldData.Add(data);
+                    var plyData = plyResp.Data[0];
+                    var worldRegion = WorldRegions[plyData.X][plyData.Y];
 
-                            var worldRegion = WorldRegions[region.X][region.Y];
-                            actor = new MmoActor(playerId, playerInfo, this, worldRegion);
-                            worldRegion.SetPlayerInRegion(actor);
-                            log.Info("ok!! 1");
-                            PlayersManager.AddPlayer(playerId, actor);
-                            log.Info("ok!! 2");
+                    actor = new MmoActor(playerId, playerInfo, this, worldRegion);
+                    worldRegion.SetPlayerInRegion(actor);
+                    PlayersManager.AddPlayer(playerId, actor);
+                    WorldPlayers.Add(plyData);
 
-                            interestArea = new InterestArea(worldRegion, actor, true);
-                        }
-                    }
+                    interestArea = new InterestArea(worldRegion, actor, true);
                 }
             }
             else
             {
-                log.Info("data found x="+data.X+"  "+data.Y);
                 var worldRegion = WorldRegions[data.X][data.Y];
                 interestArea = new InterestArea(worldRegion, actor, false);
             }

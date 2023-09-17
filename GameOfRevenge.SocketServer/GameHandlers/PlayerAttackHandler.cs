@@ -134,7 +134,7 @@ namespace GameOfRevenge.GameHandlers
                 }
                 else
                 {
-                    if (Enemy.PlayerData.Invaded == 0)
+                    if (true)//Enemy.PlayerData.Invaded == 0)
                     {
                         var location = new MapLocation() { X = attacker.WorldRegion.X, Y = attacker.WorldRegion.Y };
                         var watchLevel = await GameService.BkingdomePvpManager.AttackOtherPlayer(attackerCompleteData, marchingArmy, location, Enemy.PlayerId);
@@ -143,8 +143,9 @@ namespace GameOfRevenge.GameHandlers
                     }
                     else
                     {
+                        //TODO: remove this
                         await GameService.BkingdomePvpManager.AttackMonster(attackerCompleteData, marchingArmy);
-                        attackData = new AttackResponseData(attackerCompleteData, marchingArmy, Enemy.PlayerId, Enemy.PlayerData.Invaded);
+//                        attackData = new AttackResponseData(attackerCompleteData, marchingArmy, Enemy.PlayerId, Enemy.PlayerData.Invaded);
                     }
                 }
                 var str = "Passing Data attackerId {0} Data {1} defenderId {2} ";

@@ -1,8 +1,4 @@
 ﻿using System.Collections.Concurrent;
-using System.Collections.Generic;
-using System.Threading.Tasks;
-using GameOfRevenge.Common.Models.Kingdom;
-
 
 namespace GameOfRevenge.Interface
 {
@@ -11,6 +7,6 @@ namespace GameOfRevenge.Interface
         IWorld DefaultWorld { get; }
         ConcurrentDictionary<int, IWorld> Worlds { get; }
 
-        void SetupPvpWorld(int worldId, List<WorldDataTable> worldData);
+        void SetupWorld(string worldCode);
     }
 }

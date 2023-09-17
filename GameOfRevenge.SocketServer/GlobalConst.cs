@@ -4,15 +4,15 @@ namespace GameOfRevenge
 {
     public class GlobalConst
     {
-        public static (string worldName, byte worldId, BoundingBox boundingBox, Vector tileDimention) GetPopWorld()
+        public static (string worldName, byte worldId, BoundingBox boundingBox) GetPopWorld(int sizeX, int sizeY)
         {
-            var bounding = new BoundingBox(new Vector(0, 0), new Vector(worldArea, worldArea));
-            var tile = new Vector(tileArea, tileArea);
-            return ("popWorld", 1, bounding, tile);
+            var bounding = new BoundingBox(new Vector(0, 0), new Vector(sizeX, sizeY));
+//            var tile = new Vector(tileArea, tileArea);
+            return ("popWorld", 1, bounding);
         }
 
-        public const float worldArea = 1000;   //(1000*1000)/10*10 = 10000; tils
-        public const float tileArea = 1;
+//        public const float worldArea = 1000;   //(1000*1000)/10*10 = 10000; tils
+//        public const float tileArea = 1;
         public const float TilesIaX = 10;
         public const float TilesIaY = 10;
         public const byte defaultWorldId = 1;

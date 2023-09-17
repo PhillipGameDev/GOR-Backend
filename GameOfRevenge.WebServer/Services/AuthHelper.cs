@@ -4,6 +4,7 @@ using System.IdentityModel.Tokens.Jwt;
 using System.Linq;
 using System.Security.Claims;
 using System.Text;
+using GameOfRevenge.Business;
 using GameOfRevenge.Common.Models;
 using Microsoft.AspNetCore.Http;
 using Microsoft.IdentityModel.Tokens;
@@ -74,7 +75,7 @@ namespace GameOfRevenge.WebServer.Services
                 try
                 {
                     var tokenHandler = new JwtSecurityTokenHandler();
-                    var key = Encoding.ASCII.GetBytes(AppSettings.Config.Secret);
+                    var key = Encoding.ASCII.GetBytes(Config.Secret);
                     var claims = user.GetClaims().Where(x => x.Type != Remember);
                     var tokenDescriptor = new SecurityTokenDescriptor
                     {

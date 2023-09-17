@@ -155,11 +155,11 @@ BEGIN
 			END CATCH
 		END
 
-	DECLARE @invaded INT = 0;
-	IF (DATEDIFF(DAY, @lastLogin, @time) > (30 * 6)) SET @invaded = 1;
-	SELECT 'PlayerId' = @existingId, 'Name' = @name, 'IsAdmin' = @isAdmin, 'IsDeveloper' = @isDeveloper, 'KingLevel' = @kingLevel, 
-			'CastleLevel' = @castleLevel, 'WatchLevel' = @watchLevel, 'ShieldEndTime' = @shieldEndTime, 'Invaded' = @invaded,
-			'VIPPoints' = @vipPoints, 'ClanId' = @clanId, 'RegisteredDate' = @creationDate, 'LastLogin' = @lastLogin;
+	SELECT 'PlayerId' = @existingId, 'Name' = @name, 'IsAdmin' = @isAdmin, 'IsDeveloper' = @isDeveloper,
+			'KingLevel' = @kingLevel, 'CastleLevel' = @castleLevel, 'WatchLevel' = @watchLevel,
+			'ShieldEndTime' = @shieldEndTime,
+			'VIPPoints' = @vipPoints, 'ClanId' = @clanId,
+			'RegisteredDate' = @creationDate, 'LastLogin' = @lastLogin;
 
 	IF (@Log = 1) EXEC [dbo].[GetMessage] @userId, @message, @case, @error, @time, 1, 1;
 END

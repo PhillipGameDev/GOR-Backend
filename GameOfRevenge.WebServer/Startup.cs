@@ -49,10 +49,12 @@ namespace GameOfRevenge.WebServer
 
             var appSettingsSection = Configuration.GetSection("AppSettings");
             services.Configure<IAppSettings>(appSettingsSection);
-            var appSettings = appSettingsSection.Get<AppSettings>();
-            AppSettings.Config = appSettings;
 
+            var appSettings = appSettingsSection.Get<AppSettings>();
+            Config.Secret = appSettings.Secret;
+            Config.ServerVersion = appSettings.ServerVersion;
             Config.ConnectionString = appSettings.ConnectionString;
+            Config.DefaultWorldCode = appSettings.DefaultWorldCode;
 
             var key = Encoding.ASCII.GetBytes(appSettings.Secret);
             var auth = services.AddAuthentication();

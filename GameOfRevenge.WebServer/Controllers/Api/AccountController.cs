@@ -15,7 +15,7 @@ namespace GameOfRevenge.WebServer.Controllers.Api
             this.accountManager = accountManager;
         }
 
-        [HttpPost]
+/*        [HttpPost]
         [AllowAnonymous]
         public async Task<IActionResult> TryLoginOrRegister(string identifier, string name, bool accept, int version = 0)
         {
@@ -23,7 +23,7 @@ namespace GameOfRevenge.WebServer.Controllers.Api
             if (response.IsSuccess && response.HasData) response.Data.GenerateToken();
 
             return ReturnResponse(response);
-        }
+        }*/
 
         [HttpPost]
         [AllowAnonymous]

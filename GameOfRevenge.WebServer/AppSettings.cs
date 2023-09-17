@@ -2,16 +2,17 @@
 {
     public interface IAppSettings
     {
-        string ConnectionString { get; set; }
-        string Secret { get; set; }
-        string ServerVersion { get; set; }
+        string ConnectionString { get; }
+        string Secret { get; }
+        string ServerVersion { get; }
+        string DefaultWorldCode { get; }
     }
 
     public class AppSettings : IAppSettings
     {
+        public string ConnectionString { get; set; }
         public string Secret { get; set; }
         public string ServerVersion { get; set; }
-        public string ConnectionString { get; set; }
-        public static IAppSettings Config { get; set; }
+        public string DefaultWorldCode { get; set; }
     }
 }
