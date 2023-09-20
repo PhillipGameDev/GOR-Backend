@@ -107,10 +107,10 @@ namespace GameOfRevenge.WebAdmin.Pages
 
                 var subOptions = new List<(DataType, int, string, string)>()
                 {
-                    Tuple(DataType.Custom, CustomType.KingExperiencePoints),
-                    Tuple(DataType.Custom, CustomType.KingStaminaPoints),
-                    Tuple(DataType.Custom, CustomType.VIPPoints),
-                    Tuple(DataType.Custom, CustomType.HeroPoints),
+                    Tuple(DataType.Custom, CustomRewardType.KingExperiencePoints),
+                    Tuple(DataType.Custom, CustomRewardType.KingStaminaPoints),
+                    Tuple(DataType.Custom, CustomRewardType.VIPPoints),
+                    Tuple(DataType.Custom, CustomRewardType.HeroPoints),
                     Tuple(DataType.Resource, ResourceType.Food),
                     Tuple(DataType.Resource, ResourceType.Wood),
                     Tuple(DataType.Resource, ResourceType.Ore),

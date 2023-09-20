@@ -163,7 +163,7 @@ namespace GameOfRevenge.Business.Manager.UserData
             Response<PlayerDataTableUpdated> respBuilder;
             if (currWorker.Id == 0)
             {
-                respBuilder = await manager.AddOrUpdatePlayerData(playerId, DataType.Custom, 2, json, false);
+                respBuilder = await manager.AddOrUpdatePlayerData(playerId, DataType.Custom, (int)CustomValueType.BuildingWorker, json, false);
                 if (respBuilder.IsSuccess)
                 {
                     currWorker.Id = respBuilder.Data.Id;
@@ -538,7 +538,7 @@ namespace GameOfRevenge.Business.Manager.UserData
         {
             var builders = new List<UserRecordBuilderDetails>();
 
-            var resp = await manager.GetAllPlayerData(playerId, DataType.Custom, 2);
+            var resp = await manager.GetAllPlayerData(playerId, DataType.Custom, (int)CustomValueType.BuildingWorker);
             if (resp.IsSuccess)
             {
                 foreach (var data in resp.Data)

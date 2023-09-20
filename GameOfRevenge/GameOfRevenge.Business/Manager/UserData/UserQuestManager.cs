@@ -517,9 +517,9 @@ namespace GameOfRevenge.Business.Manager.UserData
                     {
                         long kingDetailsId = 0;
                         UserKingDetails kingDetails = null;
-                        if ((rewardData.DataType == DataType.Custom) && (rewardData.ValueId < 3))
+                        if ((rewardData.DataType == DataType.Custom) && (rewardData.ValueId < (int)CustomRewardType.VIPPoints))
                         {
-                            var kingresp = await manager.GetPlayerData(playerId, DataType.Custom, 1);
+                            var kingresp = await manager.GetPlayerData(playerId, DataType.Custom, (int)CustomValueType.KingDetails);
                             if (kingresp.IsSuccess && kingresp.HasData)
                             {
                                 kingDetails = JsonConvert.DeserializeObject<UserKingDetails>(kingresp.Data.Value);
@@ -532,24 +532,30 @@ namespace GameOfRevenge.Business.Manager.UserData
                         switch (rewardData.DataType)
                         {
                             case DataType.Custom:
-                                switch ((CustomType)rewardData.ValueId)
+                                switch ((CustomRewardType)rewardData.ValueId)
                                 {
-                                    case CustomType.KingExperiencePoints: kingDetails.Experience += rewardData.Value; updateKing = true; break;
-                                    case CustomType.KingStaminaPoints: kingDetails.MaxStamina += rewardData.Value; updateKing = true; break;
-                                    case CustomType.VIPPoints:
-                                        var vipresp = await manager.GetPlayerData(playerId, DataType.Custom, 1);
+                                    case CustomRewardType.KingExperiencePoints:
+                                        kingDetails.Experience += rewardData.Value;
+                                        updateKing = true;
+                                        break;
+                                    case CustomRewardType.KingStaminaPoints:
+                                        kingDetails.MaxStamina += rewardData.Value;
+                                        updateKing = true;
+                                        break;
+                                    case CustomRewardType.VIPPoints:
+                                        var vipresp = await manager.GetPlayerData(playerId, DataType.Custom, (int)CustomValueType.VIPPoints);
                                         if (!vipresp.IsSuccess) throw new InvalidModelExecption(vipresp.Message);
 
                                         var vipdata = vipresp.Data;
                                         if (vipdata == null) throw new InvalidModelExecption("VIP data missing");
 
                                         var vipdetails = JsonConvert.DeserializeObject<UserVIPDetails>(vipdata.Value);
-                                        vipdetails.Points += rewardData.Value;//TODO: add vippoints to player info
+                                        vipdetails.Points += rewardData.Value;
                                         var json = JsonConvert.SerializeObject(vipdetails);
                                         var saveResp = await manager.UpdatePlayerDataID(playerId, vipdata.Id, json);
                                         if (!saveResp.IsSuccess) throw new InvalidModelExecption(saveResp.Message);
                                         break;
-                                    case CustomType.HeroPoints: //hero points
+                                    case CustomRewardType.HeroPoints: //hero points
                                         var heroResp = await userHeroManager.AddHeroPoints(playerId, context, rewardData.Value);
                                         if (!heroResp.IsSuccess) throw new InvalidModelExecption(heroResp.Message);
                                         break;

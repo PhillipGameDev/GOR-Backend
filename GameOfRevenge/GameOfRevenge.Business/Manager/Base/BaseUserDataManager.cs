@@ -95,11 +95,8 @@ namespace GameOfRevenge.Business.Manager.Base
                 var clanData = await clanManager.GetPlayerClanData(playerId);
                 if (clanData.IsSuccess && clanData.HasData) finalData.Data.ClanId = clanData.Data.Id;
 
-                line = "2";
                 var customs = response.Data.Where(x => x.DataType == DataType.Custom)?.ToList();
-                line = "3";
-                var kingData = customs?.Find(x => x.ValueId == 1);
-                line = "4";
+                var kingData = customs?.Find(x => x.ValueId == (int)CustomValueType.KingDetails);
                 if (kingData != null)
                 {
                     try
@@ -109,9 +106,8 @@ namespace GameOfRevenge.Business.Manager.Base
                     catch {}
                 }
                 if (finalData.Data.King == null) finalData.Data.King = new UserKingDetails();
-                line = "4b";
-                var vipData = customs?.Find(x => x.ValueId == 3);
-                line = "4c";
+
+                var vipData = customs?.Find(x => x.ValueId == (int)CustomValueType.VIPPoints);
                 if (vipData != null)
                 {
                     try
@@ -122,13 +118,12 @@ namespace GameOfRevenge.Business.Manager.Base
                 }
                 if (finalData.Data.VIP == null) finalData.Data.VIP = new UserVIPDetails();
 
-
                 var builders = new List<UserRecordBuilderDetails>();
                 if (customs != null)
                 {
                     foreach (var customData in customs)
                     {
-                        if (customData.ValueId != 2) continue;
+                        if (customData.ValueId != (int)CustomValueType.BuildingWorker) continue;
 
                         UserRecordBuilderDetails bld = null;
                         try
@@ -146,7 +141,7 @@ namespace GameOfRevenge.Business.Manager.Base
                 if (builders.Count == 0)
                 {
                     var json = JsonConvert.SerializeObject(new UserBuilderDetails());
-                    var builderResp = await manager.AddOrUpdatePlayerData(playerId, DataType.Custom, 2, json);
+                    var builderResp = await manager.AddOrUpdatePlayerData(playerId, DataType.Custom, (int)CustomValueType.BuildingWorker, json);
                     if (builderResp.IsSuccess)
                     {
                         builders.Add(new UserRecordBuilderDetails()
@@ -745,7 +740,7 @@ namespace GameOfRevenge.Business.Manager.Base
                 long.TryParse(gemsdata.Value, out long plyGems);
                 if (plyGems < points) throw new InvalidModelExecption("Not enough gems");
 
-                var vipdata = response.Data.Find(x => (x.DataType == DataType.Custom) && (x.ValueId == 3));
+                var vipdata = response.Data.Find(x => (x.DataType == DataType.Custom) && (x.ValueId == (int)CustomValueType.VIPPoints));
                 if (vipdata != null)
                 {
                     var vipdetails = JsonConvert.DeserializeObject<UserVIPDetails>(vipdata.Value);
@@ -802,7 +797,7 @@ namespace GameOfRevenge.Business.Manager.Base
                 var response = await manager.GetAllPlayerData(playerId, DataType.Custom);
                 if (!response.IsSuccess) throw new InvalidModelExecption(response.Message);
 
-                var vipdata = response.Data.Find(x => (x.DataType == DataType.Custom) && (x.ValueId == 3));
+                var vipdata = response.Data.Find(x => (x.DataType == DataType.Custom) && (x.ValueId == (int)CustomValueType.VIPPoints));
                 if (vipdata != null)
                 {
                     var vipdetails = JsonConvert.DeserializeObject<UserVIPDetails>(vipdata.Value);

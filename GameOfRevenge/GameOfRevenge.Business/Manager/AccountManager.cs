@@ -172,11 +172,11 @@ namespace GameOfRevenge.Business.Manager
                             }
                         }
 
-                        resp = await dataManager.GetPlayerData(playerId, DataType.Custom, 3);
+                        resp = await dataManager.GetPlayerData(playerId, DataType.Custom, (int)CustomValueType.VIPPoints);
                         if (resp.IsSuccess && !resp.HasData)
                         {
                             var json = JsonConvert.SerializeObject(new UserVIPDetails(100));
-                            var x = await dataManager.AddOrUpdatePlayerData(playerId, DataType.Custom, 3, json);
+                            var x = await dataManager.AddOrUpdatePlayerData(playerId, DataType.Custom, (int)CustomValueType.VIPPoints, json);
                         }
                     }
                     catch (Exception ex)
@@ -245,13 +245,13 @@ namespace GameOfRevenge.Business.Manager
             //#endif
             var dataManager = new PlayerDataManager();
             var json = JsonConvert.SerializeObject(new UserKingDetails());
-            await dataManager.AddOrUpdatePlayerData(playerId, DataType.Custom, 1, json);
+            await dataManager.AddOrUpdatePlayerData(playerId, DataType.Custom, (int)CustomValueType.KingDetails, json);
 
             json = JsonConvert.SerializeObject(new UserBuilderDetails());
-            await dataManager.AddOrUpdatePlayerData(playerId, DataType.Custom, 2, json);
+            await dataManager.AddOrUpdatePlayerData(playerId, DataType.Custom, (int)CustomValueType.BuildingWorker, json);
 
             json = JsonConvert.SerializeObject(new UserVIPDetails(100));
-            await dataManager.AddOrUpdatePlayerData(playerId, DataType.Custom, 3, json);
+            await dataManager.AddOrUpdatePlayerData(playerId, DataType.Custom, (int)CustomValueType.VIPPoints, json);
 
             var dataList = new List<StructureDetails>();
             dataList.Add(new StructureDetails()

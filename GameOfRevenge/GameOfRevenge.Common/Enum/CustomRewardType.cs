@@ -1,6 +1,6 @@
 ﻿namespace GameOfRevenge.Common
 {
-    public enum CustomType : int
+    public enum CustomRewardType : int
     {
         Unknown = 0,
         KingExperiencePoints = 1,

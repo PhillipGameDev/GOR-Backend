@@ -536,7 +536,7 @@ namespace GameOfRevenge.Business.Manager.UserData
 
             if (heroReward)
             {
-                rewards.Add(new DataReward(366, 0, DataType.Custom, 4, 1, 1));//hero points 1
+                rewards.Add(new DataReward(366, 0, DataType.Custom, (int)CustomRewardType.HeroPoints, 1, 1));//hero points 1
             }
             report.Attacker.Items = rewards;
 
@@ -875,7 +875,7 @@ namespace GameOfRevenge.Business.Manager.UserData
                 if (king != null)
                 {
                     var kingJson = JsonConvert.SerializeObject(king);
-                    var responseKing = await manager.AddOrUpdatePlayerData(attackerId, DataType.Custom, 1, kingJson);
+                    var responseKing = await manager.AddOrUpdatePlayerData(attackerId, DataType.Custom, (int)CustomValueType.KingDetails, kingJson);
                     if (!responseKing.IsSuccess)
                     {
                         log.Debug(responseKing.Message);
