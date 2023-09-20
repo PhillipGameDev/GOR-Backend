@@ -146,7 +146,7 @@ namespace GameOfRevenge.WebServer.Controllers.Api
         [HttpPost]
         public async Task<IActionResult> CollectResource(int locationId, StructureType structureType = StructureType.Unknown)
         {
-            var response = await userStructureManager.CollectResource(Token.PlayerId, locationId, structureType);
+            var response = await userStructureManager.CollectResource(Token.PlayerId, locationId);
             return ReturnResponse(response);
         }
 

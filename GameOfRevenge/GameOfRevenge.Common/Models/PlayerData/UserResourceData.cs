@@ -138,6 +138,17 @@ namespace GameOfRevenge.Common.Models.PlayerData
     }
 
     [DataContract]
+    public class BoostUpResourceResponse
+    {
+        [DataMember]
+        public DateTime StartTime { get; set; }
+        [DataMember]
+        public int Duration { get; set; }
+        [DataMember]
+        public int Percentage { get; set; }
+    }
+
+    [DataContract]
     public class CollectedResourceResponse
     {
         [DataMember]

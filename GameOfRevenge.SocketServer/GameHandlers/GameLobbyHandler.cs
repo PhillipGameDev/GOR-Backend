@@ -75,7 +75,7 @@ new string[]{
                     case OperationCode.RecruitTroopStatus: return await HandleRecruitTroopStatus(peer, operationRequest);//11
                     case OperationCode.TroopTrainerTimeBoost: return HandleTroopBoostUp(peer, operationRequest);//12
                     case OperationCode.CollectResourceRequest: return await HandleCollectResourceRequest(peer, operationRequest);//13
-                    case OperationCode.BoostResourceTime: return HandleBoostResources(peer, operationRequest);//14
+                    case OperationCode.BoostResourceTime: return await HandleBoostResources(peer, operationRequest);//14
 
                     case OperationCode.AttackRequest: return await HandleAttackRequest(peer, operationRequest);//15
                     case OperationCode.SendReinforcementsRequest: return await HandleSendReinforcementsRequest(peer, operationRequest); 
@@ -766,8 +766,12 @@ new string[]{
         public async Task<SendResult> HandleCollectResourceRequest(IGorMmoPeer peer, OperationRequest operationRequest)
         {
             var operation = new CollectResourceRequest(peer.Protocol, operationRequest);
-            log.Info(">>>>>>>>> collect resource >" + JsonConvert.SerializeObject(operation));
+            if (!operation.IsValid)
+            {
+                return peer.SendOperation(operationRequest.OperationCode, ReturnCode.InvalidOperation, debuMsg: operation.GetErrorMessage());
+            }
 
+            log.Info(">>>>>>>>> collect resource >" + JsonConvert.SerializeObject(operation));
             var building = peer.Actor.InternalPlayerDataManager.GetPlayerBuilding(operation.StructureType, operation.LocationId);
             if ((building == null) || !(building is ResourceGenerator))
             {
@@ -775,9 +779,7 @@ new string[]{
                 return peer.SendOperation(operationRequest.OperationCode, ReturnCode.InvalidOperation, debuMsg: msg);
             }
 
-            var bldResource = (ResourceGenerator)building;
-            var extraMultiplier = (bldResource.BoostUp.Percentage / 100f);
-            var response = await GameService.BPlayerStructureManager.CollectResource(peer.Actor.PlayerId, operation.LocationId, extraMultiplier);
+            var response = await GameService.BPlayerStructureManager.CollectResource(peer.Actor.PlayerId, operation.LocationId);
             if (!response.IsSuccess || !response.HasData)
             {
                 var msg = operation.GetErrorMessage();
@@ -786,6 +788,7 @@ new string[]{
 
             await UpdatePlayerData(peer.Actor);
 
+            var bldResource = (ResourceGenerator)building;
             var resourceType = bldResource.Resource.ResourceInfo.Code;
             var resourceCollected = response.Data.CollectedResource;
             var uresponse = new CollectResourceResponse()
@@ -803,47 +806,51 @@ new string[]{
             return peer.SendOperation(operationRequest.OperationCode, ReturnCode.OK, uresponse.GetDictionary(), debuMsg: response.Message);
         }
 
-        public SendResult HandleBoostResources(IGorMmoPeer peer, OperationRequest operationRequest)
+        public async Task<SendResult> HandleBoostResources(IGorMmoPeer peer, OperationRequest operationRequest)
         {
             log.Debug("@@@@@@@ HANDLE BOOST RESOURCES FROM " + peer.Actor.PlayerId);
-            string errMsg = null;
             var operation = new ResourceBoostUpRequest(peer.Protocol, operationRequest);
-            if (operation.IsValid)
+            if (!operation.IsValid)
             {
-                log.Debug("internal player data exists =" + (peer.Actor.InternalPlayerDataManager != null));
-                var building = peer.Actor.InternalPlayerDataManager.GetPlayerBuilding((StructureType)operation.StructureType, operation.LocationId);
-                if ((building != null) && (building is ResourceGenerator bldResource))
-                {
-                    log.Debug(">> building resource = "+Newtonsoft.Json.JsonConvert.SerializeObject(bldResource));
-                    if (operation.SetBoost)
-                    {
-                        bldResource.BoostResourceGenerationTime();
-                    }
-                    else if (bldResource.BoostUp.TimeLeft == 0)
-                    {
-                        log.Debug("@@@@@@@ HANDLE BOOST RESOURCES STARTED");
-                        return peer.SendOperation(operationRequest.OperationCode, ReturnCode.OK, null, debuMsg: "OK");
-                    }
-
-                    log.Debug("creating response");
-                    var response = new ResourceBoostUpResponse()
-                    {
-                        StructureType = operation.StructureType,
-                        LocationId = operation.LocationId,
-                        StartTime = bldResource.BoostUp.StartTime.ToString("s") + "Z",
-                        Duration = bldResource.BoostUp.Duration,
-                        Percentage = bldResource.BoostUp.Percentage
-                    };
-
-                    log.Debug("@@@@@@@ HANDLE BOOST RESOURCES RESTARTED");
-                    return peer.SendOperation(operationRequest.OperationCode, ReturnCode.OK, response.GetDictionary(), debuMsg: "OK");
-                }
-
-                errMsg = "Building not found in server.";
+                return peer.SendOperation(operationRequest.OperationCode, ReturnCode.InvalidOperation, debuMsg: operation.GetErrorMessage());
             }
-            if (errMsg == null) errMsg = operation.GetErrorMessage();
 
-            return peer.SendOperation(operationRequest.OperationCode, ReturnCode.InvalidOperation, debuMsg: errMsg);
+            log.Debug("internal player data exists =" + (peer.Actor.InternalPlayerDataManager != null));
+            var building = peer.Actor.InternalPlayerDataManager.GetPlayerBuilding((StructureType)operation.StructureType, operation.LocationId);
+            if ((building == null) || !(building is ResourceGenerator))
+            {
+                var msg = "Building not found in server.";
+                return peer.SendOperation(operationRequest.OperationCode, ReturnCode.InvalidOperation, debuMsg: msg);
+            }
+
+            var response = await GameService.BPlayerStructureManager.BoostUpResource(peer.Actor.PlayerId, operation.LocationId, operation.SetBoost);
+            if (!response.IsSuccess)
+            {
+                var msg = operation.GetErrorMessage();
+                return peer.SendOperation(operationRequest.OperationCode, ReturnCode.InvalidOperation, debuMsg: msg);
+            }
+
+            if (!response.HasData)
+            {
+                log.Debug("@@@@@@@ HANDLE BOOST RESOURCES - INACTIVE");
+                return peer.SendOperation(operationRequest.OperationCode, ReturnCode.OK, null, debuMsg: "OK");
+            }
+
+            var bldData = response.Data;
+            log.Debug("@@@@@@@ HANDLE BOOST RESOURCES - ACTIVE");
+            var bldResource = (ResourceGenerator)building;
+            bldResource.BoostUp.StartTime = bldData.StartTime;
+            bldResource.BoostUp.Duration = bldData.Duration;
+            bldResource.BoostUp.Value = bldData.Percentage;
+            var resp = new ResourceBoostUpResponse()
+            {
+                StructureType = operation.StructureType,
+                LocationId = operation.LocationId,
+                StartTime = bldData.StartTime.ToString("s") + "Z",
+                Duration = bldData.Duration,
+                Percentage = bldData.Percentage
+            };
+            return peer.SendOperation(operationRequest.OperationCode, ReturnCode.OK, resp.GetDictionary(), debuMsg: "OK");
         }
 
         public async Task<SendResult> HandleAttackRequest(IGorMmoPeer peer, OperationRequest operationRequest)

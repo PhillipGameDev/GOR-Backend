@@ -134,8 +134,18 @@ namespace GameOfRevenge.Business.CacheData
             else return data;
         }
 
+        public static (int, int) GetBoostResourceGenerationTime(int location, int castleLevel)
+        {
+            var seconds = 5 * 60;
+            var percentage = 10;
+            if (location >= 50)
+            {
+                seconds = 8 * 3600;
+                percentage = castleLevel;
+            }
 
-
+            return (seconds, percentage);
+        }
 
         #region Cache Check, Load and Clear
         public static async Task<Response> StoreData(int type, string data)

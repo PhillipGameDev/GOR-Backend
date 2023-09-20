@@ -128,7 +128,6 @@
     <Compile Include="Model\Common\QuestUpdateResponse.cs" />
     <Compile Include="Model\Common\UpgradeTechnologyResponse.cs" />
     <Compile Include="Model\EventCode.cs" />
-    <Compile Include="Model\Model.cs" />
     <Compile Include="Model\OperationCode.cs" />
     <Compile Include="Model\Operation\AttackRequest.cs" />
     <Compile Include="Model\Operation\CameraMoveRequest.cs" />

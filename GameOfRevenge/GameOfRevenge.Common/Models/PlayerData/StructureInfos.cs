@@ -82,7 +82,7 @@ namespace GameOfRevenge.Common.Models
         public DateTime LastCollected { get; set; }
 
         [DataMember(EmitDefaultValue = false)]
-        public TimerBase Boost { get; set; }
+        public BoostUpData Boost { get; set; }
 
         public int CurrentLevel => (TimeLeft == 0) ? Level : (Level - 1);
     }

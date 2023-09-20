@@ -107,11 +107,17 @@ namespace GameOfRevenge.Business.Manager.UserData
                 }
                 else
                 {
-                    if ((building.Boost == null) || (building.Boost.TimeLeft == 0))
+                    int castleLvl = 1;
+                    var userCastle = await CheckBuildingStatus(playerId, StructureType.CityCounsel);
+                    if (userCastle.Data.Value.Count > 0) castleLvl = userCastle.Data.Value[0].CurrentLevel;
+
+                    var (seconds, percentage) = CacheStructureDataManager.GetBoostResourceGenerationTime(building.Location, castleLvl);
+                    building.Boost = new BoostUpData()
                     {
-                        building.Boost = new TimerBase() { StartTime = DateTime.UtcNow };
-                    }
-                    building.Boost.Duration = duration;
+                        StartTime = DateTime.UtcNow,
+                        Duration = duration,
+                        Value = percentage
+                    };
                 }
             }
 
@@ -278,7 +284,7 @@ namespace GameOfRevenge.Business.Manager.UserData
                     break;
                 }
             }
-            if (dataList.Count >= limit)
+            if (dataList.Count(x => x.Location < 50) >= limit)
             {
                 if (limit == 0)
                 {
@@ -639,9 +645,9 @@ namespace GameOfRevenge.Business.Manager.UserData
 
         private static readonly List<StructureType> ValidResourceStructures = new List<StructureType>() { StructureType.Farm, StructureType.Sawmill, StructureType.Mine };
 
-        private static (StructureInfos, StructureDetails, IReadOnlyStructureDataRequirement) FindUserBuilding(List<PlayerDataTable> playerData, List<StructureType> validStructures, int locationId, StructureType structureType = StructureType.Unknown)
+        private static (StructureInfos, StructureDetails, IReadOnlyStructureDataRequirement) FindUserBuilding(int locationId, List<PlayerDataTable> playerData, StructureType structureType = StructureType.Unknown)
         {
-            var filter = validStructures;
+            var filter = ValidResourceStructures;
             if (structureType != StructureType.Unknown) filter = new List<StructureType>() { structureType };
 
             var exists = false;
@@ -673,12 +679,7 @@ namespace GameOfRevenge.Business.Manager.UserData
             return (userBldGroup, userBld, cacheBuilding);
         }
 
-        public async Task<Response<CollectedResourceResponse>> CollectResource(int playerId, int locationId, float extraMultiplier = 0)
-        {
-            return await CollectResource(playerId, locationId, StructureType.Unknown, extraMultiplier);
-        }
-
-        public async Task<Response<CollectedResourceResponse>> CollectResource(int playerId, int locationId, StructureType structureType, float extraMultiplier = 0)
+        public async Task<Response<BoostUpResourceResponse>> BoostUpResource(int playerId, int locationId, bool setBoost)
         {
             try
             {
@@ -687,8 +688,80 @@ namespace GameOfRevenge.Business.Manager.UserData
                 {
                     throw new InvalidModelExecption(allStructures.Message);
                 }
+                var (userBldGroup, userBld, cacheBuilding) = FindUserBuilding(locationId, allStructures.Data);
 
-                var (userBldGroup, userBld, cacheBuilding) = FindUserBuilding(allStructures.Data, ValidResourceStructures, locationId, structureType);
+                if (!setBoost && ((userBld.Boost == null) || (userBld.Boost.TimeLeft == 0)))
+                {
+                    return new Response<BoostUpResourceResponse>()
+                    {
+                        Case = 102,
+                        Message = "Boost inactive"
+                    };
+                }
+
+                int respCase;
+                string msg;
+                if (userBld.Boost == null) userBld.Boost = new BoostUpData();
+                if (setBoost)
+                {
+                    int castleLvl = 1;
+                    var userCastle = await CheckBuildingStatus(playerId, StructureType.CityCounsel);
+                    if (userCastle.Data.Value.Count > 0) castleLvl = userCastle.Data.Value[0].CurrentLevel;
+
+                    var (seconds, percentage) = CacheStructureDataManager.GetBoostResourceGenerationTime(locationId, castleLvl);
+                    userBld.Boost.StartTime = DateTime.UtcNow;
+                    userBld.Boost.Duration = seconds;
+                    userBld.Boost.Value = percentage;
+
+                    var json = JsonConvert.SerializeObject(userBldGroup.Buildings);
+                    var response = await manager.UpdatePlayerDataID(playerId, userBldGroup.Id, json);
+
+                    respCase = 100;
+                    msg = "Boost started";
+                }
+                else
+                {
+                    respCase = 101;
+                    msg = "Boost active";
+                }
+
+                var resp = new BoostUpResourceResponse()
+                {
+                    StartTime = userBld.Boost.StartTime,
+                    Duration = userBld.Boost.Duration,
+                    Percentage = userBld.Boost.Value
+                };
+                return new Response<BoostUpResourceResponse>()
+                {
+                    Case = respCase,
+                    Data = resp,
+                    Message = msg
+                };
+            }
+            catch (DataNotExistExecption ex)
+            {
+                return new Response<BoostUpResourceResponse>() { Case = 202, Message = ex.Message };
+            }
+            catch (InvalidModelExecption ex)
+            {
+                return new Response<BoostUpResourceResponse>() { Case = 201, Message = ex.Message };
+            }
+            catch (Exception ex)
+            {
+                return new Response<BoostUpResourceResponse>() { Case = 200, Message = ex.Message };
+            }
+        }
+
+        public async Task<Response<CollectedResourceResponse>> CollectResource(int playerId, int locationId)
+        {
+            try
+            {
+                var allStructures = await manager.GetAllPlayerData(playerId, DataType.Structure);
+                if (!allStructures.IsSuccess || !allStructures.HasData)
+                {
+                    throw new InvalidModelExecption(allStructures.Message);
+                }
+                var (userBldGroup, userBld, cacheBuilding) = FindUserBuilding(locationId, allStructures.Data);
 
                 int resHourlyProduction = 0;
                 int resMaxAmount = cacheBuilding.Data.ResourceCapacity;
@@ -745,21 +818,21 @@ namespace GameOfRevenge.Business.Manager.UserData
                     }
                 }
 
-                extraMultiplier = 0;
+                var extraMultiplier = 0f;
                 if (userBld.Boost != null)
                 {
                     if (userBld.Boost.TimeLeft > 0)
                     {
-                        //                        BoostUp.StartTime = DateTime.UtcNow;
-                        //                        BoostUp.Duration = 5 * 60;
-                        //                        BoostUp.Percentage = 10;
-                        extraMultiplier = 0.1f;
+                        extraMultiplier = (userBld.Boost.Value / 100f);
                     }
                     else
                     {
                         userBld.Boost = null;
                     }
                 }
+
+                //            var buildingField = peer.Actor.InternalPlayerDataManager.GetPlayerBuilding(operation.StructureType, 50+);
+                //TODO: add extra boost if found
 
                 var finalMultiplier = 1 + (percentage / 100f) + extraMultiplier;
                 double amount = (productionAmount * finalMultiplier);
