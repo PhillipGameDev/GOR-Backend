@@ -6,7 +6,7 @@ namespace GameOfRevenge.Buildings.Handlers
 {
     public class BlackSmith : PlayerBuildingManager, IPlayerBuildingManager
     {
-        public BlackSmith(MmoActor player, StructureDetails structureData, IGameBuildingManager baseBuildingManager) : base(player, structureData, baseBuildingManager)
+        public BlackSmith(PlayerInstance player, StructureDetails structureData, IGameBuildingManager baseBuildingManager) : base(player, structureData, baseBuildingManager)
         {
         }
     }

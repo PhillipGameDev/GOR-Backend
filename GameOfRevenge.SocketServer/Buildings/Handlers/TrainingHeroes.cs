@@ -6,7 +6,7 @@ namespace GameOfRevenge.Buildings.Handlers
 {
     public class TrainingHeroes : PlayerBuildingManager
     {
-        public TrainingHeroes(MmoActor player, StructureDetails structureData, IGameBuildingManager baseBuildingManager) : base(player, structureData, baseBuildingManager)
+        public TrainingHeroes(PlayerInstance player, StructureDetails structureData, IGameBuildingManager baseBuildingManager) : base(player, structureData, baseBuildingManager)
         {
 
         }

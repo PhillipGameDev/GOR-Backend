@@ -55,11 +55,15 @@ namespace GameOfRevenge.GameHandlers
         public Region[][] WorldRegions { get; set; }
         public Vector TileDimensions { get; private set; }
         public IPlayersManager PlayersManager { get; set; }
+
         public List<PlayerID> WorldPlayers { get; private set; }
+        public List<EntityID> WorldMonsters { get; private set; }
+
         public IFiber WorldFiber { get; private set; }
+
         private readonly Random rd = new Random();
 
-        public CountryGrid(WorldTable world, List<PlayerID> worldPlayers)
+        public CountryGrid(WorldTable world, List<PlayerID> worldPlayers, List<EntityID> worldMonsters)
         {
             var w = GlobalConst.GetPopWorld(world.ZoneX, world.ZoneY);
             var worldId = world.Id;
@@ -73,6 +77,7 @@ namespace GameOfRevenge.GameHandlers
 
                 WorldId = worldId;
                 WorldPlayers = worldPlayers;
+                WorldMonsters = worldMonsters;
                 WorldFiber = new PoolFiber();
                 WorldFiber.Start();
 
@@ -96,7 +101,7 @@ namespace GameOfRevenge.GameHandlers
                         if (task.Result.IsSuccess && task.Result.HasData)
                         {
                             var plyInfo = task.Result.Data;
-                            var actor = new MmoActor(playerId, plyInfo, this, worldRegion);
+                            var actor = new PlayerInstance(playerId, plyInfo, this, worldRegion);
                             actor.WorldRegion.SetPlayerInRegion(actor);
                             PlayersManager.AddPlayer(playerId, actor);
                             count++;
@@ -351,47 +356,55 @@ namespace GameOfRevenge.GameHandlers
             return (this.WorldRegions[data.X][data.Y], actor, iA);
         }*/
 
-        public async Task<(MmoActor actor, IInterestArea iA)> GetPlayerPositionAsync(int playerId, PlayerInfo playerInfo)
+        public async Task<(PlayerInstance, IInterestArea)> AllocatePlayerAsync(int playerId, PlayerInfo playerInfo)
         {
-            log.Info("GetPlayerPositionAsync START");
+            log.Info("AllocatePlayerAsync START");
             IInterestArea interestArea = null;
-            var actor = PlayersManager.GetPlayer(playerId);
-            log.Info("actor =" + (actor != null));
-            log.Info("worlddata = "+(WorldPlayers != null));
+            var playerInstance = PlayersManager.GetPlayer(playerId);
             var data = WorldPlayers.Find(wd => (wd.PlayerId == playerId));
             if (data == null)
             {
-                log.Info("data null");
                 var plyResp = await GameService.BAccountManager.GetAllPlayerIDs(playerId: playerId, length: 1);
                 if (plyResp.IsSuccess && plyResp.HasData && (plyResp.Data.Count > 0))
                 {
                     var plyData = plyResp.Data[0];
                     var worldRegion = WorldRegions[plyData.X][plyData.Y];
 
-                    actor = new MmoActor(playerId, playerInfo, this, worldRegion);
-                    worldRegion.SetPlayerInRegion(actor);
-                    PlayersManager.AddPlayer(playerId, actor);
+                    playerInstance = new PlayerInstance(playerId, playerInfo, this, worldRegion);
+                    worldRegion.SetPlayerInRegion(playerInstance);
+                    PlayersManager.AddPlayer(playerId, playerInstance);
                     WorldPlayers.Add(plyData);
 
-                    interestArea = new InterestArea(worldRegion, actor, true);
+                    interestArea = new PlayerInterestArea(worldRegion, playerInstance, true);
                 }
             }
             else
             {
                 var worldRegion = WorldRegions[data.X][data.Y];
-                interestArea = new InterestArea(worldRegion, actor, false);
+                interestArea = new PlayerInterestArea(worldRegion, playerInstance, false);
             }
 
-            log.Info("GetPlayerPositionAsync END");
-            return (actor, interestArea);
+            log.Info("AllocatePlayerAsync END");
+            return (playerInstance, interestArea);
         }
 
-        public double GetDistanceBw2Points(Region p1, Region p2)
+        public bool CheckSameZone(Region p1, Region p2)
         {
-            double totalDistance = Math.Sqrt(Math.Pow((p2.X - p1.X), 2)
-                  + Math.Pow((p2.Y - p1.Y), 2));
-            return totalDistance;
+            //TODO: implement code
+            return true;
         }
+
+        public int GetDistance(Region p1, Region p2)
+        {
+            return GetDistance(p1.X, p1.Y, p2.X, p2.Y);
+        }
+
+        public int GetDistance(int p1x, int p1y, int p2x, int p2y)
+        {
+            var dist = Math.Sqrt(Math.Pow((p2x - p1x), 2) + Math.Pow((p2y - p1y), 2)) * 10;
+            return 15 + (int)dist;
+        }
+
         public void Dispose()
         {
             this.WorldFiber.Dispose();

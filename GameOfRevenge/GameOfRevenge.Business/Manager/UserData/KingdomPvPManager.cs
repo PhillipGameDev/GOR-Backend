@@ -328,7 +328,7 @@ namespace GameOfRevenge.Business.Manager.UserData
 
         public async Task<BattleReport> FinishBattleData(PlayerCompleteData attackerArmy, BattlePower attackerPower, PlayerCompleteData defenderArmy, BattlePower defenderPower, MarchingArmy marchingArmy)
         {
-            log.Debug("------------FINISH BATTLE SIMULATION " + attackerPower.PlayerId + " vs " + defenderPower.PlayerId);
+            log.Debug("------------FINISH BATTLE SIMULATION " + attackerPower.EntityId + " vs " + defenderPower.EntityId);
             //TODO: implement atkHealingBoost, defHealingBoost percentage based on level (maybe we need to add level to item)
             var atkHealingBoost = attackerArmy.Boosts.Exists(x => (x.Type == NewBoostType.LifeSaver) && (x.TimeLeft > 0));
             var attackerInfirmaryCapacity = 0;
@@ -362,18 +362,22 @@ namespace GameOfRevenge.Business.Manager.UserData
             {
                 Attacker = attackerPower,
                 Defender = defenderPower,
-                WinnerId = attackerWon? attackerPower.PlayerId : defenderPower.PlayerId
+                WinnerId = attackerWon? attackerPower.EntityId : defenderPower.EntityId
             };
             if (attackerWon)
             {
                 var heroReward = ((attackerArmy.King.BattleCount + 1) % 3) == 0;
                 GiveLoot(defenderArmy, attackerPower, report, heroReward);
             }
+            else if (attackerPower.Wounded == 0)
+            {
+                marchingArmy.Duration = 0;
+            }
 
             marchingArmy.Report = report;
             marchingArmy.TroopChanges = attackerPower.TroopChanges;
             var json = JsonConvert.SerializeObject(marchingArmy.Base());
-            var response = await manager.UpdatePlayerDataID(attackerPower.PlayerId, marchingArmy.MarchingId, json);
+            var response = await manager.UpdatePlayerDataID(attackerPower.EntityId, marchingArmy.MarchingId, json);
 //                AddOrUpdatePlayerData(attackerPower.PlayerId, DataType.Marching, 1, json);
             if (!response.IsSuccess)
             {
@@ -388,7 +392,7 @@ namespace GameOfRevenge.Business.Manager.UserData
                 await ApplyDefenderChangesAndSendReport(report);
             }
 
-            log.Debug("------------FINISH BATTLE SIMULATION END " + attackerPower.PlayerId + " vs " + defenderPower.PlayerId);
+            log.Debug("------------FINISH BATTLE SIMULATION END " + attackerPower.EntityId + " vs " + defenderPower.EntityId);
             return report;
         }
 
@@ -652,17 +656,17 @@ namespace GameOfRevenge.Business.Manager.UserData
         {
             var defenderPower = (BattlePower)report.Defender;
 
-            var defenderDataResp = await manager.GetAllPlayerData(defenderPower.PlayerId);
+            var defenderDataResp = await manager.GetAllPlayerData(defenderPower.EntityId);
             log.Debug(">>> "+defenderDataResp.IsSuccess+"   "+defenderDataResp.HasData);
             if (!defenderDataResp.IsSuccess || !defenderDataResp.HasData) return false;
 
             var msg = JsonConvert.SerializeObject(report);
 
             //SAVE PROCESS
-            await ApplyTroopChanges(defenderPower.PlayerId, defenderDataResp.Data, defenderPower.TroopChanges, SAVE);
+            await ApplyTroopChanges(defenderPower.EntityId, defenderDataResp.Data, defenderPower.TroopChanges, SAVE);
             if (SAVE)
             {
-                var response = await structManager.UpdateGate(defenderPower.PlayerId, defenderPower.GateHP);
+                var response = await structManager.UpdateGate(defenderPower.EntityId, defenderPower.GateHP);
                 if (!response.IsSuccess)
                 {
                     log.Debug(response.Message);
@@ -685,7 +689,7 @@ namespace GameOfRevenge.Business.Manager.UserData
                         }
                         log.Debug("defender item = " + item.RewardId + "  " + item.DataType + " " + item.ValueId + "  " + item.Value + "  " + item.Count);
                     }
-                    var respResources = await resManager.SumMainResource(defenderPower.PlayerId, food, wood, ore, 0, 0);
+                    var respResources = await resManager.SumMainResource(defenderPower.EntityId, food, wood, ore, 0, 0);
                     if (!respResources.IsSuccess)
                     {
                         log.Debug(respResources.Message);
@@ -694,7 +698,7 @@ namespace GameOfRevenge.Business.Manager.UserData
 
                 try
                 {
-                    var respMail = await mailManager.SendMail(defenderPower.PlayerId, MailType.BattleReport, msg);
+                    var respMail = await mailManager.SendMail(defenderPower.EntityId, MailType.BattleReport, msg);
                     if (!respMail.IsSuccess)
                     {
                         log.Debug(respMail.Message);
@@ -789,7 +793,7 @@ namespace GameOfRevenge.Business.Manager.UserData
         public async Task<bool> ApplyAttackerChangesAndSendReport(MarchingArmy marchingArmy)
         {
             var report = marchingArmy.Report;
-            var attackerId = report.Attacker.PlayerId;
+            var attackerId = report.Attacker.EntityId;
 
             var attackerDataResp = await manager.GetAllPlayerData(attackerId);
             if (!attackerDataResp.IsSuccess || !attackerDataResp.HasData) return false;
@@ -901,7 +905,7 @@ namespace GameOfRevenge.Business.Manager.UserData
                     {
                         log.Debug("attacker item = " + item.RewardId + "  " + item.DataType+" "+ item.ValueId +"  "+ item.Value + "  " + item.Count);
                     }
-                    await UserQuestManager.CollectRewards(report.Attacker.PlayerId, report.Attacker.Items);
+                    await UserQuestManager.CollectRewards(report.Attacker.EntityId, report.Attacker.Items);
                 }
 
                 try

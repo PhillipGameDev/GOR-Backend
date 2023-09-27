@@ -3,42 +3,49 @@ using System.Collections.Generic;
 using System.Linq;
 using ExitGames.Concurrency.Fibers;
 using ExitGames.Logging;
+using GameOfRevenge.Common;
+using GameOfRevenge.Common.Models;
 using GameOfRevenge.GameApplication;
 using GameOfRevenge.Interface;
 using GameOfRevenge.Model;
 
 namespace GameOfRevenge.GameHandlers
 {
-    public class InterestArea : IInterestArea, IDisposable
+    public class PlayerInterestArea : IInterestArea, IDisposable
     {
         private static readonly ILogger log = LogManager.GetCurrentClassLogger();
-        public IWorld World { get { return this.CastleRegion.Country; } }
-        public MmoActor Owner { get; private set; }
+
+        public IWorld World => CastleRegion.Country;
+
+        public PlayerInstance PlayerInstance { get; private set; }
         public Region CastleRegion { get; private set; }
         public Region CameraRegion { get; private set; }
-        public readonly HashSet<Region> Regions;
+        public HashSet<Region> AreaRegions = new HashSet<Region>();
 
-        private readonly RequestItemEnterMessage requestItemEnterMessage;
-        private readonly RequestItemExitMessage requestItemExitMessage;
+//        private readonly RequestItemEnterMessage requestItemEnterMessage;
+//        private readonly RequestItemExitMessage requestItemExitMessage;
 
-        private readonly Dictionary<Region, IDisposable> regionSubscriptions;
-        public IFiber Fiber { get { return this.Owner.Fiber; } }
+//        private readonly Dictionary<Region, IDisposable> regionSubscriptions;
+        public IFiber Fiber => PlayerInstance.Fiber;
 
-        public InterestArea(Region region, MmoActor actor, bool isLocatedNewLocation = false)
+        public PlayerInterestArea(Region region, PlayerInstance playerInstance, bool isLocatedNewLocation = false)
         {
-            this.CastleRegion = region;
-            this.CameraRegion = region;
-            this.Owner = actor;
-            this.Regions = new HashSet<Region>();
-            this.regionSubscriptions = new Dictionary<Region, IDisposable>();
-            this.requestItemEnterMessage = new RequestItemEnterMessage(this);
-            this.requestItemExitMessage = new RequestItemExitMessage(this);
-            this.AddUpdateIntArea(isLocatedNewLocation);
+            CastleRegion = region;
+            CameraRegion = region;
+            PlayerInstance = playerInstance;
+//            PlayerInterestRegions = new HashSet<Region>();
+//            this.regionSubscriptions = new Dictionary<Region, IDisposable>();
+//            this.requestItemEnterMessage = new RequestItemEnterMessage(this);
+//            this.requestItemExitMessage = new RequestItemExitMessage(this);
+//            AddUpdateIntArea(isLocatedNewLocation);
+            if (isLocatedNewLocation)
+            {
+                region.OnEnterPlayer(PlayerInstance);
+            }
         }
 
-        public void AddUpdateIntArea(bool isLocatedNewLocation = false)
+        public void AddUpdateIntArea()//bool isLocatedNewLocation = false)
         {
-            var regions = new List<Region>();
             var maxPosX = World.SizeX / World.TileDimensions.X;   //max position of X cordinate in our world
             var maxPosY = World.SizeY / World.TileDimensions.Y;   //max position of Y cordinate in our world
             var ecXPos = CameraRegion.X + (1 * (GlobalConst.TilesIaX));
@@ -48,234 +55,209 @@ namespace GameOfRevenge.GameHandlers
             var eC = new Vector(Math.Min(maxPosX - 1, ecXPos), Math.Min(maxPosX - 1, ecYPos));    // last cordinate position of tiles which is part of IA
             var sC = new Vector(Math.Max(0, scXPos), Math.Max(0, scYPos));   //start cordinate position of tiles which is part of IA
 
-            var attackList = GameService.BRealTimeUpdateManager.GetAllAttackerData(this.Owner.PlayerId);
-            if ((attackList != null) && (attackList.Count > 0))
+            var attackList = AddPlayersConfronted(PlayerInstance.PlayerId);//, isLocatedNewLocation);
+
+            var regionsInArea = new List<Region>();
+            for (int x = (int)sC.X; x <= eC.X && x >= 0 && x < maxPosX; x++)   //loop for x cordinate
             {
-                foreach (var item in attackList)
+                for (int y = (int)sC.Y; y <= eC.Y && y >= 0 && y < maxPosY; y++)   // loop for y cordinate
                 {
-                    var targetId = item.AttackData.TargetId;
-                    var found = false;
-                    for (int i = 0; i < maxPosX; i++)   //loop for x coordinate
+                    var region = World.WorldRegions[x][y];
+                    regionsInArea.Add(region);
+                    if (AreaRegions.Contains(region)) continue;
+
+                    AreaRegions.Add(region);
+                    if (region.IsBooked && (region.Owner.PlayerId != PlayerInstance.PlayerId) &&
+                        !PlayerInstance.InterestUsers.ContainsKey(region.Owner.PlayerId))
                     {
-                        for (int j = 0; j < maxPosY; j++)   // loop for y coordinate
+                        PlayerInstance.InterestUsers.TryAdd(region.Owner.PlayerId, region.Owner);
+//                        if (isLocatedNewLocation) region.OnEnterPlayer(PlayerInstance); // new player instanstiate
+                        if (PlayerInstance.IsInKingdomView)
                         {
-                            var r = this.World.WorldRegions[i][j];
-                            if ((r.Owner == null) || (r.Owner.PlayerId != targetId)) continue;
-
-                            if (!this.Regions.Contains(r))
-                            {
-                                this.Regions.Add(r);
-                                if (r.IsBooked && (r.Owner != null) && !this.Owner.InterestUsers.ContainsKey(r.Owner.PlayerId))
-                                {
-                                    this.Owner.InterestUsers.TryAdd(r.Owner.PlayerId, r.Owner);
-                                    if (isLocatedNewLocation) r.OnEnterPlayer(this.Owner); // new player instanstiate
-                                    if (this.Owner.IsInKingdomView) this.SendOnEnterEvent(r);
-                                }
-                            }
-                            found = true;
-                            break;
+                            PlayerInstance.SendEvent(EventCode.IaEnter, new IaEnterResponse(region.Owner));
+//                                SendOnEnterEvent(region);
                         }
-                        if (found) break;
+                    }
+//                    var monster = World.WorldMonsters.Find(entity => (entity.X == x) && (entity.Y == y));
+//                    if (monster != null)
+                    {
+                        var monsterId = (y * 2000) + x;
+                        var seed = monsterId;
+                        var hitPoints = 10000;
+                        var enterEvent = new EntityEnterResponse(x, y, seed, EntityType.Monster, monsterId, hitPoints);
+                        PlayerInstance.SendEvent(EventCode.EntityEnter, enterEvent);
                     }
                 }
             }
 
-            for (int i = (int)sC.X; i <= eC.X && i >= 0 && i < maxPosX; i++)   //loop for x cordinate
+            if ((regionsInArea.Count > 0) && (AreaRegions.Count > 0))
             {
-                for (int j = (int)sC.Y; j <= eC.Y && j >= 0 && j < maxPosY; j++)   // loop for y cordinate
+                var outRegions = AreaRegions.Except(regionsInArea).ToList();
+                foreach (Region region in outRegions)
                 {
-                    var r = this.World.WorldRegions[i][j];
-                    regions.Add(r);
-                    if (this.Regions.Contains(r)) continue;
-
-                    this.Regions.Add(r);
-                    if (r.IsBooked && (r.Owner != null) && !this.Owner.InterestUsers.ContainsKey(r.Owner.PlayerId))
+                    if (!AreaRegions.Contains(region)) continue;
+                    if (region.Owner != null)
                     {
-                        this.Owner.InterestUsers.TryAdd(r.Owner.PlayerId, r.Owner);
-                        if (isLocatedNewLocation) r.OnEnterPlayer(this.Owner); // new player instanstiate
-                        if (this.Owner.IsInKingdomView) this.SendOnEnterEvent(r);
-                    }
-                }
-            }
+                        var tilePlayerId = region.Owner.PlayerId;
+                        if (tilePlayerId == PlayerInstance.PlayerId) continue;
+                        if (attackList.Exists(x => (x.AttackData.TargetId == tilePlayerId))) continue;
 
-            if (((regions != null) && (regions.Count() > 0)) &&
-                ((Regions != null) && (Regions.Count() > 0)))
-            {
-                var outRegions = Regions.Except(regions).ToList();
-                foreach (Region r in outRegions)
-                {
-                    if (!Regions.Contains(r)) continue;
-                    if (r.Owner != null)
-                    {
-                        var tilePlayerId = r.Owner.PlayerId;
-                        if (tilePlayerId == this.Owner.PlayerId) continue;
-                        if ((attackList != null) && attackList.Exists(x => (x.AttackData.TargetId == tilePlayerId))) continue;
-                    }
-
-                    Regions.Remove(r);
-                    if (r.IsBooked && (r.Owner != null) && Owner.InterestUsers.ContainsKey(r.Owner.PlayerId))
-                    {
-                        log.InfoFormat("Send Exit Tiles to ");
-                        this.Owner.InterestUsers.TryRemove(r.Owner.PlayerId, out MmoActor o);
-                        if (isLocatedNewLocation) r.OnExitPlayer(r.Owner);
-                        if (this.Owner.IsInKingdomView) this.SendOnExitEvent(r);
-                    }
-                }
-            }
-            log.InfoFormat("Add regions acc current positition Count {0} ", this.Regions.Count);
-        }
-        public void UpdateInterestArea(Region newRegion)
-        {
-            if (this.CastleRegion == null || this.CastleRegion != newRegion)
-            {
-                log.InfoFormat("Update Interest Area X {0} y {1} ", newRegion.X, newRegion.Y);
-                this.CastleRegion = newRegion;
-                this.CameraRegion = newRegion;
-                this.AddUpdateIntArea(true);
-            }
-        }
-
-/*        public void AddUpdateIntArea2()
-        {
-            List<Region> regions = new List<Region>();
-            var maxPosX = this.World.Area.Size.X / this.World.TileDimensions.X;   //max position of X coordinate in our world
-            var maxPosY = this.World.Area.Size.Y / this.World.TileDimensions.Y;   //max position of Y coordinate in our world
-
-            for (int i = 0; i < maxPosX; i++)   //loop for x coordinate
-            {
-                for (int j = 0; j < maxPosY; j++)   // loop for y coordinate
-                {
-                    log.Info("region " + i + " " + j);
-                    var r = this.World.WorldRegions[i][j];
-                    regions.Add(r);
-                    if (this.Regions.Contains(r)) continue;
-
-                    this.Regions.Add(r);
-                    if (r.IsBooked && (r.Owner != null) && !this.Owner.InterestUsers.ContainsKey(r.Owner.PlayerId))
-                    {
-                        this.Owner.InterestUsers.TryAdd(r.Owner.PlayerId, r.Owner);
-                        r.OnEnterPlayer(this.Owner); // new player instantiate
-                        if (this.Owner.IsInKingdomView) this.SendOnEnterEvent(r);
-                    }
-                }
-            }
-            if (((regions != null) && (regions.Count() > 0)) &&
-                ((Regions != null) && (Regions.Count() > 0)))
-            {
-                var extraRegion = Regions.Except(regions);
-                if (extraRegion != null)
-                {
-                    foreach (Region r in extraRegion)
-                    {
-                        if (!Regions.Contains(r)) continue;
-
-                        Regions.Remove(r);
-                        if (r.IsBooked && (r.Owner != null) &&
-                            Owner.InterestUsers.ContainsKey(r.Owner.PlayerId))
+                        if (region.IsBooked && PlayerInstance.InterestUsers.ContainsKey(tilePlayerId))
                         {
                             log.InfoFormat("Send Exit Tiles to ");
-                            this.Owner.InterestUsers.TryRemove(r.Owner.PlayerId, out MmoActor o);
-                            r.OnExitPlayer(r.Owner);
-                            if (this.Owner.IsInKingdomView) this.SendOnExitEvent(r);
+                            PlayerInstance.InterestUsers.TryRemove(tilePlayerId, out PlayerInstance o);
+//                            if (isLocatedNewLocation) region.OnExitPlayer(region.Owner);
+                            if (PlayerInstance.IsInKingdomView) SendOnExitEvent(region);
                         }
                     }
+
+                    var monsterId = (region.Y * 2000) + region.X;
+                    var exitEvent = new EntityExitResponse(1, monsterId);
+                    PlayerInstance.SendEvent(EventCode.EntityExit, exitEvent);
+
+                    AreaRegions.Remove(region);
                 }
             }
-            log.InfoFormat("Add regions acc current position Count {0} ", this.Regions.Count);
-        }*/
+            log.InfoFormat("Add regions acc current positition Count {0} ", this.AreaRegions.Count);
+        }
 
-        public void CameraMove(Region r)
+        List<AttackStatusData> AddPlayersConfronted(int playerId)//, bool isLocatedNewLocation)
+        {
+            var maxPosX = World.SizeX / World.TileDimensions.X;   //max position of X cordinate in our world
+            var maxPosY = World.SizeY / World.TileDimensions.Y;   //max position of Y cordinate in our world
+            var attackList = GameService.BRealTimeUpdateManager.GetAllAttackerData(playerId);
+            //TODO: invert for
+            foreach (var item in attackList)
+            {
+                var targetId = item.AttackData.TargetId;
+                var found = false;
+                for (int x = 0; x < maxPosX; x++)   //loop for x coordinate
+                {
+                    for (int y = 0; y < maxPosY; y++)   // loop for y coordinate
+                    {
+                        var region = World.WorldRegions[x][y];
+                        if ((region.Owner == null) || (region.Owner.PlayerId != targetId)) continue;
+
+                        if (!AreaRegions.Contains(region))
+                        {
+                            AreaRegions.Add(region);
+                            if (region.IsBooked && !PlayerInstance.InterestUsers.ContainsKey(region.Owner.PlayerId))
+                            {
+                                PlayerInstance.InterestUsers.TryAdd(region.Owner.PlayerId, region.Owner);
+//                                if (isLocatedNewLocation) region.OnEnterPlayer(PlayerInstance); // new player instantiate
+                                if (PlayerInstance.IsInKingdomView)
+                                {
+                                    PlayerInstance.SendEvent(EventCode.IaEnter, new IaEnterResponse(region.Owner));
+//                                    SendOnEnterEvent(region);
+                                }
+                            }
+                        }
+                        found = true;
+                        break;
+                    }
+                    if (found) break;
+                }
+            }
+
+            return attackList;
+        }
+
+        public void UpdateInterestArea(Region newRegion)
+        {
+            if (newRegion == CastleRegion) return;
+
+            log.InfoFormat("Update Interest Area X {0} y {1} ", newRegion.X, newRegion.Y);
+            CastleRegion = newRegion;
+            CameraRegion = newRegion;
+            AddUpdateIntArea();// true);
+        }
+
+        public void CameraMove(Region region)
         {
 //            log.InfoFormat("Camera Move Request {0} ", this.Owner.PlayerId);
+            if (region == CameraRegion) return;
+
+            CameraRegion = region;
             try
             {
-                if (this.CameraRegion == null || this.CameraRegion != r)
-                {
-                    this.CameraRegion = r;
-                    this.AddUpdateIntArea();
-                }
+                AddUpdateIntArea();
             }
             catch (Exception ex)
             {
                 log.Info("Exception!! " + ex.Message);
             }
         }
+
         public void JoinKingdomView()
         {
-            if (this.Owner.IsInKingdomView) return;
+            if (PlayerInstance.IsInKingdomView) return;
 
-            this.Owner.JoinKingdomView();
-            foreach (var r in this.Regions)
+            PlayerInstance.JoinKingdomView();
+            AddUpdateIntArea();
+
+/*            foreach (var region in AreaRegions)
             {
-/*                if (r != null)
+                if (region.IsBooked && (region.Owner != PlayerInstance))
                 {
-                    try
-                    {
-                        log.Info("region " + r.X + " " + r.Y + "   " + r.IsBooked + "  " + r.Owner);
-                        if (r.Owner != null) log.Info("ply=" + r.Owner.PlayerId);
-                    }
-                    catch (Exception ex)
-                    {
-                        log.Info("exception " + ex.Message);
-                    }
-                }*/
-                this.SendOnEnterEvent(r);
-            }
-            var attackList = GameService.BRealTimeUpdateManager.GetAllAttackerData(this.Owner.PlayerId);
-            if ((attackList != null) && (attackList.Count > 0))
+                    PlayerInstance.SendEvent(EventCode.IaEnter, new IaEnterResponse(region.Owner));
+                }
+//                    SendOnEnterEvent(region);
+            }*/
+
+            var attackList = GameService.BRealTimeUpdateManager.GetAllAttackerData(PlayerInstance.PlayerId);
+            if (attackList.Count > 0)
             {
+                log.Info(attackList.Count + "Attack data found for user " + PlayerInstance.PlayerId);
                 foreach (var item in attackList)
                 {
-                    var attackResponse = new AttackResponse(item.AttackData);
-                    this.Owner.SendEvent(EventCode.AttackEvent, attackResponse);
+                    PlayerInstance.SendEvent(EventCode.AttackEvent, new AttackResponse(item.AttackData));
                 }
             }
-            else
-            {
-                log.InfoFormat("Attack data not found for this user when join kingdom view {0} ", this.Owner.PlayerId);
-            }
         }
+
         public void LeaveKingdomView()
         {
-            if (!this.Owner.IsInKingdomView) return;
+            if (!PlayerInstance.IsInKingdomView) return;
 
-            this.Owner.LeaveKingdomView();
-            foreach (var r in this.Regions)
-            {
-                this.SendOnExitEvent(r);
-            }
+            PlayerInstance.LeaveKingdomView();
+            AreaRegions.Clear();
+//            foreach (var region in AreaRegions)
+//            {
+//                SendOnExitEvent(region, false);
+//            }
         }
-        public void SendOnEnterEvent(Region region)
-        {
-            if (region.IsBooked && (region.Owner != null) &&
-                (region.Owner != this.Owner) && this.Owner.IsInKingdomView)
-            {
-                var response = new IaEnterResponse(region.Owner);
-                this.Owner.SendEvent(EventCode.IaEnter, response);
 
-/*                var attackData = GameService.BRealTimeUpdateManager.GetAttackerData(region.Owner.PlayerId);
+/*        public void SendOnEnterEvent(Region region)
+        {
+            if (!PlayerInstance.IsInKingdomView) return;
+
+            if (region.IsBooked && (region.Owner != PlayerInstance))
+            {
+                PlayerInstance.SendEvent(EventCode.IaEnter, new IaEnterResponse(region.Owner));
+
+/ *                var attackData = GameService.BRealTimeUpdateManager.GetAttackerData(region.Owner.PlayerId);
                 if (attackData != null)
                 {
                     var attackResponse = new AttackResponse(attackData.AttackData);
                     this.Owner.SendEvent(EventCode.AttackEvent, attackResponse);
-                }*/
+                }* /
             }
-        }
-        public void SendOnExitEvent(Region r)
+        }*/
+
+        public void SendOnExitEvent(Region region, bool validate = true)
         {
-            if (r.IsBooked && (r.Owner != null) && (r.Owner != this.Owner) && this.Owner.IsInKingdomView)
+            if (validate && !PlayerInstance.IsInKingdomView) return;
+
+            if (region.IsBooked && (region.Owner != PlayerInstance))
             {
-                var response = new IaExitResponse
-                {
-                    playerId = r.Owner.PlayerId
-                };
-                this.Owner.SendEvent(EventCode.IaExit, response);
+                PlayerInstance.SendEvent(EventCode.IaExit, new IaExitResponse(region.Owner.PlayerId));
             }
         }
+
         public void Dispose()
         {
             this.LeaveKingdomView();
-            this.regionSubscriptions.Clear();
+//            this.regionSubscriptions.Clear();
             GC.SuppressFinalize(this);
         }
     }

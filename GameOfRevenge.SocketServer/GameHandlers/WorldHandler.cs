@@ -91,7 +91,7 @@ namespace GameOfRevenge.GameHandlers
                         }
                     }
 
-                    countryGrid = new CountryGrid(world, DistributePlayers(players, world));
+                    countryGrid = new CountryGrid(world, DistributePlayers(players, world), null);
                 }
                 else
                 {
@@ -99,7 +99,7 @@ namespace GameOfRevenge.GameHandlers
                     task2.Wait();
                     if (task2.Result.IsSuccess && task2.Result.HasData)
                     {
-                        countryGrid = new CountryGrid(world, task2.Result.Data);
+                        countryGrid = new CountryGrid(world, task2.Result.Data, null);
                     }
                     else
                     {

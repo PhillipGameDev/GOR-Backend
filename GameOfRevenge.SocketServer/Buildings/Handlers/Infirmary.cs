@@ -14,7 +14,7 @@ namespace GameOfRevenge.Buildings.Handlers
     {
         public List<UnavaliableTroopInfo> RecoverList = new List<UnavaliableTroopInfo>();
 
-        public Infirmary(MmoActor player, StructureDetails structureData, IGameBuildingManager baseBuildingManager) : base(player, structureData, baseBuildingManager)
+        public Infirmary(PlayerInstance player, StructureDetails structureData, IGameBuildingManager baseBuildingManager) : base(player, structureData, baseBuildingManager)
         {
         }
 

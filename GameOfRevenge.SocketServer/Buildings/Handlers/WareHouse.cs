@@ -6,7 +6,7 @@ namespace GameOfRevenge.Buildings.Handlers
 {
     public class WareHouse : PlayerBuildingManager, IPlayerBuildingManager
     {
-        public WareHouse(MmoActor player, StructureDetails structureData, IGameBuildingManager baseBuildingManager) : base(player, structureData, baseBuildingManager)
+        public WareHouse(PlayerInstance player, StructureDetails structureData, IGameBuildingManager baseBuildingManager) : base(player, structureData, baseBuildingManager)
         {
         }
     }

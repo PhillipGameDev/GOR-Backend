@@ -15,7 +15,7 @@ namespace GameOfRevenge.Buildings.Handlers
 {
     public class Gate : PlayerBuildingManager, IPlayerBuildingManager
     {
-        public Gate(MmoActor player, StructureDetails structureData, IGameBuildingManager baseBuildingManager) : base(player, structureData, baseBuildingManager)
+        public Gate(PlayerInstance player, StructureDetails structureData, IGameBuildingManager baseBuildingManager) : base(player, structureData, baseBuildingManager)
         {
         }
 
@@ -38,7 +38,7 @@ namespace GameOfRevenge.Buildings.Handlers
                 var newValues = new GateResponse(ref dict)
                 {
                     BuildingLocationId = operation.BuildingLocationId,
-                    Hitpoint = gateData[0].HitPoints
+                    Hitpoints = gateData[0].HitPoints
                 };
 
                 Player.SendOperation(OperationCode.GateHp, ReturnCode.OK, dict, playerData.Message);
@@ -88,7 +88,7 @@ namespace GameOfRevenge.Buildings.Handlers
                 var newValues = new GateResponse(ref dict)
                 {
                     BuildingLocationId = operation.BuildingLocationId,
-                    Hitpoint = gateData[0].HitPoints
+                    Hitpoints = gateData[0].HitPoints
                 };
 
                 Player.SendOperation(OperationCode.RepairGate, ReturnCode.OK, dict, playerData.Message);

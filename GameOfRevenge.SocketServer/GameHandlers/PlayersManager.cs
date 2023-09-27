@@ -1,53 +1,71 @@
 ﻿
-using GameOfRevenge.Interface;
 using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+using GameOfRevenge.Interface;
 
 namespace GameOfRevenge.GameHandlers
 {
-
     public class PlayersManager : IPlayersManager, IDisposable
     {
-        // Locking the sync root guarantees thread safe access.
-        protected readonly object SyncRoot = new object(); // that is for world user access
-        private readonly Dictionary<int, MmoActor> players;
+        private readonly Dictionary<int, PlayerInstance> players = new Dictionary<int, PlayerInstance>();
+
         public PlayersManager()
         {
-            players = new Dictionary<int, MmoActor>();
         }
-        public void AddPlayer(int userId, MmoActor player)
+
+        public void AddPlayer(int playerId, PlayerInstance player)
         {
-            lock (SyncRoot)
+            lock (players)
             {
-                if (!players.ContainsKey(userId)) players.Add(userId, player);
+                if (!players.ContainsKey(playerId)) players.Add(playerId, player);
             }
         }
-        public void RemovePlayer(int userId)
+
+        public void RemovePlayer(int playerId)
         {
-            lock (SyncRoot)
+            lock (players)
             {
-                if (players.ContainsKey(userId)) players.Remove(userId);
+                if (players.ContainsKey(playerId)) players.Remove(playerId);
             }
         }
-        public MmoActor GetPlayer(int userId)
+
+        public PlayerInstance GetPlayer(int playerId)
         {
-            return players.ContainsKey(userId) ? players[userId] : null;
+            PlayerInstance player = null;
+            lock (players)
+            {
+                if (players.ContainsKey(playerId)) player = players[playerId];
+            }
+
+            return player;
         }
-        public void BroadCastToWorld(byte evCode, object data)
+
+        public void BroadcastToWorld(byte evCode, object data)
         {
-            foreach (var p in players)
-                p.Value.SendEvent(evCode, data);
+            List<PlayerInstance> list;
+            lock (players)
+            {
+                list = new List<PlayerInstance>(players.Values);
+            }
+
+            foreach (var player in list)
+            {
+                player.SendEvent(evCode, data);
+            }
         }
+
         public void ClearAll()
         {
-            players.Clear();
+            lock (players)
+            {
+                players.Clear();
+            }
         }
+
         public void Dispose()
         {
-            players?.Clear();
+            ClearAll();
+
             GC.SuppressFinalize(this);
         }
     }

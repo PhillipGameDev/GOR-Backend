@@ -19,7 +19,7 @@ namespace GameOfRevenge.Buildings.Handlers
         protected static readonly ILogger log = LogManager.GetCurrentClassLogger();
 
         public IGameBuildingManager BaseBuilderManager { get; set; }
-        public MmoActor Player { get; private set; }
+        public PlayerInstance Player { get; private set; }
         public StructureDetails PlayerStructureData { get; set; }
 
         public IReadOnlyStructureDataRequirement BaseStructureData
@@ -36,7 +36,7 @@ namespace GameOfRevenge.Buildings.Handlers
 
         public Dictionary<TroopType, ITroop> Troops { get; set; } = new Dictionary<TroopType, ITroop>();
 
-        public PlayerBuildingManager(MmoActor player, StructureDetails structureData, IGameBuildingManager buildingManager)
+        public PlayerBuildingManager(PlayerInstance player, StructureDetails structureData, IGameBuildingManager buildingManager)
         {
             BaseBuilderManager = buildingManager;
             Player = player;

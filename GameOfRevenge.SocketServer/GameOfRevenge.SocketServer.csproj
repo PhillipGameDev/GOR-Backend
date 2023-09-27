@@ -92,7 +92,7 @@
     <Compile Include="Buildings\Handlers\GameBuildingManager.cs" />
     <Compile Include="GameHandlers\GameLobbyHandler.cs" />
     <Compile Include="GameHandlers\InterestArea.cs" />
-    <Compile Include="GameHandlers\MmoActor.cs" />
+    <Compile Include="GameHandlers\PlayerInstance.cs" />
     <Compile Include="GameApplication\GameService.cs" />
     <Compile Include="GameHandlers\PlayerAttackHandler.cs" />
     <Compile Include="GameHandlers\PlayerSocketDataManager.cs" />
@@ -184,6 +184,8 @@
     <Compile Include="Model\Operation\RetreatMarchingArmyRequest.cs" />
     <Compile Include="Model\Common\MarchingResultResponse.cs" />
     <Compile Include="Model\Common\UpdateMarchingArmyEvent.cs" />
+    <Compile Include="Model\Common\EntityEnterResponse.cs" />
+    <Compile Include="Model\Common\EntityExitResponse.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="GameOfRevenge.dll.config">

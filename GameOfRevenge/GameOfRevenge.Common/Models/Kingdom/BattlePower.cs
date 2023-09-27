@@ -25,10 +25,10 @@ namespace GameOfRevenge.Common.Models.Kingdom
         internal int TempAttack;
         internal int TempDefense;
 
-        public BattlePower(int playerId, int monsterId, int hitPoints, int attack, int defense)
+        public BattlePower(EntityType entityType, int entityId, int hitPoints, int attack, int defense)
         {
-            PlayerId = playerId;
-            MonsterId = monsterId;
+            EntityType = entityType;
+            EntityId = entityId;
             HitPoints = hitPoints;
             TempAttack = attack;
             TempDefense = defense;
@@ -44,8 +44,9 @@ namespace GameOfRevenge.Common.Models.Kingdom
             Func<TroopType, IReadOnlyTroopDataRequirementRel> getTroopData,
             Func<PlayerCompleteData, MarchingArmy, List<AttackDefenseMultiplier>> getAtkDefMultiplier)
         {
-            PlayerId = completeData.PlayerId;
-            Username = completeData.PlayerName;
+            EntityType = EntityType.Player;
+            EntityId = completeData.PlayerId;
+            EntityName = completeData.PlayerName;
             
             var troops = (marchingArmy != null)? marchingArmy.Troops : completeData.Troops;
             if ((troops != null) && (troops.Count > 0))
@@ -271,12 +272,12 @@ namespace GameOfRevenge.Common.Models.Kingdom
     [DataContract]
     public class ClientBattleReport
     {
+        [DataMember(EmitDefaultValue = false)]
+        public EntityType EntityType { get; set; }
         [DataMember]
-        public int PlayerId { get; set; }
+        public int EntityId { get; set; }
         [DataMember(EmitDefaultValue = false)]
-        public string Username { get; set; }
-        [DataMember(EmitDefaultValue = false)]
-        public int MonsterId { get; set; }
+        public string EntityName { get; set; }
 
         [DataMember(EmitDefaultValue = false)]
         public int Attack { get; set; }

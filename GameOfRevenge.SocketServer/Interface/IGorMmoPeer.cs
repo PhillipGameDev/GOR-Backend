@@ -11,7 +11,7 @@ namespace GameOfRevenge.Interface
     public interface IGorMmoPeer : IDisposable
     {
         IRpcProtocol Protocol { get; }
-        MmoActor Actor { get; set; }
+        PlayerInstance PlayerInstance { get; set; }
 
 
         SendResult SendOperation(OperationCode opCode, ReturnCode returnCode);

@@ -37,7 +37,7 @@ namespace GameOfRevenge.Buildings.Handlers
             }
         }
 
-        public Farm(MmoActor player, StructureDetails structureData, IGameBuildingManager baseBuildingManager) : base(player, structureData, baseBuildingManager)
+        public Farm(PlayerInstance player, StructureDetails structureData, IGameBuildingManager baseBuildingManager) : base(player, structureData, baseBuildingManager)
         {
         }
     }

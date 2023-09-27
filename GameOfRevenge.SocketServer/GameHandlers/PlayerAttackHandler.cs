@@ -20,10 +20,10 @@ namespace GameOfRevenge.GameHandlers
     {
         private static readonly ILogger log = LogManager.GetCurrentClassLogger();
 
-        public readonly MmoActor attacker;
-        public MmoActor Enemy { get; private set; }
+        public readonly PlayerInstance attacker;
+        public PlayerInstance Enemy { get; private set; }
 
-        public PlayerAttackHandler(MmoActor attacker)
+        public PlayerAttackHandler(PlayerInstance attacker)
         {
             this.attacker = attacker;
         }
@@ -41,8 +41,8 @@ namespace GameOfRevenge.GameHandlers
         private async Task<bool> SendMarchingArmyAsync(SendArmyRequest request, bool reinforcement = false)
         {
             log.Debug("@@@@@@@@!!! Send Army Request " + JsonConvert.SerializeObject(request));
-            var attackList = GameService.BRealTimeUpdateManager.GetAllAttackerData(this.attacker.PlayerId);
-            if ((attackList != null) && (attackList.Count >= 10))
+            var attackList = GameService.BRealTimeUpdateManager.GetAllAttackerData(attacker.PlayerId);
+            if (attackList.Count >= 10)
             {
                 attacker.SendOperation(OperationCode.AttackRequest, ReturnCode.Failed, null, "Maximum number of marching troops reached.");
 
@@ -50,18 +50,55 @@ namespace GameOfRevenge.GameHandlers
                 return false;
             }
 
-            Enemy = attacker.World.PlayersManager.GetPlayer(request.TargetPlayerId);
-            if (Enemy == null)
+            var world = attacker.World;
+            var dist = 0;
+            var targetId = 0;
+            var targetName = "";
+            switch ((EntityType)request.TargetType)
             {
-                attacker.SendOperation(OperationCode.AttackRequest, ReturnCode.Failed, null, "Destination not found.");
+                case EntityType.Default:
+                case EntityType.Player:
+                    Enemy = world.PlayersManager.GetPlayer(request.TargetId);
+                    if (Enemy == null)
+                    {
+                        attacker.SendOperation(OperationCode.AttackRequest, ReturnCode.Failed, null, "Destination not found.");
 
-                log.Debug("@@@@@@@@ PROCCESS END - Destination not found.");
-                return false;
+                        log.Debug("@@@@@@@@ PROCCESS END - Destination not found.");
+                        return false;
+                    }
+                    else
+                    {
+                        var sameZone = world.CheckSameZone(attacker.WorldRegion, Enemy.WorldRegion);
+                        if (!sameZone)
+                        {
+                            attacker.SendOperation(OperationCode.AttackRequest, ReturnCode.Failed, null, "Destination is not in the same zone.");
+
+                            log.Debug("@@@@@@@@ PROCCESS END - Destination is not in the same zone.");
+                            return false;
+                        }
+                    }
+
+                    targetId = Enemy.PlayerId;
+                    targetName = Enemy.PlayerInfo.Name;
+                    dist = world.GetDistance(attacker.WorldRegion, Enemy.WorldRegion);
+                    break;
+                case EntityType.Monster:
+                    //                request.TargetId; //moster id
+                    //attacker.World.WorldMonsters.Find(x => x.EntityId == request.TargetId);
+
+                    targetId = request.TargetId;//TODO: set monster id from database
+                    var targetX = (targetId % 2000);
+                    var targetY = (targetId - targetX) / 2000;
+                    log.Debug("@@@@@@@@ x:"+targetX+"  y:"+targetY);
+                    var attackerRegion = attacker.WorldRegion;
+                    dist = world.GetDistance(attackerRegion.X, attackerRegion.Y, targetX, targetY);
+                    break;
+                case EntityType.Fortress:
+                    break;
             }
 
             var timestart = DateTime.UtcNow.AddSeconds(2);
             var success = true;
-            var dist = attacker.World.GetDistanceBw2Points(Enemy.WorldRegion, attacker.WorldRegion) * 100;// / 0.2f;
 
             //apply HeroType.AlyamamahEyes - Troop Marching Time
             /*            if (request.HeroIds != null)
@@ -118,9 +155,10 @@ namespace GameOfRevenge.GameHandlers
                 }
 
                 marchingArmy.StartTime = timestart;
-                marchingArmy.Distance = (int)dist;
+                marchingArmy.Distance = dist;
                 marchingArmy.Duration = (int)delay;
-                marchingArmy.TargetId = Enemy.PlayerId;
+
+                marchingArmy.TargetId = targetId;
 
                 var resp = await BaseUserDataManager.GetFullPlayerData(attacker.PlayerId);
                 if (!resp.IsSuccess || !resp.HasData) throw new DataNotExistExecption(resp.Message);
@@ -130,26 +168,29 @@ namespace GameOfRevenge.GameHandlers
                 if (reinforcement)
                 {
                     await GameService.BkingdomePvpManager.SendReinforcement(attackerCompleteData, marchingArmy);
-                    attackData = new AttackResponseData(attackerCompleteData, marchingArmy, Enemy.PlayerId, 0);
+                    attackData = new AttackResponseData(attackerCompleteData, marchingArmy, targetId);
                 }
                 else
                 {
-                    if (true)//Enemy.PlayerData.Invaded == 0)
+                    switch ((EntityType)request.TargetType)
                     {
-                        var location = new MapLocation() { X = attacker.WorldRegion.X, Y = attacker.WorldRegion.Y };
-                        var watchLevel = await GameService.BkingdomePvpManager.AttackOtherPlayer(attackerCompleteData, marchingArmy, location, Enemy.PlayerId);
+                        default://SendArmyType.Default:
+                        case EntityType.Player:
+                            var location = new MapLocation() { X = attacker.WorldRegion.X, Y = attacker.WorldRegion.Y };
+                            var watchLevel = await GameService.BkingdomePvpManager.AttackOtherPlayer(attackerCompleteData, marchingArmy, location, targetId);
 
-                        attackData = new AttackResponseData(attackerCompleteData, marchingArmy, Enemy.PlayerId, Enemy.PlayerData.Name, watchLevel);
-                    }
-                    else
-                    {
-                        //TODO: remove this
-                        await GameService.BkingdomePvpManager.AttackMonster(attackerCompleteData, marchingArmy);
-//                        attackData = new AttackResponseData(attackerCompleteData, marchingArmy, Enemy.PlayerId, Enemy.PlayerData.Invaded);
+                            attackData = new AttackResponseData(attackerCompleteData, marchingArmy, targetId, targetName, watchLevel);
+                            break;
+                        case EntityType.Monster:
+                            await GameService.BkingdomePvpManager.AttackMonster(attackerCompleteData, marchingArmy);
+                            attackData = new AttackResponseData(attackerCompleteData, marchingArmy, targetId);
+                            break;
+//                        case SendArmyType.Fortress:
+//                            break;
                     }
                 }
-                var str = "Passing Data attackerId {0} Data {1} defenderId {2} ";
-                log.InfoFormat(str, attacker.PlayerId, JsonConvert.SerializeObject(marchingArmy), Enemy.PlayerId);
+                var str = "Passing Data attackerId {0} Data {1} targetId {2} ";
+                log.InfoFormat(str, attacker.PlayerId, JsonConvert.SerializeObject(marchingArmy), targetId);
 
                 var attackResponse = new AttackResponse(attackData);
                 attacker.SendEvent(EventCode.AttackEvent, attackResponse);

@@ -14,7 +14,7 @@ namespace GameOfRevenge.Buildings.Interface
     public interface IPlayerBuildingManager 
     {
         [JsonIgnore]
-        MmoActor Player { get; }
+        PlayerInstance Player { get; }
         //TODO: we should remove userstructuredata, this implementation store all the user
         //structure data of this type. We should just store the data for this building
         //the core base of this class was build to support multiple buildings, but we

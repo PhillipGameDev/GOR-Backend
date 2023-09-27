@@ -24,7 +24,7 @@ namespace GameOfRevenge.Model
         [DataMember(Code = (byte)RoomParameterKey.ShieldEndTime, IsOptional = false)]
         public string ShieldEndTime { get; set; }
 
-        [DataMember(Code = (byte)RoomParameterKey.Invaded, IsOptional = false)]
+        [DataMember(Code = (byte)RoomParameterKey.Invaded, IsOptional = true)]
         public int Invaded { get; set; }
 
         [DataMember(Code = (byte)RoomParameterKey.VIPPoints, IsOptional = false)]
@@ -36,22 +36,22 @@ namespace GameOfRevenge.Model
         [DataMember(Code = (byte)RoomParameterKey.Timestamp, IsOptional = false)]
         public string LastLogin { get; set; }
 
-        public IaEnterResponse(MmoActor actor)
+        public IaEnterResponse(PlayerInstance player)
         {
-            X = actor.WorldRegion.X;
-            Y = actor.WorldRegion.Y;
-            PlayerId = actor.PlayerId;
-            Username = actor.PlayerData.Name;
+            X = player.WorldRegion.X;
+            Y = player.WorldRegion.Y;
+            PlayerId = player.PlayerId;
+            Username = player.PlayerInfo.Name;
 
-            KingLevel = actor.PlayerData.KingLevel;
-            CastleLevel = actor.PlayerData.CastleLevel;
-            WatchLevel = actor.PlayerData.WatchLevel;
-            ShieldEndTime = actor.PlayerData.ShieldEndTime.ToUniversalTime().ToString("s") + "Z";
+            KingLevel = player.PlayerInfo.KingLevel;
+            CastleLevel = player.PlayerInfo.CastleLevel;
+            WatchLevel = player.PlayerInfo.WatchLevel;
+            ShieldEndTime = player.PlayerInfo.ShieldEndTime.ToUniversalTime().ToString("s") + "Z";
             Invaded = 0;
 
-            VIPPoints = actor.PlayerData.VIPPoints;
-            AllianceId = actor.PlayerData.AllianceId;
-            LastLogin = actor.PlayerData.LastLogin.ToUniversalTime().ToString("s") + "Z";
+            VIPPoints = player.PlayerInfo.VIPPoints;
+            AllianceId = player.PlayerInfo.AllianceId;
+            LastLogin = player.PlayerInfo.LastLogin.ToUniversalTime().ToString("s") + "Z";
         }
     }
 }

@@ -1085,8 +1085,9 @@ namespace GameOfRevenge.Business.Manager.UserData
 
                 if (!completed)
                 {
+                    var fieldBuildings = 50;//location used for field buildings outside castle
                     var bld = data.UserData.Structures.Find(x => (x.StructureType == initialData.StructureType))?
-                                    .Buildings.Find(x => (x.CurrentLevel >= initialData.Level));
+                                    .Buildings.Find(x => (x.Location < fieldBuildings) && (x.CurrentLevel >= initialData.Level));
                     completed = (bld != null);
                 }
 
@@ -1122,7 +1123,8 @@ namespace GameOfRevenge.Business.Manager.UserData
                     var blds = data.UserData.Structures.Find(x => (x.StructureType == initialData.StructureType));
                     if (blds != null)
                     {
-                        var count = blds.Buildings.Sum(x => (x.CurrentLevel >= 1)? 1 : 0);
+                        var fieldBuildings = 50;//location used for field buildings outside castle
+                        var count = blds.Buildings.Sum(x => (x.Location < fieldBuildings) && (x.CurrentLevel >= 1)? 1 : 0);
 
                         if (count >= initialData.Count)
                         {

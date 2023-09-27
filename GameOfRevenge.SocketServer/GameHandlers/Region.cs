@@ -25,13 +25,13 @@ namespace GameOfRevenge.GameHandlers
         public bool IsWalkable { get; private set; } = true;  // that means, this full tiles is non walkable
         public Vector Area { get; private set; } //tiles area
         public bool IsBooked => (Owner != null);
-        public MmoActor Owner { get; set; }
+        public PlayerInstance Owner { get; set; }
         public int CountryId { get; private set; }
 
         public readonly CountryGrid Country;
         public MessageChannel<RequestSendMeassageChannel> regionSendMessageChannel;
 
-        public MessageChannel<RequestItemEnterMessage> RegionEnterChanel;
+        public MessageChannel<RequestItemEnterMessage> RegionEnterChannel;
         public MessageChannel<RequestItemEnterMessage> JoinKingdomChannel;
         public MessageChannel<RequestItemExitMessage> RegionExitChannel;
         public MessageChannel<RequestEnterCurrentRegionChannel> RegionCurrentEnterChannel;
@@ -41,7 +41,7 @@ namespace GameOfRevenge.GameHandlers
         {
             regionSendMessageChannel = new MessageChannel<RequestSendMeassageChannel>(MessageCounters.CounterSend);
             JoinKingdomChannel = new MessageChannel<RequestItemEnterMessage>(MessageCounters.CounterSend);
-            RegionEnterChanel = new MessageChannel<RequestItemEnterMessage>(MessageCounters.CounterSend);
+            RegionEnterChannel = new MessageChannel<RequestItemEnterMessage>(MessageCounters.CounterSend);
             RegionExitChannel = new MessageChannel<RequestItemExitMessage>(MessageCounters.CounterSend);
             RegionCurrentEnterChannel = new MessageChannel<RequestEnterCurrentRegionChannel>(MessageCounters.CounterSend);
             RegionCurrentExitChannel = new MessageChannel<RequestExitCurrentRegionChannel>(MessageCounters.CounterSend);
@@ -52,53 +52,42 @@ namespace GameOfRevenge.GameHandlers
             CountryId = worldId;
         }
 
-        public void SetPlayerInRegion(MmoActor actor)
+        public void SetPlayerInRegion(PlayerInstance actor)
         {
             if (!IsBooked) Owner = actor;
         }
 
-        public void RemovePlayerFromRegion(MmoActor actor)
+        public void RemovePlayerFromRegion(PlayerInstance actor)
         {
             Owner = null;
         }
 
-        public void OnEnterPlayer(MmoActor actor)
+        public void OnEnterPlayer(PlayerInstance actor)
         {
-            if (IsBooked && (this.Owner != actor))
-            {
-                var response = new IaEnterResponse(actor);
+            if (!IsBooked || (actor == Owner)) return;
 
-                Owner.SendEvent(EventCode.IaEnter, response);
-                var attackList = GameService.BRealTimeUpdateManager.GetAllAttackerData(actor.PlayerId);
-                if ((attackList != null) && (attackList.Count > 0))
-                {
-                    foreach (var item in attackList)
-                    {
-                        var attackResponse = new AttackResponse(item.AttackData);
-                        Owner.SendEvent(EventCode.AttackEvent, attackResponse);
-                    }
-                }
+            Owner.SendEvent(EventCode.IaEnter, new IaEnterResponse(actor));
+
+            var attackList = GameService.BRealTimeUpdateManager.GetAllAttackerData(actor.PlayerId);
+            foreach (var item in attackList)
+            {
+                Owner.SendEvent(EventCode.AttackEvent, new AttackResponse(item.AttackData));
             }
         }
 
-        public void OnExitPlayer(MmoActor actor)
+        public void OnExitPlayer(PlayerInstance actor)
         {
-            if (IsBooked && (Owner != actor) && Owner.IsInKingdomView)
-            {
-                var response = new IaExitResponse
-                {
-                    playerId = actor.PlayerId
-                };
-                Owner.SendEvent(EventCode.IaExit, response);
-            }
+            if (!IsBooked || (actor == Owner) || !Owner.IsInKingdomView) return;
+
+            Owner.SendEvent(EventCode.IaExit, new IaExitResponse(actor.PlayerId));
         }
     }
 
     public class RequestItemEnterMessage
     {
-        public InterestArea InterestArea { get; private set; }
+        public PlayerInterestArea InterestArea { get; private set; }
 
-        public RequestItemEnterMessage(InterestArea interestArea)
+        public RequestItemEnterMessage(PlayerInterestArea interestArea)
         {
             InterestArea = interestArea;
         }
@@ -119,9 +108,9 @@ namespace GameOfRevenge.GameHandlers
     /// </summary>
     public class RequestItemExitMessage
     {
-        public InterestArea InterestArea { get; private set; }
+        public PlayerInterestArea InterestArea { get; private set; }
 
-        public RequestItemExitMessage(InterestArea interestArea)
+        public RequestItemExitMessage(PlayerInterestArea interestArea)
         {
             InterestArea = interestArea;
         }
@@ -141,9 +130,9 @@ namespace GameOfRevenge.GameHandlers
 
     public class RequestEnterCurrentRegionChannel
     {
-        public InterestArea InterestArea;
+        public PlayerInterestArea InterestArea;
 
-        public RequestEnterCurrentRegionChannel(InterestArea interestArea)
+        public RequestEnterCurrentRegionChannel(PlayerInterestArea interestArea)
         {
             InterestArea = interestArea;
         }
@@ -151,9 +140,9 @@ namespace GameOfRevenge.GameHandlers
 
     public class RequestExitCurrentRegionChannel
     {
-        public InterestArea InterestArea;
+        public PlayerInterestArea InterestArea;
 
-        public RequestExitCurrentRegionChannel(InterestArea interestArea)
+        public RequestExitCurrentRegionChannel(PlayerInterestArea interestArea)
         {
             InterestArea = interestArea;
         }

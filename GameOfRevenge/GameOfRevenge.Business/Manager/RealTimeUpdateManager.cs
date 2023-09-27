@@ -34,7 +34,7 @@ namespace GameOfRevenge.Business.Manager
 
         public List<AttackStatusData> GetAllAttackerData(int attackerId)
         {
-            List<AttackStatusData> list = null;
+            List<AttackStatusData> list;
             lock (SyncRoot)
             {
                 list = attackInProgress.FindAll(x => (x.AttackData.AttackerId == attackerId));
@@ -45,7 +45,7 @@ namespace GameOfRevenge.Business.Manager
 
         public List<AttackStatusData> GetAllAttackDataForDefender(int defenderId)
         {
-            List<AttackStatusData> list = null;
+            List<AttackStatusData> list;
             lock (SyncRoot)
             {
                 list = attackInProgress.FindAll(x => (x.AttackData.TargetId == defenderId));
@@ -178,16 +178,25 @@ namespace GameOfRevenge.Business.Manager
                             {
                                 defenderPower = new BattlePower(item.Defender, null, CacheTroopDataManager.GetFullTroopData, GetAtkDefMultiplier);
                             }
-                            else
+                            else// if (marchingArmy.MarchingType == MarchingType.AttackMonster)
                             {
-                                var hitPoints = (int)(attackerPower.HitPoints * (new Random().Next(6, 9) / 10f));
-                                var attack = (int)(attackerPower.Attack * (new Random().Next(8, 11) / 10f));
-                                var defense = (int)(attackerPower.Defense * 0.7f);
-                                defenderPower = new BattlePower(item.AttackData.TargetId, item.AttackData.MonsterId, hitPoints, attack, defense);
+                                //TODO: get monster values from db
+//                                var hitPoints = (int)(attackerPower.HitPoints * (new Random().Next(6, 9) / 10f));
+//                                var attack = (int)(attackerPower.Attack * (new Random().Next(8, 11) / 10f));
+//                                var defense = (int)(attackerPower.Defense * 0.7f);
+                                var monsterId = marchingArmy.TargetId;
+                                var hitPoints = 10000;
+                                var attack = 5000;
+                                var defense = 5000;
+                                defenderPower = new BattlePower(EntityType.Monster, item.AttackData.TargetId, hitPoints, attack, defense);
                             }
+//                            else//attack glory kingdom
+//                            {
+
+//                            }
                             item.DefenderPower = defenderPower;
 
-                            log.Debug("atk pwr= " + attackerPower.HitPoints + " vs def pwr=" + defenderPower.HitPoints);
+                            log.Debug("atk hp= " + attackerPower.HitPoints + " vs def hp=" + defenderPower.HitPoints);
                             item.State++;
                             break;
 

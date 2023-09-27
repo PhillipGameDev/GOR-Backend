@@ -6,7 +6,7 @@ namespace GameOfRevenge.Buildings.Handlers
 {
     public class InfantryCamp : PlayerBuildingManager,IPlayerBuildingManager
     {
-        public InfantryCamp(MmoActor player, StructureDetails structureData, IGameBuildingManager baseBuildingManager) : base(player, structureData, baseBuildingManager)
+        public InfantryCamp(PlayerInstance player, StructureDetails structureData, IGameBuildingManager baseBuildingManager) : base(player, structureData, baseBuildingManager)
         {
         }
     }

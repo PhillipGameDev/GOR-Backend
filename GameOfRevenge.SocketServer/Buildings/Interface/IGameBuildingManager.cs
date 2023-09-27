@@ -13,8 +13,8 @@ namespace GameOfRevenge.Buildings.Interface
         IReadOnlyStructureDataRequirementRel CacheBuildingData { get; }
 
         int BuildTime(int level);
-        void CreateStructureForPlayer(CreateStructureRequest request, MmoActor actor);
-        bool UpgradeStructureForPlayer(UpgradeStructureRequest request, MmoActor actor);
-        void RecruitTroops(RecruitTroopRequest request, MmoActor actor);
+        void CreateStructureForPlayer(CreateStructureRequest request, PlayerInstance actor);
+        bool UpgradeStructureForPlayer(UpgradeStructureRequest request, PlayerInstance actor);
+        void RecruitTroops(RecruitTroopRequest request, PlayerInstance actor);
     }
 }

@@ -141,7 +141,7 @@ namespace GameOfRevenge.Business.CacheData
             if (location >= 50)
             {
                 seconds = 8 * 3600;
-                percentage = castleLevel;
+                percentage = castleLevel * 2;
             }
 
             return (seconds, percentage);

@@ -4,10 +4,10 @@ namespace GameOfRevenge.Interface
 {
     public interface IPlayersManager
     {
-        void AddPlayer(int playerId, MmoActor player);
+        void AddPlayer(int playerId, PlayerInstance player);
         void RemovePlayer(int playerId);
-        MmoActor GetPlayer(int playerId);
-        void BroadCastToWorld(byte evCode, object data);
+        PlayerInstance GetPlayer(int playerId);
+        void BroadcastToWorld(byte evCode, object data);
         //TODO: Implement Broadcast to clan
         void ClearAll();
     }

@@ -19,7 +19,7 @@ namespace GameOfRevenge.Buildings.Handlers
         public abstract double ProductionInTime { get; }  // that production is hourly
         public abstract IPlayerResources Resource { get; }
         public BoostUpData BoostUp { get; set; }
-        public ResourceGenerator(MmoActor player, StructureDetails structureData, IGameBuildingManager buildingManager) : base(player, structureData, buildingManager)
+        public ResourceGenerator(PlayerInstance player, StructureDetails structureData, IGameBuildingManager buildingManager) : base(player, structureData, buildingManager)
         {
             BoostUp = (structureData.Boost != null)? structureData.Boost : new BoostUpData();
         }

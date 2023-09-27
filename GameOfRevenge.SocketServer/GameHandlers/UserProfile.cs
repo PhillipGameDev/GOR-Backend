@@ -15,7 +15,7 @@ namespace GameOfRevenge.GameHandlers
     {
         private static readonly ILogger log = LogManager.GetCurrentClassLogger();
 
-        public ConcurrentDictionary<int, MmoActor> InterestUsers { get; protected set; } = new ConcurrentDictionary<int, MmoActor>();
+        public ConcurrentDictionary<int, PlayerInstance> InterestUsers { get; protected set; } = new ConcurrentDictionary<int, PlayerInstance>();
         public List<IGorMmoPeer> IntrestedPeers
         {
             get
@@ -24,7 +24,7 @@ namespace GameOfRevenge.GameHandlers
             }
         }
         public int PlayerId { get; private set; }
-        public PlayerInfo PlayerData { get; private set; }
+        public PlayerInfo PlayerInfo { get; protected set; }
         public string Email { get; set; }
         public string FullName { get; set; }
         public IGorMmoPeer Peer { get; set; }
@@ -35,12 +35,7 @@ namespace GameOfRevenge.GameHandlers
         public UserProfile(int playerId, PlayerInfo playerInfo)
         {
             PlayerId = playerId;
-            PlayerData = playerInfo;
-        }
-
-        public void UpdatePlayerInfo(PlayerInfo info)
-        {
-            PlayerData = info;
+            PlayerInfo = playerInfo;
         }
 
         public void SendOperation(byte opCode, ReturnCode returnCode, Dictionary<byte, object> data = null, string debuMsg = "")
@@ -72,7 +67,7 @@ namespace GameOfRevenge.GameHandlers
             var peers = IntrestedPeers;
             foreach (var item in peers)
             {
-                log.Info($"Send Event to User: {item.Actor.PlayerId}; EvCode: {evCode}; Data: {JsonConvert.SerializeObject(data)};");
+                log.Info($"Send Event to User: {item.PlayerInstance.PlayerId}; EvCode: {evCode}; Data: {JsonConvert.SerializeObject(data)};");
                 item.SendEvent(ev, new SendParameters());
             }
         }

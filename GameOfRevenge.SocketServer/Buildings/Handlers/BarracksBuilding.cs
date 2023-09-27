@@ -6,7 +6,7 @@ namespace GameOfRevenge.Buildings.Handlers
 {
     public class BarracksBuilding : PlayerBuildingManager, IPlayerBuildingManager
     {
-        public BarracksBuilding(MmoActor player, StructureDetails structureData, IGameBuildingManager baseBuildingManager) : base(player, structureData, baseBuildingManager)
+        public BarracksBuilding(PlayerInstance player, StructureDetails structureData, IGameBuildingManager baseBuildingManager) : base(player, structureData, baseBuildingManager)
         {
         }
     }

@@ -2,11 +2,15 @@
 using ExitGames.Concurrency.Fibers;
 using ExitGames.Logging;
 using GameOfRevenge.Common.Models;
+using GameOfRevenge.Common.Models.Quest;
+using GameOfRevenge.Common.Services;
+using GameOfRevenge.GameApplication;
 using GameOfRevenge.Interface;
+using GameOfRevenge.Model;
 
 namespace GameOfRevenge.GameHandlers
 {
-    public class MmoActor : UserProfile
+    public class PlayerInstance : UserProfile
     {
         private static readonly ILogger log = LogManager.GetCurrentClassLogger();
         
@@ -17,19 +21,60 @@ namespace GameOfRevenge.GameHandlers
         public IPlayerSocketDataManager InternalPlayerDataManager { get; private set; }
         public IPlayerAttackHandler PlayerAttackHandler => InternalPlayerDataManager.AttackHandler;
         
-        public MmoActor(int playerId, PlayerInfo playerInfo, IWorld world, Region region) : base(playerId, playerInfo)
+        public PlayerInstance(int playerId, PlayerInfo playerInfo, IWorld world, Region region) : base(playerId, playerInfo)
         {
             World = world;
             WorldRegion = region;
             //playerInfo assigned on base
         }
         
-        public void PlayerSpawn(IInterestArea interestArea, IGorMmoPeer peer, IPlayerSocketDataManager playerDataManager)
+        public void PlayerSpawn(IInterestArea interestArea, IGorMmoPeer peer, IPlayerSocketDataManager playerDataManager, PlayerInfo playerInfo)
         {
-            Peer = peer;
             InterestArea = interestArea;
+            Peer = peer;
             InternalPlayerDataManager = playerDataManager;
+            peer.PlayerInstance = this;//vice versa mmoactor into the peer and reverse
+            PlayerInfo = playerInfo;
+
+            var profile = new UserProfileResponse(playerInfo, WorldRegion.X, WorldRegion.Y);
+            SendEvent(EventCode.UserProfile, profile);
+
+            log.InfoFormat("Send profile data to client X {0} Y {1} userName {2} castle {3} ",
+                            profile.X, profile.Y, profile.UserName, profile.CastleLevel);
         }
+
+        public void TryAddPlayerQuestData()
+        {
+            GameService.RealTimeUpdateManagerQuestValidator.TryAddPlayerQuestData(PlayerId, QuestAction);
+        }
+
+        void QuestAction(PlayerQuestDataTable questUpdated)
+        {
+            if (questUpdated == null) return;
+
+            var objResp = new QuestUpdateResponse()
+            {
+                IsSuccess = true,
+                Message = "Update quest data",
+
+                QuestId = questUpdated.QuestId,
+                Completed = questUpdated.Completed,
+                ProgressData = questUpdated.Completed ? null : questUpdated.ProgressData
+            };
+
+            new DelayedAction().WaitForCallBack(() =>
+            {
+                try
+                {
+                    SendEvent(EventCode.UpdateQuest, objResp);
+                }
+                catch (Exception ex)
+                {
+                    log.Info("EXCEPTION sending event " + ex.Message);
+                }
+            }, 100);
+        }
+
         public void PlayerTeleport(Region region)
         {
             WorldRegion = region;
@@ -37,7 +82,7 @@ namespace GameOfRevenge.GameHandlers
 
         public void JoinKingdomView()
         {
-            log.InfoFormat("Join KIngdom View Call {0} ",this.PlayerId);
+            log.InfoFormat("Join Kingdom View Call {0} ",this.PlayerId);
             
             IsInKingdomView = true;
             InterestUsers.Clear();

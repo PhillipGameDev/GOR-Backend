@@ -54,7 +54,7 @@ new string[]{
                 log.InfoFormat("Message Recived OpCode {0} Data {1} ", operationRequest.OperationCode, GlobalHelper.DicToString(operationRequest.Parameters));
                 if ((OperationCode)operationRequest.OperationCode != OperationCode.PlayerConnectToServer)
                 {
-                    if ((peer.Actor == null) || (peer.Actor.Fiber == null))
+                    if ((peer.PlayerInstance == null) || (peer.PlayerInstance.Fiber == null))
                     {
                         log.Info("*** Message discarded, user offline");
                         return SendResult.Failed;
@@ -116,7 +116,7 @@ new string[]{
             }
         }
 
-        async Task<PlayerUserQuestData> UpdatePlayerData(MmoActor actor)
+        async Task<PlayerUserQuestData> UpdatePlayerData(PlayerInstance actor)
         {
             log.Info("player " + actor.PlayerId + " data changed - ENTER");
             var plyData = GameService.RealTimeUpdateManagerQuestValidator.GetCachedPlayerData(actor.PlayerId);
@@ -136,7 +136,7 @@ new string[]{
             return plyData;
         }
 
-        void UpdateMarchingArmies(MmoActor actor, PlayerCompleteData completeData)
+        void UpdateMarchingArmies(PlayerInstance actor, PlayerCompleteData completeData)
         {
             var marchingArmies = completeData.MarchingArmies;
             if (marchingArmies == null) return;
@@ -154,14 +154,14 @@ new string[]{
 
         private async Task<SendResult> HandleUpdatePlayerData(IGorMmoPeer peer, OperationRequest operationRequest)
         {
-            var plyData = await UpdatePlayerData(peer.Actor);
+            var plyData = await UpdatePlayerData(peer.PlayerInstance);
 
             return peer.SendOperation(operationRequest.OperationCode, (plyData != null)? ReturnCode.OK : ReturnCode.Failed);
         }
 
         private async Task<SendResult> HandleUpdateMarchingArmy(IGorMmoPeer peer, OperationRequest operationRequest)
         {
-            var plyData = await UpdatePlayerData(peer.Actor);
+            var plyData = await UpdatePlayerData(peer.PlayerInstance);
 
             return peer.SendOperation(operationRequest.OperationCode, (plyData != null) ? ReturnCode.OK : ReturnCode.Failed);
         }
@@ -183,7 +183,7 @@ new string[]{
                 army.Recall = marchingArmy.Distance - army.ReturnReduction;
 
                 var armyJson = JsonConvert.SerializeObject(army);
-                var resp = await GameService.BPlayerManager.UpdatePlayerDataID(peer.Actor.PlayerId, marchingId, armyJson);
+                var resp = await GameService.BPlayerManager.UpdatePlayerDataID(peer.PlayerInstance.PlayerId, marchingId, armyJson);
                 if (!resp.IsSuccess)
                 {
                     return peer.SendOperation(operationRequest.OperationCode, ReturnCode.Failed, debuMsg: resp.Message);
@@ -199,7 +199,7 @@ new string[]{
 //            };
             log.Info("**************** HandleRecallMarchingArmy End************************");
             var updateMarching = new UpdateMarchingArmyEvent(marchingArmy);
-            peer.Actor.SendEvent(EventCode.UpdateMarchingArmyEvent, updateMarching);
+            peer.PlayerInstance.SendEvent(EventCode.UpdateMarchingArmyEvent, updateMarching);
 
             return peer.SendOperation(operationRequest.OperationCode, ReturnCode.OK);
         }
@@ -210,7 +210,7 @@ new string[]{
             var operation = new FriendRequest(peer.Protocol, operationRequest);
             if (!operation.IsValid) return peer.SendOperation(operationRequest.OperationCode, ReturnCode.InvalidOperation, debuMsg: operation.GetErrorMessage());
 
-            var playerId = peer.Actor.PlayerId;
+            var playerId = peer.PlayerInstance.PlayerId;
             var targetPlayerId = operation.TargetPlayerId;
             var response = await GameService.BUserFriendsManager.SendFriendRequest(playerId, targetPlayerId);
             log.Info("friend request response = " + Newtonsoft.Json.JsonConvert.SerializeObject(response));
@@ -237,7 +237,7 @@ new string[]{
 
             if (response.Case == 100)
             {
-                var targetActor = peer.Actor.World.PlayersManager.GetPlayer(targetPlayerId);
+                var targetActor = peer.PlayerInstance.World.PlayersManager.GetPlayer(targetPlayerId);
                 if (targetActor != null)
                 {
                     await UpdatePlayerData(targetActor);
@@ -258,7 +258,7 @@ new string[]{
             var operation = new RespondToFriendRequest(peer.Protocol, operationRequest);
             if (!operation.IsValid) return peer.SendOperation(operationRequest.OperationCode, ReturnCode.InvalidOperation, debuMsg: operation.GetErrorMessage());
 
-            var playerId = peer.Actor.PlayerId;
+            var playerId = peer.PlayerInstance.PlayerId;
             var targetPlayerId = operation.TargetPlayerId;
             var response = await GameService.BUserFriendsManager.RespondToFriendRequest(targetPlayerId, playerId, operation.Value);
             log.Info("respond friend request = " + Newtonsoft.Json.JsonConvert.SerializeObject(response));
@@ -275,7 +275,7 @@ new string[]{
                 Flags = operation.Value
             };
 
-            var targetActor = peer.Actor.World.PlayersManager.GetPlayer(targetPlayerId);
+            var targetActor = peer.PlayerInstance.World.PlayersManager.GetPlayer(targetPlayerId);
             if (targetActor != null)
             {
                 await UpdatePlayerData(targetActor);
@@ -296,7 +296,7 @@ new string[]{
             var troopType = (TroopType)operation.TroopType;
             var troopLevel = operation.TroopLevel;
             var troopCount = operation.TroopCount;
-            var recruitResp = await GameService.InstantProgressManager.InstantRecruitTroops(peer.Actor.PlayerId,
+            var recruitResp = await GameService.InstantProgressManager.InstantRecruitTroops(peer.PlayerInstance.PlayerId,
                                                     operation.LocationId, troopType, troopLevel, troopCount);
 
             string msg = null;
@@ -314,7 +314,7 @@ new string[]{
                 return peer.SendOperation(operationRequest.OperationCode, ReturnCode.InvalidOperation, debuMsg: msg);
             }
 
-            var playerQuestData = await UpdatePlayerData(peer.Actor);
+            var playerQuestData = await UpdatePlayerData(peer.PlayerInstance);
             _ = GameService.BUserQuestManager.CheckQuestProgressForTrainTroops(playerQuestData, troopType, troopLevel, troopCount);
 
             return SendOperationResponse(peer, operationRequest, recruitResp);
@@ -324,7 +324,7 @@ new string[]{
         {
             var operation = new InstantBuildRequest(peer.Protocol, operationRequest);
 
-            var costResponse = GameService.InstantProgressManager.GetInstantBuildCost(peer.Actor.PlayerId, (StructureType)operation.StructureType, operation.StructureLevel);
+            var costResponse = GameService.InstantProgressManager.GetInstantBuildCost(peer.PlayerInstance.PlayerId, (StructureType)operation.StructureType, operation.StructureLevel);
             if (costResponse == null || !costResponse.IsSuccess)
                 return peer.SendOperation(operationRequest.OperationCode, ReturnCode.InvalidOperation, debuMsg: costResponse.Message);
 
@@ -336,7 +336,7 @@ new string[]{
         {
             var operation = new InstantBuildRequest(peer.Protocol, operationRequest);
 
-            var costResponse = await GameService.InstantProgressManager.GetBuildingSpeedUpCost(peer.Actor.PlayerId, operation.StructureLocationId);
+            var costResponse = await GameService.InstantProgressManager.GetBuildingSpeedUpCost(peer.PlayerInstance.PlayerId, operation.StructureLocationId);
             if (costResponse == null || !costResponse.IsSuccess) return peer.SendOperation(operationRequest.OperationCode, ReturnCode.InvalidOperation, debuMsg: costResponse.Message);
 
             var response = new GemsCostResponse() { GemsCost = costResponse.Data };
@@ -354,13 +354,13 @@ new string[]{
             log.Info($"StructureLocationId: {location}");
             log.Info($"StructureLevel: {level}");
 
-            var response = await GameService.InstantProgressManager.InstantBuildStructure(peer.Actor.PlayerId, structureType, level, location);
+            var response = await GameService.InstantProgressManager.InstantBuildStructure(peer.PlayerInstance.PlayerId, structureType, level, location);
             if (!response.IsSuccess)
             {
                 return peer.SendOperation(operationRequest.OperationCode, ReturnCode.InvalidOperation, debuMsg: response.Message);
             }
 
-            await UpdatePlayerData(peer.Actor);
+            await UpdatePlayerData(peer.PlayerInstance);
 
             var building = response.Data.StructureData.Value.Find(x => (x.Location == location));
             if (building == null)
@@ -413,13 +413,13 @@ new string[]{
 
             var structureType = (StructureType)operation.StructureType;
             var location = operation.StructureLocationId;
-            var response = await GameService.InstantProgressManager.SpeedUpBuildStructure(peer.Actor.PlayerId, location);
+            var response = await GameService.InstantProgressManager.SpeedUpBuildStructure(peer.PlayerInstance.PlayerId, location);
             if (!response.IsSuccess)
             {
                 return peer.SendOperation(operationRequest.OperationCode, ReturnCode.InvalidOperation, debuMsg: response.Message);
             }
 
-            await UpdatePlayerData(peer.Actor);
+            await UpdatePlayerData(peer.PlayerInstance);
 
             var respDetails = response.Data.Value.Find(x => (x.Location == location));
             if (respDetails == null)
@@ -476,7 +476,7 @@ new string[]{
                 return peer.SendOperation(operationRequest.OperationCode, ReturnCode.InvalidOperation, debuMsg: msg);
             }
 
-            var resp = await GameService.BChatManager.DeleteMessage(peer.Actor.PlayerId, operation.ChatId);
+            var resp = await GameService.BChatManager.DeleteMessage(peer.PlayerInstance.PlayerId, operation.ChatId);
             if (!resp.IsSuccess || !resp.HasData)
             {
                 var dbgMsg = "Failed to delete message";
@@ -515,16 +515,16 @@ new string[]{
                 }
             }
 
-            var resp = await GameService.BChatManager.CreateMessage(peer.Actor.PlayerId, message);
+            var resp = await GameService.BChatManager.CreateMessage(peer.PlayerInstance.PlayerId, message);
             GameLobbyHandler.log.Info("success = "+resp.IsSuccess+"  "+Newtonsoft.Json.JsonConvert.SerializeObject(resp.Data));
             if (resp.IsSuccess && resp.HasData)
             {
                 var response = new ChatMessageRespose()
                 {
                     ChatId = resp.Data.ChatId,
-                    PlayerId = peer.Actor.PlayerData.PlayerId, //operation.PlayerId,
-                    Username = peer.Actor.PlayerData.Name, //operation.Username,
-                    VIPPoints = peer.Actor.PlayerData.VIPPoints,
+                    PlayerId = peer.PlayerInstance.PlayerInfo.PlayerId, //operation.PlayerId,
+                    Username = peer.PlayerInstance.PlayerInfo.Name, //operation.Username,
+                    VIPPoints = peer.PlayerInstance.PlayerInfo.VIPPoints,
                     AllianceId = 0,//global chat alliance is zero. //operation.AllianceId,
                     Timestamp = DateTimeOffset.Now.ToUnixTimeSeconds(), //ToString("dd/MM/yyyy HH:mm:ss"),
                     ChatMessage = message
@@ -532,10 +532,10 @@ new string[]{
                 var data = response.GetDictionary();
                 GameLobbyHandler.log.Info(">>>>>data =" + data);
 
-                var questUpdated = await CompleteCustomTaskQuest(peer.Actor.PlayerId, CustomTaskType.SendGlobalChat);
+                var questUpdated = await CompleteCustomTaskQuest(peer.PlayerInstance.PlayerId, CustomTaskType.SendGlobalChat);
                 if (questUpdated)
                 {
-                    peer.Actor.SendEvent(EventCode.UpdateQuest, new Dictionary<byte, object>());
+                    peer.PlayerInstance.SendEvent(EventCode.UpdateQuest, new Dictionary<byte, object>());
                 }
 
                 return peer.Broadcast(OperationCode.GlobalChat, ReturnCode.OK, data);
@@ -551,9 +551,9 @@ new string[]{
             var operation = new ChatMessageRequest(peer.Protocol, operationRequest);
             ChatMessageRespose response = new ChatMessageRespose()
             {
-                PlayerId = peer.Actor.PlayerData.PlayerId, //operation.PlayerId,
-                Username = peer.Actor.PlayerData.Name, //operation.Username,
-                VIPPoints = peer.Actor.PlayerData.VIPPoints,
+                PlayerId = peer.PlayerInstance.PlayerInfo.PlayerId, //operation.PlayerId,
+                Username = peer.PlayerInstance.PlayerInfo.Name, //operation.Username,
+                VIPPoints = peer.PlayerInstance.PlayerInfo.VIPPoints,
                 AllianceId = operation.AllianceId,
                 Timestamp = DateTimeOffset.Now.ToUnixTimeSeconds(),//ToString("dd/MM/yyyy HH:mm:ss"),
                 ChatMessage = operation.ChatMessage,
@@ -569,7 +569,7 @@ new string[]{
             var operation = new GateRequest(peer.Protocol, operationRequest);
             if (!operation.IsValid) return peer.SendOperation(operationRequest.OperationCode, ReturnCode.InvalidOperation, debuMsg: operation.GetErrorMessage());
 
-            var building = peer.Actor.InternalPlayerDataManager.GetPlayerBuildingByLocationId(operation.BuildingLocationId);
+            var building = peer.PlayerInstance.InternalPlayerDataManager.GetPlayerBuildingByLocationId(operation.BuildingLocationId);
             if (building == null || building.StructureType != StructureType.Gate)
                 return peer.SendOperation(operationRequest.OperationCode, ReturnCode.InvalidOperation, debuMsg: "Building not found in server.");
 
@@ -579,7 +579,7 @@ new string[]{
 
         private SendResult RepairGateRequest(IGorMmoPeer peer, OperationRequest operationRequest)
         {
-            log.Debug("@@@@@@@ HANDLE REPAIR GATE FROM " + peer.Actor.PlayerId);
+            log.Debug("@@@@@@@ HANDLE REPAIR GATE FROM " + peer.PlayerInstance.PlayerId);
 
             var operation = new GateRequest(peer.Protocol, operationRequest);
             if (!operation.IsValid)
@@ -588,8 +588,8 @@ new string[]{
                 return peer.SendOperation(operationRequest.OperationCode, ReturnCode.InvalidOperation, debuMsg: operation.GetErrorMessage());
             }
 
-            log.Debug("internal player data exists ="+(peer.Actor.InternalPlayerDataManager != null));
-            var building = peer.Actor.InternalPlayerDataManager.GetPlayerBuildingByLocationId(operation.BuildingLocationId);
+            log.Debug("internal player data exists ="+(peer.PlayerInstance.InternalPlayerDataManager != null));
+            var building = peer.PlayerInstance.InternalPlayerDataManager.GetPlayerBuildingByLocationId(operation.BuildingLocationId);
             if ((building == null) || (building.StructureType != StructureType.Gate))
             {
                 return peer.SendOperation(operationRequest.OperationCode, ReturnCode.InvalidOperation, debuMsg: "Building not found in server.");
@@ -616,7 +616,7 @@ new string[]{
             var operation = new WoundedTroopHealRequest(peer.Protocol, operationRequest);
             if (!operation.IsValid) return peer.SendOperation(operationRequest.OperationCode, ReturnCode.InvalidOperation, debuMsg: operation.GetErrorMessage());
 
-            var building = peer.Actor.InternalPlayerDataManager.GetPlayerBuildingByLocationId(operation.BuildingLocationId);
+            var building = peer.PlayerInstance.InternalPlayerDataManager.GetPlayerBuildingByLocationId(operation.BuildingLocationId);
             if (building == null)
             {
                 return peer.SendOperation(operationRequest.OperationCode, ReturnCode.InvalidOperation, debuMsg: "building not found in server.");
@@ -631,7 +631,7 @@ new string[]{
             var operation = new WoundedTroopTimerStatusRequest(peer.Protocol, operationRequest);
             if (!operation.IsValid) return peer.SendOperation(operationRequest.OperationCode, ReturnCode.InvalidOperation, debuMsg: operation.GetErrorMessage());
 
-            var building = peer.Actor.InternalPlayerDataManager.GetPlayerBuildingByLocationId(operation.BuildingLocationId);
+            var building = peer.PlayerInstance.InternalPlayerDataManager.GetPlayerBuildingByLocationId(operation.BuildingLocationId);
             if (building == null) return peer.SendOperation(operationRequest.OperationCode, ReturnCode.InvalidOperation, debuMsg: "building not found in server.");
 
             building.WoundedTroopTimerStatusRequest(operation);
@@ -652,14 +652,14 @@ new string[]{
             var troopLevel = operation.TroopLevel;
             var troopCount = operation.TroopCount;
             var locationId = operation.LocationId;
-            var resp = await GameService.BUsertroopManager.TrainTroops(peer.Actor.PlayerId, troopType, troopLevel, troopCount, locationId);
+            var resp = await GameService.BUsertroopManager.TrainTroops(peer.PlayerInstance.PlayerId, troopType, troopLevel, troopCount, locationId);
             if (!resp.IsSuccess)
             {
                 log.Info("TRAIN TROOP FAIL " + resp.Message);
                 return SendOperationResponse(peer, operationRequest, resp);
             }
 
-            var (response, data) = await GetTroopStatus(locationId, operation.StructureType, troopType, peer.Actor.PlayerId);
+            var (response, data) = await GetTroopStatus(locationId, operation.StructureType, troopType, peer.PlayerInstance.PlayerId);
             if ((data == null) || (data.Keys.Count == 0))
             {
                 var trainingTroopResp = new TroopTrainingTimeResponse()
@@ -670,7 +670,7 @@ new string[]{
                 data = trainingTroopResp.GetDictionary();
             }
 
-            var playerQuestData = await UpdatePlayerData(peer.Actor);
+            var playerQuestData = await UpdatePlayerData(peer.PlayerInstance);
             _ = GameService.BUserQuestManager.CheckQuestProgressForTrainTroops(playerQuestData, troopType, troopLevel, troopCount);
 
             return SendOperationResponse(peer, operationRequest, response, data);
@@ -705,7 +705,7 @@ new string[]{
                 return SendOperationResponse(peer, operationRequest, new Response(CaseType.Error, operation.GetErrorMessage()));
             }
 
-            var (response, data) = await GetTroopStatus(operation.LocationId, operation.StructureType, (TroopType)operation.TroopType, peer.Actor.PlayerId);
+            var (response, data) = await GetTroopStatus(operation.LocationId, operation.StructureType, (TroopType)operation.TroopType, peer.PlayerInstance.PlayerId);
             return SendOperationResponse(peer, operationRequest, response, data);
         }
 
@@ -754,7 +754,7 @@ new string[]{
             var operation = new TroopTrainingStatusRequest(peer.Protocol, operationRequest);
             if (!operation.IsValid) return peer.SendOperation(operationRequest.OperationCode, ReturnCode.InvalidOperation, debuMsg: operation.GetErrorMessage());
 
-            var building = peer.Actor.InternalPlayerDataManager.GetPlayerBuilding((StructureType)operation.StructureType, operation.LocationId);
+            var building = peer.PlayerInstance.InternalPlayerDataManager.GetPlayerBuilding((StructureType)operation.StructureType, operation.LocationId);
             if (building == null) return peer.SendOperation(operationRequest.OperationCode, ReturnCode.InvalidOperation, debuMsg: "building not found in server.");
 
             if (!building.Troops.ContainsKey((TroopType)operation.TroopType)) return peer.SendOperation(operationRequest.OperationCode, ReturnCode.InvalidOperation, debuMsg: "troop not found in building.");
@@ -772,21 +772,21 @@ new string[]{
             }
 
             log.Info(">>>>>>>>> collect resource >" + JsonConvert.SerializeObject(operation));
-            var building = peer.Actor.InternalPlayerDataManager.GetPlayerBuilding(operation.StructureType, operation.LocationId);
+            var building = peer.PlayerInstance.InternalPlayerDataManager.GetPlayerBuilding(operation.StructureType, operation.LocationId);
             if ((building == null) || !(building is ResourceGenerator))
             {
                 var msg = "Building not found in server.";
                 return peer.SendOperation(operationRequest.OperationCode, ReturnCode.InvalidOperation, debuMsg: msg);
             }
 
-            var response = await GameService.BPlayerStructureManager.CollectResource(peer.Actor.PlayerId, operation.LocationId);
+            var response = await GameService.BPlayerStructureManager.CollectResource(peer.PlayerInstance.PlayerId, operation.LocationId);
             if (!response.IsSuccess || !response.HasData)
             {
                 var msg = operation.GetErrorMessage();
                 return peer.SendOperation(operationRequest.OperationCode, ReturnCode.InvalidOperation, debuMsg: msg);
             }
 
-            await UpdatePlayerData(peer.Actor);
+            await UpdatePlayerData(peer.PlayerInstance);
 
             var bldResource = (ResourceGenerator)building;
             var resourceType = bldResource.Resource.ResourceInfo.Code;
@@ -800,7 +800,7 @@ new string[]{
             };
             log.Info(">>>>>>>>> data to send >" + JsonConvert.SerializeObject(uresponse));
 
-            var playerData = GameService.RealTimeUpdateManagerQuestValidator.GetCachedPlayerData(peer.Actor.PlayerId);
+            var playerData = GameService.RealTimeUpdateManagerQuestValidator.GetCachedPlayerData(peer.PlayerInstance.PlayerId);
             _ = GameService.BUserQuestManager.CheckQuestProgressForCollectResourceAsync(playerData, resourceType, resourceCollected.Collected);
 
             return peer.SendOperation(operationRequest.OperationCode, ReturnCode.OK, uresponse.GetDictionary(), debuMsg: response.Message);
@@ -808,22 +808,22 @@ new string[]{
 
         public async Task<SendResult> HandleBoostResources(IGorMmoPeer peer, OperationRequest operationRequest)
         {
-            log.Debug("@@@@@@@ HANDLE BOOST RESOURCES FROM " + peer.Actor.PlayerId);
+            log.Debug("@@@@@@@ HANDLE BOOST RESOURCES FROM " + peer.PlayerInstance.PlayerId);
             var operation = new ResourceBoostUpRequest(peer.Protocol, operationRequest);
             if (!operation.IsValid)
             {
                 return peer.SendOperation(operationRequest.OperationCode, ReturnCode.InvalidOperation, debuMsg: operation.GetErrorMessage());
             }
 
-            log.Debug("internal player data exists =" + (peer.Actor.InternalPlayerDataManager != null));
-            var building = peer.Actor.InternalPlayerDataManager.GetPlayerBuilding((StructureType)operation.StructureType, operation.LocationId);
+            log.Debug("internal player data exists =" + (peer.PlayerInstance.InternalPlayerDataManager != null));
+            var building = peer.PlayerInstance.InternalPlayerDataManager.GetPlayerBuilding((StructureType)operation.StructureType, operation.LocationId);
             if ((building == null) || !(building is ResourceGenerator))
             {
                 var msg = "Building not found in server.";
                 return peer.SendOperation(operationRequest.OperationCode, ReturnCode.InvalidOperation, debuMsg: msg);
             }
 
-            var response = await GameService.BPlayerStructureManager.BoostUpResource(peer.Actor.PlayerId, operation.LocationId, operation.SetBoost);
+            var response = await GameService.BPlayerStructureManager.BoostUpResource(peer.PlayerInstance.PlayerId, operation.LocationId, operation.SetBoost);
             if (!response.IsSuccess)
             {
                 var msg = operation.GetErrorMessage();
@@ -832,12 +832,12 @@ new string[]{
 
             if (!response.HasData)
             {
-                log.Debug("@@@@@@@ HANDLE BOOST RESOURCES - INACTIVE");
+                log.Debug("@@@@@@@ HANDLE BOOST RESOURCES - " + response.Message);
                 return peer.SendOperation(operationRequest.OperationCode, ReturnCode.OK, null, debuMsg: "OK");
             }
 
             var bldData = response.Data;
-            log.Debug("@@@@@@@ HANDLE BOOST RESOURCES - ACTIVE");
+            log.Debug("@@@@@@@ HANDLE BOOST RESOURCES - "+response.Message);
             var bldResource = (ResourceGenerator)building;
             bldResource.BoostUp.StartTime = bldData.StartTime;
             bldResource.BoostUp.Duration = bldData.Duration;
@@ -855,18 +855,18 @@ new string[]{
 
         public async Task<SendResult> HandleAttackRequest(IGorMmoPeer peer, OperationRequest operationRequest)
         {
-            log.Debug("@@@@@@@ HANDLE ATTACK REQUEST FROM " + peer.Actor.PlayerId);
+            log.Debug("@@@@@@@ HANDLE ATTACK REQUEST FROM " + peer.PlayerInstance.PlayerId);
             string errMsg = null;
             var operation = new SendArmyRequest(peer.Protocol, operationRequest);
             if (operation.IsValid)
             {
-                var success = await peer.Actor.PlayerAttackHandler.AttackRequestAsync(operation);
+                var success = await peer.PlayerInstance.PlayerAttackHandler.AttackRequestAsync(operation);
                 if (!success) return SendResult.Failed;
 
-                var questUpdated = await CompleteCustomTaskQuest(peer.Actor.PlayerId, CustomTaskType.AttackPlayer);
+                var questUpdated = await CompleteCustomTaskQuest(peer.PlayerInstance.PlayerId, CustomTaskType.AttackPlayer);
                 if (questUpdated)
                 {
-                    peer.Actor.SendEvent(EventCode.UpdateQuest, new Dictionary<byte, object>());
+                    peer.PlayerInstance.SendEvent(EventCode.UpdateQuest, new Dictionary<byte, object>());
                 }
 
                 return SendResult.Ok;
@@ -879,12 +879,12 @@ new string[]{
 
         public async Task<SendResult> HandleSendReinforcementsRequest(IGorMmoPeer peer, OperationRequest operationRequest)
         {
-            log.Debug("@@@@@@@ HANDLE SEND REINFORCEMENTS REQUEST FROM " + peer.Actor.PlayerId);
+            log.Debug("@@@@@@@ HANDLE SEND REINFORCEMENTS REQUEST FROM " + peer.PlayerInstance.PlayerId);
             string errMsg = null;
             var operation = new SendArmyRequest(peer.Protocol, operationRequest);
             if (operation.IsValid)
             {
-                var success = await peer.Actor.PlayerAttackHandler.SendReinforcementsAsync(operation);
+                var success = await peer.PlayerInstance.PlayerAttackHandler.SendReinforcementsAsync(operation);
                 if (!success) return SendResult.Failed;
 
                 return SendResult.Ok;
@@ -898,143 +898,99 @@ new string[]{
 
         public async Task<SendResult> HandlPlayerConnectToGameServer(IGorMmoPeer peer, OperationRequest operationRequest)
         {
-            var operation = new PlayerConnectRequest(peer.Protocol, operationRequest);
-            if (!operation.IsValid) return peer.SendOperation(operationRequest.OperationCode, ReturnCode.InvalidOperation, debuMsg: operation.GetErrorMessage());
-
-            log.Debug("@@@@@@@ HANDLE PLAYER CONNECT FROM " + operation.PlayerId);
-            var playerData = GameService.BPlayerManager.GetAllPlayerData(operation.PlayerId).Result.Data;
-            if (playerData == null)
-            {
-                var dbgMsg = "Player data not found from db.";
-                return peer.SendOperation(operationRequest.OperationCode, ReturnCode.InvalidOperation, debuMsg: dbgMsg);
-            }
-            log.InfoFormat("get Player Data from db {0} ", JsonConvert.SerializeObject(playerData));
-
-            var playerId = operation.PlayerId;
-            var playerInfo = GameService.BAccountManager.GetAccountInfo(playerId).Result.Data;
-            log.InfoFormat("get Player Info from db {0} ", JsonConvert.SerializeObject(playerInfo));
-
-            (MmoActor actor, IInterestArea interestArea) = await GridWorld.GetPlayerPositionAsync(playerId, playerInfo);
-            if (actor == null)
-            {
-                var dbgMsg = "can't locate player in world map";
-                return peer.SendOperation(operationRequest.OperationCode, ReturnCode.InvalidOperation, debuMsg: dbgMsg);
-            }
-
-            log.InfoFormat("player is added in manager with playerid {0}", playerId);
-            log.InfoFormat("player enter in world X {0} Y {1} ", actor.WorldRegion.X, actor.WorldRegion.Y);
-
-            actor.StartOnReal(); //init fiber scheduler class before instantiate any building.
-            PlayerSocketDataManager playerDataManager = null;
+            int playerId;
+            PlayerSocketDataManager playerDataManager;
             try
             {
-                playerDataManager = new PlayerSocketDataManager(playerData, actor);
+                var operation = new PlayerConnectRequest(peer.Protocol, operationRequest);
+                if (!operation.IsValid) throw new InvalidOperationException(operation.GetErrorMessage());
+
+                playerId = operation.PlayerId;
+                log.Debug("@@@@@@@ HANDLE PLAYER CONNECT FROM " + playerId);
+                var playerData = GameService.BPlayerManager.GetAllPlayerData(playerId).Result.Data;
+                if (playerData == null) throw new InvalidOperationException("Player data not found from db.");
+                //            log.InfoFormat("get Player Data from db {0} ", JsonConvert.SerializeObject(playerData));
+
+                var playerInfo = GameService.BAccountManager.GetAccountInfo(playerId).Result.Data;
+                log.InfoFormat("get Player Info from db {0} ", JsonConvert.SerializeObject(playerInfo));
+                var (playerInstance, interestArea) = await GridWorld.AllocatePlayerAsync(playerId, playerInfo);
+                if (playerInstance == null) throw new InvalidOperationException("Can't allocate player in world map");
+
+                log.Info("player " + playerId + " added in world (" + playerInstance.WorldRegion.X + ", " + playerInstance.WorldRegion.Y + ")");
+
+                playerInstance.StartOnReal(); //init fiber scheduler class before instantiate any building.
+                playerDataManager = new PlayerSocketDataManager(playerData, playerInstance);
+
+                playerInstance.PlayerSpawn(interestArea, peer, playerDataManager, playerInfo);
             }
-            catch
+            catch (InvalidOperationException ex)
             {
-                var msg = "Error generating player data.";
-                log.Info("******** " + msg + " " + playerId);
-                return peer.SendOperation(operationRequest.OperationCode, ReturnCode.InvalidOperation, debuMsg: msg);
+                return peer.SendOperation(operationRequest.OperationCode, ReturnCode.InvalidOperation, debuMsg: ex.Message);
+            }
+            catch (Exception ex)
+            {
+                return peer.SendOperation(operationRequest.OperationCode, ReturnCode.Failed, debuMsg: ex.Message);
             }
 
-            actor.PlayerSpawn(interestArea, peer, playerDataManager);
-            actor.Peer.Actor = actor;  //vice versa mmoactor into the peer and reverse
-//            var vipPts = peer.Actor.PlayerData.VIPPoints;//playerInfo.VIPPoints;
-            var profile = new UserProfileResponse
+            playerDataManager.player.TryAddPlayerQuestData();
+
+            var attackList = GameService.BRealTimeUpdateManager.GetAllAttackDataForDefender(playerId);
+            if (attackList.Count > 0)
             {
-                AllianceId = playerInfo.AllianceId,
-                PlayerId = playerId,
-                UserName = playerInfo.Name,
-                X = actor.WorldRegion.X,
-                Y = actor.WorldRegion.Y,
-                VIPPoints = playerInfo.VIPPoints,
-                KingLevel = playerInfo.KingLevel,
-                CastleLevel = playerInfo.CastleLevel,
-                LastLogin = playerInfo.LastLogin.ToUniversalTime().ToString("s") + "Z"
-            };
-            actor.UpdatePlayerInfo(playerInfo);
+                log.Info(attackList.Count + " Under attack data found for player" + playerId);
 
-            actor.SendEvent(EventCode.UserProfile, profile);
-            log.InfoFormat("Send profile data to client X {0} Y {1} userName {2} castle {3} ", profile.X, profile.Y, profile.UserName, profile.CastleLevel);
-
-            GameService.RealTimeUpdateManagerQuestValidator.TryAddPlayerQuestData(actor.PlayerId, questUpdated =>
-            {
-                if (questUpdated == null) return;
-
-                var objResp = new QuestUpdateResponse()
-                {
-                    IsSuccess = true,
-                    Message = "Update quest data",
-
-                    QuestId = questUpdated.QuestId,
-                    Completed = questUpdated.Completed,
-                    ProgressData = questUpdated.Completed? null : questUpdated.ProgressData
-                };
-
-                new DelayedAction().WaitForCallBack(() =>
-                {
-                    try
-                    {
-                        actor.SendEvent(EventCode.UpdateQuest, objResp);
-                    }catch (Exception ex)
-                    {
-                        log.Info("EXCEPTION sending event " + ex.Message);
-                    }
-                }, 100);
-            });
-
-
-            var attackList = GameService.BRealTimeUpdateManager.GetAllAttackDataForDefender(actor.PlayerId);
-            if ((attackList != null) && (attackList.Count > 0))
-            {
-                var watchLevel = KingdomPvPManager.GetWatchLevel(playerData);
+                var watchLevel = KingdomPvPManager.GetWatchLevel(playerDataManager.playerData);
                 foreach (var item in attackList)
                 {
                     item.AttackData.WatchLevel = watchLevel;
-                    var attackResponse = new AttackResponse(item.AttackData);//attack / under attack event
-                    actor.SendEvent(EventCode.UnderAttack, attackResponse);
+                    playerDataManager.player.SendEvent(EventCode.UnderAttack, new AttackResponse(item.AttackData));
                 }
             }
-            else
-            {
-                log.InfoFormat("Under attack data not found for this user when join game {0} ", actor.PlayerId);
-            }
 
-            log.Debug("@@@@ END PLAYER CONNECT "+actor.PlayerId);
+            log.Debug("@@@@ END PLAYER CONNECT "+playerId);
             return peer.SendOperation(operationRequest.OperationCode, ReturnCode.OK);
         }
 
         public SendResult HandlePlayerTeleport(IGorMmoPeer peer, OperationRequest operationRequest)
         {
             //log.InfoFormat("HandlePlayerTeleport Dict {0} ", Helper.DicToString(operationRequest.Parameters));
-            var operation = new TeleportLocation(peer.Protocol, operationRequest);
-            if (!operation.IsValid) return peer.SendOperation(operationRequest.OperationCode, ReturnCode.InvalidOperation, debuMsg: operation.GetErrorMessage());
+            Region region;
+            try
+            {
+                var operation = new TeleportLocation(peer.Protocol, operationRequest);
+                if (!operation.IsValid) throw new InvalidOperationException(operation.GetErrorMessage());
+                if (peer.PlayerInstance == null) throw new InvalidOperationException("Player not found.");
 
-            if (peer.Actor == null) return peer.SendOperation(operationRequest.OperationCode, ReturnCode.InvalidOperation, debuMsg: "Invalid Request Actor not found.");
+                region = GridWorld.WorldRegions[(int)operation.X][(int)operation.Y];
+                if (region.IsBooked) throw new InvalidOperationException("Location is already used by other player.");
 
-            var region = GridWorld.WorldRegions[(int)operation.X][(int)operation.Y];
-            if (region.IsBooked) return peer.SendOperation(operationRequest.OperationCode, ReturnCode.InvalidOperation, debuMsg: "City is already booked by other player.");
+                if (!region.IsWalkable) throw new InvalidOperationException("location is not walkable.");
+            }
+            catch (InvalidOperationException ex)
+            {
+                return peer.SendOperation(operationRequest.OperationCode, ReturnCode.InvalidOperation, debuMsg: ex.Message);
+            }
 
-            if (!region.IsWalkable)
-                return peer.SendOperation(operationRequest.OperationCode, ReturnCode.OK, debuMsg: "tile position is not walkable.");
-
-            peer.Actor.WorldRegion.RemovePlayerFromRegion(peer.Actor);
-            peer.Actor.PlayerTeleport(region);
-            peer.Actor.InterestArea.UpdateInterestArea(region);
+            peer.PlayerInstance.WorldRegion.RemovePlayerFromRegion(peer.PlayerInstance);
+            peer.PlayerInstance.PlayerTeleport(region);
+            peer.PlayerInstance.InterestArea.UpdateInterestArea(region);
 
             return peer.SendOperation(operationRequest.OperationCode, ReturnCode.OK);
         }
 
         public SendResult HandlePlayerJoinKingdomView(IGorMmoPeer peer, OperationRequest operationRequest)
         {
-            if (peer == null || peer.Actor == null || peer.Actor.InterestArea == null)
-                return peer.SendOperation(operationRequest.OperationCode, ReturnCode.InvalidOperation, debuMsg: "interest area not found.");
+            if (peer == null || peer.PlayerInstance == null || peer.PlayerInstance.InterestArea == null)
+            {
+                var msg = "Interest area not found.";
+                return peer.SendOperation(operationRequest.OperationCode, ReturnCode.InvalidOperation, debuMsg: msg);
+            }
 
-            peer.Actor.InterestArea.JoinKingdomView();
+            peer.PlayerInstance.InterestArea.JoinKingdomView();
             var joinResp = new JoinKingdomResponse()
             {
-                WorldSizeX = (short)peer.Actor.World.SizeX,
-                WorldSizeY = (short)peer.Actor.World.SizeY
+                WorldSizeX = (short)peer.PlayerInstance.World.SizeX,
+                WorldSizeY = (short)peer.PlayerInstance.World.SizeY
             };
             var data = joinResp.GetDictionary();
 
@@ -1043,41 +999,50 @@ new string[]{
 
         public SendResult HandlePlayerLeaveKingdomView(IGorMmoPeer peer, OperationRequest operationRequest)
         {
-            if (peer == null || peer.Actor == null || peer.Actor.InterestArea == null)
-                return peer.SendOperation(operationRequest.OperationCode, ReturnCode.InvalidOperation, debuMsg: "interest area not found.");
+            if (peer == null || peer.PlayerInstance == null || peer.PlayerInstance.InterestArea == null)
+            {
+                var msg = "Interest area not found.";
+                return peer.SendOperation(operationRequest.OperationCode, ReturnCode.InvalidOperation, debuMsg: msg);
+            }
 
-            peer.Actor.InterestArea.LeaveKingdomView();
+            peer.PlayerInstance.InterestArea.LeaveKingdomView();
+
             return peer.SendOperation(operationRequest.OperationCode, ReturnCode.OK);
         }
 
         public SendResult HandlePlayerCameraMove(IGorMmoPeer peer, OperationRequest operationRequest)
         {
-            log.InfoFormat("HandlePlayerCameraMove Dict {0} ", GlobalHelper.DicToString(operationRequest.Parameters));
-            var operation = new CameraMoveRequest(peer.Protocol, operationRequest);
-            if (!operation.IsValid) return peer.SendOperation(operationRequest.OperationCode, ReturnCode.InvalidOperation, debuMsg: operation.GetErrorMessage());
-
-            if ((peer.Actor != null) && (peer.Actor.InterestArea != null))
+            Region region;
+            try
             {
+//                log.InfoFormat("HandlePlayerCameraMove Dict {0} ", GlobalHelper.DicToString(operationRequest.Parameters));
+                var operation = new CameraMoveRequest(peer.Protocol, operationRequest);
+                if (!operation.IsValid) throw new InvalidOperationException(operation.GetErrorMessage());
+
+                if (peer == null || peer.PlayerInstance == null || peer.PlayerInstance.InterestArea == null)
+                {
+                    throw new InvalidOperationException("Interest area not found.");
+                }
                 var x = (int)operation.X;
                 var y = (int)operation.Y;
-                var regions = GridWorld.WorldRegions;
-                log.Info(" world =" + GridWorld.WorldId + "  " + GridWorld.Name);
-                log.Info("Regions = " + regions.Length + " x " + regions[0].Length);
-                var outOfBounds = (x >= regions.Length) || (y >= regions[0].Length) || (x < 0) || (y < 0);
-                if (outOfBounds)
-                {
-                    log.Info("camera out of bounds");
-                    return peer.SendOperation(operationRequest.OperationCode, ReturnCode.InvalidOperation);
-                }
-                else
-                {
-                    log.Info($"Move to x:{x} y:{y}");
-                    peer.Actor.InterestArea.CameraMove(regions[x][y]);
-                    return peer.SendOperation(operationRequest.OperationCode, ReturnCode.OK);
-                }
+//            log.Info(" world =" + GridWorld.WorldId + "  " + GridWorld.Name);
+//            log.Info("Regions = " + regions.Length + " x " + regions[0].Length);
+                var outOfBounds = (x >= GridWorld.WorldRegions.Length) ||
+                                    (y >= GridWorld.WorldRegions[0].Length) ||
+                                    (x < 0) || (y < 0);
+                if (outOfBounds) throw new InvalidOperationException("Camera out of bounds");
+
+                region = GridWorld.WorldRegions[x][y];
+            }
+            catch (InvalidOperationException ex)
+            {
+                return peer.SendOperation(operationRequest.OperationCode, ReturnCode.InvalidOperation, debuMsg: ex.Message);
             }
 
-            return SendResult.Ok;
+//            log.Info($"Move to x:{region.X} y:{region.Y}");
+            peer.PlayerInstance.InterestArea.CameraMove(region);
+
+            return peer.SendOperation(operationRequest.OperationCode, ReturnCode.OK);
         }
 
 /*        public SendResult HandleHelpStructure(IGorMmoPeer peer, OperationRequest operationRequest)
@@ -1109,14 +1074,14 @@ new string[]{
             var location = operation.StructureLocationId;
             var seconds = operation.TotalTime;
 
-            var response = await GameService.BPlayerStructureManager.HelpBuilding(peer.Actor.PlayerId, targetPlayerId, structureType, location, seconds);
+            var response = await GameService.BPlayerStructureManager.HelpBuilding(peer.PlayerInstance.PlayerId, targetPlayerId, structureType, location, seconds);
             if (!response.IsSuccess)
             {
                 return peer.SendOperation(operationRequest.OperationCode, ReturnCode.InvalidOperation, debuMsg: response.Message);
             }
 
             var targetBuilding = response.Data.Value.Find(x => (x.Location == location));
-            var targetActor = peer.Actor.World.PlayersManager.GetPlayer(targetPlayerId);
+            var targetActor = peer.PlayerInstance.World.PlayersManager.GetPlayer(targetPlayerId);
             if (targetActor != null)
             {
                 await UpdatePlayerData(targetActor);
@@ -1140,7 +1105,7 @@ new string[]{
 
             var resp = new HelpStructureRespose()
             {
-                PlayerId = peer.Actor.PlayerId,
+                PlayerId = peer.PlayerInstance.PlayerId,
                 TargetPlayerId = targetPlayerId,
                 StructureType = (int)structureType,
                 StructureLocationId = location,
@@ -1172,9 +1137,9 @@ new string[]{
                 return peer.SendOperation(operationRequest.OperationCode, ReturnCode.Failed, debuMsg: "structure not found in the game.");
             }
 
-            GameService.GameBuildingManagerInstances[structureType].CreateStructureForPlayer(operation, peer.Actor);
+            GameService.GameBuildingManagerInstances[structureType].CreateStructureForPlayer(operation, peer.PlayerInstance);
 
-            await UpdatePlayerData(peer.Actor);
+            await UpdatePlayerData(peer.PlayerInstance);
 
             log.Info("**************** HandleCreateStructure End************************");
             return SendResult.Ok;
@@ -1182,7 +1147,7 @@ new string[]{
 
         public async Task<SendResult> HandleUpgradeStructure(IGorMmoPeer peer, OperationRequest operationRequest)
         {
-            log.Debug("@@@@@@@ HANDLE UPGRADE STRUCTURE REQUEST FROM " + peer.Actor.PlayerId);
+            log.Debug("@@@@@@@ HANDLE UPGRADE STRUCTURE REQUEST FROM " + peer.PlayerInstance.PlayerId);
 
             var operation = new UpgradeStructureRequest(peer.Protocol, operationRequest);
             if (!operation.IsValid)
@@ -1193,11 +1158,11 @@ new string[]{
             var success = false;
             if (GameService.GameBuildingManagerInstances.ContainsKey((StructureType)operation.StructureType))
             {
-                success = GameService.GameBuildingManagerInstances[(StructureType)operation.StructureType].UpgradeStructureForPlayer(operation, peer.Actor);
+                success = GameService.GameBuildingManagerInstances[(StructureType)operation.StructureType].UpgradeStructureForPlayer(operation, peer.PlayerInstance);
             }
             log.Debug(success ? "@@@@ UPGRADE OK!!" : "@@@@ UPGRADE FAIL!");
 
-            if (success) await UpdatePlayerData(peer.Actor);
+            if (success) await UpdatePlayerData(peer.PlayerInstance);
 
             return success ? SendResult.Ok : SendResult.Failed;
         }
@@ -1207,7 +1172,7 @@ new string[]{
             var operation = new PlayerBuildingBuildingStatusRequest(peer.Protocol, operationRequest);
             if (!operation.IsValid) return peer.SendOperation(operationRequest.OperationCode, ReturnCode.InvalidOperation, debuMsg: operation.GetErrorMessage());
 
-            var playerStructData = await GameService.BPlayerStructureManager.CheckBuildingStatus(peer.Actor.PlayerId, (StructureType)operation.StructureType);
+            var playerStructData = await GameService.BPlayerStructureManager.CheckBuildingStatus(peer.PlayerInstance.PlayerId, (StructureType)operation.StructureType);
 
             string msg = null;
             StructureDetails building = null;
@@ -1305,7 +1270,7 @@ new string[]{
                 StructureType = (int)type
             };
 
-            peer.Actor.SendEvent(EventCode.CompleteTimer, timer);
+            peer.PlayerInstance.SendEvent(EventCode.CompleteTimer, timer);
 
             log.Info("************************************** SendBuildingCompleteToBuild END **************************************");
         }

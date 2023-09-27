@@ -10,12 +10,12 @@ namespace GameOfRevenge.ResourcesHandler
     public class PlayerResources : IPlayerResources
     {
         private static readonly ILogger log = LogManager.GetCurrentClassLogger();
-        private readonly MmoActor actor;
+        private readonly PlayerInstance actor;
 
         public IReadOnlyResourceTable ResourceInfo { get; private set; }
         public long Value { get; set; }
 
-        public PlayerResources(IReadOnlyResourceTable info, long value, MmoActor actor)
+        public PlayerResources(IReadOnlyResourceTable info, long value, PlayerInstance actor)
         {
             this.actor = actor;
             Value = value;

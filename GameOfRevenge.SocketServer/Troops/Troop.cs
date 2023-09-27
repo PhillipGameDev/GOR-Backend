@@ -20,7 +20,7 @@ namespace GameOfRevenge.Troops
 
         public TroopDetails TroopDetails { get; private set; }
         public UnavaliableTroopInfo TroopTrainer { get; private set; }
-        public MmoActor Player { get => Building.Player; }
+        public PlayerInstance Player { get => Building.Player; }
         public IGameTroop GameTroop { get; private set; }
         public TroopType TroopType => GameTroop.TroopType;
         public bool IsTraining { get => (TroopTrainer != null) && (TroopTrainer.TimeLeft > 0); }

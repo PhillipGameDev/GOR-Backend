@@ -11,7 +11,7 @@ namespace GameOfRevenge.Model
         [DataMember(Code = (byte)RoomParameterKey.StructureLocationId, IsOptional = true)]
         public int BuildingLocationId { get; set; }
 
-        [DataMember(Code = (byte)RoomParameterKey.Hitpoint, IsOptional = true)]
-        public int Hitpoint { get; set; }
+        [DataMember(Code = (byte)RoomParameterKey.HitPoints, IsOptional = true)]
+        public int Hitpoints { get; set; }
     }
 }

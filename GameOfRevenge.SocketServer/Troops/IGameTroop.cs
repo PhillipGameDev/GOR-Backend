@@ -12,7 +12,7 @@ namespace GameOfRevenge.Troops
         TroopType TroopType { get; }
 
         double GetTrainingTotalTime(int level);
-        void TroopTraining(RecruitTroopRequest request, MmoActor actor);
-        ITroop AddTroopOnPlayerBuilding(TroopType troopType, IPlayerBuildingManager building, MmoActor actor);
+        void TroopTraining(RecruitTroopRequest request, PlayerInstance actor);
+        ITroop AddTroopOnPlayerBuilding(TroopType troopType, IPlayerBuildingManager building, PlayerInstance actor);
     }
 }

@@ -37,7 +37,7 @@ namespace GameOfRevenge.Buildings.Handlers
             }
         }
 
-        public Mine(MmoActor player, StructureDetails structureData, IGameBuildingManager baseBuildingManager) : base(player, structureData, baseBuildingManager)
+        public Mine(PlayerInstance player, StructureDetails structureData, IGameBuildingManager baseBuildingManager) : base(player, structureData, baseBuildingManager)
         {
         }
     }

@@ -1,4 +1,5 @@
-﻿using System.Threading.Tasks;
+﻿using System.Collections.Generic;
+using System.Threading.Tasks;
 using ExitGames.Concurrency.Fibers;
 using GameOfRevenge.Common.Models;
 using GameOfRevenge.GameHandlers;
@@ -15,11 +16,16 @@ namespace GameOfRevenge.Interface
         Region[][] WorldRegions { get; }
         Vector TileDimensions { get; }
         IPlayersManager PlayersManager { get; }
+
+        List<PlayerID> WorldPlayers { get; }
+        List<EntityID> WorldMonsters { get; }
+
         IFiber WorldFiber { get; }
 
-//        Region FindFreeRegion();
-        Task<(MmoActor actor, IInterestArea iA)> GetPlayerPositionAsync(int playerId, PlayerInfo playerInfo);
-        double GetDistanceBw2Points(Region p1, Region p2);
+        Task<(PlayerInstance, IInterestArea)> AllocatePlayerAsync(int playerId, PlayerInfo playerInfo);
+        bool CheckSameZone(Region p1, Region p2);
+        int GetDistance(Region p1, Region p2);
+        int GetDistance(int p1x, int p1y, int p2x, int p2y);
         void Dispose();
     }
 }

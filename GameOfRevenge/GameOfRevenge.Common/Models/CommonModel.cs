@@ -24,7 +24,7 @@ namespace GameOfRevenge.Common.Models
         public int AttackerId { get; set; }
         public string AttackerName { get; set; }
 
-        public int MonsterId { get; set; }//obsolete, use TargetId
+//        public int MonsterId { get; set; }//obsolete, use TargetId
 
         public int TargetId { get; set; }
         public string TargetName { get; set; }
@@ -46,7 +46,7 @@ namespace GameOfRevenge.Common.Models
         {
         }
 
-        public AttackResponseData(PlayerCompleteData attackerCompleteData, MarchingArmy marchingArmy, int targetId, int monsterId)
+        public AttackResponseData(PlayerCompleteData attackerCompleteData, MarchingArmy marchingArmy, int targetId)
         {
             MarchingId = marchingArmy.MarchingId;
             MarchingType = marchingArmy.MarchingType;
@@ -56,7 +56,7 @@ namespace GameOfRevenge.Common.Models
 
             TargetId = targetId;
 //            EnemyId = targetId;//obsolete
-            MonsterId = monsterId;//obsolete
+//            MonsterId = monsterId;//obsolete
 
             StartTime = marchingArmy.StartTime.ToUniversalTime().ToString("s") + "Z";
             Recall = marchingArmy.Recall;

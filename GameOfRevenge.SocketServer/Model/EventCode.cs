@@ -12,6 +12,8 @@
         UpdateQuest = 8,
         UnderAttack = 9,
         ReinforcementsEvent = 10,
-        UpdateMarchingArmyEvent = 11
+        UpdateMarchingArmyEvent = 11,
+        EntityEnter = 12,
+        EntityExit = 13
     }
 }

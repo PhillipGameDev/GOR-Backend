@@ -24,7 +24,7 @@ namespace GameOfRevenge.GameHandlers
     {
         private static readonly ILogger log = LogManager.GetCurrentClassLogger();
         public readonly List<PlayerDataTable> playerData;
-        public readonly MmoActor player;
+        public readonly PlayerInstance player;
 
         public Dictionary<StructureType, List<IPlayerBuildingManager>> PlayerBuildings { get; private set; }
         public Dictionary<ResourceType, IPlayerResources> PlayerResources { get; private set; }
@@ -32,13 +32,13 @@ namespace GameOfRevenge.GameHandlers
 //        public UserKingDetails King { get; set; }
 //        public List<UserRecordBuilderDetails> Builders { get; set; }
 
-        public PlayerSocketDataManager(List<PlayerDataTable> playerData, MmoActor player)
+        public PlayerSocketDataManager(List<PlayerDataTable> playerData, PlayerInstance playerInstance)
         {
-            this.AttackHandler = new PlayerAttackHandler(player);
+            this.AttackHandler = new PlayerAttackHandler(playerInstance);
             this.PlayerBuildings = new Dictionary<StructureType, List<IPlayerBuildingManager>>();
             this.PlayerResources = new Dictionary<ResourceType, IPlayerResources>();
             this.playerData = playerData;
-            this.player = player;
+            this.player = playerInstance;
 //            this.Builders = new List<UserRecordBuilderDetails>();
 
             var sortedList = playerData.OrderBy(x => x.DataType);
@@ -75,16 +75,16 @@ namespace GameOfRevenge.GameHandlers
                         case DataType.Resource:
                             var resource = PlayerData.PlayerDataToUserResourceData(data);
 #if DEBUG
-                            log.InfoFormat("Player Data Convert to resource {0} playerData {1} ",
-                            JsonConvert.SerializeObject(resource), JsonConvert.SerializeObject(data));
+//                            log.InfoFormat("Player Data Convert to resource {0} playerData {1} ",
+//                            JsonConvert.SerializeObject(resource), JsonConvert.SerializeObject(data));
 #endif
                             AddResourcesOnPlayer(resource);
                             break;
                         case DataType.Troop:
                             var troops = PlayerData.PlayerDataToUserTroopData(data);
 #if DEBUG
-                            log.InfoFormat("Player Data Convert to Troop {0} playerData {1} ",
-                              JsonConvert.SerializeObject(troops), JsonConvert.SerializeObject(data));
+//                            log.InfoFormat("Player Data Convert to Troop {0} playerData {1} ",
+//                              JsonConvert.SerializeObject(troops), JsonConvert.SerializeObject(data));
 #endif
                             AddTroopOnPlayerBuilding(troops);
                             break;

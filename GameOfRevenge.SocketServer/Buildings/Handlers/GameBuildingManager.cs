@@ -34,7 +34,7 @@ namespace GameOfRevenge.Buildings.Handlers
             Troops = troops;
         }
 
-        public void RecruitTroops(RecruitTroopRequest request, MmoActor actor)
+        public void RecruitTroops(RecruitTroopRequest request, PlayerInstance actor)
         {
             if (Troops.ContainsKey((TroopType)request.TroopType))
             {
@@ -47,7 +47,7 @@ namespace GameOfRevenge.Buildings.Handlers
             }
         }
 
-        public void CreateStructureForPlayer(CreateStructureRequest request, MmoActor actor)
+        public void CreateStructureForPlayer(CreateStructureRequest request, PlayerInstance actor)
         {
             log.InfoFormat("Create Structure Request CurrentBuilding {0} Data {1} ", this.CacheBuildingData.Info.Code.ToString(), JsonConvert.SerializeObject(request));
             var structureData = CacheBuildingData.GetStructureLevelById(1);
@@ -86,7 +86,7 @@ namespace GameOfRevenge.Buildings.Handlers
             }
         }
 
-        public bool UpgradeStructureForPlayer(UpgradeStructureRequest request, MmoActor actor)
+        public bool UpgradeStructureForPlayer(UpgradeStructureRequest request, PlayerInstance actor)
         {
 #if DEBUG
             log.InfoFormat("Upgrade Structure Request CurrentBuilding {0} Data {1} ", this.CacheBuildingData.Info.Code.ToString(),
@@ -145,7 +145,7 @@ namespace GameOfRevenge.Buildings.Handlers
             return success;
         }
         
-        private Response<UserStructureData> CreateOrUpgradeStructure(MmoActor player, IReadOnlyList<IReadOnlyDataRequirement> requirments, int location, bool isUpgrade = false)
+        private Response<UserStructureData> CreateOrUpgradeStructure(PlayerInstance player, IReadOnlyList<IReadOnlyDataRequirement> requirments, int location, bool isUpgrade = false)
         {
             if (requirments.Count > 0)
             {

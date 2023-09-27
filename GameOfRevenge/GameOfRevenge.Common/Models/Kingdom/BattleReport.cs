@@ -12,6 +12,6 @@ namespace GameOfRevenge.Common.Models.Kingdom
         [DataMember(EmitDefaultValue = false)]
         public int WinnerId { get; set; }
 
-        public bool AttackerWon => (WinnerId == Attacker.PlayerId);
+        public bool AttackerWon => (WinnerId == Attacker.EntityId);
     }
 }

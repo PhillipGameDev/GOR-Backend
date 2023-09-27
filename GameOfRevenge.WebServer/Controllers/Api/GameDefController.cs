@@ -1,17 +1,9 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using GameOfRevenge.Business.CacheData;
-using GameOfRevenge.Common.Net;
-using GameOfRevenge.Common.Models.Boost;
-using GameOfRevenge.Common.Models.Inventory;
-using GameOfRevenge.Common.Models.Troop;
-using GameOfRevenge.Common.Helper;
-using System.Linq;
-using GameOfRevenge.Common.Models.Structure;
-using GameOfRevenge.Common.Interface.UserData;
-using GameOfRevenge.Common.Models.Technology;
+using GameOfRevenge.Common;
+using GameOfRevenge.Common.Models;
 
 namespace GameOfRevenge.WebServer.Controllers.Api
 {
@@ -155,6 +147,23 @@ namespace GameOfRevenge.WebServer.Controllers.Api
         public IActionResult BuildingLevelDescription()
         {
             var response = CacheStructureDataManager.StructureInfoFactory;
+            return ReturnResponse(response);
+        }
+
+        readonly string[] monsterNames = new string[] { "Cyclops", "Darkness Spider", "Ghoul", "Golem Rock", "Oak Tree", "Troll", "Vampire" };
+
+        [HttpGet]
+        public IActionResult GetAllMonsters()
+        {
+            var response = new List<EntityData>();
+            foreach (var name in monsterNames)
+            {
+                var hp = 10000;
+                var atk = 5000;
+                var def = 5000;
+                response.Add(new EntityData(EntityType.Default, name, hp, atk, def));
+            }
+
             return ReturnResponse(response);
         }
 

@@ -17,7 +17,7 @@ namespace GameOfRevenge.GameApplication
     {
         public static readonly List<IGorMmoPeer> Clients = new List<IGorMmoPeer>();
         private static readonly ILogger log = LogManager.GetCurrentClassLogger();
-        public MmoActor Actor { get; set; }
+        public PlayerInstance PlayerInstance { get; set; }
 
         public GorMmoPeer(InitRequest initRequest) : base(initRequest)
         {
@@ -30,11 +30,11 @@ namespace GameOfRevenge.GameApplication
 #if DEBUG
             if (!string.IsNullOrEmpty(reasonDetail)) reasonDetail = ", reason in details: " + reasonDetail;
 #endif
-            if (Actor != null)
+            if (PlayerInstance != null)
             {
                 try
                 {
-                    GameService.RealTimeUpdateManagerQuestValidator.DeletePlayerQuestData(Actor.PlayerId);
+                    GameService.RealTimeUpdateManagerQuestValidator.DeletePlayerQuestData(PlayerInstance.PlayerId);
                 }
                 catch (Exception ex)
                 {
@@ -43,10 +43,10 @@ namespace GameOfRevenge.GameApplication
 #endif
                 }
 #if DEBUG
-                log.Debug($"****** Client {Actor.PlayerId} disconnected with code: {reasonCode}{reasonDetail}");
+                log.Debug($"****** Client {PlayerInstance.PlayerId} disconnected with code: {reasonCode}{reasonDetail}");
 #endif
 
-                Actor.StopOnReal();
+                PlayerInstance.StopOnReal();
             }
 #if DEBUG
             else
@@ -85,7 +85,7 @@ namespace GameOfRevenge.GameApplication
 
             var result = SendOperationResponse(operationResponse, new SendParameters());
 
-            log.Debug($"Send Operation response to ply'{this.Actor.PlayerId}' - opCode: {opCode}, returnCode: {returnCode}, data: {GlobalHelper.DicToString(data)}, debugMsg: {debuMsg}");
+            log.Debug($"Send Operation response to ply'{this.PlayerInstance.PlayerId}' - opCode: {opCode}, returnCode: {returnCode}, data: {GlobalHelper.DicToString(data)}, debugMsg: {debuMsg}");
 
             return result;
         }

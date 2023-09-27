@@ -14,7 +14,8 @@ namespace GameOfRevenge.Common.Models.PlayerData
         Unknown = 0,
         AttackPlayer = 1,
         ReinforcementPlayer = 2,
-        AttackMonster = 3
+        AttackMonster = 3,
+        AttackGloryKingdom = 4
     }
 
     [DataContract]

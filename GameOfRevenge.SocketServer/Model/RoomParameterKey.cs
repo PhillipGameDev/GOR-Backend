@@ -36,7 +36,7 @@
         IsReturnFromAttack = 32,
         TechLevel = 33,
         TechType = 34,
-        Hitpoint = 35,
+        HitPoints = 35,
         HeroIds = 36,
         QuestId = 37,
         QuestGroup = 38,
@@ -72,6 +72,7 @@
         MarchingType = 68,
         Recall = 69,
         AdvanceReduction = 70,
-        ReturnReduction = 71
+        ReturnReduction = 71,
+        TargetType = 72
     }
 }

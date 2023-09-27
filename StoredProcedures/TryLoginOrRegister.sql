@@ -62,6 +62,7 @@ BEGIN
 
 						SELECT @existingAccount = p.[PlayerId] FROM [dbo].[Player] AS p WHERE p.[PlayerIdentifier] = @tempIdentifier; 
 						EXEC [dbo].[AddFirstTimeData] @existingAccount;
+						/*TODO: update AddFirstTimeData to add our current user default data, after that we should generate @info data*/
 
 						SET @case = 100;
 						SET @message = 'Created new account succesfully';

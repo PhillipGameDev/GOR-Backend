@@ -33,7 +33,7 @@ namespace GameOfRevenge.Troops
             else return GlobalConst.DefaultTroopTrainingTime;
         }
 
-        public void TroopTraining(RecruitTroopRequest request, MmoActor actor)
+        public void TroopTraining(RecruitTroopRequest request, PlayerInstance actor)
         {
             var building = actor.InternalPlayerDataManager.GetPlayerBuilding(request.StructureType, request.LocationId);
             if (building == null)
@@ -63,7 +63,7 @@ namespace GameOfRevenge.Troops
             }
         }
 
-        public ITroop AddTroopOnPlayerBuilding(TroopType troopType, IPlayerBuildingManager building, MmoActor actor)
+        public ITroop AddTroopOnPlayerBuilding(TroopType troopType, IPlayerBuildingManager building, PlayerInstance actor)
         {
             log.InfoFormat("AddTroopOnPlayerBuilding {0} bld= {1} ", troopType.ToString(), JsonConvert.SerializeObject(building));
             TroopFactory troopFactory = new ConcreteTroopFactory();

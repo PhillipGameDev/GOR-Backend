@@ -37,7 +37,7 @@ namespace GameOfRevenge.Buildings.Handlers
             }
         }
 
-        public SawMill(MmoActor player, StructureDetails structureData, IGameBuildingManager baseBuildingManager) : base(player, structureData, baseBuildingManager)
+        public SawMill(PlayerInstance player, StructureDetails structureData, IGameBuildingManager baseBuildingManager) : base(player, structureData, baseBuildingManager)
         {
         }
     }

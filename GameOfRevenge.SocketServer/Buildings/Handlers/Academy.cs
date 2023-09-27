@@ -11,7 +11,7 @@ namespace GameOfRevenge.Buildings.Handlers
 {
     public class Academy : PlayerBuildingManager, IPlayerBuildingManager
     {
-        public Academy(MmoActor player, StructureDetails structureData, IGameBuildingManager baseBuildingManager) : base(player, structureData, baseBuildingManager)
+        public Academy(PlayerInstance player, StructureDetails structureData, IGameBuildingManager baseBuildingManager) : base(player, structureData, baseBuildingManager)
         {
         }
 

@@ -717,7 +717,7 @@ namespace GameOfRevenge.Business.Manager.UserData
                     var response = await manager.UpdatePlayerDataID(playerId, userBldGroup.Id, json);
 
                     respCase = 100;
-                    msg = "Boost started";
+                    msg = "Boost started "+castleLvl+"  "+percentage;
                 }
                 else
                 {
@@ -731,6 +731,7 @@ namespace GameOfRevenge.Business.Manager.UserData
                     Duration = userBld.Boost.Duration,
                     Percentage = userBld.Boost.Value
                 };
+
                 return new Response<BoostUpResourceResponse>()
                 {
                     Case = respCase,

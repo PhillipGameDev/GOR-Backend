@@ -1,5 +1,5 @@
-﻿using System;
-using Photon.SocketServer.Rpc;
+﻿using Photon.SocketServer.Rpc;
+using GameOfRevenge.Common.Models;
 
 namespace GameOfRevenge.Model
 {
@@ -25,5 +25,18 @@ namespace GameOfRevenge.Model
 
         [DataMember(Code = (byte)RoomParameterKey.Timestamp, IsOptional = false)]
         public string LastLogin { get; set; }
+
+        public UserProfileResponse(PlayerInfo playerInfo, int x, int y)
+        {
+            X = x;
+            Y = y;
+            PlayerId = playerInfo.PlayerId;
+            UserName = playerInfo.Name;
+            AllianceId = playerInfo.AllianceId;
+            VIPPoints = playerInfo.VIPPoints;
+            KingLevel = playerInfo.KingLevel;
+            CastleLevel = playerInfo.CastleLevel;
+            LastLogin = playerInfo.LastLogin.ToUniversalTime().ToString("s") + "Z";
+        }
     }
 }
