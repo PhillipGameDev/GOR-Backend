@@ -1,0 +1,19 @@
+
+OBSOLETO
+/*ALTER TABLE Player ALTER COLUMN IsAdmin SMALLINT NOT NULL;
+ALTER TABLE Player ALTER COLUMN IsDeveloper SMALLINT NOT NULL;*/
+renombrar IsAdmin, IsDeveloper por X,Y
+/*alter table Player add constraint DF_Player_X default -1 for X;
+alter table Player add constraint DF_Player_Y default -1 for Y;*/
+
+
+
+
+
+
+
+agregar nuevas columnas a World
+ALTER TABLE World ADD [ZoneX] SMALLINT NOT NULL DEFAULT 1;
+ALTER TABLE World ADD [ZoneY] SMALLINT NOT NULL DEFAULT 1;
+ALTER TABLE World ADD [ZoneSize] SMALLINT NOT NULL DEFAULT 50;
+ALTER TABLE World ADD [CurrentZone] SMALLINT NOT NULL DEFAULT -1;*/

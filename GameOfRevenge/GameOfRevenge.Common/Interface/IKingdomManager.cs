@@ -18,5 +18,12 @@ namespace GameOfRevenge.Common.Interface
         Task<Response<WorldDataTable>> GetWorldTileData(int id);
         Task<Response<List<WorldDataTable>>> GetWorldTilesData(int id);
         Task<Response<WorldDataTable>> UpdateWorldTileData(int x, int y, int? tileId = null, int? worldId = null);
+
+        Task<Response<List<ZoneFortressTable>>> GetAllZoneFortress();
+        Task<Response<ZoneFortress>> GetZoneFortressByIndex(int playerId, int zoneIndex);
+        Task<Response<ZoneFortress>> GetZoneFortressById(int zoneFortressId);
+        Task<Response<ZoneFortress>> UpdateZoneFortress(int zoneFortressId, int? hitPoints = null,
+                                                            int? attack = null, int? defense = null,
+                                                            int? playerId = null, string data = null);
     }
 }

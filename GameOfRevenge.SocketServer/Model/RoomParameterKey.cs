@@ -5,7 +5,7 @@
         WorldId = 1,
         X = 2,
         Y = 3,
-        PosPointX = 4,
+        Size = 4,
         PosPointY = 5,
         Username = 6,
         CommonMessage = 7,
@@ -73,6 +73,8 @@
         Recall = 69,
         AdvanceReduction = 70,
         ReturnReduction = 71,
-        TargetType = 72
+        TargetType = 72,
+        Attack = 73,
+        Defense = 74
     }
 }

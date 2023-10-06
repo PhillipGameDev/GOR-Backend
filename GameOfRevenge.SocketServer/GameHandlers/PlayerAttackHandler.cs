@@ -44,7 +44,8 @@ namespace GameOfRevenge.GameHandlers
             var attackList = GameService.BRealTimeUpdateManager.GetAllAttackerData(attacker.PlayerId);
             if (attackList.Count >= 10)
             {
-                attacker.SendOperation(OperationCode.AttackRequest, ReturnCode.Failed, null, "Maximum number of marching troops reached.");
+                var msg = "Maximum number of marching troops reached.";
+                attacker.SendOperation(OperationCode.AttackRequest, ReturnCode.Failed, null, msg);
 
                 log.Debug("@@@@@@@@ PROCCESS END - Max 10 marching troops.");
                 return false;
@@ -61,7 +62,8 @@ namespace GameOfRevenge.GameHandlers
                     Enemy = world.PlayersManager.GetPlayer(request.TargetId);
                     if (Enemy == null)
                     {
-                        attacker.SendOperation(OperationCode.AttackRequest, ReturnCode.Failed, null, "Destination not found.");
+                        var msg = "Destination not found.";
+                        attacker.SendOperation(OperationCode.AttackRequest, ReturnCode.Failed, null, msg);
 
                         log.Debug("@@@@@@@@ PROCCESS END - Destination not found.");
                         return false;
@@ -71,7 +73,8 @@ namespace GameOfRevenge.GameHandlers
                         var sameZone = world.CheckSameZone(attacker.WorldRegion, Enemy.WorldRegion);
                         if (!sameZone)
                         {
-                            attacker.SendOperation(OperationCode.AttackRequest, ReturnCode.Failed, null, "Destination is not in the same zone.");
+                            var msg = "Destination is not in the same zone.";
+                            attacker.SendOperation(OperationCode.AttackRequest, ReturnCode.Failed, null, msg);
 
                             log.Debug("@@@@@@@@ PROCCESS END - Destination is not in the same zone.");
                             return false;
@@ -90,10 +93,24 @@ namespace GameOfRevenge.GameHandlers
                     var targetX = (targetId % 2000);
                     var targetY = (targetId - targetX) / 2000;
                     log.Debug("@@@@@@@@ x:"+targetX+"  y:"+targetY);
-                    var attackerRegion = attacker.WorldRegion;
-                    dist = world.GetDistance(attackerRegion.X, attackerRegion.Y, targetX, targetY);
+                    dist = world.GetDistance(attacker.WorldRegion.X, attacker.WorldRegion.Y, targetX, targetY);
                     break;
                 case EntityType.Fortress:
+                    targetId = request.TargetId;
+                    var fortress = world.WorldForts.Find(x => x.ZoneFortressId == targetId);
+                    if (fortress == null)
+                    {
+                        var msg = "";
+                        attacker.SendOperation(OperationCode.AttackRequest, ReturnCode.Failed, null, msg);
+                        return false;
+                    }
+
+                    var totalZonesX = world.TilesX / world.ZoneSize;
+                    var fortressX = (fortress.ZoneIndex % totalZonesX);
+                    var fortressY = (fortress.ZoneIndex - fortressX) / totalZonesX;
+                    fortressX = (fortressX * world.ZoneSize) + (world.ZoneSize / 2);
+                    fortressY = (fortressY * world.ZoneSize) + (world.ZoneSize / 2);
+                    dist = world.GetDistance(attacker.WorldRegion.X, attacker.WorldRegion.Y, fortressX, fortressY);
                     break;
             }
 
@@ -185,8 +202,10 @@ namespace GameOfRevenge.GameHandlers
                             await GameService.BkingdomePvpManager.AttackMonster(attackerCompleteData, marchingArmy);
                             attackData = new AttackResponseData(attackerCompleteData, marchingArmy, targetId);
                             break;
-//                        case SendArmyType.Fortress:
-//                            break;
+                        case EntityType.Fortress:
+                            await GameService.BkingdomePvpManager.AttackGloryKingdom(attackerCompleteData, marchingArmy);
+                            attackData = new AttackResponseData(attackerCompleteData, marchingArmy, targetId);
+                            break;
                     }
                 }
                 var str = "Passing Data attackerId {0} Data {1} targetId {2} ";

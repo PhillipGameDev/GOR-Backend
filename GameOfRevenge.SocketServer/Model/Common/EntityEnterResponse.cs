@@ -27,4 +27,35 @@ namespace GameOfRevenge.Model
             HitPoints = hitPoints;
         }
     }
+
+    public class FortressEnterResponse : EntityEnterResponse
+    {
+        [DataMember(Code = (byte)RoomParameterKey.Attack, IsOptional = false)]
+        public int Attack { get; set; }
+
+        [DataMember(Code = (byte)RoomParameterKey.Defense, IsOptional = false)]
+        public int Defense { get; set; }
+
+        [DataMember(Code = (byte)RoomParameterKey.AllianceId, IsOptional = false)]
+        public int ClanId { get; set; }
+
+        [DataMember(Code = (byte)RoomParameterKey.Name, IsOptional = true)]
+        public string Name { get; set; }
+
+        [DataMember(Code = (byte)RoomParameterKey.PlayerId, IsOptional = true)]
+        public int PlayerId { get; set; }
+
+        [DataMember(Code = (byte)RoomParameterKey.StartTime, IsOptional = true)]
+        public string StartTime { get; set; }
+
+        [DataMember(Code = (byte)RoomParameterKey.Duration, IsOptional = true)]
+        public int Duration { get; set; }
+
+//        [DataMember(Code = (byte)RoomParameterKey.TroopsData, IsOptional = true)]
+//        public string PlayerTroops { get; set; }
+
+        public FortressEnterResponse(int x, int y, int seed, EntityType entityType, int entityId, int hitPoints) : base(x, y, seed, entityType, entityId, hitPoints)
+        {
+        }
+    }
 }

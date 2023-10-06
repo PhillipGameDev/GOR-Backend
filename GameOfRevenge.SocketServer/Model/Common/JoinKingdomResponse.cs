@@ -7,9 +7,12 @@ namespace GameOfRevenge.Model
     public class JoinKingdomResponse : DictionaryEncode
     {
         [DataMember(Code = (byte)RoomParameterKey.X, IsOptional = true)]
-        public short WorldSizeX { get; set; }
+        public short WorldTilesX { get; set; }
 
         [DataMember(Code = (byte)RoomParameterKey.Y, IsOptional = true)]
-        public short WorldSizeY { get; set; }
+        public short WorldTilesY { get; set; }
+
+        [DataMember(Code = (byte)RoomParameterKey.Size, IsOptional = true)]
+        public byte ZoneSize { get; set; }
     }
 }

@@ -5,6 +5,7 @@ using ExitGames.Concurrency.Fibers;
 using ExitGames.Logging;
 using GameOfRevenge.Common;
 using GameOfRevenge.Common.Models;
+using GameOfRevenge.Common.Models.Kingdom;
 using GameOfRevenge.GameApplication;
 using GameOfRevenge.Interface;
 using GameOfRevenge.Model;
@@ -15,12 +16,13 @@ namespace GameOfRevenge.GameHandlers
     {
         private static readonly ILogger log = LogManager.GetCurrentClassLogger();
 
-        public IWorld World => CastleRegion.Country;
+        public IWorld World => CastleRegion.World;
 
         public PlayerInstance PlayerInstance { get; private set; }
         public Region CastleRegion { get; private set; }
         public Region CameraRegion { get; private set; }
         public HashSet<Region> AreaRegions = new HashSet<Region>();
+        public List<ZoneFortressTable> AreaForts = new List<ZoneFortressTable>();
 
 //        private readonly RequestItemEnterMessage requestItemEnterMessage;
 //        private readonly RequestItemExitMessage requestItemExitMessage;
@@ -46,12 +48,15 @@ namespace GameOfRevenge.GameHandlers
 
         public void AddUpdateIntArea()//bool isLocatedNewLocation = false)
         {
-            var maxPosX = World.SizeX / World.TileDimensions.X;   //max position of X cordinate in our world
-            var maxPosY = World.SizeY / World.TileDimensions.Y;   //max position of Y cordinate in our world
-            var ecXPos = CameraRegion.X + (1 * (GlobalConst.TilesIaX));
-            var ecYPos = CameraRegion.Y + (1 * (GlobalConst.TilesIaY));
-            var scXPos = CameraRegion.X + (-1 * (GlobalConst.TilesIaX));
-            var scYPos = CameraRegion.Y + (-1 * (GlobalConst.TilesIaY));
+            //            log.Info("Dimensions = " + World.TileDimensions.X+" , "+World.TileDimensions.Y);
+
+            var maxPosX = World.TilesX;// / World.TileDimensions.X;   //max position of X cordinate in our world
+            var maxPosY = World.TilesY;// / World.TileDimensions.Y;   //max position of Y cordinate in our world
+            var ecXPos = CameraRegion.X + GlobalConst.PadTilesX;
+            var ecYPos = CameraRegion.Y + GlobalConst.PadTilesY;
+
+            var scXPos = CameraRegion.X - GlobalConst.PadTilesX;
+            var scYPos = CameraRegion.Y - GlobalConst.PadTilesY;
             var eC = new Vector(Math.Min(maxPosX - 1, ecXPos), Math.Min(maxPosX - 1, ecYPos));    // last cordinate position of tiles which is part of IA
             var sC = new Vector(Math.Max(0, scXPos), Math.Max(0, scYPos));   //start cordinate position of tiles which is part of IA
 
@@ -71,13 +76,13 @@ namespace GameOfRevenge.GameHandlers
                         !PlayerInstance.InterestUsers.ContainsKey(region.Owner.PlayerId))
                     {
                         PlayerInstance.InterestUsers.TryAdd(region.Owner.PlayerId, region.Owner);
-//                        if (isLocatedNewLocation) region.OnEnterPlayer(PlayerInstance); // new player instanstiate
                         if (PlayerInstance.IsInKingdomView)
                         {
                             PlayerInstance.SendEvent(EventCode.IaEnter, new IaEnterResponse(region.Owner));
-//                                SendOnEnterEvent(region);
                         }
                     }
+
+                    if (PlayerInstance.IsInKingdomView)
 //                    var monster = World.WorldMonsters.Find(entity => (entity.X == x) && (entity.Y == y));
 //                    if (monster != null)
                     {
@@ -104,27 +109,53 @@ namespace GameOfRevenge.GameHandlers
 
                         if (region.IsBooked && PlayerInstance.InterestUsers.ContainsKey(tilePlayerId))
                         {
-                            log.InfoFormat("Send Exit Tiles to ");
+//                            log.InfoFormat("Send Exit Tiles to ");
                             PlayerInstance.InterestUsers.TryRemove(tilePlayerId, out PlayerInstance o);
 //                            if (isLocatedNewLocation) region.OnExitPlayer(region.Owner);
                             if (PlayerInstance.IsInKingdomView) SendOnExitEvent(region);
                         }
                     }
 
-                    var monsterId = (region.Y * 2000) + region.X;
-                    var exitEvent = new EntityExitResponse(1, monsterId);
-                    PlayerInstance.SendEvent(EventCode.EntityExit, exitEvent);
+                    if (PlayerInstance.IsInKingdomView)
+                    {
+                        var monsterId = (region.Y * 2000) + region.X;
+                        var exitEvent = new EntityExitResponse(1, monsterId);
+                        PlayerInstance.SendEvent(EventCode.EntityExit, exitEvent);
+                    }
 
                     AreaRegions.Remove(region);
                 }
             }
             log.InfoFormat("Add regions acc current positition Count {0} ", this.AreaRegions.Count);
+
+            if (PlayerInstance.IsInKingdomView)
+            {
+                var totalZonesX = (World.TilesX / World.ZoneSize);
+                var centerZone = (World.ZoneSize / 2);
+    //            var fortsInArea = new List<ZoneFortress>();
+                foreach (var fortress in World.WorldForts)
+                {
+                    if (AreaForts.Contains(fortress)) continue;
+
+                    AreaForts.Add(fortress);
+                    var x = (fortress.ZoneIndex % totalZonesX) + centerZone;
+                    var y = (int)Math.Floor(fortress.ZoneIndex / (float)totalZonesX) + centerZone;
+                    var enterEvent = new FortressEnterResponse(x, y, 0, EntityType.Fortress, fortress.ZoneFortressId, fortress.HitPoints);
+                    enterEvent.Attack = fortress.Attack;
+                    enterEvent.Defense = fortress.Defense;
+                    enterEvent.ClanId = fortress.ClanId;
+                    enterEvent.Name = fortress.Name;
+//                    enterEvent.PlayerId = fortress.PlayerId;
+    //                enterEvent.PlayerTroops
+                    PlayerInstance.SendEvent(EventCode.EntityEnter, enterEvent);
+                }
+            }
         }
 
         List<AttackStatusData> AddPlayersConfronted(int playerId)//, bool isLocatedNewLocation)
         {
-            var maxPosX = World.SizeX / World.TileDimensions.X;   //max position of X cordinate in our world
-            var maxPosY = World.SizeY / World.TileDimensions.Y;   //max position of Y cordinate in our world
+            var maxPosX = World.TilesX;// / World.TileDimensions.X;   //max position of X cordinate in our world
+            var maxPosY = World.TilesY;// / World.TileDimensions.Y;   //max position of Y cordinate in our world
             var attackList = GameService.BRealTimeUpdateManager.GetAllAttackerData(playerId);
             //TODO: invert for
             foreach (var item in attackList)
@@ -221,6 +252,7 @@ namespace GameOfRevenge.GameHandlers
 
             PlayerInstance.LeaveKingdomView();
             AreaRegions.Clear();
+            AreaForts.Clear();
 //            foreach (var region in AreaRegions)
 //            {
 //                SendOnExitEvent(region, false);

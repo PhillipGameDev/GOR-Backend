@@ -7,6 +7,8 @@ using GameOfRevenge.Interface;
 using GameOfRevenge.Common.Models.Kingdom;
 using GameOfRevenge.GameApplication;
 using GameOfRevenge.Common.Models;
+using GameOfRevenge.Business.Manager;
+using GameOfRevenge.Business.CacheData;
 
 namespace GameOfRevenge.GameHandlers
 {
@@ -39,7 +41,7 @@ namespace GameOfRevenge.GameHandlers
             var world = task.Result.Data;
             if (!worlds.ContainsKey(world.Id))
             {
-                CountryGrid countryGrid;
+                WorldGrid countryGrid;
                 if (world.CurrentZone == -1)
                 {
                     var task1 = GameService.BKingdomManager.GetWorldTilesData(world.Id);
@@ -91,15 +93,47 @@ namespace GameOfRevenge.GameHandlers
                         }
                     }
 
-                    countryGrid = new CountryGrid(world, DistributePlayers(players, world), null);
+                    countryGrid = new WorldGrid(world, DistributePlayers(players, world), null, null);
                 }
                 else
                 {
+                    List<ZoneFortressTable> allForts = null;
+                    var task1 = GameService.BKingdomManager.GetAllZoneFortress();
+                    task1.Wait();
+                    if (task1.Result.IsSuccess && task1.Result.HasData)
+                    {
+                        allForts = task1.Result.Data;
+                        log.Info("Zone fortress = " + allForts.Count);
+                        foreach (var fortress in allForts)
+                        {
+                            var fortressDataResp = GameService.BKingdomManager.GetZoneFortressById(fortress.ZoneFortressId);
+                            fortressDataResp.Wait();
+                            var fortressData = fortressDataResp.Result.Data;
+
+                            var playerData = new PlayerCompleteData() { Troops = fortressData.GetAllTroops() };
+                            var power = new BattlePower(playerData, null, CacheTroopDataManager.GetFullTroopData, null);
+                            if ((fortress.HitPoints != power.HitPoints) ||
+                                (fortress.Attack != power.Attack) || (fortress.Defense != power.Defense))
+                            {
+                                fortress.HitPoints = power.HitPoints;
+                                fortress.Attack = power.Attack;
+                                fortress.Defense = power.Defense;
+                                var update = GameService.BKingdomManager.UpdateZoneFortress(fortress.ZoneFortressId,
+                                            hitPoints: power.HitPoints, attack: power.Attack, defense: power.Defense);
+                                update.Wait();
+                            }
+                        }
+                    }
+                    else
+                    {
+                        log.Info("No zone fortress - "+task1.Result.Message);
+                    }
+
                     var task2 = GameService.BAccountManager.GetAllPlayerIDs();
                     task2.Wait();
                     if (task2.Result.IsSuccess && task2.Result.HasData)
                     {
-                        countryGrid = new CountryGrid(world, task2.Result.Data, null);
+                        countryGrid = new WorldGrid(world, task2.Result.Data, null, allForts);
                     }
                     else
                     {

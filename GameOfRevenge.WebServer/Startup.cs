@@ -220,6 +220,8 @@ namespace GameOfRevenge.WebServer
 
             services.AddSingleton<IInstantProgressManager>(new InstantProgressManager());
 
+            services.AddSingleton<IKingdomManager>(new KingdomManager());
+
             ReloadDataBaseData();
         }
 

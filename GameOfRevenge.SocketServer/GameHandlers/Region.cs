@@ -23,12 +23,12 @@ namespace GameOfRevenge.GameHandlers
         // grid cell Y (debug only)
         public int Y { get; private set; }
         public bool IsWalkable { get; private set; } = true;  // that means, this full tiles is non walkable
-        public Vector Area { get; private set; } //tiles area
+//        public Vector Area { get; private set; } //tiles area
         public bool IsBooked => (Owner != null);
         public PlayerInstance Owner { get; set; }
-        public int CountryId { get; private set; }
+        public int WorldId => World.WorldId;//{ get; private set; }
 
-        public readonly CountryGrid Country;
+        public readonly WorldGrid World;
         public MessageChannel<RequestSendMeassageChannel> regionSendMessageChannel;
 
         public MessageChannel<RequestItemEnterMessage> RegionEnterChannel;
@@ -37,7 +37,7 @@ namespace GameOfRevenge.GameHandlers
         public MessageChannel<RequestEnterCurrentRegionChannel> RegionCurrentEnterChannel;
         public MessageChannel<RequestExitCurrentRegionChannel> RegionCurrentExitChannel;
 
-        public Region(int x, int y, Vector area, int worldId, CountryGrid country)
+        public Region(int x, int y, WorldGrid worldGrid)
         {
             regionSendMessageChannel = new MessageChannel<RequestSendMeassageChannel>(MessageCounters.CounterSend);
             JoinKingdomChannel = new MessageChannel<RequestItemEnterMessage>(MessageCounters.CounterSend);
@@ -47,9 +47,9 @@ namespace GameOfRevenge.GameHandlers
             RegionCurrentExitChannel = new MessageChannel<RequestExitCurrentRegionChannel>(MessageCounters.CounterSend);
             X = x;
             Y = y;
-            Country = country;
-            Area = area;
-            CountryId = worldId;
+            World = worldGrid;
+//            Area = area;
+//            WorldId = worldGrid.worldId;
         }
 
         public void SetPlayerInRegion(PlayerInstance actor)

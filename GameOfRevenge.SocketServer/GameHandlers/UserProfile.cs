@@ -56,7 +56,20 @@ namespace GameOfRevenge.GameHandlers
         {
             if (Peer != null)
             {
-                log.Info($"Send Event to User: {PlayerId}; EvCode: {evCode}; Data: {JsonConvert.SerializeObject(data)};");
+                switch (evCode)
+                {
+                    case EventCode.IaEnter:
+                    case EventCode.IaExit:
+                    case EventCode.EntityExit:
+                        break;
+                    default:
+                        var json = JsonConvert.SerializeObject(data);
+                        if ((evCode != EventCode.EntityEnter) || (json.IndexOf("EntityType\":3") != -1))
+                        {
+                            log.Info($"Send Event to User: {PlayerId}; EvCode: {evCode}; Data: {json};");
+                        }
+                        break;
+                }
                 var ev = new EventData((byte)evCode, data);
                 Peer.SendEvent(ev, new SendParameters());
             }

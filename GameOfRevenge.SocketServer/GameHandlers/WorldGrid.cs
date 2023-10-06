@@ -28,6 +28,8 @@ namespace GameOfRevenge.GameHandlers
     using GameOfRevenge.Interface;
     using GameOfRevenge.Model;
     using GameOfRevenge.GameApplication;
+    using GameOfRevenge.Common;
+    using GameOfRevenge.Business.Manager.Kingdom;
 
     /// <summary>
     /// Grid used to divide the world.
@@ -40,30 +42,33 @@ namespace GameOfRevenge.GameHandlers
     //posDiff = i  1
     //Area = X*A*i * Y*B*1 = 20*10*1 * 20*10*1 = 200 * 200
     //tiles dimentions A * B * i = 10 * 10 * 1 = 10 * 10
-    public class CountryGrid : IDisposable, IWorld
+    public class WorldGrid : IDisposable, IWorld
     {
         private static readonly ILogger log = LogManager.GetCurrentClassLogger();
 
         private static readonly IAccountManager accountManager = new AccountManager();
         private static readonly IPlayerDataManager manager = new PlayerDataManager();
+        private static readonly IKingdomManager kingdomManager = new KingdomManager();
 
         public int WorldId { get; private set; }
         public string Name { get; private set; }
-        public int SizeX { get; private set; }
-        public int SizeY { get; private set; }
+        public int ZoneSize { get; private set; }
+        public int TilesX { get; private set; }
+        public int TilesY { get; private set; }
 
         public Region[][] WorldRegions { get; set; }
-        public Vector TileDimensions { get; private set; }
+//        public Vector TileDimensions { get; private set; }
         public IPlayersManager PlayersManager { get; set; }
 
         public List<PlayerID> WorldPlayers { get; private set; }
         public List<EntityID> WorldMonsters { get; private set; }
+        public List<ZoneFortressTable> WorldForts { get; private set; }
 
         public IFiber WorldFiber { get; private set; }
 
         private readonly Random rd = new Random();
 
-        public CountryGrid(WorldTable world, List<PlayerID> worldPlayers, List<EntityID> worldMonsters)
+        public WorldGrid(WorldTable world, List<PlayerID> worldPlayers, List<EntityID> worldMonsters, List<ZoneFortressTable> worldForts)
         {
             var w = GlobalConst.GetPopWorld(world.ZoneX, world.ZoneY);
             var worldId = world.Id;
@@ -71,25 +76,28 @@ namespace GameOfRevenge.GameHandlers
             try
             {
                 Name = w.worldName;
-                SizeX = world.ZoneX * world.ZoneSize;
-                SizeY = world.ZoneY * world.ZoneSize;
-                log.InfoFormat("world size = {0},{1}", SizeX, SizeY);
+                ZoneSize = world.ZoneSize;
+                TilesX = world.ZoneX * world.ZoneSize;
+                TilesY = world.ZoneY * world.ZoneSize;
+                log.InfoFormat("world total tiles = x:{0}, y:{1}", TilesX, TilesY);
 
                 WorldId = worldId;
                 WorldPlayers = worldPlayers;
                 WorldMonsters = worldMonsters;
+                WorldForts = (worldForts != null)? worldForts : new List<ZoneFortressTable>();
+
                 WorldFiber = new PoolFiber();
                 WorldFiber.Start();
 
                 var count = 0;
                 PlayersManager = new PlayersManager();
-                WorldRegions = new Region[SizeX][];
-                for (int x = 0; x < SizeX; x++)
+                WorldRegions = new Region[TilesX][];
+                for (int x = 0; x < TilesX; x++)
                 {
-                    WorldRegions[x] = new Region[SizeY];
-                    for (int y = 0; y < SizeY; y++)
+                    WorldRegions[x] = new Region[TilesY];
+                    for (int y = 0; y < TilesY; y++)
                     {
-                        var worldRegion = new Region(x, y, TileDimensions, worldId, this);
+                        var worldRegion = new Region(x, y, this);// worldId, this);
                         WorldRegions[x][y] = worldRegion;
 
                         var worldPlayer = WorldPlayers.Find(wd => (wd.X == x) && (wd.Y == y));
@@ -164,6 +172,7 @@ namespace GameOfRevenge.GameHandlers
                     }
                     var attackerData = task.Result.Data;
 
+                    //TODO: resume marching for monsters, glory kingdom
                     var defenderId = marching.TargetId;
                     task = BaseUserDataManager.GetFullPlayerData(defenderId);
                     task.Wait();
@@ -231,31 +240,84 @@ namespace GameOfRevenge.GameHandlers
         void MarchingArmyComplete(AttackStatusData data, int notify)
         {
             var marchingArmy = data.MarchingArmy;
+            var atkData = data.AttackData;
             var result = new MarchingResultResponse()
             {
                 MarchingId = marchingArmy.MarchingId,
                 MarchingType = marchingArmy.MarchingType.ToString(),
-                AttackerId = data.AttackData.AttackerId,
-                AttackerName = data.AttackData.AttackerName,
-                TargetId = data.AttackData.TargetId,
-                TargetName = data.AttackData.TargetName
+                AttackerId = atkData.AttackerId,
+                AttackerName = atkData.AttackerName,
+                TargetId = atkData.TargetId,
+                TargetName = atkData.TargetName
             };
-            if (!marchingArmy.IsRecalling)
-            {
-                if ((marchingArmy.MarchingType == MarchingType.AttackPlayer) ||
-                    (marchingArmy.MarchingType == MarchingType.AttackMonster))
-                {
-                    if (marchingArmy.Report != null) result.WinnerId = marchingArmy.Report.WinnerId;
-                }
-                else if (marchingArmy.MarchingType == MarchingType.ReinforcementPlayer)
-                {
-                    result.WinnerId = data.AttackData.TargetId;
-                }
-            }
 
             var notifyAttacker = (notify != RealTimeUpdateManager.NOTIFY_TARGET);
             var playerId = notifyAttacker ? result.AttackerId : result.TargetId;
             var actor = PlayersManager.GetPlayer(playerId);
+            if (!marchingArmy.IsRecalling)
+            {
+                switch (marchingArmy.MarchingType)
+                {
+                    case MarchingType.ReinforcementPlayer:
+                        result.WinnerId = atkData.TargetId;
+                        break;
+                    case MarchingType.AttackPlayer:
+                    case MarchingType.AttackMonster:
+                    case MarchingType.AttackGloryKingdom:
+                        if (marchingArmy.Report != null) result.WinnerId = marchingArmy.Report.WinnerId;
+
+                        if (marchingArmy.MarchingType == MarchingType.AttackGloryKingdom)
+                        {
+                            //TODO: Broadcast glory kingdom new status, HP, attack, defense para todos
+                            //TODO: Broadcast glory kingdom details zone members
+                            //broacast a todos kingdom details
+
+                            try
+                            {
+                                var memfortress = WorldForts.Find(fortress => fortress.ZoneFortressId == marchingArmy.TargetId);
+                                var defPower = data.DefenderPower;
+                                if (defPower != null)
+                                {
+                                    memfortress.HitPoints = defPower.HitPoints;
+                                    memfortress.Attack = defPower.TempAttack;
+                                    memfortress.Defense = defPower.TempDefense;
+                                }
+
+                                var task = kingdomManager.GetZoneFortressById(atkData.TargetId);
+                                task.Wait();
+                                if (task.Result.IsSuccess && task.Result.HasData)
+                                {
+                                    memfortress.ClanId = task.Result.Data.ClanId;
+                                    memfortress.Name = task.Result.Data.Name;
+                                    memfortress.PlayerId = task.Result.Data.PlayerId;
+                                    memfortress.StartTime = task.Result.Data.StartTime;
+                                    memfortress.Duration = task.Result.Data.Duration;
+                                }
+
+                                var totalZonesX = (TilesX / ZoneSize);
+                                var centerZone = (ZoneSize / 2);
+                                var x = (memfortress.ZoneIndex % totalZonesX) + centerZone;
+                                var y = (int)Math.Floor(memfortress.ZoneIndex / (float)totalZonesX) + centerZone;
+                                var enterEvent = new FortressEnterResponse(x, y, 0, EntityType.Fortress, memfortress.ZoneFortressId, memfortress.HitPoints);
+                                enterEvent.Attack = memfortress.Attack;
+                                enterEvent.Defense = memfortress.Defense;
+                                enterEvent.ClanId = memfortress.ClanId;
+                                enterEvent.Name = memfortress.Name;
+                                enterEvent.PlayerId = memfortress.PlayerId;
+                                enterEvent.StartTime = memfortress.StartTime?.ToString("s") + "Z";
+                                enterEvent.Duration = memfortress.Duration;
+
+                                if (actor != null) actor.BroadcastWithMe(EventCode.EntityEnter, enterEvent);
+                            }
+                            catch (Exception ex)
+                            {
+                                log.Error("ERROR: " + ex.Message);
+                            }
+                        }
+                        break;
+                }
+            }
+
             if (actor != null) actor.SendEvent(EventCode.MarchingResult, result);
 
             if (notify == RealTimeUpdateManager.NOTIFY_ALL)

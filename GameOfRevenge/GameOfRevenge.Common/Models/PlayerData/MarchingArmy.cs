@@ -86,9 +86,14 @@ namespace GameOfRevenge.Common.Models.PlayerData
             get
             {
                 int value = Recall + Distance - ReturnReduction;
-                if (Recall == 0)
+                if (!IsRecalling)
                 {
-                    var returnDist = ((MarchingType != MarchingType.ReinforcementPlayer)? Distance : 0);
+                    var returnDist = 0;
+                    if ((MarchingType != MarchingType.ReinforcementPlayer) &&
+                        (MarchingType != MarchingType.AttackGloryKingdom))
+                    {
+                        returnDist = Distance;
+                    }
                     value += returnDist - AdvanceReduction + Duration;
                 }
 

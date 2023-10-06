@@ -13,8 +13,8 @@ namespace GameOfRevenge
 
 //        public const float worldArea = 1000;   //(1000*1000)/10*10 = 10000; tils
 //        public const float tileArea = 1;
-        public const float TilesIaX = 10;
-        public const float TilesIaY = 10;
+        public const float PadTilesX = 10;
+        public const float PadTilesY = 10;
         public const byte defaultWorldId = 1;
 
         // thats for land area 

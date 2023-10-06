@@ -43,6 +43,8 @@
         RecallMarchingArmy = 37,
 
         SendFriendRequest = 34,
-        RespondToFriendRequest = 35
+        RespondToFriendRequest = 35,
+
+        ClaimRewardsRequest = 38
     }
 }
