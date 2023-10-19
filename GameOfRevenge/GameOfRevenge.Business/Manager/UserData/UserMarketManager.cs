@@ -67,15 +67,21 @@ namespace GameOfRevenge.Business.Manager.UserData
             var pack = iapProducts.FirstOrDefault(x => (x.ProductId == productId));
             if (pack != null)
             {
-                await UserQuestManager.CollectRewards(playerId, pack.Rewards); //TODO:implement response error
-
-                //TODO: register transacton
-/*                var redemeedResp = await Db.ExecuteSPNoData("RedeemChapterReward", new Dictionary<string, object>()
+                var resp = await UserQuestManager.CollectRewards(playerId, pack.Rewards);
+                if (resp != ReturnCode.OK)
                 {
-                    { "PlayerChapterUserId", chapterData.ChapterUserDataId }
-                });*/
+                    return new Response(CaseType.Error, "Failed to redeem product");
+                }
+                else
+                {
+                    //TODO: register transacton
+                    /*                var redemeedResp = await Db.ExecuteSPNoData("RedeemChapterReward", new Dictionary<string, object>()
+                                    {
+                                        { "PlayerChapterUserId", chapterData.ChapterUserDataId }
+                                    });*/
 
-                return new Response(CaseType.Success, "Product redeemed");
+                    return new Response(CaseType.Success, "Product redeemed");
+                }
             }
             else
             {

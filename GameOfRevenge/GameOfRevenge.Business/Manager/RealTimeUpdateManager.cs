@@ -140,6 +140,10 @@ namespace GameOfRevenge.Business.Manager
                                 item.Attacker = atkResp.Data;
                                 item.AttackData.AttackerName = item.Attacker.PlayerName;
                                 item.State++;
+                                if (marchingArmy.MarchingType == MarchingType.AttackGloryKingdom)
+                                {
+                                    await ProcessGloryKingdomBattle(item, attackResultCallback);
+                                }
                             }
                             break;
 
@@ -178,7 +182,7 @@ namespace GameOfRevenge.Business.Manager
                             {
                                 defenderPower = new BattlePower(item.Defender, null, CacheTroopDataManager.GetFullTroopData, GetAtkDefMultiplier);
                             }
-                            else// if (marchingArmy.MarchingType == MarchingType.AttackMonster)
+                            else if (marchingArmy.MarchingType == MarchingType.AttackMonster)
                             {
                                 //TODO: get monster values from db
 //                                var hitPoints = (int)(attackerPower.HitPoints * (new Random().Next(6, 9) / 10f));
@@ -190,10 +194,10 @@ namespace GameOfRevenge.Business.Manager
                                 var defense = 5000;
                                 defenderPower = new BattlePower(EntityType.Monster, item.AttackData.TargetId, hitPoints, attack, defense);
                             }
-//                            else//attack glory kingdom
-//                            {
-
-//                            }
+                            else//attack glory kingdom
+                            {
+                                defenderPower = new BattlePower(item.Defender, null, CacheTroopDataManager.GetFullTroopData, null);
+                            }
                             item.DefenderPower = defenderPower;
 
                             log.Debug("atk hp= " + attackerPower.HitPoints + " vs def hp=" + defenderPower.HitPoints);
@@ -215,7 +219,8 @@ namespace GameOfRevenge.Business.Manager
                             }
                             else
                             {
-                                await pvpManager.FinishBattleData(item.Attacker, item.AttackerPower, item.Defender, item.DefenderPower, marchingArmy);
+                                await pvpManager.FinishBattleData(item.Attacker, item.AttackerPower,
+                                                                item.Defender, item.DefenderPower, marchingArmy);
                                 item.State++;
                             }
                             break;
@@ -283,7 +288,132 @@ namespace GameOfRevenge.Business.Manager
             list = null;
         }
 
-        private List<AttackDefenseMultiplier> GetAtkDefMultiplier(PlayerCompleteData playerData, MarchingArmy marchingArmy)
+        async Task ProcessGloryKingdomBattle(AttackStatusData data, Action<AttackStatusData, int> attackResultCallback)
+        {
+            var fortressResp = await pvpManager.kingdomManager.GetZoneFortressById(data.AttackData.TargetId);
+            if (!fortressResp.IsSuccess || !fortressResp.HasData) throw new Exception("target data not found");
+
+            data.AttackerPower = new BattlePower(data.Attacker, data.MarchingArmy, CacheTroopDataManager.GetFullTroopData, GetAtkDefMultiplier, (ss) => { log.Debug(ss); });
+
+            var fortress = fortressResp.Data;
+            if (fortress.ClanId == data.Attacker.ClanId)
+            {
+                var newPlayerTroop = new PlayerTroops(data.Attacker.PlayerId, data.MarchingArmy.Troops);
+
+                var existingPlayerTroop = fortress.PlayerTroops.Find(x => x.PlayerId == newPlayerTroop.PlayerId);
+
+                if (existingPlayerTroop != null)
+                {
+                    foreach (var newTroopInfo in newPlayerTroop.Troops)
+                    {
+                        TroopInfos existingTroopInfo = existingPlayerTroop.Troops.Find(t => t.TroopType == newTroopInfo.TroopType);
+
+                        if (existingTroopInfo != null)
+                        {
+                            foreach (var newTroopDetail in newTroopInfo.TroopData)
+                            {
+                                TroopDetails existingTroopDetail = existingTroopInfo.TroopData.Find(d => d.Level == newTroopDetail.Level);
+
+                                if (existingTroopDetail != null)
+                                {
+                                    existingTroopDetail.Count += newTroopDetail.Count;
+                                }
+                                else
+                                {
+                                    existingTroopInfo.TroopData.Add(newTroopDetail);
+                                }
+                            }
+                        }
+                        else
+                        {
+                            existingPlayerTroop.Troops.Add(newTroopInfo);
+                        }
+                    }
+                }
+                else
+                {
+                    fortress.PlayerTroops.Add(newPlayerTroop);
+                }
+
+                var defData = new PlayerCompleteData()
+                {
+                    PlayerId = fortress.ZoneFortressId,
+                    Troops = fortress.GetAllTroops()
+                };
+                data.DefenderPower = new BattlePower(defData, null, CacheTroopDataManager.GetFullTroopData, null, (ss) => { log.Debug(ss); });
+                data.DefenderPower.EntityType = EntityType.Fortress;
+
+                var fortressData = new ZoneFortressData()
+                {
+                    FirstCapturedTime = fortress.FirstCapturedTime,
+                    StartTime = fortress.StartTime,
+                    Duration = fortress.Duration,
+                    PlayerTroops = fortress.PlayerTroops
+                };
+                var json = Newtonsoft.Json.JsonConvert.SerializeObject(fortressData);
+                var updateResp = await pvpManager.kingdomManager.UpdateZoneFortress(fortress.ZoneFortressId,
+                        hitPoints: data.DefenderPower.HitPoints, attack: data.DefenderPower.TempAttack,
+                        defense: data.DefenderPower.TempDefense, data: json);
+
+
+
+                var troopChanges = data.AttackerPower.TroopChanges;
+                data.MarchingArmy.TroopChanges = troopChanges;
+
+                foreach (var troopChange in troopChanges)
+                {
+                    troopChange.Dead = troopChange.InitialCount;
+                    troopChange.Wounded = 0;
+                }
+                var playerTroops = new List<PlayerTroops>()
+                {
+                    new PlayerTroops(data.Attacker.PlayerId, data.Attacker.Troops)
+                };
+                await pvpManager.ApplyTroopChanges(playerTroops, troopChanges, true);
+            }
+            else
+            {
+                data.Defender = new PlayerCompleteData()
+                {
+                    PlayerId = fortress.ZoneFortressId,
+                    Troops = fortress.GetAllTroops()
+                };
+                data.DefenderPower = new BattlePower(data.Defender, null, CacheTroopDataManager.GetFullTroopData, null,(ss)=> { log.Debug(ss); });
+                data.DefenderPower.EntityType = EntityType.Fortress;
+
+                log.Debug("battle: atk pwr= " + data.AttackerPower.HitPoints + " xx def pwr=" + data.DefenderPower.HitPoints);
+                log.Debug("attacker troops: " + Newtonsoft.Json.JsonConvert.SerializeObject(data.AttackerPower.TroopChanges));
+                log.Debug("defender troops: " + Newtonsoft.Json.JsonConvert.SerializeObject(data.DefenderPower.TroopChanges));
+                while ((data.DefenderPower.HitPoints > 0) && (data.AttackerPower.HitPoints > 0))
+                {
+                    data.AttackerPower.AttackPlayer(data.DefenderPower, (ss)=> { log.Debug(ss); });
+                    log.Debug("atk pwr= " + data.AttackerPower.HitPoints + "  "+data.AttackerPower.TempAttack+"/"+data.AttackerPower.TempDefense +
+                                "   xx def pwr=" + data.DefenderPower.HitPoints+" "+data.DefenderPower.TempAttack+"/"+data.DefenderPower.TempDefense);
+                }
+                log.Debug("result: atk pwr= " + data.AttackerPower.HitPoints + " xx def pwr=" + data.DefenderPower.HitPoints);
+
+                await pvpManager.FinishBattleData(data.Attacker, data.AttackerPower,
+                                                data.Defender, data.DefenderPower, data.MarchingArmy);
+
+                //SAVE PLAYER REPORT
+                log.Debug("ApplyAttackerChangesAndSendReport!!!");
+
+                foreach (var troopChange in data.MarchingArmy.TroopChanges)
+                {
+                    troopChange.Dead = troopChange.InitialCount;
+                    troopChange.Wounded = 0;
+                }
+                await pvpManager.ApplyAttackerChangesAndSendReport(data.MarchingArmy);
+            }
+
+            log.Debug("attack glory kingdom end event");
+            attackResultCallback(data, NOTIFY_ATTACKER);
+
+            log.Debug("** END ** " + data.AttackData.AttackerId + " glory kingdom " + data.AttackData.TargetId);
+            lock (SyncRoot) attackInProgress.Remove(data);
+        }
+
+        public static List<AttackDefenseMultiplier> GetAtkDefMultiplier(PlayerCompleteData playerData, MarchingArmy marchingArmy)
         {
             var list = new List<AttackDefenseMultiplier>();
 
@@ -368,12 +498,13 @@ namespace GameOfRevenge.Business.Manager
             }
             var multiplier = new AttackDefenseMultiplier()
             {
+                Troop = null, //<--- global multiplier
                 AttackMultiplier = attack * (1 + (atkPercentage / 100f)),
                 DefenseMultiplier = defense * (1 + (defPercentage / 100f))
             };
             list.Add(multiplier);
 
-            if ((marchingArmy != null) && (marchingArmy.Troops != null))
+            if ((playerData.Boosts != null) && (marchingArmy != null) && (marchingArmy.Troops != null))
             {
                 var troops = marchingArmy.Troops;
                 foreach (var troop in troops)

@@ -109,9 +109,9 @@ namespace GameOfRevenge.GameHandlers
                         if (task.Result.IsSuccess && task.Result.HasData)
                         {
                             var plyInfo = task.Result.Data;
-                            var actor = new PlayerInstance(playerId, plyInfo, this, worldRegion);
-                            actor.WorldRegion.SetPlayerInRegion(actor);
-                            PlayersManager.AddPlayer(playerId, actor);
+                            var playerInstance = new PlayerInstance(playerId, plyInfo, this, worldRegion);
+                            playerInstance.WorldRegion.SetPlayerInRegion(playerInstance);
+                            PlayersManager.AddPlayer(playerId, playerInstance);
                             count++;
                         }
                         else
@@ -268,10 +268,6 @@ namespace GameOfRevenge.GameHandlers
 
                         if (marchingArmy.MarchingType == MarchingType.AttackGloryKingdom)
                         {
-                            //TODO: Broadcast glory kingdom new status, HP, attack, defense para todos
-                            //TODO: Broadcast glory kingdom details zone members
-                            //broacast a todos kingdom details
-
                             try
                             {
                                 var memfortress = WorldForts.Find(fortress => fortress.ZoneFortressId == marchingArmy.TargetId);
@@ -298,16 +294,16 @@ namespace GameOfRevenge.GameHandlers
                                 var centerZone = (ZoneSize / 2);
                                 var x = (memfortress.ZoneIndex % totalZonesX) + centerZone;
                                 var y = (int)Math.Floor(memfortress.ZoneIndex / (float)totalZonesX) + centerZone;
-                                var enterEvent = new FortressEnterResponse(x, y, 0, EntityType.Fortress, memfortress.ZoneFortressId, memfortress.HitPoints);
-                                enterEvent.Attack = memfortress.Attack;
-                                enterEvent.Defense = memfortress.Defense;
+                                var enterEvent = new FortressEnterResponse(x, y, 0, EntityType.Fortress, memfortress.ZoneFortressId, memfortress.HitPoints, memfortress.Attack, memfortress.Defense);
                                 enterEvent.ClanId = memfortress.ClanId;
                                 enterEvent.Name = memfortress.Name;
                                 enterEvent.PlayerId = memfortress.PlayerId;
                                 enterEvent.StartTime = memfortress.StartTime?.ToString("s") + "Z";
                                 enterEvent.Duration = memfortress.Duration;
 
-                                if (actor != null) actor.BroadcastWithMe(EventCode.EntityEnter, enterEvent);
+                                //TODO: improvement: Broadcast glory kingdom new status, (HP, attack, defense) to all users
+                                //TODO: Broadcast details to zone members
+                                if (actor != null) actor.BroadcastEventToAllUsers(EventCode.EntityEnter, enterEvent, true);
                             }
                             catch (Exception ex)
                             {

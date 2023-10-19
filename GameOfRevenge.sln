@@ -17,9 +17,76 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "GameOfRevenge.WebServer", "
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "GameOfRevenge.WebAdmin", "GameOfRevenge.WebAdmin\GameOfRevenge.WebAdmin.csproj", "{A7559BC0-8780-4CC3-A563-C46C919214FC}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "GameOfRevenge.WebServerTest", "GameOfRevenge.WebServerTest\GameOfRevenge.WebServerTest.csproj", "{47FB272A-7951-4E64-BEB8-32A1C9DAC61B}"
-EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "GameOfRevenge.SocketServer", "GameOfRevenge.SocketServer\GameOfRevenge.SocketServer.csproj", "{48D376D8-31DC-4C0F-B4D4-7DD1A4A4978B}"
+EndProject
+Project("{9344BDBB-3E7F-41FC-A0DD-8665D75EE146}") = "GameOfRevenge.WebServerTest", "GameOfRevenge.WebServerTest\GameOfRevenge.WebServerTest.csproj", "{BA35F6CB-067E-4E8A-9C38-E85297C90106}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "StoredProcedures", "StoredProcedures", "{D810CFF2-8DA1-4369-B927-8C354A8A3EEC}"
+	ProjectSection(SolutionItems) = preProject
+		StoredProcedures\BlockPlayer.sql = StoredProcedures\BlockPlayer.sql
+		StoredProcedures\AddOrUpdatePlayerData.sql = StoredProcedures\AddOrUpdatePlayerData.sql
+		StoredProcedures\AddOrUpdatePlayerQuestData.sql = StoredProcedures\AddOrUpdatePlayerQuestData.sql
+		StoredProcedures\AddOrUpdatePlayerStoredData.sql = StoredProcedures\AddOrUpdatePlayerStoredData.sql
+		StoredProcedures\AddPlayerResourceData.sql = StoredProcedures\AddPlayerResourceData.sql
+		StoredProcedures\AddQuestReward.sql = StoredProcedures\AddQuestReward.sql
+		StoredProcedures\CreateChatMessage.sql = StoredProcedures\CreateChatMessage.sql
+		StoredProcedures\CreateMail.sql = StoredProcedures\CreateMail.sql
+		StoredProcedures\DeleteChatMessage.sql = StoredProcedures\DeleteChatMessage.sql
+		StoredProcedures\DeletePlayer.sql = StoredProcedures\DeletePlayer.sql
+		StoredProcedures\dirtywords.sql = StoredProcedures\dirtywords.sql
+		StoredProcedures\FriendRequest.sql = StoredProcedures\FriendRequest.sql
+		StoredProcedures\Friends.sql = StoredProcedures\Friends.sql
+		StoredProcedures\GetActiveUsers.sql = StoredProcedures\GetActiveUsers.sql
+		StoredProcedures\GetAllChapterQuests.sql = StoredProcedures\GetAllChapterQuests.sql
+		StoredProcedures\GetAllChapterRewards.sql = StoredProcedures\GetAllChapterRewards.sql
+		StoredProcedures\GetAllChapters.sql = StoredProcedures\GetAllChapters.sql
+		StoredProcedures\GetAllMail.sql = StoredProcedures\GetAllMail.sql
+		StoredProcedures\GetAllPlayerActiveTournament.sql = StoredProcedures\GetAllPlayerActiveTournament.sql
+		StoredProcedures\GetAllPlayerData.sql = StoredProcedures\GetAllPlayerData.sql
+		StoredProcedures\GetAllPlayerResourceData.sql = StoredProcedures\GetAllPlayerResourceData.sql
+		StoredProcedures\GetAllPlayerStoredData.sql = StoredProcedures\GetAllPlayerStoredData.sql
+		StoredProcedures\GetAllQuestRewards.sql = StoredProcedures\GetAllQuestRewards.sql
+		StoredProcedures\GetAllQuests.sql = StoredProcedures\GetAllQuests.sql
+		StoredProcedures\GetAllStructureBuildLimit.sql = StoredProcedures\GetAllStructureBuildLimit.sql
+		StoredProcedures\GetAllStructureLevelDatas.sql = StoredProcedures\GetAllStructureLevelDatas.sql
+		StoredProcedures\GetAllStructureLevelRequirements.sql = StoredProcedures\GetAllStructureLevelRequirements.sql
+		StoredProcedures\GetAllTechnology.sql = StoredProcedures\GetAllTechnology.sql
+		StoredProcedures\GetBlockedPlayers.sql = StoredProcedures\GetBlockedPlayers.sql
+		StoredProcedures\GetChatMessages.sql = StoredProcedures\GetChatMessages.sql
+		StoredProcedures\GetClanMembers.sql = StoredProcedures\GetClanMembers.sql
+		StoredProcedures\GetDailyVisits.sql = StoredProcedures\GetDailyVisits.sql
+		StoredProcedures\GetFriendRequests.sql = StoredProcedures\GetFriendRequests.sql
+		StoredProcedures\GetGameData.sql = StoredProcedures\GetGameData.sql
+		StoredProcedures\GetMarchingTroops.sql = StoredProcedures\GetMarchingTroops.sql
+		StoredProcedures\GetMessage.sql = StoredProcedures\GetMessage.sql
+		StoredProcedures\GetPlayerAllQuestData.sql = StoredProcedures\GetPlayerAllQuestData.sql
+		StoredProcedures\GetPlayerAllRewardData.sql = StoredProcedures\GetPlayerAllRewardData.sql
+		StoredProcedures\GetPlayerBackup.sql = StoredProcedures\GetPlayerBackup.sql
+		StoredProcedures\GetPlayerBackups.sql = StoredProcedures\GetPlayerBackups.sql
+		StoredProcedures\GetPlayerData.sql = StoredProcedures\GetPlayerData.sql
+		StoredProcedures\GetPlayerDataById.sql = StoredProcedures\GetPlayerDataById.sql
+		StoredProcedures\GetPlayerDetailsById.sql = StoredProcedures\GetPlayerDetailsById.sql
+		StoredProcedures\GetPlayerDetailsByIdentifier.sql = StoredProcedures\GetPlayerDetailsByIdentifier.sql
+		StoredProcedures\GetPlayerFriends.sql = StoredProcedures\GetPlayerFriends.sql
+		StoredProcedures\GetPlayerIDs.sql = StoredProcedures\GetPlayerIDs.sql
+		StoredProcedures\GetPlayerQuestData.sql = StoredProcedures\GetPlayerQuestData.sql
+		StoredProcedures\GetPlayerTutorial.sql = StoredProcedures\GetPlayerTutorial.sql
+		StoredProcedures\GetRanking.sql = StoredProcedures\GetRanking.sql
+		StoredProcedures\GetRankings.sql = StoredProcedures\GetRankings.sql
+		StoredProcedures\GetStorePackages.sql = StoredProcedures\GetStorePackages.sql
+		StoredProcedures\IncrementPackageReward.sql = StoredProcedures\IncrementPackageReward.sql
+		StoredProcedures\IncrementPlayerData.sql = StoredProcedures\IncrementPlayerData.sql
+		StoredProcedures\LeaveClan.sql = StoredProcedures\LeaveClan.sql
+		StoredProcedures\QUERY_INSERT_DATA.sql = StoredProcedures\QUERY_INSERT_DATA.sql
+		StoredProcedures\RemovePlayerResourceData.sql = StoredProcedures\RemovePlayerResourceData.sql
+		StoredProcedures\ReportChatMessage.sql = StoredProcedures\ReportChatMessage.sql
+		StoredProcedures\ResetAllDailyQuests.sql = StoredProcedures\ResetAllDailyQuests.sql
+		StoredProcedures\RespondToFriendRequest.sql = StoredProcedures\RespondToFriendRequest.sql
+		StoredProcedures\RestorePlayerBackup.sql = StoredProcedures\RestorePlayerBackup.sql
+		StoredProcedures\SaveDailyVisits.sql = StoredProcedures\SaveDailyVisits.sql
+		StoredProcedures\SaveMail.sql = StoredProcedures\SaveMail.sql
+		StoredProcedures\SavePlayerBackup.sql = StoredProcedures\SavePlayerBackup.sql
+	EndProjectSection
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -43,14 +110,14 @@ Global
 		{A7559BC0-8780-4CC3-A563-C46C919214FC}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{A7559BC0-8780-4CC3-A563-C46C919214FC}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{A7559BC0-8780-4CC3-A563-C46C919214FC}.Release|Any CPU.Build.0 = Release|Any CPU
-		{47FB272A-7951-4E64-BEB8-32A1C9DAC61B}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{47FB272A-7951-4E64-BEB8-32A1C9DAC61B}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{47FB272A-7951-4E64-BEB8-32A1C9DAC61B}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{47FB272A-7951-4E64-BEB8-32A1C9DAC61B}.Release|Any CPU.Build.0 = Release|Any CPU
 		{48D376D8-31DC-4C0F-B4D4-7DD1A4A4978B}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{48D376D8-31DC-4C0F-B4D4-7DD1A4A4978B}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{48D376D8-31DC-4C0F-B4D4-7DD1A4A4978B}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{48D376D8-31DC-4C0F-B4D4-7DD1A4A4978B}.Release|Any CPU.Build.0 = Release|Any CPU
+		{BA35F6CB-067E-4E8A-9C38-E85297C90106}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{BA35F6CB-067E-4E8A-9C38-E85297C90106}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{BA35F6CB-067E-4E8A-9C38-E85297C90106}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{BA35F6CB-067E-4E8A-9C38-E85297C90106}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -60,8 +127,9 @@ Global
 		{422BC36B-E2B4-4F70-8256-DD6EA0C5DED4} = {E5B4FB78-6AD8-4EFC-BD4A-82C25FF16F11}
 		{BE1012BF-E089-4347-8655-BE1AA48BE7D4} = {93FBF289-A6E8-4185-AB62-B4BB9491A6E6}
 		{A7559BC0-8780-4CC3-A563-C46C919214FC} = {93FBF289-A6E8-4185-AB62-B4BB9491A6E6}
-		{47FB272A-7951-4E64-BEB8-32A1C9DAC61B} = {93FBF289-A6E8-4185-AB62-B4BB9491A6E6}
 		{48D376D8-31DC-4C0F-B4D4-7DD1A4A4978B} = {93FBF289-A6E8-4185-AB62-B4BB9491A6E6}
+		{BA35F6CB-067E-4E8A-9C38-E85297C90106} = {93FBF289-A6E8-4185-AB62-B4BB9491A6E6}
+		{D810CFF2-8DA1-4369-B927-8C354A8A3EEC} = {93FBF289-A6E8-4185-AB62-B4BB9491A6E6}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {6F57F825-5759-49A4-B66E-61C9BC12757B}

@@ -10,6 +10,7 @@ using GameOfRevenge.Buildings.Interface;
 using GameOfRevenge.GameHandlers;
 using GameOfRevenge.Model;
 using GameOfRevenge.GameApplication;
+using GameOfRevenge.Business;
 
 namespace GameOfRevenge.Troops
 {

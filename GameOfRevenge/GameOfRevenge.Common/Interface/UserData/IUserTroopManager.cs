@@ -14,6 +14,7 @@ namespace GameOfRevenge.Common.Interface.UserData
         Task<Response<UserTroopData>> TrainTroops(int playerId, TroopType type, int level, int count, int location);
         Task<Response<UserTroopData>> InstantTrainTroops(int playerId, TroopType type, int level, int count);
 
+        Task<Response<List<PlayerDataTable>>> AddTroops(int playerId, List<TroopInfos> troops);
         Task<Response<UserTroopData>> AddTroops(int playerId, TroopType type, int level, int count);
         Task<Response<UserTroopData>> AddTroops(int playerId, int id, int level, int count);
 

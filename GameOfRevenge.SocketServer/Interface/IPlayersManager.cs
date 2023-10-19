@@ -7,8 +7,7 @@ namespace GameOfRevenge.Interface
         void AddPlayer(int playerId, PlayerInstance player);
         void RemovePlayer(int playerId);
         PlayerInstance GetPlayer(int playerId);
-        void BroadcastToWorld(byte evCode, object data);
-        //TODO: Implement Broadcast to clan
+//        void BroadcastToWorld(byte evCode, object data);
         void ClearAll();
     }
 }

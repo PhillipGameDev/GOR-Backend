@@ -45,10 +45,12 @@ namespace GameOfRevenge.GameApplication
         public static GameLobbyHandler GameLobby { get; private set; }
         public static IWorldHandler WorldHandler { get; private set; }
         public static RealTimeUpdateManagerQuestValidator RealTimeUpdateManagerQuestValidator { get; private set; }
+        public static RealTimeUpdateManagerGloryKingdom RealTimeUpdateManagerGloryKingdom { get; private set; }
         public static IAccountManager BAccountManager { get; private set; }
 
 
         public static IChatManager BChatManager { get; private set; }
+        public static IClanManager BClanManager { get; private set; }
 
         public static void StartInstance()
         {
@@ -96,9 +98,12 @@ namespace GameOfRevenge.GameApplication
             BRealTimeUpdateManager = new RealTimeUpdateManager();
             BAccountManager = new AccountManager();
             BChatManager = new ChatManager();
+            BClanManager = new ClanManager();
 
-            var adminManager = new AdminDataManager(BPlayerManager, new ClanManager(), BUserQuestManager );
+            var adminManager = new AdminDataManager(BPlayerManager, BClanManager, BUserQuestManager );
             RealTimeUpdateManagerQuestValidator = new RealTimeUpdateManagerQuestValidator(adminManager, BUserQuestManager);
+
+            RealTimeUpdateManagerGloryKingdom = new RealTimeUpdateManagerGloryKingdom(BKingdomManager);
 
             instance = new object();
 

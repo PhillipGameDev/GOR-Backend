@@ -40,5 +40,8 @@ namespace GameOfRevenge.Model
 
         [DataMember(Code = (byte)RoomParameterKey.TotalTime, IsOptional = false)]
         public int TotalTime { get; set; }
+
+        [DataMember(Code = (byte)RoomParameterKey.HelpValue, IsOptional = false)]
+        public byte Helped { get; set; }
     }
 }

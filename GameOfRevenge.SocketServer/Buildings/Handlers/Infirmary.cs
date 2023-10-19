@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using GameOfRevenge.Buildings.Interface;
+using GameOfRevenge.Business;
 using GameOfRevenge.Common;
 using GameOfRevenge.Common.Models;
 using GameOfRevenge.Common.Models.Troop;

@@ -38,7 +38,7 @@ BEGIN
 		SET @message = ERROR_MESSAGE();
 	END CATCH
 
-	SELECT zf.[ZoneFortressId], zf.[WorldId], zf.[ZoneIndex], zf.[HitPoints], zf.[Attack], zf.[Defense], zf.[ClanId], c.[Name], 
+	SELECT zf.[ZoneFortressId], zf.[WorldId], zf.[ZoneIndex], zf.[HitPoints], zf.[Attack], zf.[Defense], zf.[Finished], zf.[ClanId], c.[Name], 
 			zf.[PlayerId], zf.[Data]
 	FROM [dbo].[ZoneFortress] AS zf
 	LEFT JOIN [dbo].[Clan] AS c ON c.[ClanId] = zf.[ClanId]

@@ -13,6 +13,9 @@ namespace GameOfRevenge.Model
         [DataMember(Code = (byte)RoomParameterKey.TargetId, IsOptional = true)]
         public int TargetId { get; set; }
 
+        [DataMember(Code = (byte)RoomParameterKey.DefaultValue, IsOptional = true)]
+        public byte DefaultValue { get; set; }
+
         [DataMember(Code = (byte)RoomParameterKey.Value, IsOptional = true)]
         public int[] Values { get; set; }
     }

@@ -10,6 +10,7 @@ using GameOfRevenge.Model;
 using GameOfRevenge.Common.Models;
 using GameOfRevenge.Common.Models.Quest;
 using GameOfRevenge.Common.Services;
+using GameOfRevenge.Business;
 
 namespace GameOfRevenge.GameApplication
 {
@@ -64,6 +65,61 @@ namespace GameOfRevenge.GameApplication
             var task = GameService.GameLobby.OnLobbyMessageRecived(this, operationRequest, sendParameters);
             task.Wait();
         }
+
+/*        public SendResult SendEventTo(List<int> players, IEventData eventData)
+        {
+            if (string.IsNullOrWhiteSpace(debuMsg)) debuMsg = string.Empty;
+
+            foreach (var plyId in players)
+            {
+                var client = Clients.Find(x => (x != null) && (x.PlayerInstance != null) && (x.PlayerInstance.PlayerId == plyId));
+                if (client == null) continue;
+
+                try
+                {
+                    client.SendOperation(opCode, returnCode, data);
+                }
+                catch (Exception ex)
+                {
+                    log.Debug("Exception = " + ex.Message);
+                }
+            }
+
+            log.Debug($"Send Operation to all players opCode: {opCode}, returnCode: {returnCode}, data: {GlobalHelper.DicToString(data)}, debugMsg: {debuMsg}");
+
+            return SendResult.Ok;
+        }
+
+        public SendResult SendEventTo(List<int> players, OperationCode opCode, ReturnCode returnCode) => SendOperationTo(players, (byte)opCode, returnCode, null, null);
+        public SendResult SendEventTo(List<int> players, OperationCode opCode, ReturnCode returnCode, string debugMsg) => SendOperationTo(players, (byte)opCode, returnCode, null, debugMsg);
+        public SendResult SendEventTo(List<int> players, OperationCode opCode, ReturnCode returnCode, Dictionary<byte, object> data) => SendOperationTo(players, (byte)opCode, returnCode, data, null);
+        public SendResult SendEventTo(List<int> players, OperationCode opCode, ReturnCode returnCode, Dictionary<byte, object> data, string debugMsg) => SendOperationTo(players, (byte)opCode, returnCode, data, debugMsg);
+        public SendResult SendEventTo(List<int> players, byte opCode, ReturnCode returnCode) => SendOperationTo(players, opCode, returnCode, null, null);
+        public SendResult SendEventTo(List<int> players, byte opCode, ReturnCode returnCode, string debugMsg) => SendOperationTo(players, opCode, returnCode, null, debugMsg);
+        public SendResult SendEventTo(List<int> players, byte opCode, ReturnCode returnCode, Dictionary<byte, object> data) => SendOperationTo(players, opCode, returnCode, data, null);
+        public SendResult SendEventTo(List<int> players, byte opCode, ReturnCode returnCode, Dictionary<byte, object> data, string debuMsg)
+        {
+            if (string.IsNullOrWhiteSpace(debuMsg)) debuMsg = string.Empty;
+
+            foreach (var plyId in players)
+            {
+                var client = Clients.Find(x => (x != null) && (x.PlayerInstance != null) && (x.PlayerInstance.PlayerId == plyId));
+                if (client == null) continue;
+
+                try
+                {
+                    client.SendOperation(opCode, returnCode, data);
+                }
+                catch (Exception ex)
+                {
+                    log.Debug("Exception = " + ex.Message);
+                }
+            }
+
+            log.Debug($"Send Operation to all players opCode: {opCode}, returnCode: {returnCode}, data: {GlobalHelper.DicToString(data)}, debugMsg: {debuMsg}");
+
+            return SendResult.Ok;
+        }*/
 
         public SendResult SendOperation(OperationCode opCode, ReturnCode returnCode) => SendOperation((byte)opCode, returnCode, null, string.Empty);
         public SendResult SendOperation(OperationCode opCode, ReturnCode returnCode, string debuMsg) => SendOperation((byte)opCode, returnCode, null, debuMsg);
@@ -128,10 +184,6 @@ namespace GameOfRevenge.GameApplication
             return result;
         }
 
-
-        public new SendResult SendEvent(IEventData eventData, SendParameters sendParameters)
-        {
-            return base.SendEvent(eventData, sendParameters);
-        }
+        public SendResult SendEvent(IEventData eventData) => SendEvent(eventData, new SendParameters());
     }
 }

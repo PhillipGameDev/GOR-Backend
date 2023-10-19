@@ -13,10 +13,9 @@ using GameOfRevenge.Common.Net;
 using GameOfRevenge.Common.Models;
 using GameOfRevenge.Common.Models.Quest;
 using GameOfRevenge.Common.Models.Quest.Template;
-using GameOfRevenge.Common.Models.PlayerData;
+using GameOfRevenge.Common.Models.Clan;
 using GameOfRevenge.Common.Services;
 using GameOfRevenge.Common.Interface.UserData;
-using GameOfRevenge.Common.Email;
 using GameOfRevenge.Business.CacheData;
 using GameOfRevenge.Business.Manager.Base;
 using GameOfRevenge.Business.Manager.UserData;
@@ -26,6 +25,7 @@ using GameOfRevenge.Interface;
 using GameOfRevenge.Model;
 using GameOfRevenge.Buildings.Handlers;
 using GameOfRevenge.Model.Common;
+using GameOfRevenge.Business;
 
 namespace GameOfRevenge.GameHandlers
 {
@@ -46,6 +46,20 @@ new string[]{
 new string[]{
 "سكس","طيز","شرج","لعق","لحس","مص","تمص","بيضان","ثدي","بز","بزاز","حلمة","مفلقسة","بظر","كس","فرج","شهوة","شاذ","مبادل","عاهرة","جماع","قضيب","زب","لوطي","لواط","سحاق","سحاقية","اغتصاب","خنثي","احتلام","نيك","متناك","متناكة","شرموطة","عرص","خول","قحبة","لبوة"
 }};
+
+        private readonly List<DataReward> gloryKingdomRewards = new List<DataReward>()
+        {
+            new DataReward() { RewardId = 349, Count = 100 }//10k food
+            ,new DataReward() { RewardId = 353, Count = 100 }//10k wood
+            ,new DataReward() { RewardId = 146, Count = 100 }//5k ore
+
+            ,new DataReward() { RewardId = 369, Count = 40 }//25% marching
+            ,new DataReward() { RewardId = 368, Count = 40 }//50% marching
+
+            ,new DataReward() { RewardId = 1, Count = 20 }//1k xp
+            ,new DataReward() { RewardId = 96, Count = 20 }//100 vip
+            ,new DataReward() { RewardId = 25, Count = 20 }//5 hero
+        };
 
         public async Task<SendResult> OnLobbyMessageRecived(IGorMmoPeer peer, OperationRequest operationRequest, SendParameters sendParameters)
         {
@@ -105,6 +119,9 @@ new string[]{
                     case OperationCode.SendFriendRequest: return await HandleSendFriendRequest(peer, operationRequest);//34
                     case OperationCode.RespondToFriendRequest: return await HandleRespondToFriendRequest(peer, operationRequest);//35
 //                    OperationCode.CheckUnderAttack = 22
+
+                    case OperationCode.ClaimRewardsRequest: return await HandleClaimRewardsRequest(peer, operationRequest); 
+
                     default: return peer.SendOperation(operationRequest.OperationCode, ReturnCode.InvalidOperation);
                 }
             }
@@ -136,7 +153,7 @@ new string[]{
             return plyData;
         }
 
-        void UpdateMarchingArmies(PlayerInstance actor, PlayerCompleteData completeData)
+        void UpdateMarchingArmies(PlayerInstance playerInstance, PlayerCompleteData completeData)
         {
             var marchingArmies = completeData.MarchingArmies;
             if (marchingArmies == null) return;
@@ -145,10 +162,11 @@ new string[]{
             {
                 if (!GameService.BRealTimeUpdateManager.UpdateMarchingArmy(item)) continue;
 
-                var target = actor.World.PlayersManager.GetPlayer(item.TargetId);
+//                var target = playerInstance.World.PlayersManager.GetPlayer(item.TargetId);
                 var updateMarching = new UpdateMarchingArmyEvent(item);
-                actor.SendEvent(EventCode.UpdateMarchingArmyEvent, updateMarching);
-                target.SendEvent(EventCode.UpdateMarchingArmyEvent, updateMarching);
+                var users = new List<int>() { playerInstance.PlayerId, item.TargetId };
+                playerInstance.SendEventToUsers(users, EventCode.UpdateMarchingArmyEvent, updateMarching);
+//                target.SendEvent(EventCode.UpdateMarchingArmyEvent, updateMarching);
             }
         }
 
@@ -166,42 +184,127 @@ new string[]{
             return peer.SendOperation(operationRequest.OperationCode, (plyData != null) ? ReturnCode.OK : ReturnCode.Failed);
         }
 
+        private async Task<ReturnCode> RecallFromGloryKingdom(int playerId, ZoneFortress fortress)
+        {
+            var playerTroops = fortress.PlayerTroops.Find(x => x.PlayerId == playerId);
+            if (playerTroops == null) return ReturnCode.InvalidOperation;
+            if (!playerTroops.Recalled)
+            {
+                var resp = await GameService.BUsertroopManager.AddTroops(playerId, playerTroops.Troops);
+                if (!resp.IsSuccess) return ReturnCode.Failed;
+
+                playerTroops.Recalled = true;
+            }
+
+            return ReturnCode.OK;
+        }
+
+        public async Task<ReturnCode> RecallTroopFromGloryKingdom(int playerId, int fortressId)
+        {
+            var fortressResp = await GameService.BKingdomManager.GetZoneFortressById(fortressId);
+            if (!fortressResp.IsSuccess || !fortressResp.HasData) return ReturnCode.InvalidOperation;
+
+            var fortress = fortressResp.Data;
+            var resp = await RecallFromGloryKingdom(playerId, fortress);
+            if (resp != ReturnCode.OK) return resp;
+
+            var fortressData = new ZoneFortressData()
+            {
+                FirstCapturedTime = fortress.FirstCapturedTime,
+                StartTime = fortress.StartTime,
+                Duration = fortress.Duration,
+                PlayerTroops = fortress.PlayerTroops
+            };
+            var json = JsonConvert.SerializeObject(fortressData);
+            var updResp = await GameService.BKingdomManager.UpdateZoneFortress(fortressId, data: json);
+            if (!updResp.IsSuccess) return ReturnCode.Failed;
+
+            return ReturnCode.OK;
+        }
+
+        public async Task<ReturnCode> RecallAllTroopsFromGloryKingdom(int fortressId)
+        {
+            var fortressResp = await GameService.BKingdomManager.GetZoneFortressById(fortressId);
+            if (!fortressResp.IsSuccess || !fortressResp.HasData) return ReturnCode.InvalidOperation;
+
+            var response = ReturnCode.OK;
+            var fortress = fortressResp.Data;
+            if (fortress.PlayerId > 0)
+            {
+                foreach (var playerTroops in fortress.PlayerTroops)
+                {
+                    var resp = await RecallFromGloryKingdom(playerTroops.PlayerId, fortress);
+                    if (resp != ReturnCode.OK) response = ReturnCode.Failed;
+                }
+            }
+            var fortressData = new ZoneFortressData()
+            {
+                FirstCapturedTime = fortress.FirstCapturedTime,
+                StartTime = fortress.StartTime,
+                Duration = fortress.Duration,
+                PlayerTroops = fortress.PlayerTroops
+            };
+            var json = JsonConvert.SerializeObject(fortressData);
+            var updResp = await GameService.BKingdomManager.UpdateZoneFortress(fortressId, data: json);
+            if (!updResp.IsSuccess) return ReturnCode.Failed;
+
+            return response;
+        }
+
         private async Task<SendResult> HandleRecallMarchingArmy(IGorMmoPeer peer, OperationRequest operationRequest)
         {
             log.Info("**************** HandleRecallMarchingArmy Start************************");
             var operation = new RetreatMarchingArmyRequest(peer.Protocol, operationRequest);
-            if (!operation.IsValid) return peer.SendOperation(operationRequest.OperationCode, ReturnCode.InvalidOperation, debuMsg: operation.GetErrorMessage());
-
-            var marchingId = operation.MarchingId;
-            var marchingArmy = GameService.BRealTimeUpdateManager.GetMarchingArmy(marchingId);
-            if (marchingArmy == null) return peer.SendOperation(operationRequest.OperationCode, ReturnCode.InvalidOperation);
-
-            if (!marchingArmy.IsRecalling)
+            if (!operation.IsValid)
             {
-                var army = marchingArmy.Base();
-                army.ReturnReduction = (int)marchingArmy.TimeLeftForTask;
-                army.Recall = marchingArmy.Distance - army.ReturnReduction;
-
-                var armyJson = JsonConvert.SerializeObject(army);
-                var resp = await GameService.BPlayerManager.UpdatePlayerDataID(peer.PlayerInstance.PlayerId, marchingId, armyJson);
-                if (!resp.IsSuccess)
-                {
-                    return peer.SendOperation(operationRequest.OperationCode, ReturnCode.Failed, debuMsg: resp.Message);
-                }
-                marchingArmy.ReturnReduction = army.ReturnReduction;
-                marchingArmy.Recall = army.Recall;
+                var msg = operation.GetErrorMessage();
+                return peer.SendOperation(operationRequest.OperationCode, ReturnCode.InvalidOperation, debuMsg: msg);
             }
 
-            GameService.BRealTimeUpdateManager.UpdateMarchingArmy(marchingArmy);
-//            var updateResp = new UpdateMarchingArmyEvent(marchingArmy)
-//            {
-//                MarchingId = operation.MarchingId
-//            };
-            log.Info("**************** HandleRecallMarchingArmy End************************");
-            var updateMarching = new UpdateMarchingArmyEvent(marchingArmy);
-            peer.PlayerInstance.SendEvent(EventCode.UpdateMarchingArmyEvent, updateMarching);
+            var marchingId = operation.MarchingId;
+            if (marchingId < 0)//glory kingdom
+            {
+                var fortressId = (int)-marchingId;
+                var resp = await RecallTroopFromGloryKingdom(peer.PlayerInstance.PlayerId, fortressId);
+                if (resp != ReturnCode.OK) peer.SendOperation(operationRequest.OperationCode, resp);
 
-            return peer.SendOperation(operationRequest.OperationCode, ReturnCode.OK);
+
+                var updateMarching = new UpdateMarchingArmyEvent() { MarchingId = marchingId };
+                await peer.PlayerInstance.SendEventToAlliance(EventCode.UpdateMarchingArmyEvent, updateMarching);
+                log.Info("**************** HandleRecallMarchingArmy End************************");
+
+                return peer.SendOperation(operationRequest.OperationCode, ReturnCode.OK);
+            }
+            else
+            {
+                var marchingArmy = GameService.BRealTimeUpdateManager.GetMarchingArmy(marchingId);
+                if (marchingArmy == null) return peer.SendOperation(operationRequest.OperationCode, ReturnCode.InvalidOperation);
+
+                if (!marchingArmy.IsRecalling)
+                {
+                    var army = marchingArmy.Base();
+                    army.ReturnReduction = (int)marchingArmy.TimeLeftForTask;
+                    army.Recall = marchingArmy.Distance - army.ReturnReduction;
+
+                    var armyJson = JsonConvert.SerializeObject(army);
+                    var resp = await GameService.BPlayerManager.UpdatePlayerDataID(peer.PlayerInstance.PlayerId, marchingId, armyJson);
+                    if (!resp.IsSuccess)
+                    {
+                        return peer.SendOperation(operationRequest.OperationCode, ReturnCode.Failed, debuMsg: resp.Message);
+                    }
+                    marchingArmy.ReturnReduction = army.ReturnReduction;
+                    marchingArmy.Recall = army.Recall;
+                }
+
+                GameService.BRealTimeUpdateManager.UpdateMarchingArmy(marchingArmy);
+
+                var updateMarching = new UpdateMarchingArmyEvent(marchingArmy);
+                peer.PlayerInstance.SendEvent(EventCode.UpdateMarchingArmyEvent, updateMarching);
+
+                log.Info("**************** HandleRecallMarchingArmy End************************");
+
+                return peer.SendOperation(operationRequest.OperationCode, ReturnCode.OK);
+            }
         }
 
         async Task<SendResult> HandleSendFriendRequest(IGorMmoPeer peer, OperationRequest operationRequest)
@@ -863,10 +966,13 @@ new string[]{
                 var success = await peer.PlayerInstance.PlayerAttackHandler.AttackRequestAsync(operation);
                 if (!success) return SendResult.Failed;
 
-                var questUpdated = await CompleteCustomTaskQuest(peer.PlayerInstance.PlayerId, CustomTaskType.AttackPlayer);
-                if (questUpdated)
+                if (operation.TargetType == (byte)EntityType.Player)
                 {
-                    peer.PlayerInstance.SendEvent(EventCode.UpdateQuest, new Dictionary<byte, object>());
+                    var questUpdated = await CompleteCustomTaskQuest(peer.PlayerInstance.PlayerId, CustomTaskType.AttackPlayer);
+                    if (questUpdated)
+                    {
+                        peer.PlayerInstance.SendEvent(EventCode.UpdateQuest, new Dictionary<byte, object>());
+                    }
                 }
 
                 return SendResult.Ok;
@@ -893,6 +999,107 @@ new string[]{
 
             log.Debug("@@@@ SEND REINFORCEMENTS INVALID");
 //            var msg = operation.GetErrorMessage();
+            return peer.SendOperation(operationRequest.OperationCode, ReturnCode.InvalidOperation, debuMsg: errMsg);
+        }
+
+        public async Task<ReturnCode> DistributeGloryKingdomRewards(int fortressId, float defaultValue, List<KeyValuePair<int, float>> values = null)
+        {
+            var fortressResp = await GameService.BKingdomManager.GetZoneFortressById(fortressId);
+            if (!fortressResp.IsSuccess || !fortressResp.HasData) return ReturnCode.InvalidOperation;
+
+            List<ClanMember> clanMembers = null;
+            var clanId = fortressResp.Data.ClanId;
+            if (clanId > 0)
+            {
+                var clanResp = await GameService.BClanManager.GetClanMembers(clanId);
+                if (!clanResp.IsSuccess || !clanResp.HasData) return ReturnCode.InvalidOperation;
+
+                clanMembers = clanResp.Data;
+            }
+            var updResp = await GameService.BKingdomManager.UpdateZoneFortress(fortressId, finished: true);
+            if (!updResp.IsSuccess) return ReturnCode.Failed;
+
+            GameService.RealTimeUpdateManagerGloryKingdom.UpdateFortressData(updResp.Data);
+            var leaderPlayerId = fortressResp.Data.PlayerId;
+            if ((clanMembers != null) && (leaderPlayerId > 0))
+            {
+                var random = new Random();
+                var completeWithoutErrors = true;
+                var fortress = fortressResp.Data;
+                foreach (var member in clanMembers)
+                {
+                    var playerId = member.PlayerId;
+                    var minCount = 5;
+                    var percentage = defaultValue;
+                    if (playerId == leaderPlayerId)
+                    {
+                        minCount = 10;
+                        percentage = 1;
+                    }
+                    else if (values != null)
+                    {
+                        var idx = values.FindIndex(x => x.Key == playerId);
+                        if (idx != -1) percentage = values[idx].Value;
+                    }
+                    var rewards = new List<DataReward>();
+                    foreach (var reward in gloryKingdomRewards)
+                    {
+                        if (random.NextDouble() < (0.005f + percentage)) continue;
+
+                        var count = random.Next(minCount, (int)(reward.Count * percentage));
+                        rewards.Add(new DataReward()
+                        {
+                            RewardId = reward.RewardId,
+                            Count = (int)Math.Ceiling(count / 5f) * 5
+                        });
+                    }
+                    var resp = await UserQuestManager.CollectRewards(playerId, rewards);
+                    if (resp != ReturnCode.OK) completeWithoutErrors = false;
+                }
+            }
+
+            return ReturnCode.OK;
+        }
+
+        public async Task<SendResult> HandleClaimRewardsRequest(IGorMmoPeer peer, OperationRequest operationRequest)
+        {
+            log.Debug("@@@@@@@ HANDLE CLAIM REWARDS REQUEST FROM " + peer.PlayerInstance.PlayerId);
+            string errMsg = null;
+            var operation = new ClaimRewardsRequest(peer.Protocol, operationRequest);
+            if (operation.IsValid)
+            {
+                if (operation.TargetType == (byte)EntityType.Fortress)
+                {
+                    List<KeyValuePair<int, float>> percentages = null;
+                    if (operation.Values != null)
+                    {
+                        percentages = new List<KeyValuePair<int, float>>();
+                        var len = operation.Values.Length;
+                        for (int num = 0; num < len; num += 2)
+                        {
+                            var playerId = operation.Values[num];
+                            var percentage = operation.Values[num + 1] / 100f;
+                            percentages.Add(new KeyValuePair<int, float>(playerId, percentage));
+                        }
+                    }
+                    var resp = await DistributeGloryKingdomRewards(operation.TargetId, operation.DefaultValue / 100f, percentages);
+                    if (resp == ReturnCode.OK)
+                    {
+                        return peer.SendOperation(operationRequest.OperationCode, ReturnCode.OK, debuMsg: "OK");
+                    }
+                    else
+                    {
+                        errMsg = "Error processing data";
+                    }
+                }
+                else
+                {
+                    errMsg = "Invalid parameters";
+                }
+            }
+            if (errMsg == null) errMsg = operation.GetErrorMessage();
+
+            log.Debug("@@@@ CLAIM REWARDS INVALID");
             return peer.SendOperation(operationRequest.OperationCode, ReturnCode.InvalidOperation, debuMsg: errMsg);
         }
 
@@ -986,15 +1193,19 @@ new string[]{
                 return peer.SendOperation(operationRequest.OperationCode, ReturnCode.InvalidOperation, debuMsg: msg);
             }
 
-            peer.PlayerInstance.InterestArea.JoinKingdomView();
+            new DelayedAction().WaitForCallBack(() =>
+            {
+                peer.PlayerInstance.InterestArea.JoinKingdomView();
+            }, 100);
+
             var joinResp = new JoinKingdomResponse()
             {
-                WorldSizeX = (short)peer.PlayerInstance.World.SizeX,
-                WorldSizeY = (short)peer.PlayerInstance.World.SizeY
+                WorldTilesX = (short)peer.PlayerInstance.World.TilesX,
+                WorldTilesY = (short)peer.PlayerInstance.World.TilesY,
+                ZoneSize = (byte)peer.PlayerInstance.World.ZoneSize
             };
-            var data = joinResp.GetDictionary();
 
-            return peer.SendOperation(operationRequest.OperationCode, ReturnCode.OK, data);
+            return peer.SendOperation(operationRequest.OperationCode, ReturnCode.OK, joinResp.GetDictionary());
         }
 
         public SendResult HandlePlayerLeaveKingdomView(IGorMmoPeer peer, OperationRequest operationRequest)
@@ -1110,10 +1321,11 @@ new string[]{
                 StructureType = (int)structureType,
                 StructureLocationId = location,
                 Duration = targetBuilding.Duration,
-                TotalTime = seconds
+                TotalTime = seconds,
+                Helped = (byte)targetBuilding.Helped
             };
-            //TODO:broadcast to alliance only
-            peer.Broadcast(OperationCode.HelpStructure, ReturnCode.OK, resp.GetDictionary());
+            await peer.PlayerInstance.SendEventToAlliance(EventCode.HelpStructure, resp.GetDictionary(), true);
+//                SendOperationToAlliance(OperationCode.HelpStructure, ReturnCode.OK, resp.GetDictionary());
 
             log.Info("**************** HandleHelpStructure End************************");
 

@@ -135,7 +135,7 @@ else if (Helper.IsRegion(ViewData, "HTMLSection"))
                 <tbody>
                     @foreach (var user in Model.Users)
                     {
-                        <tr class="user-row align-middle @(user.Invaded == -1 ? "table-warning" : "")" type="button"
+                        <tr class="user-row align-middle" type="button"
                             id="user-@user.PlayerId" data-player-id="@user.PlayerId"
                             data-toggle="modal" data-target="#user-modal">
                             @if (user.PlayerId == 0)
@@ -176,9 +176,9 @@ else if (Helper.IsRegion(ViewData, "HTMLSection"))
                                         }
                                     </div>
                                     <div class="wdt-1 align-middle">
-                                        @if (user.Invaded > 0)
+                                        @if (user.IsAdmin)
                                         {
-                                            <span class="badge badge-secondary">Monster</span>
+                                            <span class="badge badge-secondary">Admin</span>
                                         }
                                         else if (user.IsDeveloper)
                                         {

@@ -1,4 +1,6 @@
 ﻿using System;
+using System.Collections.Generic;
+using System.Threading.Tasks;
 using ExitGames.Concurrency.Fibers;
 using ExitGames.Logging;
 using GameOfRevenge.Common.Models;
@@ -41,6 +43,19 @@ namespace GameOfRevenge.GameHandlers
 
             log.InfoFormat("Send profile data to client X {0} Y {1} userName {2} castle {3} ",
                             profile.X, profile.Y, profile.UserName, profile.CastleLevel);
+        }
+
+        public async Task SendEventToAlliance(EventCode eventCode, object data, bool includeOwner = false)
+        {
+            if ((Peer != null) && (PlayerInfo.AllianceId > 0))
+            {
+                var resp = await GameService.BClanManager.GetClanMembers(PlayerInfo.AllianceId);
+                if (resp.IsSuccess && resp.HasData)
+                {
+                    var members = resp.Data.ConvertAll(x => x.PlayerId);
+                    SendEventToUsers(members, eventCode, data, includeOwner);
+                }
+            }
         }
 
         public void TryAddPlayerQuestData()

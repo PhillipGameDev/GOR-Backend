@@ -24,14 +24,16 @@ namespace GameOfRevenge.WebServer.Controllers.Api
         }
 
         [HttpGet]
-        public IActionResult GetEventDetails()
+        public async Task<IActionResult> GetEventDetails()
         {
-            var details = new EventDetails()
-            {
-                StartTime = DateTime.Parse("2023-10-04T10:00:00Z").ToUniversalTime().ToString("s") + "Z"
-            };
+            return ReturnResponse(await kingdomManager.GetGloryKingdomDetails());
 
-            return ReturnResponse(new Response<EventDetails>(details, 100, "OK"));
+//            var details = new EventDetails()
+//            {
+//                StartTime = DateTime.Parse("2023-10-07T08:00:00Z").ToUniversalTime().ToString("s") + "Z"
+//            };
+
+//            return ReturnResponse(new Response<EventDetails>(details, 100, "OK"));
         }
 
         [HttpPost]

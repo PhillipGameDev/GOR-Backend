@@ -103,7 +103,7 @@
     <Compile Include="Helpers\MessageCounters.cs" />
     <Compile Include="GameApplication\GorMmoPeer.cs" />
     <Compile Include="GameApplication\PhotonApplication.cs" />
-    <Compile Include="GameHandlers\CountryGrid.cs" />
+    <Compile Include="GameHandlers\WorldGrid.cs" />
     <Compile Include="GameHandlers\PlayersManager.cs" />
     <Compile Include="GameHandlers\Region.cs" />
     <Compile Include="Buildings\Interface\IGameBuildingManager.cs" />
@@ -155,7 +155,6 @@
     <Compile Include="Model\Operation\UpgradeTechnologyRequest.cs" />
     <Compile Include="Model\Operation\WoundedTroopHealRequest.cs" />
     <Compile Include="Model\Operation\WoundedTroopTimerStatusRequest.cs" />
-    <Compile Include="Model\ReturnCode.cs" />
     <Compile Include="Model\RoomParameterKey.cs" />
     <Compile Include="Model\Vector.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
@@ -186,6 +185,9 @@
     <Compile Include="Model\Common\UpdateMarchingArmyEvent.cs" />
     <Compile Include="Model\Common\EntityEnterResponse.cs" />
     <Compile Include="Model\Common\EntityExitResponse.cs" />
+    <Compile Include="Model\Operation\ClaimRewardsRequest.cs" />
+    <Compile Include="GameApplication\xRealTimeUpdateManagerGloryKingdom.cs" Condition=" '$(EnableDefaultCompileItems)' == 'true' " />
+    <Compile Include="GameApplication\RealTimeUpdateManagerGloryKingdom.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="GameOfRevenge.dll.config">

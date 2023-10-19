@@ -1,4 +1,5 @@
-﻿using GameOfRevenge.Common.Models;
+﻿using GameOfRevenge.Business;
+using GameOfRevenge.Common.Models;
 using GameOfRevenge.Common.Models.Quest;
 using GameOfRevenge.GameHandlers;
 using GameOfRevenge.Model;
@@ -14,6 +15,12 @@ namespace GameOfRevenge.Interface
         PlayerInstance PlayerInstance { get; set; }
 
 
+/*        SendResult SendEventTo(List<int> players, IEventData opCode, ReturnCode returnCode, string debuMsg);
+        SendResult SendEventTo(List<int> players, IEventData opCode, ReturnCode returnCode, Dictionary<byte, object> data = null, string debuMsg = null);
+
+        SendResult SendEventTo(List<int> players, byte opCode, ReturnCode returnCode, string debuMsg);
+        SendResult SendEventTo(List<int> players, byte opCode, ReturnCode returnCode, Dictionary<byte, object> data = null, string debuMsg = null);
+*/
         SendResult SendOperation(OperationCode opCode, ReturnCode returnCode);
         SendResult SendOperation(OperationCode opCode, ReturnCode returnCode, string debuMsg);
         SendResult SendOperation(OperationCode opCode, ReturnCode returnCode, Dictionary<byte, object> data);
@@ -34,6 +41,6 @@ namespace GameOfRevenge.Interface
         SendResult Broadcast(byte opCode, ReturnCode returnCode, Dictionary<byte, object> data);
         SendResult Broadcast(byte opCode, ReturnCode returnCode, Dictionary<byte, object> data, string debuMsg);
 
-        SendResult SendEvent(IEventData eventData, SendParameters sendParameters);
+        SendResult SendEvent(IEventData eventData);
     }
 }

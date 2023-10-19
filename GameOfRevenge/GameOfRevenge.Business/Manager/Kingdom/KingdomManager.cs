@@ -356,6 +356,7 @@ namespace GameOfRevenge.Business.Manager.Kingdom
                 fortress.HitPoints = fortressResp.HitPoints;
                 fortress.Attack = fortressResp.Attack;
                 fortress.Defense = fortressResp.Defense;
+                fortress.Finished = fortressResp.Finished;
                 fortress.ClanId = fortressResp.ClanId;
                 fortress.PlayerId = fortressResp.PlayerId;
                 fortress.Name = fortressResp.Name;
@@ -414,6 +415,7 @@ namespace GameOfRevenge.Business.Manager.Kingdom
                 fortress.HitPoints = fortressResp.HitPoints;
                 fortress.Attack = fortressResp.Attack;
                 fortress.Defense = fortressResp.Defense;
+                fortress.Finished = fortressResp.Finished;
                 fortress.ClanId = fortressResp.ClanId;
                 fortress.PlayerId = fortressResp.PlayerId;
                 fortress.Name = fortressResp.Name;
@@ -447,7 +449,8 @@ namespace GameOfRevenge.Business.Manager.Kingdom
 
         public async Task<Response<ZoneFortress>> UpdateZoneFortress(int zoneFortressId, int? hitPoints = null,
                                                     int? attack = null, int? defense = null,
-                                                    int? playerId = null, string data = null)
+                                                    int? playerId = null, bool? finished = null,
+                                                    string data = null)
         {
             var spParams = new Dictionary<string, object>()
             {
@@ -457,6 +460,7 @@ namespace GameOfRevenge.Business.Manager.Kingdom
             if (attack != null) spParams.Add("Attack", attack);
             if (defense != null) spParams.Add("Defense", defense);
             if (playerId != null) spParams.Add("PlayerId", playerId);
+            if (finished != null) spParams.Add("Finished", finished);
             if (data != null) spParams.Add("Data", data);
 
             try
@@ -479,6 +483,7 @@ namespace GameOfRevenge.Business.Manager.Kingdom
                 fortress.HitPoints = fortressResp.HitPoints;
                 fortress.Attack = fortressResp.Attack;
                 fortress.Defense = fortressResp.Defense;
+                fortress.Finished = fortressResp.Finished;
                 fortress.ClanId = fortressResp.ClanId;
                 fortress.PlayerId = fortressResp.PlayerId;
                 fortress.Name = fortressResp.Name;
@@ -502,6 +507,55 @@ namespace GameOfRevenge.Business.Manager.Kingdom
             catch (Exception ex)
             {
                 return new Response<ZoneFortress>()
+                {
+                    Case = 0,
+                    Data = null,
+                    Message = ErrorManager.ShowError(ex)
+                };
+            }
+        }
+
+        public async Task<Response<GloryKingdomData>> GetGloryKingdomDetails()
+        {
+            try
+            {
+                return await Db.ExecuteSPSingleRow<GloryKingdomData>("GetGloryKingdomDetails", null);
+            }
+            catch (Exception ex)
+            {
+                return new Response<GloryKingdomData>()
+                {
+                    Case = 0,
+                    Data = null,
+                    Message = ErrorManager.ShowError(ex)
+                };
+            }
+        }
+
+        public async Task<Response<GloryKingdomData>> CreateGloryKingdomEvent(DateTime startTime, DateTime endTime)
+        {
+            try
+            {
+                var spParams = new Dictionary<string, object>()
+                {
+                    { "StartTime", startTime },
+                    { "EndTime", endTime }
+                };
+
+                return await Db.ExecuteSPSingleRow<GloryKingdomData>("AddGloryKingdomDetails", spParams);
+            }
+            catch (InvalidModelExecption ex)
+            {
+                return new Response<GloryKingdomData>()
+                {
+                    Case = 200,
+                    Data = null,
+                    Message = ex.Message
+                };
+            }
+            catch (Exception ex)
+            {
+                return new Response<GloryKingdomData>()
                 {
                     Case = 0,
                     Data = null,

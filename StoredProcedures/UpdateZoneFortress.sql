@@ -12,6 +12,7 @@ ALTER   PROCEDURE [dbo].[UpdateZoneFortress]
 	@Attack INT = NULL,
 	@Defense INT = NULL,
 	@PlayerId INT = NULL,
+	@Finished BIT = NULL,
 	@Data VARCHAR(MAX) = NULL
 AS
 BEGIN
@@ -24,11 +25,13 @@ BEGIN
 
 	DECLARE @tclanid INT = NULL;
 	DECLARE @tplayerid INT = NULL;
+	DECLARE @tfinished BIT = NULL;
 	DECLARE @tdata VARCHAR(MAX) = NULL;
 
 	BEGIN TRY
-		SELECT @id = zf.[ZoneFortressId], @tclanid = zf.[ClanId], @tplayerid = zf.[PlayerId], @tdata = zf.[Data]
+		SELECT @id = zf.[ZoneFortressId], @tclanid = zf.[ClanId], @tplayerid = zf.[PlayerId], @tfinished = zf.[Finished], @tdata = zf.[Data]
 		FROM [dbo].[ZoneFortress] AS zf WHERE zf.[ZoneFortressId] = @tid;
+
 		IF (@id IS NULL) BEGIN
 			SET @case = 200;
 			SET @message = 'Zone fortress does not exist';
@@ -48,9 +51,14 @@ BEGIN
 				END
 
 				IF (@Data IS NOT NULL) SET @tdata = @Data;
+				IF (@Finished IS NOT NULL) SET @tfinished = @Finished;
 				UPDATE [dbo].[ZoneFortress] SET [HitPoints] = @HitPoints, [Attack] = @Attack, [Defense] = @Defense, 
-												[ClanId] = @tclanid, [PlayerId] = @tplayerid, [Data] = @tdata
+												[ClanId] = @tclanid, [PlayerId] = @tplayerid, [Finished] = @tfinished, [Data] = @tdata
 				WHERE [ZoneFortressId] = @id;
+			END
+			ELSE IF (@Finished IS NOT NULL) BEGIN
+				IF (@Data IS NOT NULL) SET @tdata = @Data;
+				UPDATE [dbo].[ZoneFortress] SET [Finished] = @tfinished, [Data] = @tdata WHERE [ZoneFortressId] = @id;
 			END
 			ELSE IF (@Data IS NOT NULL) BEGIN
 				UPDATE [dbo].[ZoneFortress] SET [Data] = @Data WHERE [ZoneFortressId] = @id;
@@ -64,7 +72,7 @@ BEGIN
 		SET @message = ERROR_MESSAGE();
 	END CATCH
 
-	SELECT zf.[ZoneFortressId], zf.[WorldId], zf.[ZoneIndex], zf.[HitPoints], zf.[Attack], zf.[Defense], zf.[ClanId], c.[Name], 
+	SELECT zf.[ZoneFortressId], zf.[WorldId], zf.[ZoneIndex], zf.[HitPoints], zf.[Attack], zf.[Defense], zf.[Finished], zf.[ClanId], c.[Name], 
 			zf.[PlayerId], zf.[Data]
 	FROM [dbo].[ZoneFortress] AS zf
 	LEFT JOIN [dbo].[Clan] AS c ON c.[ClanId] = zf.[ClanId]

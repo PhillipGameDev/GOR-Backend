@@ -18,6 +18,10 @@ namespace GameOfRevenge.Model.Common
         [DataMember(Code = (byte)RoomParameterKey.ReturnReduction, IsOptional = true)]
         public int ReturnReduction { get; set; }
 
+        public UpdateMarchingArmyEvent()
+        {
+        }
+
         public UpdateMarchingArmyEvent(MarchingArmy marchingArmy)
         {
             MarchingId = marchingArmy.MarchingId;

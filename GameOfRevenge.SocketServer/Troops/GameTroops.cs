@@ -6,6 +6,7 @@ using GameOfRevenge.Buildings.Interface;
 using GameOfRevenge.GameHandlers;
 using ExitGames.Logging;
 using Newtonsoft.Json;
+using GameOfRevenge.Business;
 
 namespace GameOfRevenge.Troops
 {

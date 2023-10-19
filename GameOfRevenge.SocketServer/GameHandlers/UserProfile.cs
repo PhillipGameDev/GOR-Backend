@@ -8,6 +8,8 @@ using Photon.SocketServer;
 using GameOfRevenge.Common.Models;
 using GameOfRevenge.Interface;
 using GameOfRevenge.Model;
+using GameOfRevenge.GameApplication;
+using GameOfRevenge.Business;
 
 namespace GameOfRevenge.GameHandlers
 {
@@ -29,7 +31,7 @@ namespace GameOfRevenge.GameHandlers
         public string FullName { get; set; }
         public IGorMmoPeer Peer { get; set; }
         public IFiber Fiber { get; set; }
-        public double Health { get; protected set; }
+//        public double Health { get; protected set; }
         public bool IsInKingdomView { get; protected set; }
 
         public UserProfile(int playerId, PlayerInfo playerInfo)
@@ -38,61 +40,88 @@ namespace GameOfRevenge.GameHandlers
             PlayerInfo = playerInfo;
         }
 
-        public void SendOperation(byte opCode, ReturnCode returnCode, Dictionary<byte, object> data = null, string debuMsg = "")
+        public void SendOperation(OperationCode opCode, ReturnCode returnCode, Dictionary<byte, object> data = null, string debuMsg = null)
         {
-            if (Peer != null)
-                Peer.SendOperation(opCode, returnCode, data, debuMsg);
+            if (Peer != null) Peer.SendOperation(opCode, returnCode, data, debuMsg);
         }
-        public void SendOperation(OperationCode opCode, ReturnCode returnCode, Dictionary<byte, object> data = null, string debuMsg = "")
+
+        public void SendOperation(byte opCode, ReturnCode returnCode, Dictionary<byte, object> data = null, string debuMsg = null)
         {
-            if (Peer != null)
-                Peer.SendOperation(opCode, returnCode, data, debuMsg);
+            if (Peer != null) Peer.SendOperation(opCode, returnCode, data, debuMsg);
         }
+
         public void SendEvent(byte evCode, object data)
         {
             SendEvent((EventCode)evCode, data);
         }
-        public void SendEvent(EventCode evCode, object data)
+
+        public void SendEvent(EventCode eventCode, object data)
         {
-            if (Peer != null)
+            if (Peer == null) return;
+
+            switch (eventCode)
             {
-                switch (evCode)
+                case EventCode.IaEnter:
+                case EventCode.IaExit:
+                case EventCode.EntityExit:
+                    break;
+                default:
+                    var json = JsonConvert.SerializeObject(data);
+                    if ((eventCode != EventCode.EntityEnter) || (json.IndexOf("EntityType\":3") != -1))
+                    {
+                        log.Info($"Send Event to User: {PlayerId} EventCode: {eventCode} Data: {json}");
+                    }
+                    break;
+            }
+            Peer.SendEvent(new EventData((byte)eventCode, data));
+        }
+
+//        public void BroadcastWithMe(EventCode eventCode, object data) => BroadcastToAllUsers(eventCode, data, true);
+
+/*        public void BroadcastToInterestUsers(EventCode eventCode, object data, bool includeOwner = false)
+        {
+            BroadcastToUsers(IntrestedPeers, eventCode, data, includeOwner);
+        }*/
+
+        public void BroadcastEventToAllUsers(EventCode eventCode, object data, bool includeOwner = false)
+        {
+            var peers = GorMmoPeer.Clients.Where(x => (x.PlayerInstance != null) &&
+                                                (x.PlayerInstance.IsInKingdomView) &&
+                                                (x.PlayerInstance.Peer != null)).ToList();
+            SendEventToUsers(peers, eventCode, data, includeOwner);
+        }
+
+        public void SendEventToUsers(List<int> users, EventCode eventCode, object data, bool includeOwner = false)
+        {
+            var peers = new List<IGorMmoPeer>();
+            foreach (var id in users)
+            {
+                var client = GorMmoPeer.Clients.Find(x => (x.PlayerInstance != null) &&
+                                                        (x.PlayerInstance.IsInKingdomView) &&
+                                                        (x.PlayerInstance.PlayerId == id));
+                if ((client != null) && (client.PlayerInstance.Peer != null))
                 {
-                    case EventCode.IaEnter:
-                    case EventCode.IaExit:
-                    case EventCode.EntityExit:
-                        break;
-                    default:
-                        var json = JsonConvert.SerializeObject(data);
-                        if ((evCode != EventCode.EntityEnter) || (json.IndexOf("EntityType\":3") != -1))
-                        {
-                            log.Info($"Send Event to User: {PlayerId}; EvCode: {evCode}; Data: {json};");
-                        }
-                        break;
+                    peers.Add(client.PlayerInstance.Peer);
                 }
-                var ev = new EventData((byte)evCode, data);
-                Peer.SendEvent(ev, new SendParameters());
             }
+            SendEventToUsers(peers, eventCode, data, includeOwner);
         }
-        public void BoradCastInterestUsers(EventCode evCode, object data)
+
+        void SendEventToUsers(List<IGorMmoPeer> peers, EventCode eventCode, object data, bool includeOwner = false)
         {
-            var ev = new EventData((byte)evCode, data);
-            var peers = IntrestedPeers;
+            var eventData = new EventData((byte)eventCode, data);
+            if (includeOwner && (Peer != null) && !peers.Exists(x => x == Peer)) Peer.SendEvent(eventData);
+            var ids = includeOwner ? PlayerId.ToString() : "";
             foreach (var item in peers)
             {
-                log.Info($"Send Event to User: {item.PlayerInstance.PlayerId}; EvCode: {evCode}; Data: {JsonConvert.SerializeObject(data)};");
-                item.SendEvent(ev, new SendParameters());
+                if (item != null)
+                {
+                    item.SendEvent(eventData);
+                    ids += "," + item.PlayerInstance.PlayerId;
+                }
             }
-        }
-        public void BroadcastWithMe(EventCode evCode, object data)
-        {
-            log.Info($"Broadcast Event with me: {PlayerId}; EvCode: {evCode}; Data: {JsonConvert.SerializeObject(data)};");
-            var peers = IntrestedPeers;
-            var ev = new EventData((byte)evCode, data);
-            foreach (var item in peers)
-                item.SendEvent(ev, new SendParameters());
-            if (Peer != null)
-                Peer.SendEvent(ev, new SendParameters());
+            log.Info($"Send - Event: {eventCode} Data: {JsonConvert.SerializeObject(data)}");
+            log.Info("        To Users: " + ids);
         }
     }
 }

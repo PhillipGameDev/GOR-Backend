@@ -18,6 +18,9 @@
     <None Remove="Microsoft.AspNetCore.Mvc.NewtonsoftJson" />
     <None Remove="Microsoft.AspNet.WebApi.WebHost" />
     <None Remove="Newtonsoft.Json" />
+    <None Remove="Google.Apis.Auth.AspNetCore3" />
+    <None Remove="AspNet.Security.OAuth.Apple" />
+    <None Remove="Google.Apis.AndroidPublisher.v3" />
     <None Remove=".DS_Store" />
   </ItemGroup>
 

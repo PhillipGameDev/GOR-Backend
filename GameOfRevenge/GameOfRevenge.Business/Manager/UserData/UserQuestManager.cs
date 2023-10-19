@@ -139,7 +139,8 @@ namespace GameOfRevenge.Business.Manager.UserData
             if (questData.Redeemed) return new Response(201, "Quest reward already redemeed");
 
             var questRewards = CacheQuestDataManager.GetQuestData(questData.QuestId);
-            await CollectRewards(playerId, questRewards.Rewards); //TODO:implement response error
+            var collectResp = await CollectRewards(playerId, questRewards.Rewards);
+            if (collectResp != ReturnCode.OK) return new Response(202, "Failed to collect rewards");
 
             QuestResourceData quest = null;
             if (questRewards.Quest.QuestGroup == QuestGroupType.DAILY_QUEST)
@@ -193,7 +194,8 @@ namespace GameOfRevenge.Business.Manager.UserData
             //foreach (var quest in questProgress.Data) if (!quest.Completed) return new Response(200, "Chapter not completed");
 
             var questRewards = CacheQuestDataManager.GetFullChapterData(chapterId);
-            await CollectRewards(playerId, questRewards.Chapter.Rewards); //TODO:implement response error
+            var resp = await CollectRewards(playerId, questRewards.Chapter.Rewards);
+            if (resp != ReturnCode.OK) return new Response(204, "Failed to collect rewards");
 
             var redemeedResp = await Db.ExecuteSPNoData("RedeemChapterReward", new Dictionary<string, object>()
             {
@@ -461,38 +463,49 @@ namespace GameOfRevenge.Business.Manager.UserData
             return await UpdateQuestData(playerId, questId, isCompleted, dataString);
         }
 
-        public static async Task CollectRewards(int playerId, IReadOnlyList<IReadOnlyDataReward> rewards)
+        public static async Task<ReturnCode> CollectRewards(int playerId, IReadOnlyList<IReadOnlyDataReward> rewards)
         {
-            if (rewards.Count == 0) return;
+            if ((rewards == null) || (rewards.Count == 0)) return ReturnCode.OK;
 
-            List<PlayerDataTable> userRewards = null;
             var resp = await manager.GetAllPlayerData(playerId, DataType.Reward);
-            userRewards = (resp.IsSuccess && resp.HasData)? resp.Data : new List<PlayerDataTable>();
+            if (!resp.IsSuccess || !resp.HasData) return ReturnCode.InvalidOperation;
 
+            var noErrors = true;
+            var userRewards = resp.Data;
             foreach (var reward in rewards)
             {
                 var data = userRewards.Find(x => (x.ValueId == reward.RewardId));
                 if (data != null)
                 {
-                    if (int.TryParse(data.Value, out int count))
+                    if (int.TryParse(data.Value, out int userCount))
                     {
-                        count += reward.Count;
-                        await manager.UpdatePlayerDataID(playerId, data.Id, count.ToString());
+                        userCount += reward.Count;
+                        data.Value = userCount.ToString();
+                        var saveResp = await manager.UpdatePlayerDataID(playerId, data.Id, data.Value);
+                        if (!saveResp.IsSuccess) noErrors = false;
                     }
                     else
                     {
-
+                        noErrors = false;
                     }
                 }
                 else
                 {
-                    var saveResp = await manager.AddOrUpdatePlayerData(playerId, DataType.Reward, reward.RewardId, reward.Count.ToString());
+                    var value = reward.Count.ToString();
+                    var saveResp = await manager.AddOrUpdatePlayerData(playerId, DataType.Reward, reward.RewardId, value);
                     if (saveResp.IsSuccess && saveResp.HasData)
                     {
                         userRewards.Add(saveResp.Data.ToPlayerDataTable);
                     }
+                    else
+                    {
+                        noErrors = false;
+                    }
                 }
             }
+            //TODO: implement a way to rollback changes if an error occurs?
+
+            return noErrors? ReturnCode.OK : ReturnCode.Failed;
         }
 
         public async Task<Response<PlayerDataTableUpdated>> ConsumeReward(int playerId, long playerDataId, string context = null)

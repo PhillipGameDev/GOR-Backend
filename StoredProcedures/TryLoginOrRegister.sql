@@ -87,7 +87,23 @@ BEGIN
 							LastLogin DATETIME
 						);
 						INSERT INTO @temp EXEC [dbo].[GetPlayerDetailsById] @existingAccount, 0;
-						SET @info = (SELECT * FROM @temp FOR JSON PATH, WITHOUT_ARRAY_WRAPPER);
+						SET @info = (
+						    SELECT 
+						        PlayerId,
+						        Name,
+						        IsAdmin,
+						        IsDeveloper,
+						        KingLevel,
+						        CastleLevel,
+						        WatchLevel,
+						        ShieldEndTime,
+						        VIPPoints,
+						        ClanId AS AllianceId,
+						        RegisteredDate,
+						        LastLogin
+						    FROM @temp
+						    FOR JSON PATH, WITHOUT_ARRAY_WRAPPER
+						);
 
 						SET @case = 101;
 						SET @message = 'Fetched existing account succesfully';

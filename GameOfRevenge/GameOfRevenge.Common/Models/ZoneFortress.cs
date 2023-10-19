@@ -21,6 +21,8 @@ namespace GameOfRevenge.Common.Models
         [DataMember]
         public int Defense { get; set; }
         [DataMember(EmitDefaultValue = false)]
+        public bool Finished { get; set; }
+        [DataMember(EmitDefaultValue = false)]
         public int ClanId { get; set; }
         [DataMember(EmitDefaultValue = false)]
         public string Name { get; set; }
@@ -29,8 +31,6 @@ namespace GameOfRevenge.Common.Models
 
         [DataMember(EmitDefaultValue = false)]
         public DateTime? FirstCapturedTime { get; set; }
-        [DataMember(EmitDefaultValue = false)]
-        public bool Claimed { get; set; }
         [DataMember(EmitDefaultValue = false)]
         public List<PlayerTroops> PlayerTroops { get; set; }
 
@@ -58,11 +58,25 @@ namespace GameOfRevenge.Common.Models
         }
     }
 
+    [DataContract]
     public class PlayerTroops
     {
+        [DataMember(EmitDefaultValue = false)]
         public int PlayerId { get; set; }
+        [DataMember(EmitDefaultValue = false)]
         public bool Recalled { get; set; }
+        [DataMember]
         public List<TroopInfos> Troops { get; set; }
+
+        public PlayerTroops()
+        {
+        }
+
+        public PlayerTroops(int playerId, List<TroopInfos> troops)
+        {
+            PlayerId = playerId;
+            Troops = troops;
+        }
     }
 
     [DataContract]
@@ -70,8 +84,8 @@ namespace GameOfRevenge.Common.Models
     {
         [DataMember(EmitDefaultValue = false)]
         public DateTime? FirstCapturedTime { get; set; }
-        [DataMember(EmitDefaultValue = false)]
-        public bool Claimed { get; set; }
+//        [DataMember(EmitDefaultValue = false)]
+//        public bool Claimed { get; set; }
         [DataMember(EmitDefaultValue = false)]
         public List<PlayerTroops> PlayerTroops { get; set; }
     }

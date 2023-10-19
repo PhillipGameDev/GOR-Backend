@@ -1,4 +1,4 @@
-﻿namespace GameOfRevenge.Model
+﻿namespace GameOfRevenge.Business
 {
     public enum ReturnCode : byte
     {

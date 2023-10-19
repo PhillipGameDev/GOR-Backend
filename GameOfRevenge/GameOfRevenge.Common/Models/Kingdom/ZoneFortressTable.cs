@@ -23,6 +23,8 @@ namespace GameOfRevenge.Common.Models.Kingdom
         public int Defense { get; set; }
 
         [DataMember(EmitDefaultValue = false)]
+        public bool Finished { get; set; }
+        [DataMember(EmitDefaultValue = false)]
         public int ClanId { get; set; }
         [DataMember(EmitDefaultValue = false)]
         public string Name { get; set; }
@@ -51,13 +53,11 @@ namespace GameOfRevenge.Common.Models.Kingdom
             Attack = reader.GetValue(index) == DBNull.Value ? 0 : reader.GetInt32(index); index++;
             Defense = reader.GetValue(index) == DBNull.Value ? 0 : reader.GetInt32(index); index++;
 
-//            StartTime = reader.GetValue(index) == DBNull.Value ? new DateTime() : reader.GetDateTime(index); index++;
-//            Duration = reader.GetValue(index) == DBNull.Value ? 0 : reader.GetInt32(index); index++;
-
+            Finished = reader.GetValue(index) == DBNull.Value ? false : reader.GetBoolean(index); index++;
             ClanId = reader.GetValue(index) == DBNull.Value ? 0 : reader.GetInt32(index); index++;
             Name = reader.GetValue(index) == DBNull.Value ? null : reader.GetString(index); index++;
 
-            if (reader.FieldCount < 9) return;
+            if (reader.FieldCount < 10) return;
 
             PlayerId = reader.GetValue(index) == DBNull.Value ? 0 : reader.GetInt32(index); index++;
             Data = reader.GetValue(index) == DBNull.Value ? null : reader.GetString(index);

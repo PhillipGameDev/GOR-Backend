@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Threading.Tasks;
 using GameOfRevenge.Common.Models;
 using GameOfRevenge.Common.Models.Kingdom;
@@ -24,6 +25,10 @@ namespace GameOfRevenge.Common.Interface
         Task<Response<ZoneFortress>> GetZoneFortressById(int zoneFortressId);
         Task<Response<ZoneFortress>> UpdateZoneFortress(int zoneFortressId, int? hitPoints = null,
                                                             int? attack = null, int? defense = null,
-                                                            int? playerId = null, string data = null);
+                                                            int? playerId = null, bool? finished = null,
+                                                            string data = null);
+
+        Task<Response<GloryKingdomData>> GetGloryKingdomDetails();
+        Task<Response<GloryKingdomData>> CreateGloryKingdomEvent(DateTime startTime, DateTime endTime);
     }
 }

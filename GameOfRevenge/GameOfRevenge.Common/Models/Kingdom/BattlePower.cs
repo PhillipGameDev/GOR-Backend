@@ -308,15 +308,6 @@ namespace GameOfRevenge.Common.Models.Kingdom
         public int Dead { get; set; }
         public int Survived => (TotalArmy - Dead);
 
-#if UNITY_2017_1_OR_NEWER
-        [DataMember(EmitDefaultValue = false)]
-        public int Food { get; set; }
-        [DataMember(EmitDefaultValue = false)]
-        public int Wood { get; set; }
-        [DataMember(EmitDefaultValue = false)]
-        public int Ore { get; set; }
-#endif
-
         [DataMember(EmitDefaultValue = false)]
         public List<HeroData> Heroes { get; set; }
 

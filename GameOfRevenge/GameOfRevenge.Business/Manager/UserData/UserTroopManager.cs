@@ -310,15 +310,76 @@ namespace GameOfRevenge.Business.Manager.UserData
                 return new Response<UserTroopData>() { Case = 0, Message = ErrorManager.ShowError() };
             }
         }
+
+        public async Task<Response<List<PlayerDataTable>>> AddTroops(int playerId, List<TroopInfos> troopInfos)
+        {
+            var userTroopsData = await manager.GetAllPlayerData(playerId, DataType.Troop);
+            if (!userTroopsData.IsSuccess || !userTroopsData.HasData)
+            {
+                return new Response<List<PlayerDataTable>>() { Case = 200, Message = "Unable to retreive user data" };
+            }
+
+            var toUpdate = new List<PlayerDataTable>();
+            var userTroops = userTroopsData.Data;
+            try
+            {
+                foreach (var troops in troopInfos)
+                {
+                    var targetTroop = troops.TroopType;
+                    var userTroopGroup = userTroops.Find(x => x.ValueId == (int)targetTroop);
+                    if (userTroopGroup == null) continue;
+
+                    List<TroopDetails> userTroop = null;
+                    foreach (var troop in troops.TroopData)
+                    {
+                        if (troop.Count == 0) continue;
+
+                        if (userTroop == null)
+                        {
+                            userTroop = JsonConvert.DeserializeObject<List<TroopDetails>>(userTroopGroup.Value);
+                        }
+                        var userData = userTroop.Find(x => x.Level == troop.Level);
+                        userData.Count += troop.Count;
+                    }
+                    if (userTroop == null) continue;
+
+                    userTroopGroup.Value = JsonConvert.SerializeObject(userTroop);
+                    toUpdate.Add(userTroopGroup);
+                }
+            }
+            catch
+            {
+                return new Response<List<PlayerDataTable>>() { Case = 201, Message = "Error processing data" };
+            }
+
+            var errMsg = "Done with errors";
+            var respCase = 100;
+            var respMsg = "Done";
+            foreach (var troop in toUpdate)
+            {
+                var resp = await manager.UpdatePlayerDataID(playerId, troop.Id, troop.Value);
+                if (!resp.IsSuccess)
+                {
+                    errMsg += " " + troop.Id;
+                    respCase = 101;
+                    respMsg = errMsg;
+                }
+            }
+
+            return new Response<List<PlayerDataTable>>() { Case = respCase, Data = userTroops, Message = respMsg };
+        }
+
         public async Task<Response<UserTroopData>> AddTroops(int playerId, TroopType type, int level, int count) => await AddTroops(playerId, type, level, count, null, false, 0);
 
         public async Task<Response<UserTroopData>> UpdateTroops(int playerId, TroopType type, List<TroopDetails> troops)
         {
             try
             {
-                var playerData = PlayerData.UserTroopDataToPlayerData(new UserTroopData() { Value = troops, ValueId = type });
-                var newValueResp = await manager.AddOrUpdatePlayerData(playerId, DataType.Troop, playerData.ValueId, playerData.Value);
-                return new Response<UserTroopData>(PlayerData.PlayerDataToUserTroopData(newValueResp.Data), newValueResp.Case, newValueResp.Message);
+                var json = Newtonsoft.Json.JsonConvert.SerializeObject(troops);
+                var resp = await manager.AddOrUpdatePlayerData(playerId, DataType.Troop, (int)type, json);
+                var data = PlayerData.PlayerDataToUserTroopData(resp.Data);
+
+                return new Response<UserTroopData>(data, resp.Case, resp.Message);
             }
             catch (DataNotExistExecption ex)
             {
@@ -344,36 +405,32 @@ namespace GameOfRevenge.Business.Manager.UserData
         }
         public Response<int> GetMaxPopulation(IReadOnlyList<StructureInfos> structures)
         {
+            var maxPopulation = 0;
             try
             {
-                var maxPopulation = 0;
-
                 foreach (var structure in structures)
                 {
                     foreach (var building in structure.Buildings)
                     {
-                        if (building.TimeLeft <= 0)
-                        {
-                            try
-                            {
-                                var pop = CacheStructureDataManager.GetStructureDataTable(structure.StructureType, building.Level).PopulationSupport;
-                                maxPopulation += pop;
-                            }
-                            catch (Exception)
-                            {
+                        if (building.CurrentLevel == 0) continue;
 
-                            }
+                        try
+                        {
+                            var pop = CacheStructureDataManager.GetStructureDataTable(structure.StructureType, building.CurrentLevel).PopulationSupport;
+                            maxPopulation += pop;
                         }
+                        catch { }
                     }
                 }
-
-                return new Response<int>(maxPopulation, 100, "Max population");
             }
             catch (Exception ex)
             {
                 return new Response<int>(CaseType.Error, ErrorManager.ShowError(ex));
             }
+
+            return new Response<int>(maxPopulation, 100, "Max population");
         }
+
         public Response<int> GetCurrentPopulation(IReadOnlyList<TroopInfos> troops)
         {
             var currentPopulation = 0;

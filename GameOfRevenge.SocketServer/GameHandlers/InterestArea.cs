@@ -140,9 +140,7 @@ namespace GameOfRevenge.GameHandlers
                     AreaForts.Add(fortress);
                     var x = (fortress.ZoneIndex % totalZonesX) + centerZone;
                     var y = (int)Math.Floor(fortress.ZoneIndex / (float)totalZonesX) + centerZone;
-                    var enterEvent = new FortressEnterResponse(x, y, 0, EntityType.Fortress, fortress.ZoneFortressId, fortress.HitPoints);
-                    enterEvent.Attack = fortress.Attack;
-                    enterEvent.Defense = fortress.Defense;
+                    var enterEvent = new FortressEnterResponse(x, y, 0, EntityType.Fortress, fortress.ZoneFortressId, fortress.HitPoints, fortress.Attack, fortress.Defense);
                     enterEvent.ClanId = fortress.ClanId;
                     enterEvent.Name = fortress.Name;
 //                    enterEvent.PlayerId = fortress.PlayerId;

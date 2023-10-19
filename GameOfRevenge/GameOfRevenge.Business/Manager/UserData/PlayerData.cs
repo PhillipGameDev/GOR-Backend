@@ -5,6 +5,7 @@ using GameOfRevenge.Common;
 using GameOfRevenge.Common.Models;
 using GameOfRevenge.Common.Models.Boost;
 using GameOfRevenge.Common.Models.PlayerData;
+using System.Linq;
 
 namespace GameOfRevenge.Business.Manager.UserData
 {
@@ -55,13 +56,30 @@ namespace GameOfRevenge.Business.Manager.UserData
         {
             if (playerData == null) return default;
 
-            return new UserTroopData()
+            var troopData = new UserTroopData()
             {
                 Id = playerData.Id,
                 DataType = DataType.Troop,
                 ValueId = CacheTroopDataManager.GetFullTroopData(playerData.ValueId).Info.Code,
                 Value = JsonConvert.DeserializeObject<List<TroopDetails>>(playerData.Value)
             };
+
+            foreach (var troop in troopData.Value)
+            {
+                if (troop.InRecovery != null)
+                {
+                    troop.InRecovery = troop.InRecovery.Where(x => (x.TimeLeft > 0)).ToList();
+                    if (troop.InRecovery.Count == 0) troop.InRecovery = null;
+                }
+
+                if (troop.InTraning != null)
+                {
+                    troop.InTraning = troop.InTraning.Where(x => (x.TimeLeft > 0)).ToList();
+                    if (troop.InTraning.Count == 0) troop.InTraning = null;
+                }
+            }
+
+            return troopData;
         }
 
         public static UserTroopData PlayerDataToUserTroopData(PlayerDataTableUpdated playerDataUpdated)

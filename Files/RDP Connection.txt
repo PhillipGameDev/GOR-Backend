@@ -1,7 +1,0 @@
-135.125.204.124
-administrator
-FmT102030+*
-
-ravas.chl6se5f7kvd.eu-north-1.rds.amazonaws.com,1433
-admin
-ravas1234

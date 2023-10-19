@@ -40,7 +40,7 @@ namespace GameOfRevenge.GameHandlers
             return player;
         }
 
-        public void BroadcastToWorld(byte evCode, object data)
+/*        public void BroadcastToWorld(byte evCode, object data)
         {
             List<PlayerInstance> list;
             lock (players)
@@ -52,7 +52,7 @@ namespace GameOfRevenge.GameHandlers
             {
                 player.SendEvent(evCode, data);
             }
-        }
+        }*/
 
         public void ClearAll()
         {

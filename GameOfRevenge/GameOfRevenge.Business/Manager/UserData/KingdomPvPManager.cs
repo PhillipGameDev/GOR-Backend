@@ -821,7 +821,6 @@ namespace GameOfRevenge.Business.Manager.UserData
             var data = new ZoneFortressData()
             {
                 FirstCapturedTime = zoneFortress.FirstCapturedTime,
-                Claimed = zoneFortress.Claimed,
                 StartTime = DateTime.UtcNow,
                 PlayerTroops = zoneFortress.PlayerTroops
             };
@@ -834,14 +833,9 @@ namespace GameOfRevenge.Business.Manager.UserData
                 playerId = report.Attacker.EntityId;
                 data.PlayerTroops = new List<PlayerTroops>()
                 {
-                    new PlayerTroops()
-                    {
-                        PlayerId = (int)playerId,
-                        Troops = troopChanges.Select(x => x.Troop).ToList()
-                    }
+                    new PlayerTroops((int)playerId, troopChanges.Select(x => x.Troop).ToList())
                 };
 //                log.Debug("new troop data = " + JsonConvert.SerializeObject(data.PlayerTroops));
-
 
 
                 if ((data.FirstCapturedTime == null) || (data.FirstCapturedTime == DateTime.MinValue))
@@ -849,10 +843,10 @@ namespace GameOfRevenge.Business.Manager.UserData
                     data.FirstCapturedTime = data.StartTime;
                 }
 
-                TimeSpan elapsed = (TimeSpan)(DateTime.UtcNow - data.FirstCapturedTime);
-                int days = (int)elapsed.TotalDays;
+                var elapsed = DateTime.UtcNow - ((DateTime)data.FirstCapturedTime).ToUniversalTime();
+                var totalDays = (int)elapsed.TotalDays;
                 var duration = 3600 * 4;
-                for (int num = 0; num < days; num++)
+                for (var num = 0; num < totalDays; num++)
                 {
                     duration /= 2;
                 }
@@ -860,7 +854,14 @@ namespace GameOfRevenge.Business.Manager.UserData
             }
             else
             {
-                data.Duration = 3600 * 24;
+                var duration = 24;
+                var DECREASE_PER_DAY = 6;
+
+                var totalDays = (DateTime.UtcNow - zoneFortress.StartTime.ToUniversalTime()).TotalDays / 2;
+                duration -= (int)Math.Floor(totalDays) * DECREASE_PER_DAY;
+                if (duration < 12) duration = 12;
+
+                data.Duration = 3600 * duration;
             }
             var json = JsonConvert.SerializeObject(data);
             var updateResp = await kingdomManager.UpdateZoneFortress(defenderPower.EntityId,
@@ -881,26 +882,14 @@ namespace GameOfRevenge.Business.Manager.UserData
                 if ((item == null) || (item.Value == null)) continue;
 
                 var userTroop = PlayerData.PlayerDataToUserTroopData(item);
-                foreach (TroopDetails troop in userTroop.Value)
-                {
-                    if (troop.InRecovery != null)
-                    {
-                        troop.InRecovery = troop.InRecovery.Where(x => (x.TimeLeft > 0)).ToList();
-                        if (troop.InRecovery.Count == 0) troop.InRecovery = null;
-                    }
-
-                    if (troop.InTraning != null)
-                    {
-                        troop.InTraning = troop.InTraning.Where(x => (x.TimeLeft > 0)).ToList();
-                        if (troop.InTraning.Count == 0) troop.InTraning = null;
-                    }
-                }
 
                 if (userTroops == null) userTroops = new List<TroopInfos>();
                 userTroops.Add(new TroopInfos(userTroop.Id, userTroop.ValueId, userTroop.Value));
             }
-            var list = new List<PlayerTroops>();
-            list.Add(new PlayerTroops() { PlayerId = playerId, Troops = userTroops });
+            var list = new List<PlayerTroops>()
+            {
+                new PlayerTroops(playerId, userTroops)
+            };
 
             return list;
         }
@@ -1065,7 +1054,7 @@ namespace GameOfRevenge.Business.Manager.UserData
                     {
                         log.Debug("attacker item = " + item.RewardId + "  " + item.DataType+" "+ item.ValueId +"  "+ item.Value + "  " + item.Count);
                     }
-                    await UserQuestManager.CollectRewards(report.Attacker.EntityId, report.Attacker.Items);
+                    var resp = await UserQuestManager.CollectRewards(report.Attacker.EntityId, report.Attacker.Items);
                 }
 
                 try

@@ -14,6 +14,7 @@
         ReinforcementsEvent = 10,
         UpdateMarchingArmyEvent = 11,
         EntityEnter = 12,
-        EntityExit = 13
+        EntityExit = 13,
+        HelpStructure = 14
     }
 }

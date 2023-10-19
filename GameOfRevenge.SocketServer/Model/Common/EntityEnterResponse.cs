@@ -54,8 +54,11 @@ namespace GameOfRevenge.Model
 //        [DataMember(Code = (byte)RoomParameterKey.TroopsData, IsOptional = true)]
 //        public string PlayerTroops { get; set; }
 
-        public FortressEnterResponse(int x, int y, int seed, EntityType entityType, int entityId, int hitPoints) : base(x, y, seed, entityType, entityId, hitPoints)
+        public FortressEnterResponse(int x, int y, int seed, EntityType entityType, int entityId, int hitPoints, int attack, int defense) :
+                base(x, y, seed, entityType, entityId, hitPoints)
         {
+            Attack = attack;
+            Defense = defense;
         }
     }
 }

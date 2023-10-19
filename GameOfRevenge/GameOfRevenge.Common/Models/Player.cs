@@ -23,6 +23,10 @@ namespace GameOfRevenge.Common.Models
 
         public string JwtToken { get; set; }
 
+        public Player()
+        {
+        }
+
         public void LoadFromDataReader(IDataReader reader)
         {
             var index = 0;

@@ -224,20 +224,6 @@ namespace GameOfRevenge.Business.Manager.Base
                         if ((item == null) || (item.Value == null)) continue;
 
                         var userTroop = PlayerData.PlayerDataToUserTroopData(item);
-                        foreach (TroopDetails troop in userTroop.Value)
-                        {
-                            if (troop.InRecovery != null)
-                            {
-                                troop.InRecovery = troop.InRecovery.Where(x => (x.TimeLeft > 0)).ToList();
-                                if (troop.InRecovery.Count == 0) troop.InRecovery = null;
-                            }
-
-                            if (troop.InTraning != null)
-                            {
-                                troop.InTraning = troop.InTraning.Where(x => (x.TimeLeft > 0)).ToList();
-                                if (troop.InTraning.Count == 0) troop.InTraning = null;
-                            }
-                        }
 
                         finalData.Data.Troops.Add(new TroopInfos(userTroop.Id, userTroop.ValueId, userTroop.Value));
                     }
