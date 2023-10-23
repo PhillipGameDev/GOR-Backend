@@ -45,6 +45,8 @@
         SendFriendRequest = 34,
         RespondToFriendRequest = 35,
 
-        ClaimRewardsRequest = 38
+        ClaimRewardsRequest = 38,
+
+        ItemBoxExploring = 39
     }
 }

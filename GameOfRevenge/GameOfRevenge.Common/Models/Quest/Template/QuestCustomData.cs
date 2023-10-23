@@ -15,6 +15,7 @@ namespace GameOfRevenge.Common.Models.Quest.Template
     public enum CustomTaskType
     {
         SendGlobalChat = 1,
-        AttackPlayer = 2
+        AttackPlayer = 2,
+        ItemBoxExploring = 3
     }
 }

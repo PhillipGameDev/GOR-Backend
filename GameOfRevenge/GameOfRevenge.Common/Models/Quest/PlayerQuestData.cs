@@ -167,6 +167,7 @@ namespace GameOfRevenge.Common.Models.Quest
                         {
                             case CustomTaskType.SendGlobalChat: name = "Send global chat"; break;
                             case CustomTaskType.AttackPlayer: name = "Attack enemy player"; break;
+                            case CustomTaskType.ItemBoxExploring: name = "Item box exploring"; break;
                         }
                         break;
                     case QuestType.Account://9
