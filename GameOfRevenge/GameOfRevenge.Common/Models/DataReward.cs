@@ -138,6 +138,27 @@ namespace GameOfRevenge.Common.Models
                     var techType = (NewBoostTech)reward.ValueId;
                     switch (techType)
                     {
+                        case NewBoostTech.ProtectionFog:/*1*/
+                            str = Localization.GetText("{0} Protection Fog", Helper.Localization.REWARDS);
+                            title = string.Format(str, TimeHelper.ChangeSecondsToFormatTimeWords(reward.Value, true));
+                            str2 = Localization.GetText("Increase the protection fog time by {0}", Helper.Localization.REWARDS);
+                            desc = string.Format(str2, TimeHelper.ChangeSecondsToFormatTimeWords(reward.Value));
+                            break;
+
+                        case NewBoostTech.ProtectionShield:/*2*/
+                            str = Localization.GetText("{0} Protection Shield", Helper.Localization.REWARDS);
+                            title = string.Format(str, TimeHelper.ChangeSecondsToFormatTimeWords(reward.Value, true));
+                            str2 = Localization.GetText("Increase the protection shield time by {0}", Helper.Localization.REWARDS);
+                            desc = string.Format(str2, TimeHelper.ChangeSecondsToFormatTimeWords(reward.Value));
+                            break;
+
+                        case NewBoostTech.ResourceProductionMultiplier:/*8*/
+                            str = Localization.GetText("{0} Resource Production Speedup", Helper.Localization.REWARDS);
+                            title = string.Format(str, TimeHelper.ChangeSecondsToFormatTimeWords(reward.Value, true));
+                            str2 = Localization.GetText("Increase the resource production speedup time by {0}", Helper.Localization.REWARDS);
+                            desc = string.Format(str2, TimeHelper.ChangeSecondsToFormatTimeWords(reward.Value));
+                            break;
+
                         case NewBoostTech.TroopTrainingSpeedMultiplier:/*14*/
                         case NewBoostTech.TroopTrainingTimeBonus:/*18*/
                             str = Localization.GetText("{0} Training Speedup", Helper.Localization.REWARDS);
