@@ -6,7 +6,6 @@ namespace GameOfRevenge.Common.Models.Quest
     public class UserChapterAllQuestProgress
     {
         public List<UserChapterQuestData> ChapterQuests;
-        public List<PlayerQuestDataTable> SideQuests;
         public List<PlayerQuestDataTable> DailyQuests;
     }
 

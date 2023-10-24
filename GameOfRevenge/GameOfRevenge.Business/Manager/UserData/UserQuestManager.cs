@@ -260,10 +260,8 @@ namespace GameOfRevenge.Business.Manager.UserData
 
             var allQuestRewards = CacheQuestDataManager.AllQuestRewards;
             var allChapterQuests = CacheQuestDataManager.ChapterQuests;
-            var allSideQuests = CacheQuestDataManager.SideQuests;
             var allDailyQuests = CacheQuestDataManager.DailyQuests;
 
-            var sideQuests = new List<PlayerQuestDataTable>();
             var dailyQuests = new List<PlayerQuestDataTable>();
             foreach (var questReward in allQuestRewards)
             {
@@ -276,24 +274,6 @@ namespace GameOfRevenge.Business.Manager.UserData
                 });
                 if (chapterQuest != null) continue;
 
-                var sideQuest = allSideQuests.FirstOrDefault(x => (x.Quest.QuestId == questData.QuestId));
-                if (sideQuest != null)
-                {
-                    var userQuest = allUserQuestProgress.Find(x => x.QuestId == questData.QuestId);
-                    if (fullTree || ((userQuest != null) && (userQuest.Completed || (userQuest.ProgressData != null))))
-                    {
-                        var questProgress = new PlayerQuestDataTable() { QuestId = questData.QuestId };
-                        if (userQuest != null)
-                        {
-                            questProgress.QuestUserDataId = userQuest.QuestUserDataId;
-                            questProgress.Completed = userQuest.Completed;
-                            questProgress.ProgressData = userQuest.ProgressData;
-                            questProgress.Redeemed = userQuest.Redeemed;
-                            questProgress.QuestId = userQuest.QuestId;
-                        }
-                        sideQuests.Add(questProgress);
-                    }
-                }
                 var dailyQuest = allDailyQuests.FirstOrDefault(x => (x.Quest.QuestId == questData.QuestId));
                 if (dailyQuest != null)
                 {
@@ -317,7 +297,6 @@ namespace GameOfRevenge.Business.Manager.UserData
             var chapterQuestRels = new UserChapterAllQuestProgress()
             {
                 ChapterQuests = userChapterQuests,
-                SideQuests = sideQuests,
                 DailyQuests = dailyQuests
             };
 
@@ -951,16 +930,6 @@ namespace GameOfRevenge.Business.Manager.UserData
                 break;
             }
 
-            //check side quest
-            foreach (var questData in CacheQuestDataManager.SideQuests)
-            {
-                if (questData.Quest.QuestType != questType) continue;
-
-                var userQuest = userQuests.SideQuests.Find(x => (x.QuestId == questData.Quest.QuestId));
-                if ((userQuest != null) && userQuest.Completed) continue;
-
-                list.Add(new UserQuestProgressData(questData.Quest, userQuest));
-            }
 
             //check daily quest
             foreach (var questData in CacheQuestDataManager.DailyQuests)
@@ -1003,16 +972,12 @@ namespace GameOfRevenge.Business.Manager.UserData
             var showLog = true;// data.UserData.IsAdmin;
 
             //check daily quest
-            System.Console.WriteLine("--check quests for " + data.PlayerId);
             await CheckQuestProgress(data, data.QuestData.DailyQuests);
 
 
-            //check side quest
-            if (showLog) System.Console.WriteLine("--side quests for " + data.PlayerId);
-            await CheckQuestProgress(data, data.QuestData.SideQuests);
 
             //check current milestone quest
-            if (showLog) System.Console.WriteLine("--chapter quests for " + data.PlayerId);
+            if (showLog) log.Info("--chapter quests for " + data.PlayerId);
             var currChapterQuest = data.QuestData.ChapterQuests.Find(x => !x.AllQuestsCompleted);
             if (currChapterQuest != null)
             {
@@ -1026,7 +991,7 @@ namespace GameOfRevenge.Business.Manager.UserData
                     }
                 }
             }
-            if (showLog) System.Console.WriteLine("----");
+            if (showLog) log.Info("----");
         }
 
 

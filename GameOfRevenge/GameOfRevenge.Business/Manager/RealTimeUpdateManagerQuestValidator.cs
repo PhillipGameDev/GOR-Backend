@@ -8,6 +8,7 @@ using GameOfRevenge.Common.Interface;
 using GameOfRevenge.Common.Interface.UserData;
 using GameOfRevenge.Business.Manager.Base;
 using ExitGames.Logging;
+using System.Linq;
 
 namespace GameOfRevenge.Business.Manager
 {
@@ -166,6 +167,26 @@ namespace GameOfRevenge.Business.Manager
             {
                 _ = UpdateAsync();
             }, UPDATE_INTERVAL + 1);
+        }
+
+        public void UpdateCustomQuest(int playerId, int questId)
+        {
+            log.Info("Update Custom Quest: Start " + playerId + "," + questId);
+            if (!allPlayerDatas.ContainsKey(playerId)) return;
+
+            var player = allPlayerDatas[playerId];
+            var currChapterQuest = player.QuestData.ChapterQuests.Find(x => !x.AllQuestsCompleted);
+
+            if (currChapterQuest != null)
+            {
+                var quest = currChapterQuest.Quests.First(x => x.QuestId == questId);
+                if (quest != null)
+                {
+                    quest.Completed = true;
+                    log.Info("Update Custom Quest: Completed");
+                }
+            }
+            log.Info("Update Custom Quest: End");
         }
 
         private void FinishDailyProcess(int count)

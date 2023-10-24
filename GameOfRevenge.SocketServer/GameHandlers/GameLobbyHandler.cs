@@ -1481,7 +1481,11 @@ new string[]{
                 {
                     string initialString = (userQuest == null) ? quest.Quest.DataString : null;
                     var resp = await questManager.UpdateQuestData(playerId, quest.Quest.QuestId, true, initialString);
-                    if (resp.IsSuccess) questUpdated = true;
+                    if (resp.IsSuccess)
+                    {
+                        questUpdated = true;
+                        GameService.RealTimeUpdateManagerQuestValidator.UpdateCustomQuest(playerId, quest.Quest.QuestId);
+                    }
                 }
             }
 
