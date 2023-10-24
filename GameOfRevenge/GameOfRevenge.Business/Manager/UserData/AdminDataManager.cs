@@ -517,7 +517,7 @@ namespace GameOfRevenge.Business.Manager.UserData
         }
 
 
-        public Task<Response<UserVIPDetails>> ActivateVIPBoosts(int playerId) => throw new NotImplementedException();
+        public Task<Response<UserVIPDetails>> ActivateVIPBoosts(int playerId, int d) => throw new NotImplementedException();
         public Task<Response<UserVIPDetails>> AddVIPPoints(int playerId, int points) => throw new NotImplementedException();
         public Task<Response<List<PlayerDataTable>>> GetAllPlayerData(int playerId) => throw new NotImplementedException();
         public int GetInstantBuildCost(int timeLeft) => throw new NotImplementedException();

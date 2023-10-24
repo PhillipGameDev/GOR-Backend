@@ -572,6 +572,10 @@ namespace GameOfRevenge.Business.Manager.UserData
                                         var heroResp = await userHeroManager.AddHeroPoints(playerId, context, rewardData.Value);
                                         if (!heroResp.IsSuccess) throw new InvalidModelExecption(heroResp.Message);
                                         break;
+                                    case CustomRewardType.VIPActivate:
+                                        var vipActivateResp = await boostManager.ActivateVIPBoosts(playerId, rewardData.Value);
+                                        if (!vipActivateResp.IsSuccess) throw new InvalidModelExecption(vipActivateResp.Message);
+                                        break;
                                 }
                                 
                                 break;
