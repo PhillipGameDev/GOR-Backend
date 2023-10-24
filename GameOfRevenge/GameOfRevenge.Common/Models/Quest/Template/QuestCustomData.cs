@@ -10,12 +10,24 @@ namespace GameOfRevenge.Common.Models.Quest.Template
         [DataMember]
         [JsonConverter(typeof(StringEnumConverter))]
         public CustomTaskType CustomTaskType { get; set; }
+        [DataMember]
+        public int? Level { get; set; }
+        [DataMember]
+        public int? Count { get; set; }
+        [DataMember]
+        public string Value { get; set; }
     }
 
     public enum CustomTaskType
     {
         SendGlobalChat = 1,
         AttackPlayer = 2,
-        ItemBoxExploring = 3
+        ItemBoxExploring = 3,
+        AttackMonster = 4,
+        GetHeroPoints = 5,
+        BuildOrUpgrade = 6,
+        ResearchTechnology = 7,
+        AttackOasis = 8,
+        TradeMarket = 9
     }
 }

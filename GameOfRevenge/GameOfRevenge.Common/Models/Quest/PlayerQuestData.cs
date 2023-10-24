@@ -166,8 +166,14 @@ namespace GameOfRevenge.Common.Models.Quest
                         switch (data5.CustomTaskType)
                         {
                             case CustomTaskType.SendGlobalChat: name = "Send global chat"; break;
-                            case CustomTaskType.AttackPlayer: name = "Attack enemy player"; break;
+                            case CustomTaskType.AttackPlayer: name = string.Format("Attack enemy player {0} times", data5.Count); break;
                             case CustomTaskType.ItemBoxExploring: name = "Item box exploring"; break;
+                            case CustomTaskType.AttackMonster: name = data5.Level != null ? string.Format("Attack lvl {0} monster {1} times", data5.Level, data5.Count) : string.Format("Attack monster {0} time", data5.Count); break;
+                            case CustomTaskType.GetHeroPoints: name = string.Format("Get {0} hero points", data5.Count); break;
+                            case CustomTaskType.BuildOrUpgrade: name = string.Format("Build or upgrade {0} building", data5.Count); break;
+                            case CustomTaskType.ResearchTechnology: name = string.Format("Research {0} technology", data5.Count); break;
+                            case CustomTaskType.AttackOasis: name = string.Format("Attack oasis {0}", data5.Value); break;
+                            case CustomTaskType.TradeMarket: name = string.Format("Trade in market {0} times", data5.Count); break;
                         }
                         break;
                     case QuestType.Account://9
@@ -183,6 +189,9 @@ namespace GameOfRevenge.Common.Models.Quest
                         switch (data7.AllianceTaskType)
                         {
                             case AllianceTaskType.JoinOrCreate: name = "Join or create an alliance"; break;
+                            case AllianceTaskType.Reinforce: name = "Reinforce"; break;
+                            case AllianceTaskType.SendGift: name = "Send Gift"; break;
+                            case AllianceTaskType.Help: name = string.Format("Help alliance army {0} times", data7.Count); break;
                         }
                         break;
                     case QuestType.ResearchTechnology://11
