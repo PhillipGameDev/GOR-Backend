@@ -803,8 +803,8 @@ namespace GameOfRevenge.Business.Manager.UserData
             foreach (var quest in questsInProgress)
             {
                 var initialData = JsonConvert.DeserializeObject<QuestTroopData>(quest.InitialData);
-                if (initialData == null) return;
-                if ((initialData.TroopType != TroopType.Other) && (initialData.TroopType != troopType)) return;
+                if (initialData == null) continue;
+                if ((initialData.TroopType != TroopType.Other) && (initialData.TroopType != troopType)) continue;
 
                 if ((initialData.Level == 0) || (level == initialData.Level))
                 {

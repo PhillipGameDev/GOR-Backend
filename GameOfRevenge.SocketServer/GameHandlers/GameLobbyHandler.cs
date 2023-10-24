@@ -122,6 +122,7 @@ new string[]{
 
                     case OperationCode.ClaimRewardsRequest: return await HandleClaimRewardsRequest(peer, operationRequest);
                     case OperationCode.ItemBoxExploring: return await HandleItemBoxExploring(peer, operationRequest); //39
+                    case OperationCode.BuildOrUpgrade: return await HandleBuildOrUpgrade(peer, operationRequest); // 40
 
                     default: return peer.SendOperation(operationRequest.OperationCode, ReturnCode.InvalidOperation);
                 }
@@ -498,7 +499,9 @@ new string[]{
 
             log.Info("**************** HandleInstantBuild End************************");
 
-//            await GameService.NewRealTimeUpdateManager.PlayerDataChanged(peer.Actor.PlayerId);//TODO: required?
+            //            await GameService.NewRealTimeUpdateManager.PlayerDataChanged(peer.Actor.PlayerId);//TODO: required?
+
+            await CompleteBuildOrUpgradeTaskAsync(peer);
 
             var obj = new StructureCreateUpgradeResponse()
             {
@@ -556,6 +559,8 @@ new string[]{
             }*/
 
             log.Info("**************** HandleSpeedUpBuild End************************");
+
+            await CompleteBuildOrUpgradeTaskAsync(peer);
 
             var obj = new StructureCreateUpgradeResponse()
             {
@@ -1116,6 +1121,30 @@ new string[]{
             }
 
             log.Debug("@@@@ HANDLE ITEM BOX EXPLORING INVALID");
+            return peer.SendOperation(operationRequest.OperationCode, ReturnCode.InvalidOperation, debuMsg: "ERROR");
+        }
+
+        public async Task<bool> CompleteBuildOrUpgradeTaskAsync(IGorMmoPeer peer)
+        {
+            var questUpdated = await CompleteCustomTaskQuest(peer.PlayerInstance.PlayerId, CustomTaskType.BuildOrUpgrade);
+            if (questUpdated)
+            {
+                peer.PlayerInstance.SendEvent(EventCode.UpdateQuest, new Dictionary<byte, object>());
+                return true;
+            }
+            return false;
+        }
+
+        public async Task<SendResult> HandleBuildOrUpgrade(IGorMmoPeer peer, OperationRequest operationRequest)
+        {
+            log.Debug("@@@@@@@ HANDLE BUILD OR UPGRADE FROM " + peer.PlayerInstance.PlayerId);
+
+            if (await CompleteBuildOrUpgradeTaskAsync(peer))
+            {
+                return peer.SendOperation(operationRequest.OperationCode, ReturnCode.OK, debuMsg: "OK");
+            }
+
+            log.Debug("@@@@ HANDLE BUILD OR UPGRADE INVALID");
             return peer.SendOperation(operationRequest.OperationCode, ReturnCode.InvalidOperation, debuMsg: "ERROR");
         }
 

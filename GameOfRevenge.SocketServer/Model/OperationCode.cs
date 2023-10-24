@@ -47,6 +47,7 @@
 
         ClaimRewardsRequest = 38,
 
-        ItemBoxExploring = 39
+        ItemBoxExploring = 39,
+        BuildOrUpgrade = 40
     }
 }

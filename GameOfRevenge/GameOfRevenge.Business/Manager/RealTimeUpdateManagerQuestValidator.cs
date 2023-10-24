@@ -179,7 +179,7 @@ namespace GameOfRevenge.Business.Manager
 
             if (currChapterQuest != null)
             {
-                var quest = currChapterQuest.Quests.First(x => x.QuestId == questId);
+                var quest = currChapterQuest.Quests.Find(x => x.QuestId == questId);
                 if (quest != null)
                 {
                     quest.Completed = true;
