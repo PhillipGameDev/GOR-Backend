@@ -193,7 +193,7 @@ namespace GameOfRevenge.Business.Manager
                             var x = await dataManager.AddOrUpdatePlayerData(playerId, DataType.Custom, (int)CustomValueType.VIPPoints, json);
                         }
 
-                        var loc = 50;
+                        /*var loc = 50;
                         var resourceBlds = new StructureType[] { StructureType.Farm, StructureType.Sawmill, StructureType.Mine };
                         foreach (var resourceBld in resourceBlds)
                         {
@@ -241,7 +241,7 @@ namespace GameOfRevenge.Business.Manager
                                 }
                             }
                             loc++;
-                        }
+                        }*/
                     }
                     catch (Exception ex)
                     {
@@ -364,7 +364,7 @@ namespace GameOfRevenge.Business.Manager
                 json = JsonConvert.SerializeObject(dataList);
                 await dataManager.AddOrUpdatePlayerData(playerId, DataType.Structure, (int)StructureType.FriendshipHall, json);
 
-                dataList[0].Location = 50;
+                /*dataList[0].Location = 50;
                 dataList[0].HitPoints = farmHealth;
                 json = JsonConvert.SerializeObject(dataList);
                 await dataManager.AddOrUpdatePlayerData(playerId, DataType.Structure, (int)StructureType.Farm, json);
@@ -377,7 +377,7 @@ namespace GameOfRevenge.Business.Manager
                 dataList[0].Location = 52;
                 dataList[0].HitPoints = mineHealth;
                 json = JsonConvert.SerializeObject(dataList);
-                await dataManager.AddOrUpdatePlayerData(playerId, DataType.Structure, (int)StructureType.Mine, json);
+                await dataManager.AddOrUpdatePlayerData(playerId, DataType.Structure, (int)StructureType.Mine, json);*/
             }
         }
 
