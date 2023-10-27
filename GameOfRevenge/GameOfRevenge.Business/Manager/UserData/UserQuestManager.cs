@@ -925,7 +925,6 @@ namespace GameOfRevenge.Business.Manager.UserData
 
                     log.Info("in progress = " + quest.Quest.QuestId + "  " + quest.Quest.DataString);
                     list.Add(new UserQuestProgressData(quest.Quest, userQuest));
-                    break;
                 }
                 break;
             }
@@ -974,21 +973,17 @@ namespace GameOfRevenge.Business.Manager.UserData
             //check daily quest
             await CheckQuestProgress(data, data.QuestData.DailyQuests);
 
-
-
             //check current milestone quest
             if (showLog) log.Info("--chapter quests for " + data.PlayerId);
             var currChapterQuest = data.QuestData.ChapterQuests.Find(x => !x.AllQuestsCompleted);
             if (currChapterQuest != null)
             {
-                PlayerQuestDataTable currQuest;
-                while ((currQuest = currChapterQuest.Quests.Find(x => !x.Completed)) != null)
+                foreach (var currQuest in currChapterQuest.Quests.FindAll(x => !x.Completed).AsReadOnly())
                 {
                     var questData = CacheQuestDataManager.AllQuestRewards.FirstOrDefault(x => (x.Quest.QuestId == currQuest.QuestId));
-                    if (questData == null) break;
+                    if (questData == null) continue;
 
-                    if (await CheckQuestProgressAsync(data, new UserQuestProgressData(questData.Quest, currQuest)) == false)
-                        break;
+                    await CheckQuestProgressAsync(data, new UserQuestProgressData(questData.Quest, currQuest));
                 }
             }
             if (showLog) log.Info("----");
