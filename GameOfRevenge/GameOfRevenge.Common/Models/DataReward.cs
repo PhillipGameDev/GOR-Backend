@@ -69,7 +69,7 @@ namespace GameOfRevenge.Common.Models
         public static (string, string, string) GetProperties(DataReward reward)
         {
             string value;
-            if (reward.DataType == DataType.Technology)
+            if (reward.DataType == DataType.Technology || (reward.DataType == DataType.Custom && (CustomType)reward.ValueId == CustomType.VIPActivate))
             {
                 if ((NewBoostTech)reward.ValueId != NewBoostTech.TroopMarchingReductionMultiplier)
                 {
@@ -91,31 +91,37 @@ namespace GameOfRevenge.Common.Models
             switch (reward.DataType)
             {
                 case DataType.Custom:
-                    switch (reward.ValueId)
+                    switch ((CustomType)reward.ValueId)
                     {
-                        case 1:
+                        case CustomType.KingExperiencePoints:
                             str = Localization.GetText("{0} Experience Points for your King", Helper.Localization.REWARDS);
                             title = string.Format(str, value);
                             str = Localization.GetText("Use this item to add {0:N0} Experience Points to your King", Helper.Localization.REWARDS);
                             desc = string.Format(str, reward.Value);
                             break;
-                        case 2:
+                        case CustomType.KingStaminaPoints:
                             str = Localization.GetText("{0} Stamina Points for your King", Helper.Localization.REWARDS);
                             title = string.Format(str, value);
                             str = Localization.GetText("Use this item to add {0:N0} Stamina Points to your King", Helper.Localization.REWARDS);
                             desc = string.Format(str, reward.Value);
                             break;
-                        case 3:
+                        case CustomType.VIPPoints:
                             str = Localization.GetText("{0} VIP Points", Helper.Localization.REWARDS);
                             title = string.Format(str, value);
                             str = Localization.GetText("Use this item to receive {0:N0} VIP Points", Helper.Localization.REWARDS);
                             desc = string.Format(str, reward.Value);
                             break;
-                        case 4:
+                        case CustomType.HeroPoints:
                             str = Localization.GetText("{0} Hero Points", Helper.Localization.REWARDS);
                             title = string.Format(str, value);
                             str = Localization.GetText("Use this item to receive {0:N0} Hero Points", Helper.Localization.REWARDS);
                             desc = string.Format(str, reward.Value);
+                            break;
+                        case CustomType.VIPActivate:
+                            str = Localization.GetText("{0} VIP Activate", Helper.Localization.REWARDS);
+                            title = string.Format(str, TimeHelper.ChangeSecondsToFormatTimeWords(reward.Value, camelcase: true));
+                            str = Localization.GetText("Activate VIP for {0}", Helper.Localization.REWARDS);
+                            desc = string.Format(str, TimeHelper.ChangeSecondsToFormatTimeWords(reward.Value));
                             break;
                     }
                     break;
@@ -132,6 +138,27 @@ namespace GameOfRevenge.Common.Models
                     var techType = (NewBoostTech)reward.ValueId;
                     switch (techType)
                     {
+                        case NewBoostTech.ProtectionFog:/*1*/
+                            str = Localization.GetText("{0} Protection Fog", Helper.Localization.REWARDS);
+                            title = string.Format(str, TimeHelper.ChangeSecondsToFormatTimeWords(reward.Value, true));
+                            str2 = Localization.GetText("Increase the protection fog time by {0}", Helper.Localization.REWARDS);
+                            desc = string.Format(str2, TimeHelper.ChangeSecondsToFormatTimeWords(reward.Value));
+                            break;
+
+                        case NewBoostTech.ProtectionShield:/*2*/
+                            str = Localization.GetText("{0} Protection Shield", Helper.Localization.REWARDS);
+                            title = string.Format(str, TimeHelper.ChangeSecondsToFormatTimeWords(reward.Value, true));
+                            str2 = Localization.GetText("Increase the protection shield time by {0}", Helper.Localization.REWARDS);
+                            desc = string.Format(str2, TimeHelper.ChangeSecondsToFormatTimeWords(reward.Value));
+                            break;
+
+                        case NewBoostTech.ResourceProductionMultiplier:/*8*/
+                            str = Localization.GetText("{0} Resource Production Speedup", Helper.Localization.REWARDS);
+                            title = string.Format(str, TimeHelper.ChangeSecondsToFormatTimeWords(reward.Value, true));
+                            str2 = Localization.GetText("Increase the resource production speedup time by {0}", Helper.Localization.REWARDS);
+                            desc = string.Format(str2, TimeHelper.ChangeSecondsToFormatTimeWords(reward.Value));
+                            break;
+
                         case NewBoostTech.TroopTrainingSpeedMultiplier:/*14*/
                         case NewBoostTech.TroopTrainingTimeBonus:/*18*/
                             str = Localization.GetText("{0} Training Speedup", Helper.Localization.REWARDS);

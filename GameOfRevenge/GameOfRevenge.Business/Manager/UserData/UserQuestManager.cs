@@ -260,10 +260,8 @@ namespace GameOfRevenge.Business.Manager.UserData
 
             var allQuestRewards = CacheQuestDataManager.AllQuestRewards;
             var allChapterQuests = CacheQuestDataManager.ChapterQuests;
-            var allSideQuests = CacheQuestDataManager.SideQuests;
             var allDailyQuests = CacheQuestDataManager.DailyQuests;
 
-            var sideQuests = new List<PlayerQuestDataTable>();
             var dailyQuests = new List<PlayerQuestDataTable>();
             foreach (var questReward in allQuestRewards)
             {
@@ -276,24 +274,6 @@ namespace GameOfRevenge.Business.Manager.UserData
                 });
                 if (chapterQuest != null) continue;
 
-                var sideQuest = allSideQuests.FirstOrDefault(x => (x.Quest.QuestId == questData.QuestId));
-                if (sideQuest != null)
-                {
-                    var userQuest = allUserQuestProgress.Find(x => x.QuestId == questData.QuestId);
-                    if (fullTree || ((userQuest != null) && (userQuest.Completed || (userQuest.ProgressData != null))))
-                    {
-                        var questProgress = new PlayerQuestDataTable() { QuestId = questData.QuestId };
-                        if (userQuest != null)
-                        {
-                            questProgress.QuestUserDataId = userQuest.QuestUserDataId;
-                            questProgress.Completed = userQuest.Completed;
-                            questProgress.ProgressData = userQuest.ProgressData;
-                            questProgress.Redeemed = userQuest.Redeemed;
-                            questProgress.QuestId = userQuest.QuestId;
-                        }
-                        sideQuests.Add(questProgress);
-                    }
-                }
                 var dailyQuest = allDailyQuests.FirstOrDefault(x => (x.Quest.QuestId == questData.QuestId));
                 if (dailyQuest != null)
                 {
@@ -317,7 +297,6 @@ namespace GameOfRevenge.Business.Manager.UserData
             var chapterQuestRels = new UserChapterAllQuestProgress()
             {
                 ChapterQuests = userChapterQuests,
-                SideQuests = sideQuests,
                 DailyQuests = dailyQuests
             };
 
@@ -572,6 +551,10 @@ namespace GameOfRevenge.Business.Manager.UserData
                                         var heroResp = await userHeroManager.AddHeroPoints(playerId, context, rewardData.Value);
                                         if (!heroResp.IsSuccess) throw new InvalidModelExecption(heroResp.Message);
                                         break;
+                                    case CustomRewardType.VIPActivate:
+                                        var vipActivateResp = await boostManager.ActivateVIPBoosts(playerId, rewardData.Value);
+                                        if (!vipActivateResp.IsSuccess) throw new InvalidModelExecption(vipActivateResp.Message);
+                                        break;
                                 }
                                 
                                 break;
@@ -820,8 +803,8 @@ namespace GameOfRevenge.Business.Manager.UserData
             foreach (var quest in questsInProgress)
             {
                 var initialData = JsonConvert.DeserializeObject<QuestTroopData>(quest.InitialData);
-                if (initialData == null) return;
-                if ((initialData.TroopType != TroopType.Other) && (initialData.TroopType != troopType)) return;
+                if (initialData == null) continue;
+                if ((initialData.TroopType != TroopType.Other) && (initialData.TroopType != troopType)) continue;
 
                 if ((initialData.Level == 0) || (level == initialData.Level))
                 {
@@ -947,16 +930,6 @@ namespace GameOfRevenge.Business.Manager.UserData
                 break;
             }
 
-            //check side quest
-            foreach (var questData in CacheQuestDataManager.SideQuests)
-            {
-                if (questData.Quest.QuestType != questType) continue;
-
-                var userQuest = userQuests.SideQuests.Find(x => (x.QuestId == questData.Quest.QuestId));
-                if ((userQuest != null) && userQuest.Completed) continue;
-
-                list.Add(new UserQuestProgressData(questData.Quest, userQuest));
-            }
 
             //check daily quest
             foreach (var questData in CacheQuestDataManager.DailyQuests)
@@ -999,51 +972,48 @@ namespace GameOfRevenge.Business.Manager.UserData
             var showLog = true;// data.UserData.IsAdmin;
 
             //check daily quest
-            System.Console.WriteLine("--check quests for " + data.PlayerId);
             await CheckQuestProgress(data, data.QuestData.DailyQuests);
 
 
-            //check side quest
-            if (showLog) System.Console.WriteLine("--side quests for " + data.PlayerId);
-            await CheckQuestProgress(data, data.QuestData.SideQuests);
 
             //check current milestone quest
-            if (showLog) System.Console.WriteLine("--chapter quests for " + data.PlayerId);
+            if (showLog) log.Info("--chapter quests for " + data.PlayerId);
             var currChapterQuest = data.QuestData.ChapterQuests.Find(x => !x.AllQuestsCompleted);
             if (currChapterQuest != null)
             {
-                var currQuest = currChapterQuest.Quests.Find(x => !x.Completed);
-                if (currQuest != null)
+                PlayerQuestDataTable currQuest;
+                while ((currQuest = currChapterQuest.Quests.Find(x => !x.Completed)) != null)
                 {
                     var questData = CacheQuestDataManager.AllQuestRewards.FirstOrDefault(x => (x.Quest.QuestId == currQuest.QuestId));
-                    if (questData != null)
-                    {
-                        await CheckQuestProgressAsync(data, new UserQuestProgressData(questData.Quest, currQuest));
-                    }
+                    if (questData == null) break;
+
+                    if (await CheckQuestProgressAsync(data, new UserQuestProgressData(questData.Quest, currQuest)) == false)
+                        break;
                 }
             }
-            if (showLog) System.Console.WriteLine("----");
+            if (showLog) log.Info("----");
         }
 
 
 
-        public async Task CheckQuestProgressAsync(PlayerUserQuestData data, UserQuestProgressData currentQuest)
+        public async Task<bool> CheckQuestProgressAsync(PlayerUserQuestData data, UserQuestProgressData currentQuest)
         {
-            var showLog = true;// data.UserData.IsAdmin;
+            if (currentQuest.QuestType == QuestType.BuildingUpgrade)
+                return await CheckQuestProgressBuildingUpgradeAsync(data, currentQuest);
 
-            switch (currentQuest.QuestType)
-            {
-                case QuestType.BuildingUpgrade: await CheckQuestProgressBuildingUpgradeAsync(data, currentQuest); break;
-                case QuestType.XBuildingCount: await CheckQuestProgressXBuildingCountAsync(data, currentQuest); break;
-                case QuestType.XTroopCount: await CheckQuestProgressXTroopCountAsync(data, currentQuest); break;
-                case QuestType.Alliance: await CheckQuestProgressAllianceAsync(data, currentQuest); break;
-//                case QuestType.ResourceCollection: CheckQuestProgressResourceCollection(data, currentQuest); break;
-//                case QuestType.TrainTroops: CheckQuestProgressTrainTroops(data, currentQuest); break;
-            }
-            if (showLog) System.Console.WriteLine("end chk");
+            if (currentQuest.QuestType == QuestType.XBuildingCount)
+                return await CheckQuestProgressXBuildingCountAsync(data, currentQuest);
+
+            if (currentQuest.QuestType == QuestType.XTroopCount)
+                return await CheckQuestProgressXTroopCountAsync(data, currentQuest);
+
+            if (currentQuest.QuestType == QuestType.Alliance)
+                return await CheckQuestProgressAllianceAsync(data, currentQuest);
+
+            return false;
         }
 
-        private async Task CheckQuestProgressAllianceAsync(PlayerUserQuestData data, UserQuestProgressData quest)
+        private async Task<bool> CheckQuestProgressAllianceAsync(PlayerUserQuestData data, UserQuestProgressData quest)
         {
             var showLog = true;// data.UserData.IsAdmin;
 
@@ -1074,12 +1044,16 @@ namespace GameOfRevenge.Business.Manager.UserData
                     quest.UserData.Completed = true;
 
                     await UpdateQuestDataAsync(data, quest.UserData);
+
+                    return true;
                 }
             }
             catch { }
+
+            return false;
         }
 
-        private async Task CheckQuestProgressBuildingUpgradeAsync(PlayerUserQuestData data, UserQuestProgressData quest)
+        private async Task<bool> CheckQuestProgressBuildingUpgradeAsync(PlayerUserQuestData data, UserQuestProgressData quest)
         {
             var showLog = true;// data.UserData.IsAdmin;
 
@@ -1110,12 +1084,15 @@ namespace GameOfRevenge.Business.Manager.UserData
                     quest.UserData.Completed = true;
 
                     await UpdateQuestDataAsync(data, quest.UserData);
+                    return true;
                 }
             }
             catch { }
+
+            return false;
         }
 
-        private async Task CheckQuestProgressXBuildingCountAsync(PlayerUserQuestData data, UserQuestProgressData quest)
+        private async Task<bool> CheckQuestProgressXBuildingCountAsync(PlayerUserQuestData data, UserQuestProgressData quest)
         {
             var showLog = true;// data.UserData.IsAdmin;
 
@@ -1161,9 +1138,12 @@ namespace GameOfRevenge.Business.Manager.UserData
                     quest.UserData.Completed = true;
 
                     await UpdateQuestDataAsync(data, quest.UserData);
+                    return true;
                 }
             }
             catch { }
+
+            return false;
         }
 
         public async Task CheckQuestProgressResourceCollectionAsync(PlayerUserQuestData data, UserQuestProgressData quest, QuestResourceData initialData = null, QuestResourceData progressData = null)
@@ -1202,7 +1182,7 @@ namespace GameOfRevenge.Business.Manager.UserData
             catch { }
         }
 
-        private async Task CheckQuestProgressXTroopCountAsync(PlayerUserQuestData data, UserQuestProgressData quest)
+        private async Task<bool> CheckQuestProgressXTroopCountAsync(PlayerUserQuestData data, UserQuestProgressData quest)
         {
             var showLog = true;// data.UserData.IsAdmin;
 
@@ -1247,9 +1227,13 @@ namespace GameOfRevenge.Business.Manager.UserData
                     quest.UserData.Completed = true;
 
                     await UpdateQuestDataAsync(data, quest.UserData);
+
+                    return true;
                 }
             }
             catch { }
+
+            return false;
         }
 
         private async Task CheckQuestProgressTrainTroopsAsync(PlayerUserQuestData data, UserQuestProgressData quest, QuestTroopData initialData = null, QuestTroopData progressData = null)

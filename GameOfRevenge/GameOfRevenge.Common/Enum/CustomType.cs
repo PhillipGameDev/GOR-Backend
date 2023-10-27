@@ -6,6 +6,7 @@
         KingExperiencePoints = 1,
         KingStaminaPoints = 2,
         VIPPoints = 3,
-        HeroPoints = 4
+        HeroPoints = 4,
+        VIPActivate = 5
     }
 }

@@ -22,7 +22,7 @@ namespace GameOfRevenge.Common.Interface.UserData
         int GetInstantBuildCost(int timeLeft);
 
         Task<Response<UserVIPDetails>> AddVIPPoints(int playerId, int points);
-        Task<Response<UserVIPDetails>> ActivateVIPBoosts(int playerId);
+        Task<Response<UserVIPDetails>> ActivateVIPBoosts(int playerId, int duration = 1800);
 
         Task<Response<RankingElement>> GetRanking(int playerId);
         Task<Response<List<RankingElement>>> GetRankings(long rankId = 0);

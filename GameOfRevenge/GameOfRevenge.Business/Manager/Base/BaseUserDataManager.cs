@@ -776,7 +776,7 @@ namespace GameOfRevenge.Business.Manager.Base
             }
         }
 
-        public async Task<Response<UserVIPDetails>> ActivateVIPBoosts(int playerId)
+        public async Task<Response<UserVIPDetails>> ActivateVIPBoosts(int playerId, int duration = 1800)
         {
             try
             {
@@ -788,7 +788,7 @@ namespace GameOfRevenge.Business.Manager.Base
                 {
                     var vipdetails = JsonConvert.DeserializeObject<UserVIPDetails>(vipdata.Value);
 
-                    int levelVal = 0;
+                    /*int levelVal = 0;
                     var specBoostData = CacheBoostDataManager.SpecNewBoostDatas.First(x => x.Type == NewBoostType.Blessing);
                     if (specBoostData.Table > 0)
                     {
@@ -796,7 +796,7 @@ namespace GameOfRevenge.Business.Manager.Base
                         {
                             int.TryParse(specBoostData.Levels[(byte)vipdetails.Level].ToString(), out levelVal);
                         }
-                    }
+                    }*/
                     /*                    var nvip = CacheBoostDataManager.GetNewBoostByTypeId((int)NewBoostType.VIP);
                                         foreach (var tech in nvip.Techs)
                                         {
@@ -806,14 +806,14 @@ namespace GameOfRevenge.Business.Manager.Base
                                             var value = tech.GetValue(vipdetails.Level);
                                             if (value > maxVal) maxVal = value;
                                         }*/
-                    if (levelVal > 0)
+                    if (duration > 0)
                     {
                         if (vipdetails.TimeLeft == 0)
                         {
                             vipdetails.StartTime = DateTime.UtcNow;
                             vipdetails.Duration = 0;
                         }
-                        vipdetails.Duration += levelVal;
+                        vipdetails.Duration += duration;
 
                         var json = JsonConvert.SerializeObject(vipdetails);
                         var saveResp = await manager.UpdatePlayerDataID(playerId, vipdata.Id, json);

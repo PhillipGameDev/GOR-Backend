@@ -120,7 +120,9 @@ new string[]{
                     case OperationCode.RespondToFriendRequest: return await HandleRespondToFriendRequest(peer, operationRequest);//35
 //                    OperationCode.CheckUnderAttack = 22
 
-                    case OperationCode.ClaimRewardsRequest: return await HandleClaimRewardsRequest(peer, operationRequest); 
+                    case OperationCode.ClaimRewardsRequest: return await HandleClaimRewardsRequest(peer, operationRequest);
+                    case OperationCode.ItemBoxExploring: return await HandleItemBoxExploring(peer, operationRequest); //39
+                    case OperationCode.BuildOrUpgrade: return await HandleBuildOrUpgrade(peer, operationRequest); // 40
 
                     default: return peer.SendOperation(operationRequest.OperationCode, ReturnCode.InvalidOperation);
                 }
@@ -497,7 +499,9 @@ new string[]{
 
             log.Info("**************** HandleInstantBuild End************************");
 
-//            await GameService.NewRealTimeUpdateManager.PlayerDataChanged(peer.Actor.PlayerId);//TODO: required?
+            //            await GameService.NewRealTimeUpdateManager.PlayerDataChanged(peer.Actor.PlayerId);//TODO: required?
+
+            await CompleteBuildOrUpgradeTaskAsync(peer);
 
             var obj = new StructureCreateUpgradeResponse()
             {
@@ -555,6 +559,8 @@ new string[]{
             }*/
 
             log.Info("**************** HandleSpeedUpBuild End************************");
+
+            await CompleteBuildOrUpgradeTaskAsync(peer);
 
             var obj = new StructureCreateUpgradeResponse()
             {
@@ -1103,6 +1109,45 @@ new string[]{
             return peer.SendOperation(operationRequest.OperationCode, ReturnCode.InvalidOperation, debuMsg: errMsg);
         }
 
+        public async Task<SendResult> HandleItemBoxExploring(IGorMmoPeer peer, OperationRequest operationRequest)
+        {
+            log.Debug("@@@@@@@ HANDLE ITEM BOXING EXPLORING FROM " + peer.PlayerInstance.PlayerId);
+
+            var questUpdated = await CompleteCustomTaskQuest(peer.PlayerInstance.PlayerId, CustomTaskType.ItemBoxExploring);
+            if (questUpdated)
+            {
+                peer.PlayerInstance.SendEvent(EventCode.UpdateQuest, new Dictionary<byte, object>());
+                return peer.SendOperation(operationRequest.OperationCode, ReturnCode.OK, debuMsg: "OK");
+            }
+
+            log.Debug("@@@@ HANDLE ITEM BOX EXPLORING INVALID");
+            return peer.SendOperation(operationRequest.OperationCode, ReturnCode.InvalidOperation, debuMsg: "ERROR");
+        }
+
+        public async Task<bool> CompleteBuildOrUpgradeTaskAsync(IGorMmoPeer peer)
+        {
+            var questUpdated = await CompleteCustomTaskQuest(peer.PlayerInstance.PlayerId, CustomTaskType.BuildOrUpgrade);
+            if (questUpdated)
+            {
+                peer.PlayerInstance.SendEvent(EventCode.UpdateQuest, new Dictionary<byte, object>());
+                return true;
+            }
+            return false;
+        }
+
+        public async Task<SendResult> HandleBuildOrUpgrade(IGorMmoPeer peer, OperationRequest operationRequest)
+        {
+            log.Debug("@@@@@@@ HANDLE BUILD OR UPGRADE FROM " + peer.PlayerInstance.PlayerId);
+
+            if (await CompleteBuildOrUpgradeTaskAsync(peer))
+            {
+                return peer.SendOperation(operationRequest.OperationCode, ReturnCode.OK, debuMsg: "OK");
+            }
+
+            log.Debug("@@@@ HANDLE BUILD OR UPGRADE INVALID");
+            return peer.SendOperation(operationRequest.OperationCode, ReturnCode.InvalidOperation, debuMsg: "ERROR");
+        }
+
         public async Task<SendResult> HandlPlayerConnectToGameServer(IGorMmoPeer peer, OperationRequest operationRequest)
         {
             int playerId;
@@ -1465,7 +1510,11 @@ new string[]{
                 {
                     string initialString = (userQuest == null) ? quest.Quest.DataString : null;
                     var resp = await questManager.UpdateQuestData(playerId, quest.Quest.QuestId, true, initialString);
-                    if (resp.IsSuccess) questUpdated = true;
+                    if (resp.IsSuccess)
+                    {
+                        questUpdated = true;
+                        GameService.RealTimeUpdateManagerQuestValidator.UpdateCustomQuest(playerId, quest.Quest.QuestId);
+                    }
                 }
             }
 

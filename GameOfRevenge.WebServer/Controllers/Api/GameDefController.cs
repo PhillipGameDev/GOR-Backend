@@ -120,8 +120,7 @@ namespace GameOfRevenge.WebServer.Controllers.Api
         [HttpGet]
         public IActionResult GetAllSideQuests()
         {
-            var response = CacheQuestDataManager.SideQuests;
-            return ReturnResponse(response);
+            return ReturnResponse(null);
         }
 
         [HttpGet]
