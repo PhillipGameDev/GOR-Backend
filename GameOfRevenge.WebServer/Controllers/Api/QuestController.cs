@@ -1,6 +1,7 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using System.Threading.Tasks;
 using GameOfRevenge.Common.Interface;
+using Newtonsoft.Json;
 
 namespace GameOfRevenge.WebServer.Controllers.Api
 {
@@ -59,9 +60,9 @@ namespace GameOfRevenge.WebServer.Controllers.Api
         }
 
         [HttpPost]
-        public async Task<IActionResult> ConsumeReward(long playerDataId, int count, string context = null)
+        public async Task<IActionResult> ConsumeReward(string playerDataId, int count, string context = null)
         {
-            var response = await questManager.ConsumeReward(Token.PlayerId, playerDataId, count, context);
+            var response = await questManager.ConsumeReward(Token.PlayerId, JsonConvert.DeserializeObject<long[]>(playerDataId), count, context);
             return ReturnResponse(response);
         }
         #endregion

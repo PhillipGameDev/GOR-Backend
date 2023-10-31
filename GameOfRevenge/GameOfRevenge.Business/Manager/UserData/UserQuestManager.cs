@@ -505,271 +505,296 @@ namespace GameOfRevenge.Business.Manager.UserData
             return noErrors? ReturnCode.OK : ReturnCode.Failed;
         }
 
-        public async Task<Response<PlayerDataTableUpdated>> ConsumeReward(int playerId, long playerDataId, int itemCount, string context = null)
+        public async Task<Response<PlayerDataTableUpdated>> ConsumeReward(int playerId, long[] playerDataIds, int itemCount, string context = null)
         {
-            var resp = await manager.GetPlayerDataById(playerDataId);
-            if (!resp.IsSuccess || !resp.HasData) return new Response<PlayerDataTableUpdated>(200, "User reward not found");
-
-            var playerData = resp.Data;
-
-            IBaseDataTypeTable<int, int> rewardData = null;
-
-            if (playerData.DataType == DataType.Reward)
+            foreach (long playerDataId in playerDataIds)
             {
-                var rewardId = playerData.ValueId;
-                rewardData = CacheQuestDataManager.AllQuestRewards
-                                .SelectMany(x => x.Rewards).FirstOrDefault(y => (y.RewardId == rewardId));
+                if (itemCount == 0) break;
 
-                if (((IReadOnlyDataReward)rewardData).Count < 1) return new Response<PlayerDataTableUpdated>(202, "Reward data invalid");
-            } else if (playerData.DataType == DataType.ShopItem)
-            {
-                var rewardId = playerData.ValueId;
-                rewardData = CacheShopDataManager.AllShopItems.FirstOrDefault(y => (y.Id == rewardId));
-            }
+                var resp = await manager.GetPlayerDataById(playerDataId);
+                if (!resp.IsSuccess || !resp.HasData) return new Response<PlayerDataTableUpdated>(200, "User reward not found");
 
-            if (rewardData == null) return new Response<PlayerDataTableUpdated>(201, "Shop data not found");
+                var playerData = resp.Data;
 
-            rewardData.Value *= itemCount;
+                IBaseDataTypeTable<int, int> rewardData = null;
 
-            if (int.TryParse(playerData.Value, out int count))
-            {
-                count -= itemCount;
-                if (count < 0) count = 0;
-                try
+                if (playerData.DataType == DataType.Reward)
                 {
-                    long kingDetailsId = 0;
-                    UserKingDetails kingDetails = null;
-                    if ((rewardData.DataType == DataType.Custom) && (rewardData.ValueId < (int)CustomRewardType.VIPPoints))
+                    var rewardId = playerData.ValueId;
+                    rewardData = CacheQuestDataManager.AllQuestRewards
+                                    .SelectMany(x => x.Rewards).FirstOrDefault(y => (y.RewardId == rewardId));
+
+                    if (((IReadOnlyDataReward)rewardData).Count < 1)
                     {
-                        var kingresp = await manager.GetPlayerData(playerId, DataType.Custom, (int)CustomValueType.KingDetails);
-                        if (kingresp.IsSuccess && kingresp.HasData)
+                        continue;
+                    }
+                }
+                else if (playerData.DataType == DataType.ShopItem)
+                {
+                    var rewardId = playerData.ValueId;
+                    rewardData = CacheShopDataManager.AllShopItems.FirstOrDefault(y => (y.Id == rewardId));
+                }
+
+                if (rewardData == null) return new Response<PlayerDataTableUpdated>(201, "Shop data not found");
+
+                if (int.TryParse(playerData.Value, out int count))
+                {
+                    if (itemCount < count)
+                    {
+                        rewardData.Value *= itemCount;
+                        count -= itemCount;
+                        itemCount = 0;
+                        if (count < 0) count = 0;
+                    } else
+                    {
+                        itemCount -= count;
+                        rewardData.Value *= count;
+                        count = 0;
+                    }
+
+                    try
+                    {
+                        long kingDetailsId = 0;
+                        UserKingDetails kingDetails = null;
+                        if ((rewardData.DataType == DataType.Custom) && (rewardData.ValueId < (int)CustomRewardType.VIPPoints))
                         {
-                            kingDetails = JsonConvert.DeserializeObject<UserKingDetails>(kingresp.Data.Value);
-                            kingDetailsId = kingresp.Data.Id;
+                            var kingresp = await manager.GetPlayerData(playerId, DataType.Custom, (int)CustomValueType.KingDetails);
+                            if (kingresp.IsSuccess && kingresp.HasData)
+                            {
+                                kingDetails = JsonConvert.DeserializeObject<UserKingDetails>(kingresp.Data.Value);
+                                kingDetailsId = kingresp.Data.Id;
+                            }
+                            if (kingDetails == null) throw new InvalidModelExecption("King data corrupted");
                         }
-                        if (kingDetails == null) throw new InvalidModelExecption("King data corrupted");
-                    }
 
-                    bool updateKing = false;
-                    switch (rewardData.DataType)
-                    {
-                        case DataType.Custom:
-                            switch ((CustomRewardType)rewardData.ValueId)
-                            {
-                                case CustomRewardType.KingExperiencePoints:
-                                    kingDetails.Experience += rewardData.Value;
-                                    updateKing = true;
-                                    break;
-                                case CustomRewardType.KingStaminaPoints:
-                                    kingDetails.MaxStamina += rewardData.Value;
-                                    updateKing = true;
-                                    break;
-                                case CustomRewardType.VIPPoints:
-                                    var vipresp = await manager.GetPlayerData(playerId, DataType.Custom, (int)CustomValueType.VIPPoints);
-                                    if (!vipresp.IsSuccess) throw new InvalidModelExecption(vipresp.Message);
+                        bool updateKing = false;
+                        switch (rewardData.DataType)
+                        {
+                            case DataType.Custom:
+                                switch ((CustomRewardType)rewardData.ValueId)
+                                {
+                                    case CustomRewardType.KingExperiencePoints:
+                                        kingDetails.Experience += rewardData.Value;
+                                        updateKing = true;
+                                        break;
+                                    case CustomRewardType.KingStaminaPoints:
+                                        kingDetails.MaxStamina += rewardData.Value;
+                                        updateKing = true;
+                                        break;
+                                    case CustomRewardType.VIPPoints:
+                                        var vipresp = await manager.GetPlayerData(playerId, DataType.Custom, (int)CustomValueType.VIPPoints);
+                                        if (!vipresp.IsSuccess) throw new InvalidModelExecption(vipresp.Message);
 
-                                    var vipdata = vipresp.Data;
-                                    if (vipdata == null) throw new InvalidModelExecption("VIP data missing");
+                                        var vipdata = vipresp.Data;
+                                        if (vipdata == null) throw new InvalidModelExecption("VIP data missing");
 
-                                    var vipdetails = JsonConvert.DeserializeObject<UserVIPDetails>(vipdata.Value);
-                                    vipdetails.Points += rewardData.Value;
-                                    var json = JsonConvert.SerializeObject(vipdetails);
-                                    var saveResp = await manager.UpdatePlayerDataID(playerId, vipdata.Id, json);
-                                    if (!saveResp.IsSuccess) throw new InvalidModelExecption(saveResp.Message);
-                                    break;
-                                case CustomRewardType.HeroPoints: //hero points
-                                    var heroResp = await userHeroManager.AddHeroPoints(playerId, context, rewardData.Value);
-                                    if (!heroResp.IsSuccess) throw new InvalidModelExecption(heroResp.Message);
-                                    break;
-                                case CustomRewardType.VIPActivate:
-                                    var vipActivateResp = await boostManager.ActivateVIPBoosts(playerId, rewardData.Value);
-                                    if (!vipActivateResp.IsSuccess) throw new InvalidModelExecption(vipActivateResp.Message);
-                                    break;
-                            }
-                                
-                            break;
-                        case DataType.Resource:
-                            var sumResp = await resmanager.SumResource(playerId, rewardData.ValueId, rewardData.Value);
-                            if (!sumResp.IsSuccess) throw new InvalidModelExecption(sumResp.Message);
-                            break;
-                        case DataType.Technology:
-                            int location = 0;
-                            TroopType troopType = TroopType.Other;
-                            List<TroopDetails> listTroops = null;
-                            Response<PlayerCompleteData> fullPlayerData;
-                            switch ((NewBoostTech)rewardData.ValueId)
-                            {
-//                                    case NewBoostTech.TroopTrainingSpeedMultiplier:/*14*/
-                                case NewBoostTech.TroopTrainingTimeBonus:/*18*/
-                                    int.TryParse(context, out location);
-                                    if (location <= 0) throw new InvalidModelExecption("Invalid Troop location");
+                                        var vipdetails = JsonConvert.DeserializeObject<UserVIPDetails>(vipdata.Value);
+                                        vipdetails.Points += rewardData.Value;
+                                        var json = JsonConvert.SerializeObject(vipdetails);
+                                        var saveResp = await manager.UpdatePlayerDataID(playerId, vipdata.Id, json);
+                                        if (!saveResp.IsSuccess) throw new InvalidModelExecption(saveResp.Message);
+                                        break;
+                                    case CustomRewardType.HeroPoints: //hero points
+                                        var heroResp = await userHeroManager.AddHeroPoints(playerId, context, rewardData.Value);
+                                        if (!heroResp.IsSuccess) throw new InvalidModelExecption(heroResp.Message);
+                                        break;
+                                    case CustomRewardType.VIPActivate:
+                                        var vipActivateResp = await boostManager.ActivateVIPBoosts(playerId, rewardData.Value);
+                                        if (!vipActivateResp.IsSuccess) throw new InvalidModelExecption(vipActivateResp.Message);
+                                        break;
+                                }
 
-                                    fullPlayerData = await BaseUserDataManager.GetFullPlayerData(playerId);
-                                    if (!fullPlayerData.IsSuccess) throw new InvalidModelExecption(fullPlayerData.Message);
+                                break;
+                            case DataType.Resource:
+                                var sumResp = await resmanager.SumResource(playerId, rewardData.ValueId, rewardData.Value);
+                                if (!sumResp.IsSuccess) throw new InvalidModelExecption(sumResp.Message);
+                                break;
+                            case DataType.Technology:
+                                int location = 0;
+                                TroopType troopType = TroopType.Other;
+                                List<TroopDetails> listTroops = null;
+                                Response<PlayerCompleteData> fullPlayerData;
+                                switch ((NewBoostTech)rewardData.ValueId)
+                                {
+                                    //                                    case NewBoostTech.TroopTrainingSpeedMultiplier:/*14*/
+                                    case NewBoostTech.TroopTrainingTimeBonus:/*18*/
+                                        int.TryParse(context, out location);
+                                        if (location <= 0) throw new InvalidModelExecption("Invalid Troop location");
 
-                                    List<UnavaliableTroopInfo> listInTraining = null;
-                                    UnavaliableTroopInfo troopTraining = null;
-                                    fullPlayerData.Data.Troops.Find(troop =>
-                                    {
-                                        TroopDetails troopDetails = null;
-                                        if (troop.TroopData != null)
+                                        fullPlayerData = await BaseUserDataManager.GetFullPlayerData(playerId);
+                                        if (!fullPlayerData.IsSuccess) throw new InvalidModelExecption(fullPlayerData.Message);
+
+                                        List<UnavaliableTroopInfo> listInTraining = null;
+                                        UnavaliableTroopInfo troopTraining = null;
+                                        fullPlayerData.Data.Troops.Find(troop =>
                                         {
-                                            troopType = troop.TroopType;
-                                            listTroops = troop.TroopData;
-                                            troopDetails = listTroops?.Find((data) =>
+                                            TroopDetails troopDetails = null;
+                                            if (troop.TroopData != null)
                                             {
-                                                listInTraining = data.InTraning;
-                                                troopTraining = listInTraining?.Find((info) => (info.BuildingLocId == location));
-                                                return troopTraining != null;
-                                            });
-                                        }
+                                                troopType = troop.TroopType;
+                                                listTroops = troop.TroopData;
+                                                troopDetails = listTroops?.Find((data) =>
+                                                {
+                                                    listInTraining = data.InTraning;
+                                                    troopTraining = listInTraining?.Find((info) => (info.BuildingLocId == location));
+                                                    return troopTraining != null;
+                                                });
+                                            }
 
-                                        return troopDetails != null;
-                                    });
-                                    if (troopTraining == null) throw new InvalidModelExecption("Training troop not found");
+                                            return troopDetails != null;
+                                        });
+                                        if (troopTraining == null) throw new InvalidModelExecption("Training troop not found");
 
-                                    troopTraining.Duration -= rewardData.Value;
-                                    if (troopTraining.Duration < 0)
-                                    {
-                                        listInTraining.Remove(troopTraining);
-                                    }
-                                    await userTroopManager.UpdateTroops(playerId, troopType, listTroops);
-                                    break;
-
-                                case NewBoostTech.TroopRecoverySpeedMultiplier:/*15*/
-                                    var boostResp2 = await boostManager.ActivateBoost(playerId, CityBoostType.LifeSaver, rewardData.Value, 0);
-                                    if (!boostResp2.IsSuccess) throw new InvalidModelExecption(boostResp2.Message);
-                                    break;
-
-                                case NewBoostTech.TroopRecoveryTimeBonus:/*19*/
-                                    int.TryParse(context, out location);
-                                    if (location <= 0) throw new InvalidModelExecption("Invalid Troop location");
-
-                                    fullPlayerData = await BaseUserDataManager.GetFullPlayerData(playerId);
-                                    if (!fullPlayerData.IsSuccess) throw new InvalidModelExecption(fullPlayerData.Message);
-
-                                    List<UnavaliableTroopInfo> listInRecovery = null;
-                                    UnavaliableTroopInfo troopRecovery = null;
-                                    fullPlayerData.Data.Troops.Find(troop =>
-                                    {
-                                        TroopDetails troopDetails = null;
-                                        if (troop.TroopData != null)
+                                        troopTraining.Duration -= rewardData.Value;
+                                        if (troopTraining.Duration < 0)
                                         {
-                                            troopType = troop.TroopType;
-                                            listTroops = troop.TroopData;
-                                            troopDetails = listTroops?.Find((data) =>
+                                            listInTraining.Remove(troopTraining);
+                                        }
+                                        await userTroopManager.UpdateTroops(playerId, troopType, listTroops);
+                                        break;
+
+                                    case NewBoostTech.TroopRecoverySpeedMultiplier:/*15*/
+                                        var boostResp2 = await boostManager.ActivateBoost(playerId, CityBoostType.LifeSaver, rewardData.Value, 0);
+                                        if (!boostResp2.IsSuccess) throw new InvalidModelExecption(boostResp2.Message);
+                                        break;
+
+                                    case NewBoostTech.TroopRecoveryTimeBonus:/*19*/
+                                        int.TryParse(context, out location);
+                                        if (location <= 0) throw new InvalidModelExecption("Invalid Troop location");
+
+                                        fullPlayerData = await BaseUserDataManager.GetFullPlayerData(playerId);
+                                        if (!fullPlayerData.IsSuccess) throw new InvalidModelExecption(fullPlayerData.Message);
+
+                                        List<UnavaliableTroopInfo> listInRecovery = null;
+                                        UnavaliableTroopInfo troopRecovery = null;
+                                        fullPlayerData.Data.Troops.Find(troop =>
+                                        {
+                                            TroopDetails troopDetails = null;
+                                            if (troop.TroopData != null)
                                             {
-                                                listInRecovery = data.InRecovery;
-                                                troopRecovery = listInRecovery?.Find((info) => (info.BuildingLocId == location));
-                                                return troopRecovery != null;
-                                            });
-                                        }
+                                                troopType = troop.TroopType;
+                                                listTroops = troop.TroopData;
+                                                troopDetails = listTroops?.Find((data) =>
+                                                {
+                                                    listInRecovery = data.InRecovery;
+                                                    troopRecovery = listInRecovery?.Find((info) => (info.BuildingLocId == location));
+                                                    return troopRecovery != null;
+                                                });
+                                            }
 
-                                        return troopDetails != null;
-                                    });
-                                    if (troopRecovery == null) throw new InvalidModelExecption("Injured troop not found");
+                                            return troopDetails != null;
+                                        });
+                                        if (troopRecovery == null) throw new InvalidModelExecption("Injured troop not found");
 
-                                    troopRecovery.Duration -= rewardData.Value;
-                                    if (troopRecovery.Duration < 0)
-                                    {
-                                        listInRecovery.Remove(troopRecovery);
-                                    }
-                                    await userTroopManager.UpdateTroops(playerId, troopType, listTroops);
-                                    break;
-
-                                case NewBoostTech.TroopMarchingReductionMultiplier://27
-                                    long.TryParse(context, out long marchingId);
-                                    if (marchingId == 0) throw new InvalidModelExecption("Invalid marching army");
-
-                                    var marching = await manager.GetPlayerDataById(marchingId); //GetAllPlayerData(playerId, DataType.Marching);
-                                    if (!marching.IsSuccess) throw new InvalidModelExecption(marching.Message);
-
-                                    MarchingArmy marchingArmy = null;
-                                    if (marching.HasData && !string.IsNullOrEmpty(marching.Data.Value))
-                                    {
-                                        try
+                                        troopRecovery.Duration -= rewardData.Value;
+                                        if (troopRecovery.Duration < 0)
                                         {
-                                            marchingArmy = JsonConvert.DeserializeObject<MarchingArmy>(marching.Data.Value);
+                                            listInRecovery.Remove(troopRecovery);
                                         }
-                                        catch { }
-                                    }
-                                    if (marchingArmy == null) throw new InvalidModelExecption("Invalid marching data");
-                                    var returning = marchingArmy.IsRecalling || marchingArmy.IsTimeForReturn;
-                                    var timeLeft = returning? marchingArmy.TimeLeft : marchingArmy.TimeLeftForTask;
-                                    if (timeLeft < 5) throw new InvalidModelExecption("Consume reward is not required");
+                                        await userTroopManager.UpdateTroops(playerId, troopType, listTroops);
+                                        break;
 
-                                    var percentage = (rewardData.Value > 100) ? 100 : rewardData.Value;
-                                    var reduction = (int)(timeLeft * (percentage / 100f));
-                                    if (returning)
-                                    {
-                                        marchingArmy.ReturnReduction += reduction;
-                                    }
-                                    else
-                                    {
-                                        marchingArmy.AdvanceReduction += reduction;
-                                    }
-                                    var marchingJson = JsonConvert.SerializeObject(marchingArmy.Base());
-                                    await manager.UpdatePlayerDataID(playerId, marchingId, marchingJson);
-                                    break;
+                                    case NewBoostTech.TroopMarchingReductionMultiplier://27
+                                        long.TryParse(context, out long marchingId);
+                                        if (marchingId == 0) throw new InvalidModelExecption("Invalid marching army");
 
-                                case NewBoostTech.ResearchSpeedMultiplier:/*10*/
-                                    var boostResp3 = await boostManager.ActivateBoost(playerId, CityBoostType.TechBoost, rewardData.Value, 0);
-                                    if (!boostResp3.IsSuccess) throw new InvalidModelExecption(boostResp3.Message);
-                                    break;
-                                case NewBoostTech.ResearchTimeBonus:/*21*/
-                                    int.TryParse(context, out location);
-                                    if (location <= 0) throw new InvalidModelExecption("Invalid building location");
+                                        var marching = await manager.GetPlayerDataById(marchingId); //GetAllPlayerData(playerId, DataType.Marching);
+                                        if (!marching.IsSuccess) throw new InvalidModelExecption(marching.Message);
 
-                                    fullPlayerData = await BaseUserDataManager.GetFullPlayerData(playerId);
-                                    if (!fullPlayerData.IsSuccess) throw new InvalidModelExecption(fullPlayerData.Message);
+                                        MarchingArmy marchingArmy = null;
+                                        if (marching.HasData && !string.IsNullOrEmpty(marching.Data.Value))
+                                        {
+                                            try
+                                            {
+                                                marchingArmy = JsonConvert.DeserializeObject<MarchingArmy>(marching.Data.Value);
+                                            }
+                                            catch { }
+                                        }
+                                        if (marchingArmy == null) throw new InvalidModelExecption("Invalid marching data");
+                                        var returning = marchingArmy.IsRecalling || marchingArmy.IsTimeForReturn;
+                                        var timeLeft = returning ? marchingArmy.TimeLeft : marchingArmy.TimeLeftForTask;
+                                        if (timeLeft < 5) throw new InvalidModelExecption("Consume reward is not required");
 
-                                    var userTech = fullPlayerData.Data.Technologies.Find(x => (x.TimeLeft > 0));
-                                    if (userTech == null) throw new InvalidModelExecption("There are no active researches");
+                                        var percentage = (rewardData.Value > 100) ? 100 : rewardData.Value;
+                                        var reduction = (int)(timeLeft * (percentage / 100f));
+                                        if (returning)
+                                        {
+                                            marchingArmy.ReturnReduction += reduction;
+                                        }
+                                        else
+                                        {
+                                            marchingArmy.AdvanceReduction += reduction;
+                                        }
+                                        var marchingJson = JsonConvert.SerializeObject(marchingArmy.Base());
+                                        await manager.UpdatePlayerDataID(playerId, marchingId, marchingJson);
+                                        break;
 
-                                    userTech.Duration -= rewardData.Value;
-                                    if (userTech.Duration < 0) userTech.Duration = 0;
+                                    case NewBoostTech.ResearchSpeedMultiplier:/*10*/
+                                        var boostResp3 = await boostManager.ActivateBoost(playerId, CityBoostType.TechBoost, rewardData.Value, 0);
+                                        if (!boostResp3.IsSuccess) throw new InvalidModelExecption(boostResp3.Message);
+                                        break;
+                                    case NewBoostTech.ResearchTimeBonus:/*21*/
+                                        int.TryParse(context, out location);
+                                        if (location <= 0) throw new InvalidModelExecption("Invalid building location");
 
-                                    var json = JsonConvert.SerializeObject(userTech);
-                                    var tech = CacheTechnologyDataManager.GetFullTechnologyData(userTech.TechnologyType);
-                                    await manager.AddOrUpdatePlayerData(playerId, DataType.Technology, tech.Info.Id, json);
-                                    break;
+                                        fullPlayerData = await BaseUserDataManager.GetFullPlayerData(playerId);
+                                        if (!fullPlayerData.IsSuccess) throw new InvalidModelExecption(fullPlayerData.Message);
 
-//                                    case NewBoostTech.BuildingSpeedMultiplier:/*7*/
-                                case NewBoostTech.BuildingTimeBonus:/*20*/
-                                    int.TryParse(context, out location);
-                                    if (location <= 0) throw new InvalidModelExecption("Invalid Building location");
+                                        var userTech = fullPlayerData.Data.Technologies.Find(x => (x.TimeLeft > 0));
+                                        if (userTech == null) throw new InvalidModelExecption("There are no active researches");
 
-                                    var speedupResp = await userStructureManager.SpeedupBuilding(playerId, location, rewardData.Value);
-                                    if (!speedupResp.IsSuccess) throw new InvalidModelExecption(speedupResp.Message);
-                                    break;
-                                default:
-                                    throw new InvalidModelExecption("Can't consume the reward on this place");
-                            }
-                            break;
+                                        userTech.Duration -= rewardData.Value;
+                                        if (userTech.Duration < 0) userTech.Duration = 0;
+
+                                        var json = JsonConvert.SerializeObject(userTech);
+                                        var tech = CacheTechnologyDataManager.GetFullTechnologyData(userTech.TechnologyType);
+                                        await manager.AddOrUpdatePlayerData(playerId, DataType.Technology, tech.Info.Id, json);
+                                        break;
+
+                                    //                                    case NewBoostTech.BuildingSpeedMultiplier:/*7*/
+                                    case NewBoostTech.BuildingTimeBonus:/*20*/
+                                        int.TryParse(context, out location);
+                                        if (location <= 0) throw new InvalidModelExecption("Invalid Building location");
+
+                                        var speedupResp = await userStructureManager.SpeedupBuilding(playerId, location, rewardData.Value);
+                                        if (!speedupResp.IsSuccess) throw new InvalidModelExecption(speedupResp.Message);
+                                        break;
+                                    default:
+                                        throw new InvalidModelExecption("Can't consume the reward on this place");
+                                }
+                                break;
+                        }
+
+                        if (updateKing)
+                        {
+                            var kingjson = JsonConvert.SerializeObject(kingDetails);
+                            var kingResp = await manager.UpdatePlayerDataID(playerId, kingDetailsId, kingjson);
+                            if (!kingResp.IsSuccess) throw new InvalidModelExecption(kingResp.Message);
+                        }
                     }
-
-                    if (updateKing)
+                    catch (InvalidModelExecption ex)
                     {
-                        var kingjson = JsonConvert.SerializeObject(kingDetails);
-                        var kingResp = await manager.UpdatePlayerDataID(playerId, kingDetailsId, kingjson);
-                        if (!kingResp.IsSuccess) throw new InvalidModelExecption(kingResp.Message);
+                        return new Response<PlayerDataTableUpdated>(205, ex.Message);
                     }
-                }
-                catch (InvalidModelExecption ex)
-                {
-                    return new Response<PlayerDataTableUpdated>(205, ex.Message);
-                }
-                catch (Exception ex)
-                {
-                    return new Response<PlayerDataTableUpdated>(205, "Error consuming reward");
-                }
+                    catch (Exception ex)
+                    {
+                        return new Response<PlayerDataTableUpdated>(205, "Error consuming reward");
+                    }
 
-                return await manager.UpdatePlayerDataID(playerId, playerData.Id, count.ToString());
+                    await manager.UpdatePlayerDataID(playerId, playerData.Id, count.ToString());
+                }
+                else
+                {
+                    return new Response<PlayerDataTableUpdated>(203, "User reward value corrupted");
+                }
             }
-            else
+
+            if (itemCount > 0)
             {
-                return new Response<PlayerDataTableUpdated>(203, "User reward value corrupted");
+                return new Response<PlayerDataTableUpdated>(206, "Cannot Consume All Items");
             }
+
+            return new Response<PlayerDataTableUpdated>(CaseType.Success, "User reward successfully consumed");
         }
 
 
