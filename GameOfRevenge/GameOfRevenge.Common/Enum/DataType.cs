@@ -25,6 +25,8 @@ namespace GameOfRevenge.Common
         Product = 1018,
         Activity = 1019,
         SubTechnology = 1020,
-        Reward = 1021
+        Reward = 1021,
+        ShopItem = 1022,
+        PackageItem = 1023
     }
 }

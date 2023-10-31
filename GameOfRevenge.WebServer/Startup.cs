@@ -198,6 +198,7 @@ namespace GameOfRevenge.WebServer
             services.AddSingleton<ITroopManager>(new TroopManager());
             services.AddSingleton<ITechnologyManager>(new TechnologyManager());
             services.AddSingleton<IMarketManager>(new MarketManager());
+            services.AddSingleton<IShopManager>(new ShopManager());
 
             services.AddSingleton<IChatManager>(new ChatManager());
 
@@ -217,6 +218,7 @@ namespace GameOfRevenge.WebServer
             services.AddSingleton<IUserQuestManager>(new UserQuestManager());
             services.AddSingleton<IUserMailManager>(new UserMailManager());
             services.AddSingleton<IUserMarketManager>(new UserMarketManager());
+            services.AddSingleton<IUserShopManager>(new UserShopManager());
 
             services.AddSingleton<IInstantProgressManager>(new InstantProgressManager());
 
@@ -236,6 +238,7 @@ namespace GameOfRevenge.WebServer
             await CacheHeroDataManager.LoadCacheMemoryAsync();
             await CacheQuestDataManager.LoadCacheMemoryAsync();
             await CacheProductDataManager.LoadCacheMemoryAsync();
+            await CacheShopDataManager.LoadCacheMemoryAsync();
         }
 
         public static void ReloadDataBaseData()

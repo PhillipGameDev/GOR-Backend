@@ -212,6 +212,7 @@ namespace GameOfRevenge.WebAdmin
             var qm = new UserQuestManager();
             services.AddSingleton<IUserQuestManager>(qm);
             services.AddSingleton<IUserMarketManager>(new UserMarketManager());
+            services.AddSingleton<IUserShopManager>(new UserShopManager());
 
             var adminManager = new AdminDataManager(pdm, cm, qm);
             services.AddSingleton<IAdminDataManager>(adminManager);
@@ -231,6 +232,7 @@ namespace GameOfRevenge.WebAdmin
             await CacheHeroDataManager.LoadCacheMemoryAsync();
             await CacheQuestDataManager.LoadCacheMemoryAsync();
             await CacheProductDataManager.LoadCacheMemoryAsync();
+            await CacheShopDataManager.LoadCacheMemoryAsync();
         }
     }
 }
