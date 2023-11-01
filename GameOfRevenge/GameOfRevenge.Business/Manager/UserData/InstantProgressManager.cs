@@ -337,8 +337,8 @@ namespace GameOfRevenge.Business.Manager.UserData
                 {
                     var troopInfo = GetTroopTrainingData(locId, type, playerData.Data.Troops);
 //                    multiplier = (Math.Ceiling(troopInfo.TimeLeft / 30f) * 30) / troopInfo.Duration;
-                    trainingCount = troopInfo.Count;
-                    cost = trainingCount * (int)Math.Ceiling(troopInfo.TimeLeft / 60f) * 3;
+                    // trainingCount = troopInfo.Count;
+                    cost = (int)Math.Ceiling(troopInfo.TimeLeft / 60f) * 3;
                 }
 
 //                var cost = RecruitCost(type, troopLevel, trainingCount);
