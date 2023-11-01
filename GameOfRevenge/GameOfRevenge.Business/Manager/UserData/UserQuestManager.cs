@@ -16,6 +16,8 @@ using GameOfRevenge.Common.Models.Quest.Template;
 using GameOfRevenge.Business.CacheData;
 using GameOfRevenge.Business.Manager.Base;
 using GameOfRevenge.Common.Interface.Model.Table;
+using GameOfRevenge.Common.Interface.UserData;
+using Newtonsoft.Json.Linq;
 
 namespace GameOfRevenge.Business.Manager.UserData
 {
@@ -653,11 +655,6 @@ namespace GameOfRevenge.Business.Manager.UserData
                                         await userTroopManager.UpdateTroops(playerId, troopType, listTroops);
                                         break;
 
-                                    case NewBoostTech.TroopRecoverySpeedMultiplier:/*15*/
-                                        var boostResp2 = await boostManager.ActivateBoost(playerId, CityBoostType.LifeSaver, rewardData.Value, 0);
-                                        if (!boostResp2.IsSuccess) throw new InvalidModelExecption(boostResp2.Message);
-                                        break;
-
                                     case NewBoostTech.TroopRecoveryTimeBonus:/*19*/
                                         int.TryParse(context, out location);
                                         if (location <= 0) throw new InvalidModelExecption("Invalid Troop location");
@@ -729,10 +726,6 @@ namespace GameOfRevenge.Business.Manager.UserData
                                         await manager.UpdatePlayerDataID(playerId, marchingId, marchingJson);
                                         break;
 
-                                    case NewBoostTech.ResearchSpeedMultiplier:/*10*/
-                                        var boostResp3 = await boostManager.ActivateBoost(playerId, CityBoostType.TechBoost, rewardData.Value, 0);
-                                        if (!boostResp3.IsSuccess) throw new InvalidModelExecption(boostResp3.Message);
-                                        break;
                                     case NewBoostTech.ResearchTimeBonus:/*21*/
                                         int.TryParse(context, out location);
                                         if (location <= 0) throw new InvalidModelExecption("Invalid building location");
@@ -758,6 +751,24 @@ namespace GameOfRevenge.Business.Manager.UserData
 
                                         var speedupResp = await userStructureManager.SpeedupBuilding(playerId, location, rewardData.Value);
                                         if (!speedupResp.IsSuccess) throw new InvalidModelExecption(speedupResp.Message);
+                                        break;
+                                    case NewBoostTech.ProtectionFog:
+                                        await boostManager.ActivateBoost(playerId, CityBoostType.Fog, rewardData.Value, 0);
+                                        break;
+                                    case NewBoostTech.ProtectionShield:
+                                        await boostManager.ActivateBoost(playerId, CityBoostType.Shield, rewardData.Value, 0);
+                                        break;
+                                    case NewBoostTech.TroopAttackMultiplier:
+                                        await boostManager.ActivateBoost(playerId, CityBoostType.Blessing, rewardData.Value, 0);
+                                        break;
+                                    case NewBoostTech.ResourceProductionMultiplier:
+                                        await boostManager.ActivateBoost(playerId, CityBoostType.ProductionBoost, rewardData.Value, 0);
+                                        break;
+                                    case NewBoostTech.ResearchSpeedMultiplier:
+                                        await boostManager.ActivateBoost(playerId, CityBoostType.TechBoost, rewardData.Value, 0);
+                                        break;
+                                    case NewBoostTech.TroopRecoverySpeedMultiplier:
+                                        await boostManager.ActivateBoost(playerId, CityBoostType.LifeSaver, rewardData.Value, 0);
                                         break;
                                     default:
                                         throw new InvalidModelExecption("Can't consume the reward on this place");

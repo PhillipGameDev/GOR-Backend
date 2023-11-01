@@ -159,6 +159,13 @@ namespace GameOfRevenge.Common.Models
                             desc = string.Format(str2, TimeHelper.ChangeSecondsToFormatTimeWords(reward.Value));
                             break;
 
+                        case NewBoostTech.TroopAttackMultiplier:/*41*/
+                            str = Localization.GetText("{0} Troop Attack Multiplier", Helper.Localization.REWARDS);
+                            title = string.Format(str, TimeHelper.ChangeSecondsToFormatTimeWords(reward.Value, true));
+                            str2 = Localization.GetText("Increase the troop attack multiplier time by {0}", Helper.Localization.REWARDS);
+                            desc = string.Format(str2, TimeHelper.ChangeSecondsToFormatTimeWords(reward.Value));
+                            break;
+
                         case NewBoostTech.TroopTrainingSpeedMultiplier:/*14*/
                         case NewBoostTech.TroopTrainingTimeBonus:/*18*/
                             str = Localization.GetText("{0} Training Speedup", Helper.Localization.REWARDS);
