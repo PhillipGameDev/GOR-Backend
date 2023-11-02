@@ -11,6 +11,7 @@ namespace GameOfRevenge.Common.Models
         int Id { get; } // PK
         int CategoryId { get; }
         int Cost { get; }
+        int ItemId { get; }
     }
 
     public class ShopItemTable : IBaseTable, IReadOnlyShopItemTable
@@ -21,16 +22,18 @@ namespace GameOfRevenge.Common.Models
         public int ValueId { get; set; }
         public int Value { get; set; }
         public int Cost { get; set; }
+        public int ItemId { get; set; }
 
         public void LoadFromDataReader(IDataReader reader)
         {
             int index = 0;
             Id = reader.GetValue(index) == DBNull.Value ? 0 : reader.GetInt32(index); index++;
             CategoryId = reader.GetValue(index) == DBNull.Value ? 0 : reader.GetInt32(index); index++;
+            ItemId = reader.GetValue(index) == DBNull.Value ? 0 : reader.GetInt32(index); index++;
             DataType = (DataType)(reader.GetValue(index) == DBNull.Value ? 0 : reader.GetInt32(index)); index++;
             ValueId = reader.GetValue(index) == DBNull.Value ? 0 : reader.GetInt32(index); index++;
             Value = reader.GetValue(index) == DBNull.Value ? 0 : reader.GetInt32(index); index++;
-            Cost = reader.GetValue(index) == DBNull.Value ? 0 : reader.GetInt32(index); index++;
+            Cost = reader.GetValue(index) == DBNull.Value ? 0 : reader.GetInt32(index);
         }
     }
 }

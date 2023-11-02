@@ -19,13 +19,16 @@ namespace GameOfRevenge.Business.Manager.UserData
         private readonly IAccountManager accountManager = new AccountManager();
         private readonly IClanManager userClanManager;
         private readonly IUserQuestManager userQuestManager;
+        private readonly IUserItemManager userItemManager;
         private readonly IPlayerDataManager playerDataManager;
 
-        public AdminDataManager(IPlayerDataManager playerManager, IClanManager clanManager, IUserQuestManager questManager)
+        public AdminDataManager(IPlayerDataManager playerManager, IClanManager clanManager, IUserQuestManager questManager, IUserItemManager userItemManager)
         {
             userClanManager = clanManager;
             userQuestManager = questManager;
             playerDataManager = playerManager;
+            this.userItemManager = userItemManager;
+
         }
 
         public async Task<Response<List<PlayerID>>> GetPlayers()
@@ -440,7 +443,7 @@ namespace GameOfRevenge.Business.Manager.UserData
 
         public async Task<List<PlayerDataReward>> GetAllPlayerRewards(int playerId)
         {
-            var rewardsResp = await userQuestManager.GetUserAllRewards(playerId);
+            var rewardsResp = await userItemManager.GetUserAllItems(playerId);
             if (rewardsResp.IsSuccess && rewardsResp.HasData)
             {
                 var allPlayerRewards = new List<PlayerDataReward>();

@@ -11,5 +11,6 @@ namespace GameOfRevenge.Common.Interface
         Task<Response> BuyShopItem(int playerId, int itemId);
         Task<Response> BuyPackage(int playerId, int packageId);
         Task<Response> RedeemPurchaseShopItem(int playerId, IReadOnlyShopItemTable shopItem);
+        Task<Response> RedeemPurchasePackage(int playerId, int packageId);
     }
 }

@@ -1,42 +1,39 @@
 ﻿using System;
 using System.Data;
-using GameOfRevenge.Common.Helper;
-using GameOfRevenge.Common.Interface.Model.Table;
 using GameOfRevenge.Common.Models.Table;
 
-namespace GameOfRevenge.Common.Models
+namespace GameOfRevenge.Common.Models.Quest
 {
-    public interface IReadOnlyPackageItemTable
+    public interface IReadOnlyPlayerItemDataTable
     {
-        int Id { get; } // PK
-        int PackageId { get; }
-        int ItemId { get; }
+        long PlayerDataId { get; }
         DataType DataType { get; }
         int ValueId { get; }
         int Value { get; }
+        
         int Count { get; }
     }
 
-    public class PackageItemTable : IBaseTable, IReadOnlyPackageItemTable
+    public class PlayerItemDataTable : IBaseTable, IReadOnlyPlayerItemDataTable
     {
-        public int Id { get; set; } // PK
-        public int PackageId { get; set; }
+        public long PlayerDataId { get; set; }
         public int ItemId { get; set; }
         public DataType DataType { get; set; }
         public int ValueId { get; set; }
         public int Value { get; set; }
         public int Count { get; set; }
 
+
         public void LoadFromDataReader(IDataReader reader)
         {
             int index = 0;
-            Id = reader.GetValue(index) == DBNull.Value ? 0 : reader.GetInt32(index); index++;
-            PackageId = reader.GetValue(index) == DBNull.Value ? 0 : reader.GetInt32(index); index++;
+            PlayerDataId = reader.GetValue(index) == DBNull.Value ? 0 : reader.GetInt64(index); index++;
             ItemId = reader.GetValue(index) == DBNull.Value ? 0 : reader.GetInt32(index); index++;
-            DataType = (DataType)(reader.GetValue(index) == DBNull.Value ? 0 : reader.GetInt32(index)); index++;
+            DataType = reader.GetValue(index) == DBNull.Value ? DataType.Unknown : (DataType)Enum.Parse(typeof(DataType), reader.GetString(index)); index++;
             ValueId = reader.GetValue(index) == DBNull.Value ? 0 : reader.GetInt32(index); index++;
             Value = reader.GetValue(index) == DBNull.Value ? 0 : reader.GetInt32(index); index++;
-            Count = reader.GetValue(index) == DBNull.Value ? 0 : reader.GetInt32(index);
+            int.TryParse(reader.GetString(index), out int val);
+            Count = val;
         }
     }
 }

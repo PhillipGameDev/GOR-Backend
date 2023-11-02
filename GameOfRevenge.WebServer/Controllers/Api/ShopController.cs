@@ -20,14 +20,11 @@ namespace GameOfRevenge.WebServer.Controllers.Api
     public class ShopController : BaseApiController
     {
         private readonly IPlayerDataManager manager;
-        private readonly IShopManager shopManager;
         private readonly IUserShopManager userShopManager;
 
-        public ShopController(IPlayerDataManager playerDataManager, IShopManager shopManager,
-                                IUserShopManager userShopManager)
+        public ShopController(IPlayerDataManager playerDataManager, IUserShopManager userShopManager)
         {
             this.manager = playerDataManager;
-            this.shopManager = shopManager;
             this.userShopManager = userShopManager;
         }
 
@@ -59,6 +56,47 @@ namespace GameOfRevenge.WebServer.Controllers.Api
 
                 var reddemResponse = await userShopManager.RedeemPurchaseShopItem(playerId, shopItem);
                 if (!reddemResponse.IsSuccess) throw new DataNotExistExecption("Error when collecting shop items");
+
+                await manager.RemovePlayerResourceData(playerId, 0, 0, 0, 0, reqGold);
+
+                return ReturnResponse(new Response<bool>(true, 100, "Success"));
+            }
+            catch (InvalidModelExecption ex)
+            {
+                return ReturnResponse(new Response<bool>(true, 200, ErrorManager.ShowError(ex)));
+            }
+            catch (DataNotExistExecption ex)
+            {
+                return ReturnResponse(new Response<bool>(true, 201, ErrorManager.ShowError(ex)));
+            }
+            catch (Exception ex)
+            {
+                return ReturnResponse(new Response<bool>(true, 202, ErrorManager.ShowError(ex)));
+            }
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> PurchasePackage(int packageId)
+        {
+            var playerId = Token.PlayerId;
+            try
+            {
+                var packageLists = CacheShopDataManager.AllPackageLists;
+                var packageList = packageLists.FirstOrDefault(item => item.ListId == packageId);
+                if (packageList == null) throw new InvalidModelExecption("Invalid Package List");
+
+                var response = await manager.GetAllPlayerData(playerId, DataType.Resource);
+                if (!response.IsSuccess) throw new DataNotExistExecption(response.Message);
+
+                var golddata = response.Data.Find(x => (x.DataType == DataType.Resource) && (x.ValueId == (int)ResourceType.Gold));
+                if (golddata == null) throw new DataNotExistExecption("No resource gold");
+
+                var reqGold = packageList.Cost;
+                long.TryParse(golddata.Value, out long plyGold);
+                if (plyGold < reqGold) throw new DataNotExistExecption("Not enough gold");
+
+                var reddemResponse = await userShopManager.RedeemPurchasePackage(playerId, packageId);
+                if (!reddemResponse.IsSuccess) throw new DataNotExistExecption("Error when collecting package");
 
                 await manager.RemovePlayerResourceData(playerId, 0, 0, 0, 0, reqGold);
 

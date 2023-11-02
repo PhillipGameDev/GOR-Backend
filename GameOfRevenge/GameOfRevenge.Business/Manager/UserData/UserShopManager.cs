@@ -42,13 +42,13 @@ namespace GameOfRevenge.Business.Manager.UserData
         {
             if (shopItem == null) return ReturnCode.OK;
 
-            var resp = await manager.GetAllPlayerData(playerId, DataType.ShopItem);
+            var resp = await manager.GetAllPlayerData(playerId, DataType.Item);
             if (!resp.IsSuccess || !resp.HasData) return ReturnCode.InvalidOperation;
 
             var noErrors = true;
             var userShopItems = resp.Data;
 
-            var data = userShopItems.Find(x => (x.ValueId == shopItem.Id));
+            var data = userShopItems.Find(x => (x.ValueId == shopItem.ItemId));
             if (data != null)
             {
                 if (int.TryParse(data.Value, out int userCount))
@@ -66,7 +66,7 @@ namespace GameOfRevenge.Business.Manager.UserData
             else
             {
                 var value = "1";
-                var saveResp = await manager.AddOrUpdatePlayerData(playerId, DataType.ShopItem, shopItem.Id, value);
+                var saveResp = await manager.AddOrUpdatePlayerData(playerId, DataType.Item, shopItem.ItemId, value);
                 if (saveResp.IsSuccess && saveResp.HasData)
                 {
                     userShopItems.Add(saveResp.Data.ToPlayerDataTable);
@@ -78,6 +78,67 @@ namespace GameOfRevenge.Business.Manager.UserData
             }
 
             return noErrors ? ReturnCode.OK : ReturnCode.Failed;
+        }
+
+        public async Task<ReturnCode> CollectPackage(int playerId, PackageList package)
+        {
+            if (package == null) return ReturnCode.OK;
+
+            var resp = await manager.GetAllPlayerData(playerId, DataType.Item);
+            if (!resp.IsSuccess || !resp.HasData) return ReturnCode.InvalidOperation;
+
+            var noErrors = true;
+            var userShopItems = resp.Data;
+
+            foreach (var packageItem in package.Items)
+            {
+                var data = userShopItems.Find(x => (x.ValueId == packageItem.ItemId));
+                if (data != null)
+                {
+                    if (int.TryParse(data.Value, out int userCount))
+                    {
+                        userCount += packageItem.Count;
+                        data.Value = userCount.ToString();
+                        var saveResp = await manager.UpdatePlayerDataID(playerId, data.Id, data.Value);
+                        if (!saveResp.IsSuccess) noErrors = false;
+                    }
+                    else
+                    {
+                        noErrors = false;
+                    }
+                }
+                else
+                {
+                    var value = packageItem.Count.ToString();
+                    var saveResp = await manager.AddOrUpdatePlayerData(playerId, DataType.Item, packageItem.ItemId, value);
+                    if (saveResp.IsSuccess && saveResp.HasData)
+                    {
+                        userShopItems.Add(saveResp.Data.ToPlayerDataTable);
+                    }
+                    else
+                    {
+                        noErrors = false;
+                    }
+                }
+            }
+
+            return noErrors ? ReturnCode.OK : ReturnCode.Failed;
+        }
+
+        public async Task<Response> RedeemPurchasePackage(int playerId, int packageId)
+        {
+            var packageLists = CacheShopDataManager.AllPackageLists;
+            var package = packageLists.FirstOrDefault(item => item.ListId == packageId);
+
+            var resp = await CollectPackage(playerId, package);
+            if (resp != ReturnCode.OK)
+            {
+                return new Response(CaseType.Error, "Failed to redeem package.");
+            }
+            else
+            {
+                return new Response(CaseType.Success, "Package redeemed");
+            }
         }
 
         public async Task<Response> RedeemPurchaseShopItem(int playerId, IReadOnlyShopItemTable shopItem)
