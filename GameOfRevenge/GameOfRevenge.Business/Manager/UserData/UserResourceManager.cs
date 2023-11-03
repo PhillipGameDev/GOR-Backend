@@ -53,6 +53,21 @@ namespace GameOfRevenge.Business.Manager.UserData
                 Data = new List<UserResourceData>() { foodData.Data, woodData.Data, oreData.Data, gemData.Data, goldData.Data }
             };
         }
+
+        public async Task<Response<List<UserResourceData>>> SumRawResource(int playerId, int steel, int stone, int ruby)
+        {
+            //TODO: improve this process, we should implement a single call on database to handle this type of request
+            var steelData = await SumSteelResource(playerId, steel);
+            var stoneData = await SumStoneResource(playerId, stone);
+            var rubyData = await SumRubyResource(playerId, ruby);
+
+            return new Response<List<UserResourceData>>()
+            {
+                Case = 100,
+                Message = "Updated Raw Resource",
+                Data = new List<UserResourceData>() { steelData.Data, stoneData.Data, rubyData.Data }
+            };
+        }
         public async Task<Response<UserResourceData>> SumResource(int playerId, int resId, int value)
         {
             Validate(playerId, resId);
