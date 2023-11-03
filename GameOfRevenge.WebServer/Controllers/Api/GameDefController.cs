@@ -43,7 +43,7 @@ namespace GameOfRevenge.WebServer.Controllers.Api
         [HttpGet]
         public IActionResult GetAllItems()
         {
-            var response = CacheInventoryDataManager.ItemList;
+            var response = CacheInventoryDataManager.AllInventoryItems;
 //            var response = new List<InventoryDataTable> ();
 //            response.Add(new InventoryDataTable {Id = 111,Code=InventoryItemType.Weapon,Name="name test",Rarity = Common.RarityType.Rare });
             if (response != null)
@@ -166,11 +166,17 @@ namespace GameOfRevenge.WebServer.Controllers.Api
             return ReturnResponse(response);
         }
 
-/*        [HttpGet]
-        public IActionResult GetInstantBuildCost(int timeLeft)//obsolete -> playercontroller.instantbuild
-        {
-            var response = baseUserManager.GetInstantBuildCost(timeLeft);
-            return ReturnResponse(new Response<int>(response, 100, "Instant build cost"));
-        }*/
+        [HttpGet]
+        public IActionResult GetAllInventories() => ReturnResponse(CacheInventoryDataManager.AllInventoryItems);
+
+        [HttpGet]
+        public IActionResult GetAllInventoryData() => ReturnResponse(CacheInventoryDataManager.AllInventoryData);
+
+        /*        [HttpGet]
+                public IActionResult GetInstantBuildCost(int timeLeft)//obsolete -> playercontroller.instantbuild
+                {
+                    var response = baseUserManager.GetInstantBuildCost(timeLeft);
+                    return ReturnResponse(new Response<int>(response, 100, "Instant build cost"));
+                }*/
     }
 }

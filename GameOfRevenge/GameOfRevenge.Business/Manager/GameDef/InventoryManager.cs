@@ -11,13 +11,39 @@ using GameOfRevenge.Common.Models.Inventory;
 
 namespace GameOfRevenge.Business.Manager.GameDef
 {
-    public class InventoryManager : BaseManager
+    public class InventoryManager : BaseManager, IInventoryManager
     {
-        public async Task<Response<List<InventoryDataTable>>> GetAllInventoryItems()
+        public async Task<Response<List<InventoryTable>>> GetAllInventoryItems()
         {
             try
             {
-                return await Db.ExecuteSPMultipleRow<InventoryDataTable>("GetAllInventoryItems");
+                return await Db.ExecuteSPMultipleRow<InventoryTable>("GetAllInventoryItems");
+            }
+            catch (InvalidModelExecption ex)
+            {
+                return new Response<List<InventoryTable>>()
+                {
+                    Case = 200,
+                    Data = null,
+                    Message = ex.Message
+                };
+            }
+            catch (Exception ex)
+            {
+                return new Response<List<InventoryTable>>()
+                {
+                    Case = 0,
+                    Data = null,
+                    Message = ErrorManager.ShowError(ex)
+                };
+            }
+        }
+
+        public async Task<Response<List<InventoryDataTable>>> GetAllInventoryData()
+        {
+            try
+            {
+                return await Db.ExecuteSPMultipleRow<InventoryDataTable>("GetAllInventoryData");
             }
             catch (InvalidModelExecption ex)
             {
@@ -39,82 +65,82 @@ namespace GameOfRevenge.Business.Manager.GameDef
             }
         }
 
-/*        public async Task<Response<List<DataRequirement>>> GetAllInventoryRequirements()
-        {
-            try
-            {
-                return await Db.ExecuteSPMultipleRow<DataRequirement>("GetAllInventoryRequirements");
-            }
-            catch (InvalidModelExecption ex)
-            {
-                return new Response<List<DataRequirement>>()
+        /*        public async Task<Response<List<DataRequirement>>> GetAllInventoryRequirements()
                 {
-                    Case = 200,
-                    Data = null,
-                    Message = ex.Message
-                };
-            }
-            catch (Exception ex)
-            {
-                return new Response<List<DataRequirement>>()
-                {
-                    Case = 0,
-                    Data = null,
-                    Message = ErrorManager.ShowError(ex)
-                };
-            }
-
-        }*/
-
-/*        public async Task<Response<List<InventoryTable>>> GetAllInventoryItemDatas()
-        {
-            try
-            {
-                var infos = await GetAllInventoryItems();
-                var reqs = await GetAllInventoryRequirements();
-                if (!infos.IsSuccess) throw new InvalidModelExecption(infos.Message);
-                if (!reqs.IsSuccess) throw new InvalidModelExecption(reqs.Message);
-                var resp = new Response<List<InventoryTable>>(new List<InventoryTable>(), infos.Case, infos.Message);
-
-                foreach (var info in infos.Data)
-                {
-                    var data = new InventoryDataRequirementRel
+                    try
                     {
-                        Info = info,
-                        Requirements = new List<DataRequirement>()
-                    };
-
-                    foreach (var req in reqs.Data)
+                        return await Db.ExecuteSPMultipleRow<DataRequirement>("GetAllInventoryRequirements");
+                    }
+                    catch (InvalidModelExecption ex)
                     {
-                        if (info.Id == req.DataId)
+                        return new Response<List<DataRequirement>>()
                         {
-                            data.Requirements.Add(req);
-                        }
+                            Case = 200,
+                            Data = null,
+                            Message = ex.Message
+                        };
+                    }
+                    catch (Exception ex)
+                    {
+                        return new Response<List<DataRequirement>>()
+                        {
+                            Case = 0,
+                            Data = null,
+                            Message = ErrorManager.ShowError(ex)
+                        };
                     }
 
-                    resp.Data.Add(data);
-                }
+                }*/
 
-                return resp;
-            }
-            catch (InvalidModelExecption ex)
-            {
-                return new Response<List<InventoryDataRequirementRel>>()
+        /*        public async Task<Response<List<InventoryTable>>> GetAllInventoryItemDatas()
                 {
-                    Case = 200,
-                    Data = null,
-                    Message = ex.Message
-                };
-            }
-            catch (Exception ex)
-            {
-                return new Response<List<InventoryDataRequirementRel>>()
-                {
-                    Case = 0,
-                    Data = null,
-                    Message = ErrorManager.ShowError(ex)
-                };
-            }
-        }*/
+                    try
+                    {
+                        var infos = await GetAllInventoryItems();
+                        var reqs = await GetAllInventoryRequirements();
+                        if (!infos.IsSuccess) throw new InvalidModelExecption(infos.Message);
+                        if (!reqs.IsSuccess) throw new InvalidModelExecption(reqs.Message);
+                        var resp = new Response<List<InventoryTable>>(new List<InventoryTable>(), infos.Case, infos.Message);
+
+                        foreach (var info in infos.Data)
+                        {
+                            var data = new InventoryDataRequirementRel
+                            {
+                                Info = info,
+                                Requirements = new List<DataRequirement>()
+                            };
+
+                            foreach (var req in reqs.Data)
+                            {
+                                if (info.Id == req.DataId)
+                                {
+                                    data.Requirements.Add(req);
+                                }
+                            }
+
+                            resp.Data.Add(data);
+                        }
+
+                        return resp;
+                    }
+                    catch (InvalidModelExecption ex)
+                    {
+                        return new Response<List<InventoryDataRequirementRel>>()
+                        {
+                            Case = 200,
+                            Data = null,
+                            Message = ex.Message
+                        };
+                    }
+                    catch (Exception ex)
+                    {
+                        return new Response<List<InventoryDataRequirementRel>>()
+                        {
+                            Case = 0,
+                            Data = null,
+                            Message = ErrorManager.ShowError(ex)
+                        };
+                    }
+                }*/
     }
 }

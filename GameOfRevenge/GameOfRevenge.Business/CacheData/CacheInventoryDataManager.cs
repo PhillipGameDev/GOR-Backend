@@ -5,6 +5,7 @@ using System.Threading.Tasks;
 using GameOfRevenge.Business.Manager;
 using GameOfRevenge.Business.Manager.GameDef;
 using GameOfRevenge.Common;
+using GameOfRevenge.Common.Models;
 using GameOfRevenge.Common.Models.Inventory;
 
 namespace GameOfRevenge.Business.CacheData
@@ -14,31 +15,24 @@ namespace GameOfRevenge.Business.CacheData
         public const string InventoryNotExist = "Inventory item does not exist";
 
         private static bool isLoaded = false;
-        private static List<InventoryDataTable> InventoryItems = null;
-        private static List<InventoryItemType> itemTypes;
 
-        public static bool IsLoaded { get => isLoaded && InventoryItems != null; }
-        public static IReadOnlyList<IReadOnlyInventoryDataTable> ItemList
+        private static List<InventoryTable> inventoryItems = null;
+        private static List<InventoryDataTable> inventoryData = null;
+
+        public static bool IsLoaded { get => isLoaded && inventoryItems != null && inventoryData != null; }
+
+        public static IReadOnlyList<IReadOnlyInventoryTable> AllInventoryItems { get { CheckCacheMemory(); return inventoryItems.ToList(); } }
+        public static IReadOnlyList<IReadOnlyInventoryDataTable> AllInventoryData { get { CheckCacheMemory(); return inventoryData.ToList(); } }
+
+        public static IReadOnlyInventoryTable GetFullInventoryItemData(int itemId)
         {
-            get
-            {
-                if (InventoryItems == null) CheckCacheMemory();
-                return InventoryItems?.ToList();
-            }
-        }
-        public static IReadOnlyList<InventoryItemType> ItemTypes { get { CheckCacheMemory(); return itemTypes; } }
-
-        public static bool IsItemTypeValid(InventoryItemType itemType) => ItemTypes.Contains(itemType);
-
-        public static IReadOnlyInventoryDataTable GetFullInventoryItemData(int itemId)
-        {
-            var item = ItemList.FirstOrDefault(x => (x.Id == itemId));
+            var item = AllInventoryItems.FirstOrDefault(x => (x.Id == itemId));
             if (item == null) throw new CacheDataNotExistExecption(InventoryNotExist);
             else return item;
         }
-        public static IReadOnlyInventoryDataTable GetFullInventoryItemData(InventoryItemType itemType)
+        public static IReadOnlyInventoryTable GetFullInventoryItemData(InventoryItemType itemType)
         {
-            var item = ItemList.FirstOrDefault(x => (x.Code == itemType));
+            var item = AllInventoryItems.FirstOrDefault(x => (x.Code == itemType));
             if (item == null) throw new CacheDataNotExistExecption(InventoryNotExist);
             else return item;
         }
@@ -47,29 +41,25 @@ namespace GameOfRevenge.Business.CacheData
 
         public static async Task LoadCacheMemoryAsync()
         {
-            ClearCache();
+            var inventoryManager = new InventoryManager();
 
-            var resManager = new InventoryManager();
-            var response = await resManager.GetAllInventoryItems();// GetAllInventoryItemDatas();
-
-            if (response.IsSuccess)
-            {
-                InventoryItems = response.Data;
-
-                itemTypes = new List<InventoryItemType>();
-                foreach (var item in response.Data)
-                {
-                    if (itemTypes.Contains(item.Code)) continue;
-                    if (item.Code == InventoryItemType.Unknown) continue;
-                    itemTypes.Add(item.Code);
-                }
-                isLoaded = true;
-            }
-            else
+            var itemsResp = await inventoryManager.GetAllInventoryItems();
+            if (!itemsResp.IsSuccess)
             {
                 ClearCache();
-                throw new CacheDataNotExistExecption(response.Message);
+                throw new CacheDataNotExistExecption(itemsResp.Message);
             }
+            inventoryItems = itemsResp.Data;
+
+            var dataResp = await inventoryManager.GetAllInventoryData();
+            if (!dataResp.IsSuccess)
+            {
+                ClearCache();
+                throw new CacheDataNotExistExecption(dataResp.Message);
+            }
+            inventoryData = dataResp.Data;
+
+            isLoaded = true;
         }
 
         public static void CheckCacheMemory()
@@ -91,17 +81,8 @@ namespace GameOfRevenge.Business.CacheData
         {
             isLoaded = false;
 
-            if (InventoryItems != null)
-            {
-                InventoryItems.Clear();
-                InventoryItems = null;
-            }
-
-            if (itemTypes != null)
-            {
-                itemTypes.Clear();
-                itemTypes = null;
-            }
+            if (inventoryItems != null) { inventoryItems.Clear(); inventoryItems = null; }
+            if (inventoryData != null) { inventoryData.Clear(); inventoryData = null; }
         }
         #endregion
     }

@@ -25,11 +25,7 @@ namespace GameOfRevenge.Business.Manager.UserData
     {
         public static readonly ILogger log = LogManager.GetCurrentClassLogger();
 
-        private readonly UserHeroManager userHeroManager = new UserHeroManager();
-        private readonly UserStructureManager userStructureManager = new UserStructureManager();
-        private readonly UserTroopManager userTroopManager = new UserTroopManager();
-        private readonly UserResourceManager resmanager = new UserResourceManager();
-        private readonly UserActiveBoostManager boostManager = new UserActiveBoostManager();
+        private static readonly UserInventoryManager userInventoryManager = new UserInventoryManager();
         protected static readonly IPlayerDataManager manager = new PlayerDataManager();
 
         public async Task<Response<List<PlayerQuestDataTable>>> GetAllQuestProgress(int playerId)
@@ -423,6 +419,13 @@ namespace GameOfRevenge.Business.Manager.UserData
             var userItems = resp.Data;
             foreach (var reward in rewards)
             {
+
+                if (reward.DataType == DataType.Inventory)
+                {
+                    await userInventoryManager.AddNewInventory(playerId, reward.ValueId);
+                    continue;
+                }
+
                 var data = userItems.Find(x => (x.ValueId == reward.ItemId));
                 if (data != null)
                 {

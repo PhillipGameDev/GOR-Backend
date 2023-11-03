@@ -58,7 +58,7 @@ namespace GameOfRevenge.Business.Manager.UserData
             Validate(playerId, resId);
             //TODO: improve this call, use increment call instead of get and update
             long existingValue = await GetPlayerDataResourceValue(playerId, resId);
-            long val = existingValue + (long)value;
+            long val = existingValue + value;
             if (val < 0) val = 0;
             return await UpdateResource(playerId, resId, val);
         }
@@ -68,6 +68,10 @@ namespace GameOfRevenge.Business.Manager.UserData
         public async Task<Response<UserResourceData>> SumOreResource(int playerId, int value) => await SumResource(playerId, CacheResourceDataManager.Ore.Id, value);
         public async Task<Response<UserResourceData>> SumGemsResource(int playerId, int value) => await SumResource(playerId, CacheResourceDataManager.Gems.Id, value);
         public async Task<Response<UserResourceData>> SumGoldResource(int playerId, int value) => await SumResource(playerId, CacheResourceDataManager.Gold.Id, value);
+
+        public async Task<Response<UserResourceData>> SumSteelResource(int playerId, int value) => await SumResource(playerId, CacheResourceDataManager.Steel.Id, value);
+        public async Task<Response<UserResourceData>> SumStoneResource(int playerId, int value) => await SumResource(playerId, CacheResourceDataManager.Stone.Id, value);
+        public async Task<Response<UserResourceData>> SumRubyResource(int playerId, int value) => await SumResource(playerId, CacheResourceDataManager.Ruby.Id, value);
 
         public async Task<Response<List<UserResourceData>>> GetMainResource(int playerId)
         {
