@@ -7,7 +7,7 @@ namespace GameOfRevenge.Common.Models
     [DataContract]
     public class UserKingDetails : TimerBase
     {
-        private static readonly List<int> levels = new List<int>() { 0, 30, 120, 300, 600, 1000, 2000, 4000, 6000, 8000, 10000 };
+        private static readonly List<int> levels = new List<int>() { 0, 30, 120, 300, 600, 1000, 2000, 4000, 7000, 10000, 14150, 20000, 28000, 40000, 50000, 80000, 110000, 160000, 220000, 300000, 400000, 600000, 900000, 1200000, 1800000, 2500000, 3600000, 5100000, 7300000, 10000000 };
 
         [DataMember]
         public int MaxStamina { get; set; } = 20;
