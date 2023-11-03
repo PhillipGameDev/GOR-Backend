@@ -21,6 +21,7 @@ namespace GameOfRevenge.Business.Manager
     public class AccountManager : BaseManager, IAccountManager
     {
         private readonly IUserResourceManager resManager = new UserResourceManager();
+        private readonly IUserInventoryManager inventoryManager = new UserInventoryManager();
         private readonly IUserStructureManager strManager = new UserStructureManager();
         private readonly IUserQuestManager questManager = new UserQuestManager();
         private readonly IKingdomManager kingdomManager = new KingdomManager();
@@ -192,56 +193,6 @@ namespace GameOfRevenge.Business.Manager
                             var json = JsonConvert.SerializeObject(new UserVIPDetails(100));
                             var x = await dataManager.AddOrUpdatePlayerData(playerId, DataType.Custom, (int)CustomValueType.VIPPoints, json);
                         }
-
-                        /*var loc = 50;
-                        var resourceBlds = new StructureType[] { StructureType.Farm, StructureType.Sawmill, StructureType.Mine };
-                        foreach (var resourceBld in resourceBlds)
-                        {
-                            resp = await dataManager.GetPlayerData(playerId, DataType.Structure, (int)resourceBld);
-                            if (resp.IsSuccess)
-                            {
-                                if (resp.HasData)
-                                {
-                                    var structures = JsonConvert.DeserializeObject<List<StructureDetails>>(resp.Data.Value);
-                                    if (structures != null)
-                                    {
-                                        var bld = structures.Find(x => x.Location == loc);
-                                        if (bld == null)
-                                        {
-                                            var structureData = CacheData.CacheStructureDataManager.GetFullStructureData(resourceBld);
-                                            var hp = structureData.Levels.OrderBy(x => x.Data.Level).FirstOrDefault().Data.HitPoint;
-
-                                            structures.Add(new StructureDetails()
-                                            {
-                                                Level = 1,
-                                                StartTime = DateTime.UtcNow,
-                                                Location = loc,
-                                                HitPoints = hp,
-                                            });
-                                            var json = JsonConvert.SerializeObject(structures);
-                                            await dataManager.AddOrUpdatePlayerData(playerId, DataType.Structure, (int)resourceBld, json);
-                                        }
-                                    }
-                                }
-                                else
-                                {
-                                    var structureData = CacheData.CacheStructureDataManager.GetFullStructureData(resourceBld);
-                                    var hp = structureData.Levels.OrderBy(x => x.Data.Level).FirstOrDefault().Data.HitPoint;
-
-                                    var dataList = new List<StructureDetails>();
-                                    dataList.Add(new StructureDetails()
-                                    {
-                                        Level = 1,
-                                        StartTime = DateTime.UtcNow,
-                                        Location = loc,
-                                        HitPoints = hp,
-                                    });
-                                    var json = JsonConvert.SerializeObject(dataList);
-                                    await dataManager.AddOrUpdatePlayerData(playerId, DataType.Structure, (int)resourceBld, json);
-                                }
-                            }
-                            loc++;
-                        }*/
                     }
                     catch (Exception ex)
                     {
@@ -316,11 +267,16 @@ namespace GameOfRevenge.Business.Manager
                 structureData = CacheData.CacheStructureDataManager.GetFullStructureData(StructureType.Mine);
                 mineHealth = structureData.Levels.OrderBy(x => x.Data.Level).FirstOrDefault().Data.HitPoint;
             }
-            //#if DEBUG
-            //    await resManager.SumMainResource(playerId, 100000, 100000, 100000, 10000);
-            //#else
+#if DEBUG
+            await resManager.SumMainResource(playerId, 100000, 100000, 100000, 10000, 10000);
+            await resManager.SumRawResource(playerId, 100, 100, 100);
+
+            for (int i = 1; i <= 3; i ++)
+                await inventoryManager.AddNewInventory(playerId, i);
+
+#else
             await resManager.SumMainResource(playerId, 10000, 10000, 10000, 500, 200);
-            //#endif
+#endif
             var dataManager = new PlayerDataManager();
             var json = JsonConvert.SerializeObject(new UserKingDetails());
             await dataManager.AddOrUpdatePlayerData(playerId, DataType.Custom, (int)CustomValueType.KingDetails, json);

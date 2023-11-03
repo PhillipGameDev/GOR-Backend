@@ -19,12 +19,20 @@ namespace GameOfRevenge.Business.CacheData
         private static ResourceTable gems = null;
         private static ResourceTable gold = null;
 
+        private static ResourceTable steel = null;
+        private static ResourceTable stone = null;
+        private static ResourceTable ruby = null;
+
         public static IReadOnlyList<IReadOnlyResourceTable> ResourceInfos { get { if (resourceInfos == null) LoadCacheMemory(); return resourceInfos.ToList(); } }
         public static IReadOnlyResourceTable Food { get { if (food == null) LoadCacheMemory(); return food; } }
         public static IReadOnlyResourceTable Wood { get { if (wood == null) LoadCacheMemory(); return wood; } }
         public static IReadOnlyResourceTable Ore { get { if (ore == null) LoadCacheMemory(); return ore; } }
         public static IReadOnlyResourceTable Gems { get { if (gems == null) LoadCacheMemory(); return gems; } }
         public static IReadOnlyResourceTable Gold { get { if (gold == null) LoadCacheMemory(); return gold; } }
+
+        public static IReadOnlyResourceTable Steel { get { if (steel == null) LoadCacheMemory(); return steel; } }
+        public static IReadOnlyResourceTable Stone { get { if (stone == null) LoadCacheMemory(); return stone; } }
+        public static IReadOnlyResourceTable Ruby { get { if (ruby == null) LoadCacheMemory(); return ruby; } }
 
         public static IReadOnlyDataRequirement NewGemRequirement(int value)
         {
@@ -70,6 +78,10 @@ namespace GameOfRevenge.Business.CacheData
                 gems = resourceInfos.Find(x => (x.Code == ResourceType.Gems));
                 gold = resourceInfos.Find(x => (x.Code == ResourceType.Gold));
 
+                steel = resourceInfos.Find(x => (x.Code == ResourceType.Steel));
+                stone = resourceInfos.Find(x => (x.Code == ResourceType.Stone));
+                ruby = resourceInfos.Find(x => (x.Code == ResourceType.Ruby));
+
                 isLoaded = true;
             }
             else
@@ -97,6 +109,9 @@ namespace GameOfRevenge.Business.CacheData
             ore = null;
             gems = null;
             gold = null;
+            steel = null;
+            stone = null;
+            ruby = null;
         }
     }
 }

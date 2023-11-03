@@ -37,6 +37,11 @@ namespace GameOfRevenge.Common.Interface.UserData
         Task<Response<UserResourceData>> SumOreResource(int playerId, int value);
         Task<Response<UserResourceData>> SumGoldResource(int playerId, int value);
 
+        Task<Response<List<UserResourceData>>> SumRawResource(int playerId, int steel, int stone, int ruby);
+        Task<Response<UserResourceData>> SumSteelResource(int playerId, int value);
+        Task<Response<UserResourceData>> SumStoneResource(int playerId, int value);
+        Task<Response<UserResourceData>> SumRubyResource(int playerId, int value);
+
         Task<bool> RemoveResourceByRequirement(int playerId, IReadOnlyList<IReadOnlyDataRequirement> requirements);
         Task<bool> RefundResourceByRequirement(int playerId, IReadOnlyList<IReadOnlyDataRequirement> requirements);
         Task<bool> RemoveResourceByRequirement(int playerId, IReadOnlyList<IReadOnlyDataRequirement> requirements, int count);

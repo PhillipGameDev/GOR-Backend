@@ -8,9 +8,6 @@ namespace GameOfRevenge.Common.Interface
 {
     public interface IUserQuestManager
     {
-        Task<Response<List<PlayerRewardDataTable>>> GetUserAllRewards(int playerId);
-        Task<Response<PlayerDataTableUpdated>> ConsumeReward(int playerId, long playerDataId, string context = null);
-
         Task CheckQuestProgressForCollectResourceAsync(PlayerUserQuestData playerData, ResourceType resourceType, int count);
         Task CheckQuestProgressForTrainTroops(PlayerUserQuestData playerData, TroopType troopType, int level, int count);
         Task CheckQuestProgressForGroupTechnologyAsync(PlayerUserQuestData playerData, GroupTechnologyType groupTechnologyType);

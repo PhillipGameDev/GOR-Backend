@@ -53,12 +53,27 @@ namespace GameOfRevenge.Business.Manager.UserData
                 Data = new List<UserResourceData>() { foodData.Data, woodData.Data, oreData.Data, gemData.Data, goldData.Data }
             };
         }
+
+        public async Task<Response<List<UserResourceData>>> SumRawResource(int playerId, int steel, int stone, int ruby)
+        {
+            //TODO: improve this process, we should implement a single call on database to handle this type of request
+            var steelData = await SumSteelResource(playerId, steel);
+            var stoneData = await SumStoneResource(playerId, stone);
+            var rubyData = await SumRubyResource(playerId, ruby);
+
+            return new Response<List<UserResourceData>>()
+            {
+                Case = 100,
+                Message = "Updated Raw Resource",
+                Data = new List<UserResourceData>() { steelData.Data, stoneData.Data, rubyData.Data }
+            };
+        }
         public async Task<Response<UserResourceData>> SumResource(int playerId, int resId, int value)
         {
             Validate(playerId, resId);
             //TODO: improve this call, use increment call instead of get and update
             long existingValue = await GetPlayerDataResourceValue(playerId, resId);
-            long val = existingValue + (long)value;
+            long val = existingValue + value;
             if (val < 0) val = 0;
             return await UpdateResource(playerId, resId, val);
         }
@@ -68,6 +83,10 @@ namespace GameOfRevenge.Business.Manager.UserData
         public async Task<Response<UserResourceData>> SumOreResource(int playerId, int value) => await SumResource(playerId, CacheResourceDataManager.Ore.Id, value);
         public async Task<Response<UserResourceData>> SumGemsResource(int playerId, int value) => await SumResource(playerId, CacheResourceDataManager.Gems.Id, value);
         public async Task<Response<UserResourceData>> SumGoldResource(int playerId, int value) => await SumResource(playerId, CacheResourceDataManager.Gold.Id, value);
+
+        public async Task<Response<UserResourceData>> SumSteelResource(int playerId, int value) => await SumResource(playerId, CacheResourceDataManager.Steel.Id, value);
+        public async Task<Response<UserResourceData>> SumStoneResource(int playerId, int value) => await SumResource(playerId, CacheResourceDataManager.Stone.Id, value);
+        public async Task<Response<UserResourceData>> SumRubyResource(int playerId, int value) => await SumResource(playerId, CacheResourceDataManager.Ruby.Id, value);
 
         public async Task<Response<List<UserResourceData>>> GetMainResource(int playerId)
         {

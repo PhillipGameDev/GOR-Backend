@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Data;
 using GameOfRevenge.Common.Helper;
 using GameOfRevenge.Common.Interface.Model.Table;
@@ -8,36 +9,53 @@ using Newtonsoft.Json.Converters;
 
 namespace GameOfRevenge.Common.Models.Inventory
 {
-    public interface IReadOnlyInventoryDataTable : IReadOnlyBaseRefEnumTable<InventoryItemType>
+    [JsonConverter(typeof(StringEnumConverter))]
+    public enum RawResourceType
     {
-        [JsonProperty("ItemType")]
-        new InventoryItemType Code { get; }
-
-        [JsonProperty(Order = 1)]
-        [JsonConverter(typeof(StringEnumConverter))]
-        RarityType Rarity { get; }
+        Steel,
+        Stone,
+        Ruby
     }
 
-    public class InventoryDataTable : BaseTable, IBaseRefEnumTable<InventoryItemType>,
-                                        IReadOnlyInventoryDataTable
+    public class InventoryRequirement
+    {
+        public RawResourceType Type { get; set; }
+        public int Value { get; set; }
+        public override string ToString()
+        {
+            return $"{Type.ToString()} : {Value}";
+        }
+    }
+
+    public interface IReadOnlyInventoryDataTable
+    {
+        int Id { get; }// PK
+        int InventoryId { get; }
+        int InventoryLevel { get; }
+        string Requirements { get; }
+        IReadOnlyList<InventoryRequirement> RequirementValues { get; }
+        int TimeToUpgrade { get; }
+    }
+
+    public class InventoryDataTable : IBaseTable, IReadOnlyInventoryDataTable
     {
         public int Id { get; set; }
-        [JsonProperty("ItemType")]
-        public InventoryItemType Code { get; set; }
-        public string Name { get; set; }
+        public int InventoryId { get; set; }
+        public int InventoryLevel { get; set; }
+        [JsonIgnore]
+        public string Requirements { get; set; }
+        public IReadOnlyList<InventoryRequirement> RequirementValues { get; set; }
+        public int TimeToUpgrade { get; set; }
 
-        public RarityType Rarity { get; set; }
-
-
-        // [JsonIgnore]
-
-        public override void LoadFromDataReader(IDataReader reader)
+        public void LoadFromDataReader(IDataReader reader)
         {
             int index = 0;
             Id = reader.GetValue(index) == DBNull.Value ? 0 : reader.GetInt32(index); index++;
-            Code = reader.GetValue(index) == DBNull.Value ? InventoryItemType.Unknown : reader.GetString(index).ToEnum<InventoryItemType>(); index++;
-            Name = reader.GetValue(index) == DBNull.Value ? string.Empty : reader.GetString(index); index++;
-            Rarity = reader.GetValue(index) == DBNull.Value ? RarityType.Common : reader.GetString(index).ToEnum<RarityType>();
+            InventoryId = reader.GetValue(index) == DBNull.Value ? 0 : reader.GetInt32(index); index++;
+            InventoryLevel = reader.GetValue(index) == DBNull.Value ? 0 : reader.GetInt32(index); index++;
+            Requirements = reader.GetValue(index) == DBNull.Value ? string.Empty : reader.GetString(index); index++;
+            TimeToUpgrade = reader.GetValue(index) == DBNull.Value ? 0 : reader.GetInt32(index);
+            RequirementValues = JsonConvert.DeserializeObject<IReadOnlyList<InventoryRequirement>>(Requirements);
         }
     }
 }

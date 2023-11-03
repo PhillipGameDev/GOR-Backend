@@ -32,6 +32,7 @@ namespace GameOfRevenge.GameApplication
         public static IUserActiveBoostsManager BUserActiveBoostManager { get; private set; }
         public static IUserQuestManager BUserQuestManager { get; private set; }
         public static IPlayerDataManager BPlayerManager { get; private set; }
+        public static IUserItemManager BUserItemManager { get; private set; }
         public static IUserStructureManager BPlayerStructureManager { get; private set; }
         public static IUserResourceManager BPlayerResourceManager { get; private set; }
         public static IUserFriendsManager BUserFriendsManager { get; private set; }
@@ -100,7 +101,7 @@ namespace GameOfRevenge.GameApplication
             BChatManager = new ChatManager();
             BClanManager = new ClanManager();
 
-            var adminManager = new AdminDataManager(BPlayerManager, BClanManager, BUserQuestManager );
+            var adminManager = new AdminDataManager(BPlayerManager, BClanManager, BUserQuestManager, BUserItemManager);
             RealTimeUpdateManagerQuestValidator = new RealTimeUpdateManagerQuestValidator(adminManager, BUserQuestManager);
 
             RealTimeUpdateManagerGloryKingdom = new RealTimeUpdateManagerGloryKingdom(BKingdomManager);

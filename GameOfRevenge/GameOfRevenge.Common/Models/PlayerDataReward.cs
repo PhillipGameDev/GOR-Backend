@@ -2,7 +2,7 @@
 
 namespace GameOfRevenge.Common.Models
 {
-    public class PlayerDataReward : PlayerRewardDataTable
+    public class PlayerDataReward : PlayerItemDataTable
     {
         public int RewardId { get; set; }
     }

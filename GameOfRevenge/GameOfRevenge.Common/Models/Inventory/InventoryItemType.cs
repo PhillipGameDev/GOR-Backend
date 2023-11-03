@@ -12,6 +12,10 @@ namespace GameOfRevenge.Common.Models.Inventory
         Shield = 3,
         Belt = 4,
         Boots = 5,
-        Accessory = 6
+        Accessory = 6,
+        Armor = 7,
+        Boots2 = 8,
+        Gloves = 9,
+        Sword = 10,
     }
 }

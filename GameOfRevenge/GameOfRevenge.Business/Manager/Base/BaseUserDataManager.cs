@@ -21,7 +21,7 @@ using System.Threading.Tasks;
 
 namespace GameOfRevenge.Business.Manager.Base
 {
-    public class BaseUserDataManager : IBaseUserManager
+    public class BaseUserDataManager : BaseManager, IBaseUserManager
     {
         private static readonly ILogger log = LogManager.GetCurrentClassLogger();
 
