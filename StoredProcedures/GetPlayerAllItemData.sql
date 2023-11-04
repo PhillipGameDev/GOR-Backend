@@ -1,13 +1,13 @@
 USE [GameOfRevenge]
 GO
-/****** Object:  StoredProcedure [dbo].[GetPlayerAllRewardData]    Script Date: 11/4/2023 9:54:15 AM ******/
+/****** Object:  StoredProcedure [dbo].[GetPlayerAllItemData]    Script Date: 11/4/2023 9:36:05 AM ******/
 SET ANSI_NULLS ON
 GO
 SET QUOTED_IDENTIFIER ON
 GO
 
 
-ALTER PROCEDURE [dbo].[GetPlayerAllRewardData]
+ALTER PROCEDURE [dbo].[GetPlayerAllItemData]
 	@PlayerId INT
 AS
 BEGIN
@@ -38,12 +38,12 @@ BEGIN
 
 	IF (@currentId IS NOT NULL)
 		BEGIN
-			SELECT @dataTypeId = d.[DataTypeId] FROM [dbo].[DataType] AS d WHERE d.[Code] = 'Reward';
+			SELECT @dataTypeId = d.[DataTypeId] FROM [dbo].[DataType] AS d WHERE d.[Code] = 'Item';
 
 			SET @case = 100;
-			SELECT p.[PlayerDataId], d.[Code] AS 'DataType', i.[ValueId] AS 'ValueId', i.[Value], p.[Value] AS 'Count' FROM [dbo].[PlayerData] AS p 
-			INNER JOIN [dbo].[QuestReward] AS q ON q.[QuestRewardId] = p.[ValueId]
-			INNER JOIN [dbo].[Item] as i ON q.[ItemId] = i.[Id]
+			SELECT p.[PlayerDataId], i.[Id] AS 'ItemId', d.[Code] AS 'DataType', i.[ValueId] AS 'ValueId', i.[Value], p.[Value] AS 'Count' 
+			FROM [dbo].[PlayerData] AS p 
+			INNER JOIN [dbo].[Item] as i ON p.[ValueId] = i.[Id]
 			INNER JOIN [dbo].[DataType] AS d ON d.[DataTypeId] = i.[DataTypeId]
 			WHERE p.[PlayerId] = @currentId AND p.[DataTypeId] = @dataTypeId AND p.[Value] IS NOT NULL
 
