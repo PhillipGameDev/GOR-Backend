@@ -28,7 +28,10 @@ namespace GameOfRevenge.Common
         SubTechnology = 1020,
         Reward = 1021,
 
-        Item = 1100,
-        RawResource = 1101
+        ShopItem = 1022,
+        PackageItem = 1023,
+
+        Item = 1101,
+        RawResource = 1102
     }
 }
