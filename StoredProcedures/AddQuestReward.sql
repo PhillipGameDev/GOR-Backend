@@ -32,15 +32,15 @@ BEGIN
 
 						IF (@validTypeId IS NOT NULL)
 							BEGIN
-								SELECT @validId = [QuestRewardId] FROM [dbo].[QuestReward]
-										WHERE [QuestId] = @QuestId AND [DataTypeId] = @validTypeId AND [ReqValueId] = @ValueId AND [Value] = @Value;
+								SELECT @validId = q.[QuestRewardId] FROM [dbo].[QuestReward] as q INNER JOIN [dbo].[Item] as i ON q.[ItemId] = i.[Id]
+										WHERE q.[QuestId] = @QuestId AND i.[DataTypeId] = @validTypeId AND i.[ValueId] = @ValueId AND i.[Value] = @Value;
 								IF (@validId IS NULL)
 									BEGIN
 										DECLARE @tempTable table (QuestRewardId INT);
 
-										INSERT INTO [dbo].[QuestReward] 
+										INSERT INTO [dbo].[QuestReward]([QuestId], [Count])
 										OUTPUT INSERTED.QuestRewardId INTO @tempTable
-										VALUES (@QuestId, @validTypeId, @ValueId, @Value, @Count);
+										VALUES (@QuestId, @Count);
 
 										SELECT @validId = [QuestRewardId] FROM @tempTable;
 									END
