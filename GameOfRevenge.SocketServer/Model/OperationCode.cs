@@ -48,6 +48,9 @@
         ClaimRewardsRequest = 38,
 
         ItemBoxExploring = 39,
-        BuildOrUpgrade = 40
+        BuildOrUpgrade = 40,
+
+        InstantResearch = 41,
+        SpeedUpResearch = 42,
     }
 }

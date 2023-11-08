@@ -28,6 +28,7 @@ namespace GameOfRevenge.Business.Manager.UserData
         private readonly UserTroopManager userTroopManager = new UserTroopManager();
         private readonly UserResourceManager resmanager = new UserResourceManager();
         private readonly UserActiveBoostManager boostManager = new UserActiveBoostManager();
+        private readonly UserAcademyManager academyManager = new UserAcademyManager();
         protected static readonly IPlayerDataManager manager = new PlayerDataManager();
 
         public async Task<Response<List<PlayerItemDataTable>>> GetUserAllItems(int playerId)
@@ -270,21 +271,10 @@ namespace GameOfRevenge.Business.Manager.UserData
                                         await manager.UpdatePlayerDataID(playerId, marchingId, marchingJson);
                                         break;
                                     case NewBoostTech.ResearchTimeBonus:/*21*/
-                                        int.TryParse(context, out location);
-                                        if (location <= 0) throw new InvalidModelExecption("Invalid building location");
+                                        int.TryParse(context, out int techId);
+                                        if (techId <= 0) throw new InvalidModelExecption("Invalid technology item");
 
-                                        fullPlayerData = await BaseUserDataManager.GetFullPlayerData(playerId);
-                                        if (!fullPlayerData.IsSuccess) throw new InvalidModelExecption(fullPlayerData.Message);
-
-                                        var userTech = fullPlayerData.Data.Technologies.Find(x => (x.TimeLeft > 0));
-                                        if (userTech == null) throw new InvalidModelExecption("There are no active researches");
-
-                                        userTech.Duration -= value;
-                                        if (userTech.Duration < 0) userTech.Duration = 0;
-
-                                        var json = JsonConvert.SerializeObject(userTech);
-                                        var tech = CacheTechnologyDataManager.GetFullTechnologyData(userTech.TechnologyType);
-                                        await manager.AddOrUpdatePlayerData(playerId, DataType.Technology, tech.Info.Id, json);
+                                        await academyManager.SpeedUpUpgradeItem(playerId, techId, value);
                                         break;
 
                                     //                                    case NewBoostTech.BuildingSpeedMultiplier:/*7*/

@@ -2,8 +2,10 @@
 using GameOfRevenge.Business.CacheData;
 using GameOfRevenge.Business.Manager.Base;
 using GameOfRevenge.Common;
+using GameOfRevenge.Common.Interface;
 using GameOfRevenge.Common.Interface.UserData;
 using GameOfRevenge.Common.Models;
+using GameOfRevenge.Common.Models.Academy;
 using GameOfRevenge.Common.Models.PlayerData;
 using GameOfRevenge.Common.Models.Structure;
 using GameOfRevenge.Common.Net;
@@ -21,27 +23,28 @@ namespace GameOfRevenge.Business.Manager.UserData
         private readonly IUserResourceManager _userResourceManager = new UserResourceManager();
         private readonly IUserStructureManager _userStructureManager = new UserStructureManager();
         private readonly IUserTroopManager _userTroopManager = new UserTroopManager();
+        private readonly IUserAcademyManager _userAcademyManager = new UserAcademyManager();
 
-//        private readonly float costPerSecond = 0.08f;
-//        private readonly int freeCostSeconds = 60;
+        //        private readonly float costPerSecond = 0.08f;
+        //        private readonly int freeCostSeconds = 60;
 
-/*        public bool IsFreeCost(int timeLeft) => FinalCost(timeLeft) <= 0;
-        public int FinalCost(float timeLeft)
-        {
-            var intTime = (int)timeLeft;
-            return FinalCost(intTime);
-        }
-        public int FinalCost(double timeLeft)
-        {
-            var intTime = (int)timeLeft;
-            return FinalCost(intTime);
-        }
-        public int FinalCost(int timeLeft)
-        {
-            var newTime = timeLeft - freeCostSeconds;
-            if (newTime <= freeCostSeconds) return 0;
-            else return (int)(newTime * costPerSecond);
-        }*/
+        /*        public bool IsFreeCost(int timeLeft) => FinalCost(timeLeft) <= 0;
+                public int FinalCost(float timeLeft)
+                {
+                    var intTime = (int)timeLeft;
+                    return FinalCost(intTime);
+                }
+                public int FinalCost(double timeLeft)
+                {
+                    var intTime = (int)timeLeft;
+                    return FinalCost(intTime);
+                }
+                public int FinalCost(int timeLeft)
+                {
+                    var newTime = timeLeft - freeCostSeconds;
+                    if (newTime <= freeCostSeconds) return 0;
+                    else return (int)(newTime * costPerSecond);
+                }*/
 
         private int RecruitCost(TroopType type, int troopLevel, int count)
         {
@@ -386,6 +389,39 @@ namespace GameOfRevenge.Business.Manager.UserData
             catch (DataNotExistExecption ex) { return new Response<UserTroopData>(201, ErrorManager.ShowError(ex)); }
             catch (RequirementExecption ex) { return new Response<UserTroopData>(202, ErrorManager.ShowError(ex)); }
             catch (Exception ex) { return new Response<UserTroopData>(0, ErrorManager.ShowError(ex)); }
+        }
+
+        public async Task<Response<AcademyUserDataTable>> InstantAcademyItemUpgrade(int playerId, int itemId)
+        {
+            try
+            {
+                var playerData = await GetFullPlayerData(playerId);
+                if (!playerData.IsSuccess || !playerData.HasData) throw new DataNotExistExecption(playerData.Message);
+
+                var items = _userAcademyManager.GetUserAllItems(playerId);
+                var item = items.Result.Data.Find(e => e.ItemId == itemId);
+
+                var cost = 0;
+                double multiplier = 1;
+
+                if (item != null) {
+                    cost = (int)Math.Ceiling(item.TimeLeft / 60f) * 3;
+                }
+
+                var finalCost = (int)Math.Ceiling(cost * multiplier);
+
+                var playerGems = playerData.Data.Resources.Gems;
+                if (playerGems < finalCost) throw new RequirementExecption("Not enough gems");
+
+                var resCut = await _userResourceManager.SumGemsResource(playerId, -finalCost);
+                if (!resCut.IsSuccess) throw new RequirementExecption("Issue removing gems");
+
+                return await _userAcademyManager.InstantUpgradeItem(playerId, itemId);
+            }
+            catch (InvalidModelExecption ex) { return new Response<AcademyUserDataTable>(200, ErrorManager.ShowError(ex)); }
+            catch (DataNotExistExecption ex) { return new Response<AcademyUserDataTable>(201, ErrorManager.ShowError(ex)); }
+            catch (RequirementExecption ex) { return new Response<AcademyUserDataTable>(202, ErrorManager.ShowError(ex)); }
+            catch (Exception ex) { return new Response<AcademyUserDataTable>(0, ErrorManager.ShowError(ex)); }
         }
     }
 }

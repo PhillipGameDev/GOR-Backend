@@ -75,6 +75,7 @@
         ReturnReduction = 71,
         TargetType = 72,
         Attack = 73,
-        Defense = 74
+        Defense = 74,
+        AcademyItemId = 75
     }
 }

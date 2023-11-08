@@ -123,6 +123,7 @@ new string[]{
                     case OperationCode.ClaimRewardsRequest: return await HandleClaimRewardsRequest(peer, operationRequest);
                     case OperationCode.ItemBoxExploring: return await HandleItemBoxExploring(peer, operationRequest); //39
                     case OperationCode.BuildOrUpgrade: return await HandleBuildOrUpgrade(peer, operationRequest); // 40
+                    case OperationCode.InstantResearch: return await HandleInstantResearch(peer, operationRequest); // 41
 
                     default: return peer.SendOperation(operationRequest.OperationCode, ReturnCode.InvalidOperation);
                 }
@@ -573,6 +574,29 @@ new string[]{
             var result = peer.SendOperation(operationRequest.OperationCode, ReturnCode.OK, obj.GetDictionary());
             SendBuildingCompleteToBuild(peer, structureType, respDetails.Level, location);
             return result;
+        }
+
+        private async Task<SendResult> HandleInstantResearch(IGorMmoPeer peer, OperationRequest operationRequest)
+        {
+            log.Info("**************** HandleInstantResearch Start************************");
+            var operation = new InstantAcademyResearchRequest(peer.Protocol, operationRequest);
+            var itemId = operation.ItemId;
+            log.Info($"itemId: {itemId}");
+
+            var response = await GameService.InstantProgressManager.InstantAcademyItemUpgrade(peer.PlayerInstance.PlayerId, itemId);
+            if (!response.IsSuccess)
+            {
+                return peer.SendOperation(operationRequest.OperationCode, ReturnCode.InvalidOperation, debuMsg: response.Message);
+            }
+
+            log.Info("**************** HandleInstantResearch End************************");
+
+            var obj = new InstantResearchResponse()
+            {
+                ItemId = itemId
+            };
+
+            return peer.SendOperation(operationRequest.OperationCode, ReturnCode.OK, obj.GetDictionary());
         }
 
         private async Task<SendResult> DeleteChat(IGorMmoPeer peer, OperationRequest operationRequest)
