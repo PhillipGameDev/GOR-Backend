@@ -8,5 +8,8 @@
         string Description { get; }
         bool IsPublic { get; }
         short BadgeGK { get; }
+        int Flag { get; }
+        int Capacity { get; }
+        int MemberCount { get; }
     }
 }

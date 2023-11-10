@@ -40,8 +40,11 @@ namespace GameOfRevenge.WebServer.Controllers.Api
         //[HttpGet]
         //public async Task<IActionResult> MyClanInvitations() => ReturnResponse(await clanManager.GetPlayerClanInvitations(Token.PlayerId));
 
-        //[HttpGet]
-        //public async Task<IActionResult> JoinRequests(int clanId) => ReturnResponse(await clanManager.GetClanJoinRequests(Token.PlayerId, clanId));
+        [HttpGet]
+        public async Task<IActionResult> JoinRequests(int clanId) => ReturnResponse(await clanManager.GetClanJoinRequests(clanId));
+
+        [HttpGet]
+        public async Task<IActionResult> JoinRequestsByPlayerId(bool? isNew) => ReturnResponse(await clanManager.GetClanJoinRequestsByPlayerId(Token.PlayerId, isNew));
 
         [HttpGet]
         public async Task<IActionResult> GetAllClans(string tag, string name, bool clause, int page, int count) => ReturnResponse(await clanManager.GetClans(tag, name, clause, page, count));
@@ -65,9 +68,9 @@ namespace GameOfRevenge.WebServer.Controllers.Api
         }
 
         [HttpPost]
-        public async Task<IActionResult> CreateClan(string name, string tag, string description/*, bool isPublic*/)
+        public async Task<IActionResult> CreateClan(string name, string tag, string description, int embassyLevel)
         {
-            var response = await clanManager.CreateClan(Token.PlayerId, name, tag, description, true);
+            var response = await clanManager.CreateClan(Token.PlayerId, name, tag, description, true, embassyLevel);
             if (response.IsSuccess) await CompleteAllianceTaskQuest(Token.PlayerId, AllianceTaskType.JoinOrCreate);
 
             return ReturnResponse(response);

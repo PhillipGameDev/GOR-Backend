@@ -1,4 +1,5 @@
-﻿using System;
+﻿
+using System;
 using System.Linq;
 using System.Threading.Tasks;
 using System.Collections.Generic;
@@ -124,6 +125,18 @@ new string[]{
                     case OperationCode.ItemBoxExploring: return await HandleItemBoxExploring(peer, operationRequest); //39
                     case OperationCode.BuildOrUpgrade: return await HandleBuildOrUpgrade(peer, operationRequest); // 40
                     case OperationCode.InstantResearch: return await HandleInstantResearch(peer, operationRequest); // 41
+
+                    case OperationCode.JoinAllianceRequest: return await HandleJoinAllianceRequest(peer, operationRequest); //43
+                    case OperationCode.LeaveAllianceRequest: return await HandleLeaveAllianceRequest(peer, operationRequest); //47
+                    case OperationCode.AcceptJoinRequest: return await HandleAcceptJoinRequest(peer, operationRequest); //44
+                    case OperationCode.UpdateClanCapacity: return await HandleUpdateClanCapacityRequest(peer, operationRequest); //45
+                    case OperationCode.UpdateClanRole: return await HandleUpdateClanRoleRequest(peer, operationRequest); //46
+
+                    case OperationCode.JoinUnionRequest: return await HandleJoinUnionRequest(peer, operationRequest); //48
+                    case OperationCode.AcceptUnionRequest: return await HandleAcceptJoinUnionRequest(peer, operationRequest); //49
+                    case OperationCode.LeaveUnionRequest: return await HandleLeaveUnionRequest(peer, operationRequest); //50
+
+                    case OperationCode.CreateClan: return await HandleCreateClan(peer, operationRequest); //51
 
                     default: return peer.SendOperation(operationRequest.OperationCode, ReturnCode.InvalidOperation);
                 }
@@ -597,6 +610,186 @@ new string[]{
             };
 
             return peer.SendOperation(operationRequest.OperationCode, ReturnCode.OK, obj.GetDictionary());
+        }
+
+        private async Task<SendResult> HandleJoinAllianceRequest(IGorMmoPeer peer, OperationRequest operationRequest)
+        {
+            log.Info("**************** HandleSendJoinRequest Start************************");
+            var operation = new SendJoinRequest(peer.Protocol, operationRequest);
+            var clanId = operation.ClanId;
+            var playerId = operation.PlayerId;
+            log.Info($"JoinRequest: {clanId}, {playerId}");
+
+            var clanResp = await GameService.BClanManager.RequestJoiningToClan(playerId, clanId);
+            if (!clanResp.IsSuccess) return peer.SendOperation(operationRequest.OperationCode, ReturnCode.InvalidOperation, debuMsg: clanResp.Message);
+
+            log.Info("**************** HandleSendJoinRequest End************************");
+
+            var obj = new SendJoinResponse()
+            {
+                ClanId = clanId,
+                PlayerId = playerId
+            };
+
+            return peer.Broadcast(operationRequest.OperationCode, ReturnCode.OK, obj.GetDictionary());
+        }
+
+        private async Task<SendResult> HandleLeaveAllianceRequest(IGorMmoPeer peer, OperationRequest operationRequest)
+        {
+            log.Info("**************** HandleSendLeaveRequest Start************************");
+            var operation = new SendJoinRequest(peer.Protocol, operationRequest);
+            var clanId = operation.ClanId;
+            var playerId = operation.PlayerId;
+            log.Info($"LeaveRequest: {clanId}, {playerId}");
+
+            var clanResp = await GameService.BClanManager.LeaveClan(playerId);
+            if (!clanResp.IsSuccess) return peer.SendOperation(operationRequest.OperationCode, ReturnCode.InvalidOperation, debuMsg: clanResp.Message);
+
+            log.Info("**************** HandleSendLeaveRequest End************************");
+
+            var obj = new SendJoinResponse()
+            {
+                ClanId = clanId,
+                PlayerId = playerId
+            };
+
+            return peer.Broadcast(operationRequest.OperationCode, ReturnCode.OK, obj.GetDictionary());
+        }
+
+        private async Task<SendResult> HandleAcceptJoinRequest(IGorMmoPeer peer, OperationRequest operationRequest)
+        {
+            log.Info("**************** HandleAcceptJoinRequest Start************************");
+            var operation = new AcceptJoinRequest(peer.Protocol, operationRequest);
+            log.Info($"JoinRequest: {operation.ClanId}, {operation.PlayerId}, {operation.Value}");
+
+            var clanResp = await GameService.BClanManager.ReplyToJoinRequest(operation.PlayerId, operation.ClanId, operation.Value);
+            if (!clanResp.IsSuccess) return peer.SendOperation(operationRequest.OperationCode, ReturnCode.InvalidOperation, debuMsg: clanResp.Message);
+
+            log.Info("**************** HandleAcceptJoinRequest End************************");
+
+            var obj = new AcceptJoinResponse()
+            {
+                ClanId = operation.ClanId,
+                PlayerId = operation.PlayerId,
+                Value = operation.Value
+            };
+
+            return peer.Broadcast(operationRequest.OperationCode, ReturnCode.OK, obj.GetDictionary());
+        }
+
+        private async Task<SendResult> HandleUpdateClanCapacityRequest(IGorMmoPeer peer, OperationRequest operationRequest)
+        {
+            log.Info("**************** HandleUpdateClanCapacityRequest Start************************");
+            var operation = new ClanCapacityRequest(peer.Protocol, operationRequest);
+            log.Info($"ClanRequest: {operation.ClanId}, {operation.Value}");
+
+            var clanResp = await GameService.BClanManager.UpdateClanCapacity(operation.ClanId, operation.Value);
+            if (!clanResp.IsSuccess) return peer.SendOperation(operationRequest.OperationCode, ReturnCode.InvalidOperation, debuMsg: clanResp.Message);
+
+            log.Info("**************** HandleUpdateClanCapacityRequest End************************");
+
+            var obj = new ClanCapacityResponse()
+            {
+                ClanId = operation.ClanId,
+                Value = operation.Value
+            };
+
+            return peer.Broadcast(operationRequest.OperationCode, ReturnCode.OK, obj.GetDictionary());
+        }
+
+        private async Task<SendResult> HandleUpdateClanRoleRequest(IGorMmoPeer peer, OperationRequest operationRequest)
+        {
+            log.Info("**************** HandleSetClanRoleRequest Start************************");
+            var operation = new ClanRoleRequest(peer.Protocol, operationRequest);
+            log.Info($"ClanRequest: {operation.ClanId}, {operation.PlayerId}, {operation.Value}");
+
+            var clanResp = await GameService.BClanManager.UpdateClanRole(operation.ClanId, operation.PlayerId, operation.Value);
+            if (!clanResp.IsSuccess) return peer.SendOperation(operationRequest.OperationCode, ReturnCode.InvalidOperation, debuMsg: clanResp.Message);
+
+            log.Info("**************** HandleSetClanRoleRequest End************************");
+
+            var obj = new ClanRoleResponse()
+            {
+                ClanId = operation.ClanId,
+                PlayerId = operation.PlayerId,
+                Value = operation.Value
+            };
+
+            return peer.Broadcast(operationRequest.OperationCode, ReturnCode.OK, obj.GetDictionary());
+        }
+
+        private async Task<SendResult> HandleJoinUnionRequest(IGorMmoPeer peer, OperationRequest operationRequest)
+        {
+            log.Info("**************** HandleJoinUnionRequest Start************************");
+            var operation = new JoinUnionRequest(peer.Protocol, operationRequest);
+            log.Info($"JoinRequest: {operation.FromClanId}, {operation.ToClanId}");
+
+            var clanResp = await GameService.BClanManager.RequestJoiningToClan(operation.FromClanId, operation.ToClanId);
+            if (!clanResp.IsSuccess) return peer.SendOperation(operationRequest.OperationCode, ReturnCode.InvalidOperation, debuMsg: clanResp.Message);
+
+            log.Info("**************** HandleJoinUnionRequest End************************");
+
+            var obj = new JoinUnionResponse()
+            {
+                FromClanId = operation.FromClanId,
+                ToClanId = operation.ToClanId
+            };
+
+            return peer.Broadcast(operationRequest.OperationCode, ReturnCode.OK, obj.GetDictionary());
+        }
+
+        private async Task<SendResult> HandleAcceptJoinUnionRequest(IGorMmoPeer peer, OperationRequest operationRequest)
+        {
+            log.Info("**************** HandleAcceptJoinUnionRequest Start************************");
+            var operation = new JoinUnionRequest(peer.Protocol, operationRequest);
+            log.Info($"JoinRequest: {operation.FromClanId}, {operation.ToClanId}");
+
+            var clanResp = await GameService.BClanManager.UpdateJoiningToUnion(operation.FromClanId, operation.ToClanId, true);
+            if (!clanResp.IsSuccess) return peer.SendOperation(operationRequest.OperationCode, ReturnCode.InvalidOperation, debuMsg: clanResp.Message);
+
+            log.Info("**************** HandleAcceptJoinUnionRequest End************************");
+
+            var obj = new JoinUnionResponse()
+            {
+                FromClanId = operation.FromClanId,
+                ToClanId = operation.ToClanId
+            };
+
+            return peer.Broadcast(operationRequest.OperationCode, ReturnCode.OK, obj.GetDictionary());
+        }
+
+        private async Task<SendResult> HandleLeaveUnionRequest(IGorMmoPeer peer, OperationRequest operationRequest)
+        {
+            log.Info("**************** HandleLeaveUnionRequest Start************************");
+            var operation = new JoinUnionRequest(peer.Protocol, operationRequest);
+            log.Info($"JoinRequest: {operation.FromClanId}, {operation.ToClanId}");
+
+            var clanResp = await GameService.BClanManager.UpdateJoiningToUnion(operation.FromClanId, operation.ToClanId, null);
+            if (!clanResp.IsSuccess) return peer.SendOperation(operationRequest.OperationCode, ReturnCode.InvalidOperation, debuMsg: clanResp.Message);
+
+            log.Info("**************** HandleLeaveUnionRequest End************************");
+
+            var obj = new JoinUnionResponse()
+            {
+                FromClanId = operation.FromClanId,
+                ToClanId = operation.ToClanId
+            };
+
+            return peer.Broadcast(operationRequest.OperationCode, ReturnCode.OK, obj.GetDictionary());
+        }
+
+        private async Task<SendResult> HandleCreateClan(IGorMmoPeer peer, OperationRequest operationRequest)
+        {
+            log.Info("**************** HandleCreateClan Start************************");
+            var operation = new CreateClanRequest(peer.Protocol, operationRequest);
+            log.Info($"JoinRequest: {operation.ClanName}, {operation.EmbassyLevel}");
+
+            var clanResp = await GameService.BClanManager.CreateClan(peer.PlayerInstance.PlayerId, operation.ClanName, operation.ClanTag, operation.ClanDescription, true, operation.EmbassyLevel);
+            if (!clanResp.IsSuccess) return peer.SendOperation(operationRequest.OperationCode, ReturnCode.InvalidOperation, debuMsg: clanResp.Message);
+
+            log.Info("**************** HandleCreateClan End************************");
+
+            return peer.Broadcast(operationRequest.OperationCode, ReturnCode.OK);
         }
 
         private async Task<SendResult> DeleteChat(IGorMmoPeer peer, OperationRequest operationRequest)
@@ -1539,6 +1732,42 @@ new string[]{
                         questUpdated = true;
                         GameService.RealTimeUpdateManagerQuestValidator.UpdateCustomQuest(playerId, quest.Quest.QuestId);
                     }
+                }
+            }
+
+            return questUpdated;
+        }
+
+        private async Task<bool> CompleteAllianceTaskQuest(int playerId, AllianceTaskType taskType)
+        {
+            var quests = CacheQuestDataManager.AllQuestRewards
+                                .Where(x => (x.Quest.QuestType == QuestType.Alliance))?.ToList();
+            if (quests == null) return false;
+
+            var questUpdated = false;
+            List<PlayerQuestDataTable> allUserQuests = null;
+            foreach (var quest in quests)
+            {
+                QuestAllianceData questData = null;
+                try
+                {
+                    questData = JsonConvert.DeserializeObject<QuestAllianceData>(quest.Quest.DataString);
+                }
+                catch { }
+                if ((questData == null) || (questData.AllianceTaskType != taskType)) continue;
+
+                if (allUserQuests == null)
+                {
+                    var response = await questManager.GetAllQuestProgress(playerId);
+                    if (response.IsSuccess && response.HasData) allUserQuests = response.Data;
+                    else break;
+                }
+                var userQuest = allUserQuests.Find(x => (x.QuestId == quest.Quest.QuestId));
+                if ((userQuest == null) || !userQuest.Completed)
+                {
+                    string initialString = (userQuest == null) ? quest.Quest.DataString : null;
+                    var resp = await questManager.UpdateQuestData(playerId, quest.Quest.QuestId, true, initialString);
+                    if (resp.IsSuccess) questUpdated = true;
                 }
             }
 
