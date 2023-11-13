@@ -34,5 +34,23 @@ namespace GameOfRevenge.Common.Models.Clan
                 MemberCount = reader.GetValue(index) == DBNull.Value ? 0 : reader.GetInt32(index);
             }
         }
+
+        public void LoadFromDataReader(IDataReader reader, int startIndex)
+        {
+            int index = startIndex;
+            Id = reader.GetValue(index) == DBNull.Value ? 0 : reader.GetInt32(index); index++;
+            Name = reader.GetValue(index) == DBNull.Value ? string.Empty : reader.GetString(index); index++;
+            Tag = reader.GetValue(index) == DBNull.Value ? string.Empty : reader.GetString(index); index++;
+            IsPublic = reader.GetValue(index) != DBNull.Value && reader.GetBoolean(index); index++;
+            Description = reader.GetValue(index) == DBNull.Value ? string.Empty : reader.GetString(index); index++;
+            BadgeGK = reader.GetValue(index) == DBNull.Value ? (short)0 : reader.GetInt16(index); index++;
+            Flag = reader.GetValue(index) == DBNull.Value ? 0 : reader.GetInt32(index); index++;
+            Capacity = reader.GetValue(index) == DBNull.Value ? 0 : reader.GetInt32(index); index++;
+
+            if (index < reader.FieldCount)
+            {
+                MemberCount = reader.GetValue(index) == DBNull.Value ? 0 : reader.GetInt32(index);
+            }
+        }
     }
 }

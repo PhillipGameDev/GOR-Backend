@@ -62,6 +62,7 @@
         JoinUnionRequest = 48,
         AcceptUnionRequest = 49,
         LeaveUnionRequest = 50,
-        CreateClan = 51
+        CreateClan = 51,
+        DeleteClan = 52
     }
 }

@@ -109,9 +109,13 @@ namespace GameOfRevenge.Business.Manager.Kingdom
             if (!clanMembers.IsSuccess || !clanMembers.HasData) return response;
             response.Data.Members = clanMembers.Data;
 
-            var clanUnions = await GetClanUnions(clanId, true);
-            if (!clanUnions.IsSuccess || !clanUnions.HasData) return response;
-            response.Data.Unions = clanUnions.Data.Select(e => e.FromClanId == clanId ? e.ToClanId : e.FromClanId).ToList();
+            var clanUnions = await GetClanUnions(clanId);
+            if (!clanUnions.IsSuccess || !clanUnions.HasData)
+            {
+                response.Message = clanUnions.Message;
+                return response;
+            }
+            response.Data.Unions = clanUnions.Data;
 
 
             //var clanMemberData = clanMembers.Data.Find(x => x.PlayerId == playerId);
@@ -179,6 +183,7 @@ namespace GameOfRevenge.Business.Manager.Kingdom
                 };
 
                 var response = await Db.ExecuteSPMultipleRow<ClanUnion>("GetClanUnions", spParams);
+
                 return response;
             }
             catch (InvalidModelExecption ex)
@@ -435,7 +440,7 @@ namespace GameOfRevenge.Business.Manager.Kingdom
             {
                 var spParams = new Dictionary<string, object>()
                 {
-                    { "FromClandId", fromClanId },
+                    { "FromClanId", fromClanId },
                     { "ToClanId", toClanId },
                 };
 
@@ -457,7 +462,7 @@ namespace GameOfRevenge.Business.Manager.Kingdom
             {
                 var spParams = new Dictionary<string, object>()
                 {
-                    { "FromClandId", fromClanId },
+                    { "FromClanId", fromClanId },
                     { "ToClanId", toClanId },
                     { "Accepted", accepted }
                 };

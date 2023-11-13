@@ -9,13 +9,15 @@ namespace GameOfRevenge.Common.Models.Clan
         public int Id { get; set; }
         public int ClanId { get; set; }
         public int PlayerId { get; set; }
+        public string PlayerName { get; set; }
 
         public void LoadFromDataReader(IDataReader reader)
         {
             int index = 0;
             Id = reader.GetValue(index) == DBNull.Value ? 0 : reader.GetInt32(index); index++;
             ClanId = reader.GetValue(index) == DBNull.Value ? 0 : reader.GetInt32(index); index++;
-            PlayerId = reader.GetValue(index) == DBNull.Value ? 0 : reader.GetInt32(index);
+            PlayerId = reader.GetValue(index) == DBNull.Value ? 0 : reader.GetInt32(index); index += 3;
+            PlayerName = reader.GetValue(index) == DBNull.Value ? string.Empty : reader.GetString(index);
         }
     }
 }

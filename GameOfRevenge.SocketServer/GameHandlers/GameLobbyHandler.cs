@@ -137,6 +137,7 @@ new string[]{
                     case OperationCode.LeaveUnionRequest: return await HandleLeaveUnionRequest(peer, operationRequest); //50
 
                     case OperationCode.CreateClan: return await HandleCreateClan(peer, operationRequest); //51
+                    case OperationCode.DeleteClan: return await HandleDeleteClan(peer, operationRequest); //52
 
                     default: return peer.SendOperation(operationRequest.OperationCode, ReturnCode.InvalidOperation);
                 }
@@ -724,7 +725,7 @@ new string[]{
             var operation = new JoinUnionRequest(peer.Protocol, operationRequest);
             log.Info($"JoinRequest: {operation.FromClanId}, {operation.ToClanId}");
 
-            var clanResp = await GameService.BClanManager.RequestJoiningToClan(operation.FromClanId, operation.ToClanId);
+            var clanResp = await GameService.BClanManager.RequestJoiningToUnion(operation.FromClanId, operation.ToClanId);
             if (!clanResp.IsSuccess) return peer.SendOperation(operationRequest.OperationCode, ReturnCode.InvalidOperation, debuMsg: clanResp.Message);
 
             log.Info("**************** HandleJoinUnionRequest End************************");
@@ -788,6 +789,19 @@ new string[]{
             if (!clanResp.IsSuccess) return peer.SendOperation(operationRequest.OperationCode, ReturnCode.InvalidOperation, debuMsg: clanResp.Message);
 
             log.Info("**************** HandleCreateClan End************************");
+
+            return peer.Broadcast(operationRequest.OperationCode, ReturnCode.OK);
+        }
+
+        private async Task<SendResult> HandleDeleteClan(IGorMmoPeer peer, OperationRequest operationRequest)
+        {
+            log.Info("**************** HandleDeleteClan Start************************");
+            var operation = new DeleteClanRequest(peer.Protocol, operationRequest);
+
+            var clanResp = await GameService.BClanManager.DeleteClan(peer.PlayerInstance.PlayerId, operation.ClanId);
+            if (!clanResp.IsSuccess) return peer.SendOperation(operationRequest.OperationCode, ReturnCode.InvalidOperation, debuMsg: clanResp.Message);
+
+            log.Info("**************** HandleDeleteClan End************************");
 
             return peer.Broadcast(operationRequest.OperationCode, ReturnCode.OK);
         }

@@ -10,6 +10,7 @@ namespace GameOfRevenge.Common.Models.Clan
         public int FromClanId { get; set; }
         public int ToClanId { get; set; }
         public bool Accepted { get; set; }
+        public ClanData ClanData { get; set; }
 
         public void LoadFromDataReader(IDataReader reader)
         {
@@ -18,6 +19,9 @@ namespace GameOfRevenge.Common.Models.Clan
             FromClanId = reader.GetValue(index) == DBNull.Value ? 0 : reader.GetInt32(index); index++;
             ToClanId = reader.GetValue(index) == DBNull.Value ? 0 : reader.GetInt32(index); index++;
             Accepted = reader.GetValue(index) == DBNull.Value ? false : reader.GetBoolean(index); index++;
+            
+            ClanData = new ClanData();
+            ClanData.LoadFromDataReader(reader, index);
         }
     }
 }

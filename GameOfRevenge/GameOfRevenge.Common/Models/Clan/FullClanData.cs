@@ -6,7 +6,7 @@ namespace GameOfRevenge.Common.Models.Clan
     {
         public ClanData Info { get; set; }
         public List<ClanMember> Members { get; set; }
-        public List<int> Unions { get; set; }
+        public List<ClanUnion> Unions { get; set; }
         //public List<ClanInvite> Invites { get; set; }
         //public List<ClanJoinReq> JoinRequest { get; set; }
     }
