@@ -48,6 +48,21 @@
         ClaimRewardsRequest = 38,
 
         ItemBoxExploring = 39,
-        BuildOrUpgrade = 40
+        BuildOrUpgrade = 40,
+
+        InstantResearch = 41,
+        SpeedUpResearch = 42,
+
+        // Alliance
+        JoinAllianceRequest = 43,
+        AcceptJoinRequest = 44,
+        UpdateClanCapacity = 45,
+        UpdateClanRole = 46,
+        LeaveAllianceRequest = 47,
+        JoinUnionRequest = 48,
+        AcceptUnionRequest = 49,
+        LeaveUnionRequest = 50,
+        CreateClan = 51,
+        DeleteClan = 52
     }
 }

@@ -78,6 +78,7 @@ namespace GameOfRevenge.GameApplication
             CacheStructureDataManager.LoadCacheMemory();
             CacheResourceDataManager.LoadCacheMemory();
             CacheTroopDataManager.LoadCacheMemory();
+            CacheAcademyDataManager.LoadCacheMemoryAsync();
             log.InfoFormat("Cache data loaded");
 
             GameLobby = new GameLobbyHandler();

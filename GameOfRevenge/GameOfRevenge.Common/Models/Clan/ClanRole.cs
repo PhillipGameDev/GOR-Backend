@@ -6,6 +6,10 @@
         Owner,
         Admin,
         Moderator,
-        Member
+        Member,
+        VicePresident,
+        Defense,
+        Commander,
+        Foreign
     }
 }

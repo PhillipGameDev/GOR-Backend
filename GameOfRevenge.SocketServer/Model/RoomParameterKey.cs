@@ -75,6 +75,14 @@
         ReturnReduction = 71,
         TargetType = 72,
         Attack = 73,
-        Defense = 74
+        Defense = 74,
+        AcademyItemId = 75,
+        ClanId = 76,
+        FromClanId = 77,
+        ToClanId = 78,
+        ClanName = 79,
+        ClanTag = 80,
+        ClanDescription = 81,
+        EmbassyLevel = 82
     }
 }
