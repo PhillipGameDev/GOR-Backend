@@ -19,6 +19,7 @@ namespace GameOfRevenge.Common.Models.Structure
         int SafeDeposit { get; }
         int WoundedCapacity { get; }
         int InstantBuildCost { get; }
+        int KingEXP { get; }
     }
 
 //    [DataContract]
@@ -47,6 +48,8 @@ namespace GameOfRevenge.Common.Models.Structure
 //        [DataMember(EmitDefaultValue = false, Order = 2)]
         public int InstantBuildCost { get; set; }
 
+        public int KingEXP { get; set; }
+
         public override void LoadFromDataReader(IDataReader reader)
         {
             int index = 0;
@@ -63,7 +66,8 @@ namespace GameOfRevenge.Common.Models.Structure
             SafeDeposit = reader.GetValue(index) == DBNull.Value ? 0 : reader.GetInt32(index); index++;
             ResourceCapacity = reader.GetValue(index) == DBNull.Value ? 0 : reader.GetInt32(index); index++;
             WoundedCapacity = reader.GetValue(index) == DBNull.Value ? 0 : reader.GetInt32(index); index++;
-            InstantBuildCost = reader.GetValue(index) == DBNull.Value ? 0 : reader.GetInt32(index);
+            InstantBuildCost = reader.GetValue(index) == DBNull.Value ? 0 : reader.GetInt32(index); index++;
+            KingEXP = reader.GetValue(index) == DBNull.Value ? 0 : reader.GetInt32(index); index++;
         }
     }
 }

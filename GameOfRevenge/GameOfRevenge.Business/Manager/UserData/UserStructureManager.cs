@@ -356,6 +356,14 @@ namespace GameOfRevenge.Business.Manager.UserData
                 if (!success) return new Response<BuildingStructureData>(203, "Insufficient player resources");
             }
 
+            // Add king experience
+            if (structure.Data.KingEXP != 0)
+            {
+                var kingResp = await manager.AddKingExperience(playerId, structure.Data.KingEXP);
+                if (!kingResp.IsSuccess)
+                    return new Response<BuildingStructureData>(204, "Can't add king experience");
+            }
+
             var json = JsonConvert.SerializeObject(dataList);
             var respModel = await manager.AddOrUpdatePlayerData(playerId, DataType.Structure, structureData.Info.Id, json);
             if (respModel.IsSuccess)
@@ -460,6 +468,14 @@ namespace GameOfRevenge.Business.Manager.UserData
                         if (type == StructureType.Embassy)
                         {
                             var respModel1 = await manager.AddOrUpdatePlayerData(playerId, DataType.Activity, 1, "0");
+                        }
+
+                        // Add king experience
+                        if (structureSpec.Data.KingEXP != 0)
+                        {
+                            var kingResp = await manager.AddKingExperience(playerId, structureSpec.Data.KingEXP);
+                            if (!kingResp.IsSuccess)
+                                return new Response<BuildingStructureData>(204, "Can't add king experience");
                         }
 
                         var json = JsonConvert.SerializeObject(dataList);
