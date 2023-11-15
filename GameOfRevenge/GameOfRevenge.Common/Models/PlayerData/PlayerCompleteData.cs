@@ -1,6 +1,7 @@
 ﻿using System.Collections.Generic;
 using GameOfRevenge.Common.Models.Quest;
 using GameOfRevenge.Common.Models.PlayerData;
+using System.Linq;
 
 namespace GameOfRevenge.Common.Models
 {
@@ -29,6 +30,9 @@ namespace GameOfRevenge.Common.Models
         public List<UserItemDetails> Items { get; set; }
         public List<UserRecordNewBoost> Boosts { get; set; }
         public List<UserHeroDetails> Heroes { get; set; }
+        public List<UserTechnologyInfo> UserTechnologies { get; set; }
+
+        public int CityLevel => Structures.Find(e => e.StructureType == Structure.StructureType.CityCounsel).Buildings.First().CurrentLevel;
     }
 
     public class AllPlayerData
