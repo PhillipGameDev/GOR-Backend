@@ -11,7 +11,8 @@ ALTER   PROCEDURE [dbo].[CreateClan]
 	@Name VARCHAR(100),
 	@Tag VARCHAR(10),
 	@Description VARCHAR(5000),
-	@IsPublic BIT
+	@IsPublic BIT,
+	@Capacity INT
 AS
 BEGIN
 	
@@ -25,6 +26,7 @@ BEGIN
 	DECLARE @tempDescription VARCHAR(5000) = LTRIM(RTRIM(@Description));
 	DECLARE @clanId INT = NULL;
 	DECLARE @tisp BIT = ISNULL(@IsPublic, 0);
+	DECLARE @tempCapacity INT = ISNULL(@Capacity, 10);
 
 	BEGIN TRY
 		DECLARE @currentId INT = NULL;
@@ -57,8 +59,8 @@ BEGIN
 		ELSE
 			BEGIN
 				--add clan
-				INSERT INTO [dbo].[Clan] (Name, Tag, Description, IsPublic)
-				VALUES (@tempName, @tempTag, @tempDescription, @tisp);
+				INSERT INTO [dbo].[Clan] (Name, Tag, Description, IsPublic, Capacity)
+				VALUES (@tempName, @tempTag, @tempDescription, @tisp, @tempCapacity);
 
 				--add owner role
 				SELECT @clanId = c.[ClanId] FROM [dbo].[Clan] AS c WHERE c.[Tag] = @tempTag;
@@ -77,7 +79,8 @@ BEGIN
 		SET @message = ERROR_MESSAGE();
 	END CATCH
 
-	SELECT c.[ClanId], c.[Name], c.[Tag], c.[Description], c.[IsPublic], c.[BadgeGK]
+	SELECT c.[ClanId], c.[Name], c.[Tag], c.[Description], c.[IsPublic], c.[BadgeGK], c.[Flag], c.[Capacity],
+	(SELECT COUNT(m.[ClanMemberId]) FROM [dbo].[ClanMember] as m WHERE m.[ClanId] = c.[ClanId]) as MemberCount
 	FROM [dbo].[Clan] AS c WHERE c.[ClanId] = @clanId;
 	EXEC [dbo].[GetMessage] @userId, @message, @case, @error, @time, 1, 1;
 END

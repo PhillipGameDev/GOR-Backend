@@ -11,7 +11,7 @@ ALTER   PROCEDURE [dbo].[GetClans]
 	@Name VARCHAR(10) = '',
 	@AndClause BIT = 1,
 	@Page INT = 1,
-	@Count INT = 10
+	@Count INT = 100
 AS
 BEGIN
 	DECLARE @case INT = 1, @error INT = 0;
@@ -49,7 +49,10 @@ BEGIN
 		Tag VARCHAR(10) NOT NULL,
 		Description VARCHAR(MAX) NOT NULL,
 		IsPublic BIT NOT NULL,
-		BadgeGK SMALLINT NOT NULL
+		BadgeGK SMALLINT NOT NULL,
+		Flag INT NOT NULL,
+		Capacity INT NOT NULL,
+		MemberCount INT NOT NULL
 	)
 
 	BEGIN TRY
@@ -58,14 +61,16 @@ BEGIN
 		BEGIN
 			IF (@tclause = 1) 
 				INSERT INTO @tempTable
-				SELECT c.[ClanId], c.[Name], c.[Tag], c.[Description], c.[IsPublic], c.[BadgeGK]
+				SELECT c.[ClanId], c.[Name], c.[Tag], c.[Description], c.[IsPublic], c.[BadgeGK], c.[Flag], c.[Capacity],
+				(SELECT COUNT(m.[ClanMemberId]) FROM [dbo].[ClanMember] as m WHERE m.[ClanId] = c.[ClanId]) as MemberCount
 				FROM [dbo].[Clan] AS c 
 				WHERE c.[Name] LIKE @tName AND c.[Tag] LIKE @tTag
 				ORDER BY c.[ClanId]
 				OFFSET @tempSkipCount ROWS FETCH NEXT @tempCount ROWS ONLY;
 			ELSE 
 				INSERT INTO @tempTable
-				SELECT c.[ClanId], c.[Name], c.[Tag], c.[Description], c.[IsPublic], c.[BadgeGK]
+				SELECT c.[ClanId], c.[Name], c.[Tag], c.[Description], c.[IsPublic], c.[BadgeGK], c.[Flag], c.[Capacity],
+				(SELECT COUNT(m.[ClanMemberId]) FROM [dbo].[ClanMember] as m WHERE m.[ClanId] = c.[ClanId]) as MemberCount
 				FROM [dbo].[Clan] AS c 
 				WHERE c.[Name] LIKE @tName OR c.[Tag] LIKE @tTag
 				ORDER BY c.[ClanId]
@@ -74,21 +79,24 @@ BEGIN
 		
 	ELSE IF (@addtag = 1)
 		INSERT INTO @tempTable
-		SELECT c.[ClanId], c.[Name], c.[Tag], c.[Description], c.[IsPublic], c.[BadgeGK]
+		SELECT c.[ClanId], c.[Name], c.[Tag], c.[Description], c.[IsPublic], c.[BadgeGK], c.[Flag], c.[Capacity],
+		(SELECT COUNT(m.[ClanMemberId]) FROM [dbo].[ClanMember] as m WHERE m.[ClanId] = c.[ClanId]) as MemberCount
 		FROM [dbo].[Clan] AS c
 		WHERE c.[Tag] LIKE @tTag
 		ORDER BY c.[ClanId]
 		OFFSET @tempSkipCount ROWS FETCH NEXT @tempCount ROWS ONLY;
 	ELSE IF (@addName = 1)
 		INSERT INTO @tempTable
-		SELECT c.[ClanId], c.[Name], c.[Tag], c.[Description], c.[IsPublic], c.[BadgeGK]
+		SELECT c.[ClanId], c.[Name], c.[Tag], c.[Description], c.[IsPublic], c.[BadgeGK], c.[Flag], c.[Capacity],
+		(SELECT COUNT(m.[ClanMemberId]) FROM [dbo].[ClanMember] as m WHERE m.[ClanId] = c.[ClanId]) as MemberCount
 		FROM [dbo].[Clan] AS c
 		WHERE c.[Name] LIKE @tName
 		ORDER BY c.[ClanId]
 		OFFSET @tempSkipCount ROWS FETCH NEXT @tempCount ROWS ONLY;
 	ELSE
 		INSERT INTO @tempTable
-		SELECT c.[ClanId], c.[Name], c.[Tag], c.[Description], c.[IsPublic], c.[BadgeGK]
+		SELECT c.[ClanId], c.[Name], c.[Tag], c.[Description], c.[IsPublic], c.[BadgeGK], c.[Flag], c.[Capacity],
+		(SELECT COUNT(m.[ClanMemberId]) FROM [dbo].[ClanMember] as m WHERE m.[ClanId] = c.[ClanId]) as MemberCount
 		FROM [dbo].[Clan] AS c
 		ORDER BY c.[ClanId]
 		OFFSET @tempSkipCount ROWS FETCH NEXT @tempCount ROWS ONLY;
