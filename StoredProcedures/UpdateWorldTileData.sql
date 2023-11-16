@@ -8,10 +8,10 @@ GO
 
 
 ALTER   PROCEDURE [dbo].[UpdateWorldTileData]
-	@X INT,
-	@Y INT,
 	@WorldTileId INT = NULL,
-	@WorldId INT = NULL
+	@WorldId INT = NULL,
+	@X INT,
+	@Y INT
 AS
 BEGIN
 	DECLARE @message NVARCHAR(MAX) = NULL;
@@ -19,42 +19,41 @@ BEGIN
 	DECLARE @userId INT = NULL;
 	DECLARE @case INT = 0;
 	DECLARE @error INT = 0;
-
-	DECLARE @tx INT = ISNULL(@X,0);
-	DECLARE @ty INT = ISNULL(@Y,0);
 	DECLARE @twtid INT = @WorldTileId;
 	DECLARE @tid INT = @WorldId;
 	DECLARE @id INT = NULL;
+	DECLARE @tx INT = ISNULL(@X,0);
+	DECLARE @ty INT = ISNULL(@Y,0);
 
 	BEGIN TRY
 		IF (@twtid IS NULL)
+		BEGIN
+			SELECT @id = w.[WorldId] FROM [dbo].[World] AS w WHERE w.[WorldId] = @tid;
+			IF (@id IS NULL)
 			BEGIN
-				SELECT @id = w.[WorldId] FROM [dbo].[World] AS w WHERE w.[WorldId] = @tid;
-				IF (@id IS NULL)
-					BEGIN
-						SET @case = 200;
-						SET @message = 'World does not exist';
-					END
-				ELSE
-					BEGIN
-						SELECT @twtid = w.[WorldTileDataId] FROM [dbo].[WorldTileData] AS w
-						WHERE w.[WorldId] = @tid AND w.[X] = @tx AND w.[Y] = @ty;
-
-						IF (@twtid IS NULL)
-						BEGIN
-							INSERT INTO [dbo].[WorldTileData] VALUES (@tid, @tx, @ty, '');
-							SET @case = 100;
-							SET @message = 'Created new tile data';
-						END
-					END
+				SET @case = 200;
+				SET @message = 'World does not exist';
 			END
+			ELSE
+			BEGIN
+				SELECT @twtid = w.[WorldTileDataId] FROM [dbo].[WorldTileData] AS w
+				WHERE w.[WorldId] = @tid AND w.[X] = @tx AND w.[Y] = @ty;
+
+				IF (@twtid IS NULL)
+				BEGIN
+					INSERT INTO [dbo].[WorldTileData] VALUES (@tid, @tx, @ty, '');
+					SET @case = 100;
+					SET @message = 'Created new tile data';
+				END
+			END
+		END
 
 		IF (@twtid IS NOT NULL)
-			BEGIN
-				UPDATE [dbo].[WorldTileData] SET [X] = @tx, [Y] = @ty, [TileData] = '' WHERE [WorldTileDataId] = @twtid;
-				SET @case = 101;
-				SET @message = 'Updated tile data';
-			END
+		BEGIN
+			UPDATE [dbo].[WorldTileData] SET [X] = @tx, [Y] = @ty, [TileData] = '' WHERE [WorldTileDataId] = @twtid;
+			SET @case = 101;
+			SET @message = 'Updated tile data';
+		END
 	END TRY
 	BEGIN CATCH
 		SET @case = 0;
