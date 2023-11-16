@@ -188,6 +188,20 @@
     <Compile Include="Model\Operation\ClaimRewardsRequest.cs" />
     <Compile Include="GameApplication\xRealTimeUpdateManagerGloryKingdom.cs" Condition=" '$(EnableDefaultCompileItems)' == 'true' " />
     <Compile Include="GameApplication\RealTimeUpdateManagerGloryKingdom.cs" />
+    <Compile Include="Model\Common\InstantResearchResponse.cs" />
+    <Compile Include="Model\Operation\InstantAcademyResearchRequest.cs" />
+    <Compile Include="Model\Operation\SendJoinRequest.cs" />
+    <Compile Include="Model\Operation\DeleteClanRequest.cs" />
+    <Compile Include="Model\Common\AcceptJoinResponse.cs" />
+    <Compile Include="Model\Common\ClanCapacityResponse.cs" />
+    <Compile Include="Model\Common\ClanRoleResponse.cs" />
+    <Compile Include="Model\Common\SendJoinResponse.cs" />
+    <Compile Include="Model\Operation\AcceptJoinRequest.cs" />
+    <Compile Include="Model\Operation\ClanCapacityRequest.cs" />
+    <Compile Include="Model\Operation\ClanRoleRequest.cs" />
+    <Compile Include="Model\Operation\CreateClanRequest.cs" />
+    <Compile Include="Model\Operation\JoinUnionRequest.cs" />
+    <Compile Include="Model\Operation\LeaveUnionRequest.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="GameOfRevenge.dll.config">

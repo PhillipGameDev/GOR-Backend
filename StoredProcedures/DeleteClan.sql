@@ -6,6 +6,7 @@ GO
 SET QUOTED_IDENTIFIER ON
 GO
 
+
 ALTER   PROCEDURE [dbo].[DeleteClan]
 	@PlayerId INT,
 	@ClanId INT
@@ -45,6 +46,7 @@ BEGIN
 				DELETE FROM [dbo].[ClanInvite] WHERE [ClanId] = @existingClanId;
 				DELETE FROM [dbo].[ClanJoinRequest] WHERE [ClanId] = @existingClanId;
 				DELETE FROM [dbo].[ClanMember] WHERE [ClanId] = @existingClanId;
+				DELETE FROM [dbo].[Union] WHERE [FromClanId] = @existingClanId OR [ToClanId] = @existingClanId;
 				DELETE FROM [dbo].[Clan] WHERE [ClanId] = @existingClanId;
 
 				SET @case = 100;

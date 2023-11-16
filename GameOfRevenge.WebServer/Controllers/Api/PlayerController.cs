@@ -61,7 +61,7 @@ namespace GameOfRevenge.WebServer.Controllers.Api
                 _logger.LogWarning("ERROR: " + response.Message);
             }
 
-            if (response.Data.MarchingArmies != null)
+            if (response.HasData && (response.Data.MarchingArmies != null))
             {
                 foreach (var item in response.Data.MarchingArmies)
                 {

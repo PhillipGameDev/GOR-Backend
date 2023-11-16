@@ -68,8 +68,8 @@ BEGIN
 		SET @message = ERROR_MESSAGE();
 	END CATCH
 
-	SELECT c.[ClanJoinRequestId], c.[ClanId], c.[PlayerId], c.[Message]
-	FROM [dbo].[ClanJoinRequest] AS c 
+	SELECT c.*, p.Name FROM [dbo].[ClanJoinRequest] as c 
+	INNER JOIN [dbo].[Player] as p ON p.[PlayerId] = c.[PlayerId]
 	WHERE c.[ClanId] = @tempCId;
 
 	EXEC [dbo].[GetMessage] @userId, @message, @case, @error, @time, 1, 1;

@@ -133,7 +133,7 @@ BEGIN
 			END
 		ELSE
 			BEGIN
-				IF (@isPublic = 1)
+				/*IF (@isPublic = 1)
 					BEGIN
 						DECLARE @roldId INT  = 4;
 						SELECT @roldId = r.[ClanRoleId] FROM [dbo].[ClanRole] AS r WHERE r.[Code] = 'Member'
@@ -146,19 +146,18 @@ BEGIN
 						SET @message = 'Joined to clan succesfully';
 					END
 				ELSE
-					BEGIN
+					BEGIN*/
 						DECLARE @currentInvite INT = NULL;
 						SELECT @currentInvite = c.[ClanJoinRequestId] 
 						FROM [dbo].[ClanJoinRequest] AS c
-						WHERE c.[ClanId] = @existingClanId AND c.[PlayerId] = @currentId
+						WHERE c.[ClanId] = @existingClanId AND c.[PlayerId] = @currentId AND c.[IsNew] = 1
 
-						IF (@currentInvite IS NULL) INSERT INTO [dbo].[ClanJoinRequest] VALUES (@existingClanId, @currentId, @tAboutMe)
-						ELSE UPDATE [dbo].[ClanJoinRequest] SET [Message] = @tAboutMe
-						WHERE [ClanId] = @existingClanId AND [PlayerId] = @currentId
+						IF (@currentInvite IS NULL) INSERT INTO [dbo].[ClanJoinRequest] VALUES (@existingClanId, @currentId, @tAboutMe, 1)
+						ELSE UPDATE [dbo].[ClanJoinRequest] SET [Message] = @tAboutMe, [IsNew] = 1 WHERE [ClanId] = @existingClanId AND [PlayerId] = @currentId
 						
 						SET @case = 101;
-						SET @message = 'Sended join request to clan succesfully';
-					END
+						SET @message = 'Sent join request to clan succesfully';
+					-- END
 			END
 	END TRY
 	BEGIN CATCH
