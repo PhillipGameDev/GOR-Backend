@@ -7,6 +7,7 @@
         KingStaminaPoints = 2,
         VIPPoints = 3,
         HeroPoints = 4,
-        VIPActivate = 5
+        VIPActivate = 5,
+        WarHero = 6
     }
 }

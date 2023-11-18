@@ -98,6 +98,12 @@ namespace GameOfRevenge.Common.Models
                             str = Localization.GetText("Activate VIP for {0}", Helper.Localization.REWARDS);
                             desc = string.Format(str, TimeHelper.ChangeSecondsToFormatTimeWords(item.Value));
                             break;
+                        case CustomType.WarHero:
+                            str = Localization.GetText("{0} Hero War Point Activate", Helper.Localization.REWARDS);
+                            title = string.Format(str, TimeHelper.ChangeSecondsToFormatTimeWords(item.Value, camelcase: true));
+                            str = Localization.GetText("Activate war hero point for {0}", Helper.Localization.REWARDS);
+                            desc = string.Format(str, TimeHelper.ChangeSecondsToFormatTimeWords(item.Value));
+                            break;
                     }
                     break;
                 case DataType.Resource:

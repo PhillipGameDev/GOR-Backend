@@ -10,9 +10,10 @@ namespace GameOfRevenge.Common.Models
     public class UserHeroDetails
     {
         public const int UNLOCK_POINTS = 10;
+        public const int MAX_LEVEL = 5;
 
-//        [DataMember]
-//        public long HeroId { get; set; }//id
+        //        [DataMember]
+        //        public long HeroId { get; set; }//id
 
         [DataMember, JsonConverter(typeof(StringEnumConverter))]
         public HeroType HeroType { get; set; }
