@@ -1,10 +1,12 @@
 USE [GameOfRevenge]
 GO
-/****** Object:  StoredProcedure [dbo].[RequestJoiningToClan]    Script Date: 10/18/2023 4:08:22 AM ******/
+/****** Object:  StoredProcedure [dbo].[RequestJoiningToClan]    Script Date: 11/20/2023 9:47:44 AM ******/
 SET ANSI_NULLS ON
 GO
 SET QUOTED_IDENTIFIER ON
 GO
+
+
 
 --CREATE OR ALTER PROCEDURE [dbo].[InviteMemberToClan]
 --	@PlayerId INT,

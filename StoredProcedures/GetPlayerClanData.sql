@@ -1,11 +1,10 @@
 USE [GameOfRevenge]
 GO
-/****** Object:  StoredProcedure [dbo].[GetPlayerClanData]    Script Date: 10/18/2023 4:08:22 AM ******/
+/****** Object:  StoredProcedure [dbo].[GetPlayerClanData]    Script Date: 11/20/2023 9:44:21 AM ******/
 SET ANSI_NULLS ON
 GO
 SET QUOTED_IDENTIFIER ON
 GO
-
 ALTER   PROCEDURE [dbo].[GetPlayerClanData]
 	@PlayerId INT
 AS

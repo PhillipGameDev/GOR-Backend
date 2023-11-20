@@ -1,7 +1,6 @@
-
 USE [GameOfRevenge]
 GO
-/****** Object:  StoredProcedure [dbo].[GetClanJoinRequests]    Script Date: 10/16/2023 5:06:26 PM ******/
+/****** Object:  StoredProcedure [dbo].[GetClanJoinRequests]    Script Date: 11/20/2023 9:41:03 AM ******/
 SET ANSI_NULLS ON
 GO
 SET QUOTED_IDENTIFIER ON

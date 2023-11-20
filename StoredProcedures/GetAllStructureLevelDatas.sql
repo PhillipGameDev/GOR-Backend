@@ -1,6 +1,6 @@
 USE [GameOfRevenge]
 GO
-/****** Object:  StoredProcedure [dbo].[GetAllStructureLevelDatas]    Script Date: 12/26/2022 1:14:51 AM ******/
+/****** Object:  StoredProcedure [dbo].[GetAllStructureLevelDatas]    Script Date: 11/20/2023 9:21:09 AM ******/
 SET ANSI_NULLS ON
 GO
 SET QUOTED_IDENTIFIER ON
@@ -19,7 +19,7 @@ BEGIN
 	SET @message = 'Structure level data list fetched succesfully';
 
 	SELECT StructureDataId, StructureId, StructureLevel, HitPoint, FoodProduction, WoodProduction, OreProduction, 
-		PopulationSupport, StructureSupport, TimeToBuild, SafeDeposit, ResourceCapicity, WoundedCapacity, InstantBuildCost
+		PopulationSupport, StructureSupport, TimeToBuild, SafeDeposit, ResourceCapicity, WoundedCapacity, InstantBuildCost, KingEXP
 	FROM [dbo].[StructureData];
 
 	EXEC [dbo].[GetMessage] @userId, @message, @case, @error, @time, 1, 1;
