@@ -24,6 +24,8 @@ namespace GameOfRevenge.Common.Models.Academy
         [DataMember]
         public int Level { get; set; }
 
+        public int CurrentLevel => TimeLeft > 0 ? Level - 1 : Level;
+
         public void LoadFromDataReader(IDataReader reader)
         {
             int index = 0;

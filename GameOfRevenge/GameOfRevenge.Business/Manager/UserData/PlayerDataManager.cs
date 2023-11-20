@@ -8,6 +8,7 @@ using GameOfRevenge.Common.Interface;
 using GameOfRevenge.Common.Models;
 using GameOfRevenge.Common.Net;
 using GameOfRevenge.Common.Services;
+using Newtonsoft.Json;
 
 namespace GameOfRevenge.Business.Manager.UserData
 {
@@ -616,6 +617,48 @@ namespace GameOfRevenge.Business.Manager.UserData
             catch (Exception ex)
             {
                 return new Response<StoredPlayerDataTable>()
+                {
+                    Case = 0,
+                    Message = ErrorManager.ShowError(ex)
+                };
+            }
+        }
+
+        public async Task<Response<PlayerDataTableUpdated>> AddKingExperience(int playerId, int kingExperience)
+        {
+            try
+            {
+                UserKingDetails kingDetails = null;
+                long kingDetailsId = 0;
+
+                var kingresp = await GetPlayerData(playerId, DataType.Custom, (int)CustomValueType.KingDetails);
+                if (kingresp.IsSuccess && kingresp.HasData)
+                {
+                    kingDetails = JsonConvert.DeserializeObject<UserKingDetails>(kingresp.Data.Value);
+                    kingDetailsId = kingresp.Data.Id;
+                }
+
+                if (kingDetails == null) throw new InvalidModelExecption("King data corrupted");
+
+                kingDetails.Experience += kingExperience;
+
+                var kingjson = JsonConvert.SerializeObject(kingDetails);
+                var kingResp = await UpdatePlayerDataID(playerId, kingDetailsId, kingjson);
+                if (!kingResp.IsSuccess) throw new InvalidModelExecption(kingResp.Message);
+
+                return kingResp;
+            }
+            catch (InvalidModelExecption ex)
+            {
+                return new Response<PlayerDataTableUpdated>()
+                {
+                    Case = 200,
+                    Message = ex.Message
+                };
+            }
+            catch (Exception ex)
+            {
+                return new Response<PlayerDataTableUpdated>()
                 {
                     Case = 0,
                     Message = ErrorManager.ShowError(ex)

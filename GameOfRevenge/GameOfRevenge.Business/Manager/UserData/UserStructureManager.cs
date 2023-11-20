@@ -356,6 +356,14 @@ namespace GameOfRevenge.Business.Manager.UserData
                 if (!success) return new Response<BuildingStructureData>(203, "Insufficient player resources");
             }
 
+            // Add king experience
+            if (structure.Data.KingEXP != 0)
+            {
+                var kingResp = await manager.AddKingExperience(playerId, structure.Data.KingEXP);
+                if (!kingResp.IsSuccess)
+                    return new Response<BuildingStructureData>(204, "Can't add king experience");
+            }
+
             var json = JsonConvert.SerializeObject(dataList);
             var respModel = await manager.AddOrUpdatePlayerData(playerId, DataType.Structure, structureData.Info.Id, json);
             if (respModel.IsSuccess)
@@ -460,6 +468,14 @@ namespace GameOfRevenge.Business.Manager.UserData
                         if (type == StructureType.Embassy)
                         {
                             var respModel1 = await manager.AddOrUpdatePlayerData(playerId, DataType.Activity, 1, "0");
+                        }
+
+                        // Add king experience
+                        if (structureSpec.Data.KingEXP != 0)
+                        {
+                            var kingResp = await manager.AddKingExperience(playerId, structureSpec.Data.KingEXP);
+                            if (!kingResp.IsSuccess)
+                                return new Response<BuildingStructureData>(204, "Can't add king experience");
                         }
 
                         var json = JsonConvert.SerializeObject(dataList);
@@ -793,21 +809,26 @@ namespace GameOfRevenge.Business.Manager.UserData
                 var resPlayerData = await GetFullPlayerData(playerId);
                 if (!resPlayerData.IsSuccess || !resPlayerData.HasData)
                 {
-                    //error
+                    throw new DataNotExistExecption("PlayerData can't find");
                 }
                 var playerData = resPlayerData.Data;
 
+                // City Boost
                 var boost = playerData.Boosts.Find(x => (x.Type == (NewBoostType)CityBoostType.ProductionBoost));
                 if ((boost != null) && (boost.TimeLeft > 0))
                 {
                     var specBoostData = CacheBoostDataManager.SpecNewBoostDatas.FirstOrDefault(x => (x.Type == boost.Type));
-                    if ((specBoostData != null) && (specBoostData.Table > 0))
+                    if (specBoostData != null)
                     {
-                        float.TryParse(specBoostData.Levels[boost.Level].ToString(), out float levelVal);
-                        percentage += levelVal;
+                        var cityTech = specBoostData.Techs.FirstOrDefault(x => (x.Tech == NewBoostTech.ResourceProductionMultiplier));
+                        if (cityTech != null) percentage += cityTech.GetValue(playerData.CityLevel);
                     }
                 }
 
+                // Technology Boost
+                percentage += playerData.UserTechnologies.FindAll(e => e.IsResourceBoost(resType)).Sum(e => e.Effect);
+
+                // VIP Boost
                 var vip = playerData.VIP;
                 if ((vip != null) && (vip.TimeLeft > 0))
                 {
@@ -819,6 +840,7 @@ namespace GameOfRevenge.Business.Manager.UserData
                     }
                 }
 
+                // Building Boost
                 var extraMultiplier = 0f;
                 if (userBld.Boost != null)
                 {
@@ -851,7 +873,7 @@ namespace GameOfRevenge.Business.Manager.UserData
                 var userQuestData = await userQuestManager.GetUserAllQuestProgress(playerId, true);
                 if (!userQuestData.IsSuccess || !userQuestData.HasData)
                 {
-                    //error
+                    throw new DataNotExistExecption("User Quest Data can't find");
                 }
                 var playerUserQuestData = new PlayerUserQuestData()
                 {

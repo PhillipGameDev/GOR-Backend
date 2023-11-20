@@ -28,6 +28,7 @@ namespace GameOfRevenge.Business.Manager.Base
         protected static readonly IAccountManager accountManager = new AccountManager();
         protected static readonly IPlayerDataManager manager = new PlayerDataManager();
         protected static readonly IClanManager clanManager = new ClanManager();
+        protected static readonly IUserAcademyManager academyManager = new UserAcademyManager();
 
         protected IReadOnlyDataRequirement GetGemReq(int value)
         {
@@ -88,7 +89,8 @@ namespace GameOfRevenge.Business.Manager.Base
                         Technologies = new List<TechnologyInfos>(),
 //                            SubTechnologies = new List<SubTechnologyInfos>(),
                         Boosts = new List<UserRecordNewBoost>(),
-                        Heroes = new List<UserHeroDetails>()
+                        Heroes = new List<UserHeroDetails>(),
+                        UserTechnologies = new List<UserTechnologyInfo>()
                     }
                 };
 
@@ -408,66 +410,84 @@ namespace GameOfRevenge.Business.Manager.Base
                     }*/
                 }
 
+                line = "15";
+                var respAcademy = await academyManager.GetUserAllItems(playerId);
+                if (!respAcademy.IsSuccess) throw new DataNotExistExecption(respAcademy.Message + line);
 
-/*                    var heroes = CacheHeroDataManager.HeroInfos;
-                foreach (var hero in heroes)
+                var academyItems = CacheAcademyDataManager.AllAcademyItems;
+                foreach (var item in respAcademy.Data)
                 {
-                    UserHeroDetails userHeroData = new UserHeroDetails()
+                    var academyItem = academyItems.FirstOrDefault(e => e.Id == item.ItemId);
+                    if (academyItem == null) throw new DataNotExistExecption("Academy item not exist" + line);
+
+                    finalData.Data.UserTechnologies.Add(new UserTechnologyInfo()
                     {
-                        HeroId = hero.Info.HeroId,
-                        Code = hero.Info.Code,
-                        Unlocked = false,
-                        IsMarching = false,
-                        WarPoints = 0
-                    };
-                    finalData.Data.Heroes.Add(userHeroData);
+                        TechnologyType = academyItem.TechnologyType,
+                        Effect = academyItem.Effect * item.CurrentLevel,
+                        CategoryType = academyItem.CategoryType
+                    });
+                }
 
 
-                    if (finalData.Data.MarchingArmy != null)
-                    {
-                        userHeroData.IsMarching = finalData.Data.MarchingArmy.Heros.Exists(x => x == userHeroData.HeroId);
-                    }
-                }*/
-
-/* OLD HERO IMPLEMENTATION, REQUIREMENT BASED ON STRUCTURE
-                var structureDataIds = heroes.Select(x => x.Requirements.Select(y => y.StructureDataId)).ToList();
-
-                foreach (var hero in heroes)
-                {
-                    UserHeroDetails userHeroData = new UserHeroDetails()
-                    {
-                        HeroId = hero.Info.HeroId,
-                        IsMarching = false,
-                        Unlocked = false,
-                        Code = hero.Info.Code
-                    };
-
-                    finalData.Data.Heroes.Add(userHeroData);
-
-                    foreach (var req in hero.Requirements)
-                    {
-                        var structure = CacheStructureDataManager.GetFullStructureData(req.StructureId);
-                        var structureType = structure.Info.Code;
-
-                        foreach (var userStructure in finalData.Data.Structures)
-                        {
-                            if (userStructure.StructureType == structureType)
-                            {
-                                var structureData = structure.Levels.FirstOrDefault(x => x.Data.DataId == req.StructureDataId);
-                                var structureLevel = structureData.Data.Level;
-
-                                foreach (var userBuildings in userStructure.Buildings)
+                /*                    var heroes = CacheHeroDataManager.HeroInfos;
+                                foreach (var hero in heroes)
                                 {
-                                    if (userBuildings.Level >= structureLevel)
+                                    UserHeroDetails userHeroData = new UserHeroDetails()
                                     {
-                                        userHeroData.Unlocked = true;
-                                        userHeroData.IsMarching = finalData.Data.MarchingArmy != null ? finalData.Data.MarchingArmy.Heros.Exists(x => x == userHeroData.HeroId) : false;
+                                        HeroId = hero.Info.HeroId,
+                                        Code = hero.Info.Code,
+                                        Unlocked = false,
+                                        IsMarching = false,
+                                        WarPoints = 0
+                                    };
+                                    finalData.Data.Heroes.Add(userHeroData);
+
+
+                                    if (finalData.Data.MarchingArmy != null)
+                                    {
+                                        userHeroData.IsMarching = finalData.Data.MarchingArmy.Heros.Exists(x => x == userHeroData.HeroId);
                                     }
-                                }
-                            }
-                        }
-                    }
-                }*/
+                                }*/
+
+                /* OLD HERO IMPLEMENTATION, REQUIREMENT BASED ON STRUCTURE
+                                var structureDataIds = heroes.Select(x => x.Requirements.Select(y => y.StructureDataId)).ToList();
+
+                                foreach (var hero in heroes)
+                                {
+                                    UserHeroDetails userHeroData = new UserHeroDetails()
+                                    {
+                                        HeroId = hero.Info.HeroId,
+                                        IsMarching = false,
+                                        Unlocked = false,
+                                        Code = hero.Info.Code
+                                    };
+
+                                    finalData.Data.Heroes.Add(userHeroData);
+
+                                    foreach (var req in hero.Requirements)
+                                    {
+                                        var structure = CacheStructureDataManager.GetFullStructureData(req.StructureId);
+                                        var structureType = structure.Info.Code;
+
+                                        foreach (var userStructure in finalData.Data.Structures)
+                                        {
+                                            if (userStructure.StructureType == structureType)
+                                            {
+                                                var structureData = structure.Levels.FirstOrDefault(x => x.Data.DataId == req.StructureDataId);
+                                                var structureLevel = structureData.Data.Level;
+
+                                                foreach (var userBuildings in userStructure.Buildings)
+                                                {
+                                                    if (userBuildings.Level >= structureLevel)
+                                                    {
+                                                        userHeroData.Unlocked = true;
+                                                        userHeroData.IsMarching = finalData.Data.MarchingArmy != null ? finalData.Data.MarchingArmy.Heros.Exists(x => x == userHeroData.HeroId) : false;
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    }
+                                }*/
 
                 return finalData;
             }
