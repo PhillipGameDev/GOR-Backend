@@ -155,10 +155,11 @@ namespace GameOfRevenge.Common.Models.Kingdom
 
             var troops = (marchingArmy != null) ? marchingArmy.Troops : completeData.Troops;
 
-            Troops = troops;
-            if ((troops != null) && (troops.Count > 0))
+            Troops = troops ?? new List<TroopInfos>();
+            TroopChanges = new List<TroopDetailsPvP>();
+
+            if (troops.Count > 0)
             {
-                TroopChanges = new List<TroopDetailsPvP>();
                 foreach (var troop in troops)
                 {
                     if (troop == null) continue;
