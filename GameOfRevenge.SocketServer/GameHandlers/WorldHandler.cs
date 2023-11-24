@@ -9,6 +9,8 @@ using GameOfRevenge.GameApplication;
 using GameOfRevenge.Common.Models;
 using GameOfRevenge.Business.Manager;
 using GameOfRevenge.Business.CacheData;
+using GameOfRevenge.Common.Models.Monster;
+using System.Threading.Tasks;
 
 namespace GameOfRevenge.GameHandlers
 {
@@ -32,6 +34,34 @@ namespace GameOfRevenge.GameHandlers
             worlds = new ConcurrentDictionary<int, IWorld>();
         }
 
+        public const int MONSTERS_PER_WORLD = 1000;
+
+        public async Task<List<MonsterTable>> GetMonsters(WorldTable world)
+        { 
+            var resp = await GameService.BMonsterManager.GetMonsterWorldData(world.Id);
+            if (!resp.IsSuccess || !resp.HasData) throw new Exception(resp.Message);
+
+            var currentMonsters = resp.Data;
+            var random = new Random();
+
+            log.Info("--- PREPARE MONSTER ---: " + world.Id + "," + CacheMonsterManager.AllItems.Count);
+
+            for (int i = MONSTERS_PER_WORLD - currentMonsters.Count - 1; i >= 0; i --)
+            {
+                var ms = await GameService.BMonsterManager.AddNewMonster(world, currentMonsters, random);
+                currentMonsters.Add(new MonsterTable()
+                {
+                    X = ms.Item1,
+                    Y = ms.Item2
+                });
+            }
+
+            resp = await GameService.BMonsterManager.GetMonsterWorldData(world.Id);
+            if (!resp.IsSuccess || !resp.HasData) throw new Exception(resp.Message);
+
+            return resp.Data;
+        }
+
         public void SetupWorld(string worldCode)
         {
             var task = GameService.BKingdomManager.GetWorld(worldCode);
@@ -42,6 +72,13 @@ namespace GameOfRevenge.GameHandlers
             if (!worlds.ContainsKey(world.Id))
             {
                 WorldGrid countryGrid;
+
+                var monsterTask = GetMonsters(world);
+                monsterTask.Wait();
+                if (monsterTask.Result == null) throw new Exception("Error to get monsters");
+
+                log.Debug("MONSTERS -- " + monsterTask.Result.Count);
+
                 if (world.CurrentZone == -1)
                 {
                     var task1 = GameService.BKingdomManager.GetWorldTilesData(world.Id);
@@ -93,7 +130,7 @@ namespace GameOfRevenge.GameHandlers
                         }
                     }
 
-                    countryGrid = new WorldGrid(world, DistributePlayers(players, world), null, null);
+                    countryGrid = new WorldGrid(world, DistributePlayers(players, world), monsterTask.Result, null);
                 }
                 else
                 {
@@ -111,7 +148,7 @@ namespace GameOfRevenge.GameHandlers
                             var fortressData = fortressDataResp.Result.Data;
 
                             var playerData = new PlayerCompleteData() { Troops = fortressData.GetAllTroops() };
-                            var power = new BattlePower(playerData, null, CacheTroopDataManager.GetFullTroopData, null);
+                            var power = new BattlePower(playerData, null, CacheTroopDataManager.GetFullTroopData, null, (str) => log.Info(str));
                             if ((fortress.HitPoints != power.HitPoints) ||
                                 (fortress.Attack != power.Attack) || (fortress.Defense != power.Defense))
                             {
@@ -123,6 +160,7 @@ namespace GameOfRevenge.GameHandlers
                                 update.Wait();
                             }
                         }
+                        log.Info("Load all fortress");
                     }
                     else
                     {
@@ -133,7 +171,7 @@ namespace GameOfRevenge.GameHandlers
                     task2.Wait();
                     if (task2.Result.IsSuccess && task2.Result.HasData)
                     {
-                        countryGrid = new WorldGrid(world, task2.Result.Data, null, allForts);
+                        countryGrid = new WorldGrid(world, task2.Result.Data, monsterTask.Result, allForts);
                     }
                     else
                     {

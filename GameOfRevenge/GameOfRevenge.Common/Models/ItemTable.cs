@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Data;
 using System.Drawing;
+using System.Runtime.Serialization;
 using GameOfRevenge.Common.Helper;
 using GameOfRevenge.Common.Interface.Model.Table;
 using GameOfRevenge.Common.Models.Boost;
@@ -15,8 +16,10 @@ namespace GameOfRevenge.Common.Models
         bool CanBuy { get; }
     }
 
+    [DataContract]
     public class ItemTable : BaseDataTypeTable<int, int>, IBaseTable, IBaseDataTypeTable<int, int>, IReadOnlyBaseDataTypeTable<int, int>, IReadOnlyItemTable
     {
+        [DataMember]
         public int Id { get; set; }
         public bool IsTimeItem { get; set; }
         public bool CanBuy { get; set; }
@@ -99,10 +102,10 @@ namespace GameOfRevenge.Common.Models
                             desc = string.Format(str, TimeHelper.ChangeSecondsToFormatTimeWords(item.Value));
                             break;
                         case CustomType.WarHero:
-                            str = Localization.GetText("{0} Hero War Point Activate", Helper.Localization.REWARDS);
-                            title = string.Format(str, TimeHelper.ChangeSecondsToFormatTimeWords(item.Value, camelcase: true));
-                            str = Localization.GetText("Activate war hero point for {0}", Helper.Localization.REWARDS);
-                            desc = string.Format(str, TimeHelper.ChangeSecondsToFormatTimeWords(item.Value));
+                            str = Localization.GetText("{0} Hero Selection Activate", Helper.Localization.REWARDS);
+                            title = string.Format(str, item.Value);
+                            str = Localization.GetText("Activate Hero Selection for {0} positions", Helper.Localization.REWARDS);
+                            desc = string.Format(str, item.Value);
                             break;
                     }
                     break;

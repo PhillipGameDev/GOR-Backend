@@ -22,6 +22,8 @@ namespace GameOfRevenge.Common
         ActiveBoost = 10,
         Hero = 15,
         IncomingAttack = 17,
+        BattleHistory = 18,
+
         Gift = 1017,
         Product = 1018,
         Activity = 1019,

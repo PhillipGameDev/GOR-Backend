@@ -6,6 +6,7 @@ using GameOfRevenge.Business.Manager.Base;
 using GameOfRevenge.Common;
 using GameOfRevenge.Common.Interface;
 using GameOfRevenge.Common.Models;
+using GameOfRevenge.Common.Models.Kingdom;
 using GameOfRevenge.Common.Net;
 using GameOfRevenge.Common.Services;
 using Newtonsoft.Json;
@@ -767,6 +768,68 @@ namespace GameOfRevenge.Business.Manager.UserData
             if (gold > 0) spParams.Add("Gold", gold);
 
             return spParams;
+        }
+
+        public async Task<Response<BattleHistory>> AddBattleHistory(int playerId, bool isAttacker, string replay)
+        {
+            try
+            {
+                var spParams = new Dictionary<string, object>()
+                {
+                    { "PlayerId", playerId },
+                    { "IsAttacker", isAttacker },
+                    { "Replay", replay }
+                };
+                return await Db.ExecuteSPSingleRow<BattleHistory>("AddBattleHistory", spParams);
+            }
+            catch (InvalidModelExecption ex)
+            {
+                return new Response<BattleHistory>()
+                {
+                    Case = 200,
+                    Data = null,
+                    Message = ex.Message
+                };
+            }
+            catch (Exception ex)
+            {
+                return new Response<BattleHistory>()
+                {
+                    Case = 0,
+                    Data = null,
+                    Message = ErrorManager.ShowError(ex)
+                };
+            }
+        }
+
+        public async Task<Response<BattleHistory>> GetBattleHistory(int id)
+        {
+            try
+            {
+                var spParams = new Dictionary<string, object>()
+                {
+                    { "Id", id }
+                };
+                return await Db.ExecuteSPSingleRow<BattleHistory>("GetBattleHistory", spParams);
+            }
+            catch (InvalidModelExecption ex)
+            {
+                return new Response<BattleHistory>()
+                {
+                    Case = 200,
+                    Data = null,
+                    Message = ex.Message
+                };
+            }
+            catch (Exception ex)
+            {
+                return new Response<BattleHistory>()
+                {
+                    Case = 0,
+                    Data = null,
+                    Message = ErrorManager.ShowError(ex)
+                };
+            }
         }
     }
 }

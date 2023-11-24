@@ -206,6 +206,7 @@ namespace GameOfRevenge.WebServer
             services.AddSingleton<IChatManager>(new ChatManager());
 
             services.AddSingleton<IClanManager>(new ClanManager());
+            services.AddSingleton<IMonsterManager>(new MonsterManager());
 
             services.AddSingleton<IBaseUserManager>(new BaseUserDataManager());
             services.AddSingleton<IPlayerDataManager>(new PlayerDataManager());
@@ -246,6 +247,7 @@ namespace GameOfRevenge.WebServer
             await CacheProductDataManager.LoadCacheMemoryAsync();
             await CacheShopDataManager.LoadCacheMemoryAsync();
             await CacheAcademyDataManager.LoadCacheMemoryAsync();
+            await CacheMonsterManager.LoadCacheMemoryAsync();
         }
 
         public static void ReloadDataBaseData()

@@ -5,6 +5,7 @@ using System.Threading.Tasks;
 using ExitGames.Logging;
 using GameOfRevenge.Business.CacheData;
 using GameOfRevenge.Business.Manager.Base;
+using GameOfRevenge.Business.Manager.GameDef;
 using GameOfRevenge.Business.Manager.UserData;
 using GameOfRevenge.Common;
 using GameOfRevenge.Common.Interface;
@@ -24,6 +25,8 @@ namespace GameOfRevenge.Business.Manager
         private static readonly List<AttackStatusData> attackInProgress = new List<AttackStatusData>();
 
         private readonly KingdomPvPManager pvpManager = new KingdomPvPManager();
+        private readonly MonsterManager monsterManager = new MonsterManager();
+
         protected readonly object SyncRoot = new object(); // that is for world user access
 
         public DelayedAction Disposable;
@@ -175,24 +178,19 @@ namespace GameOfRevenge.Business.Manager
                         case 2://prepare data
                             log.Debug("------------ PREPARE BATTLE SIMULATION " + item.Attacker.PlayerId + " vs " + item.AttackData.TargetId);
 
-                            var attackerPower = new BattlePower(item.Attacker, marchingArmy, CacheTroopDataManager.GetFullTroopData, GetAtkDefMultiplier);
+                            var attackerPower = new BattlePower(item.Attacker, marchingArmy, CacheTroopDataManager.GetFullTroopData, GetAtkDefMultiplier, (msg) => log.Debug(msg));
                             item.AttackerPower = attackerPower;
                             BattlePower defenderPower;
                             if (marchingArmy.MarchingType == MarchingType.AttackPlayer)
                             {
-                                defenderPower = new BattlePower(item.Defender, null, CacheTroopDataManager.GetFullTroopData, GetAtkDefMultiplier);
+                                defenderPower = new BattlePower(item.Defender, null, CacheTroopDataManager.GetFullTroopData, GetAtkDefMultiplier, (msg) => log.Debug(msg));
                             }
                             else if (marchingArmy.MarchingType == MarchingType.AttackMonster)
                             {
-                                //TODO: get monster values from db
-//                                var hitPoints = (int)(attackerPower.HitPoints * (new Random().Next(6, 9) / 10f));
-//                                var attack = (int)(attackerPower.Attack * (new Random().Next(8, 11) / 10f));
-//                                var defense = (int)(attackerPower.Defense * 0.7f);
-                                var monsterId = marchingArmy.TargetId;
-                                var hitPoints = 10000;
-                                var attack = 5000;
-                                var defense = 5000;
-                                defenderPower = new BattlePower(EntityType.Monster, item.AttackData.TargetId, hitPoints, attack, defense);
+                                var resp = await monsterManager.GetFullMonsterData(item.AttackData.TargetId);
+                                if (!resp.IsSuccess) throw new Exception("Monster data not found");
+
+                                defenderPower = new BattlePower(resp.Data);
                             }
                             else//attack glory kingdom
                             {
@@ -200,27 +198,31 @@ namespace GameOfRevenge.Business.Manager
                             }
                             item.DefenderPower = defenderPower;
 
+                            item.Replay = new BattleReplay();
+
                             log.Debug("atk hp= " + attackerPower.HitPoints + " vs def hp=" + defenderPower.HitPoints);
                             item.State++;
                             break;
 
                         case 3://battle simulation
-                            if ((item.DefenderPower.HitPoints > 0) && (item.AttackerPower.HitPoints > 0))
                             {
                                 if (marchingArmy.MarchingType == MarchingType.AttackPlayer)
                                 {
-                                    item.AttackerPower.AttackPlayer(item.DefenderPower);
+                                    item.AttackerPower.AttackPlayer(item.DefenderPower, item.Replay, (str) => log.Info(str));
                                 }
                                 else
                                 {
-                                    item.AttackerPower.AttackMonster(item.DefenderPower);
+                                    item.AttackerPower.AttackMonster(item.DefenderPower, item.Replay);
                                 }
                                 log.Debug("atk pwr= " + item.AttackerPower.HitPoints + " xx def pwr=" + item.DefenderPower.HitPoints);
                             }
-                            else
                             {
                                 await pvpManager.FinishBattleData(item.Attacker, item.AttackerPower,
-                                                                item.Defender, item.DefenderPower, marchingArmy);
+                                                                item.Defender, item.DefenderPower, marchingArmy, item.Replay);
+
+                                log.Debug("send attacker attack end event");
+                                attackResultCallback(item, NOTIFY_ATTACKER);
+
                                 item.State++;
                             }
                             break;
@@ -233,6 +235,7 @@ namespace GameOfRevenge.Business.Manager
                                     log.Debug("send defender under attack end event");
                                     attackResultCallback(item, NOTIFY_TARGET);
                                 }
+
                                 item.State++;
                             }
                             break;
@@ -246,8 +249,6 @@ namespace GameOfRevenge.Business.Manager
                                     log.Debug("ApplyAttackerChangesAndSendReport!!!");
                                     await pvpManager.ApplyAttackerChangesAndSendReport(marchingArmy);
                                 }
-                                log.Debug("send attacker attack end event");
-                                attackResultCallback(item, NOTIFY_ATTACKER);
 
                                 log.Debug("** END ** " + item.AttackData.AttackerId + " vs " + item.AttackData.TargetId);
                                 lock (SyncRoot) attackInProgress.Remove(item);
@@ -352,8 +353,8 @@ namespace GameOfRevenge.Business.Manager
                 };
                 var json = Newtonsoft.Json.JsonConvert.SerializeObject(fortressData);
                 var updateResp = await pvpManager.kingdomManager.UpdateZoneFortress(fortress.ZoneFortressId,
-                        hitPoints: data.DefenderPower.HitPoints, attack: data.DefenderPower.TempAttack,
-                        defense: data.DefenderPower.TempDefense, data: json);
+                        hitPoints: data.DefenderPower.HitPoints, attack: data.DefenderPower.AttackCalc,
+                        defense: data.DefenderPower.DefenseCalc, data: json);
 
 
 
@@ -386,14 +387,14 @@ namespace GameOfRevenge.Business.Manager
                 log.Debug("defender troops: " + Newtonsoft.Json.JsonConvert.SerializeObject(data.DefenderPower.TroopChanges));
                 while ((data.DefenderPower.HitPoints > 0) && (data.AttackerPower.HitPoints > 0))
                 {
-                    data.AttackerPower.AttackPlayer(data.DefenderPower, (ss)=> { log.Debug(ss); });
-                    log.Debug("atk pwr= " + data.AttackerPower.HitPoints + "  "+data.AttackerPower.TempAttack+"/"+data.AttackerPower.TempDefense +
-                                "   xx def pwr=" + data.DefenderPower.HitPoints+" "+data.DefenderPower.TempAttack+"/"+data.DefenderPower.TempDefense);
+                    data.AttackerPower.AttackPlayer(data.DefenderPower, data.Replay, (ss)=> { log.Debug(ss); });
+                    log.Debug("atk pwr= " + data.AttackerPower.HitPoints + "  "+data.AttackerPower.AttackCalc+"/"+data.AttackerPower.DefenseCalc +
+                                "   xx def pwr=" + data.DefenderPower.HitPoints+" "+data.DefenderPower.AttackCalc+"/"+data.DefenderPower.DefenseCalc);
                 }
                 log.Debug("result: atk pwr= " + data.AttackerPower.HitPoints + " xx def pwr=" + data.DefenderPower.HitPoints);
 
                 await pvpManager.FinishBattleData(data.Attacker, data.AttackerPower,
-                                                data.Defender, data.DefenderPower, data.MarchingArmy);
+                                                data.Defender, data.DefenderPower, data.MarchingArmy, data.Replay);
 
                 //SAVE PLAYER REPORT
                 log.Debug("ApplyAttackerChangesAndSendReport!!!");

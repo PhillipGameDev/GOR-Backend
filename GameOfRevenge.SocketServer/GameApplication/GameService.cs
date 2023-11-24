@@ -43,6 +43,7 @@ namespace GameOfRevenge.GameApplication
         public static IRealTimeUpdateManager BRealTimeUpdateManager { get; private set; }
         public static IUserTechnologyManager BUserTechnologyManager { get; private set; }
         public static IInstantProgressManager InstantProgressManager { get; private set; }
+        public static IMonsterManager BMonsterManager { get; private set; }
         public static GameLobbyHandler GameLobby { get; private set; }
         public static IWorldHandler WorldHandler { get; private set; }
         public static RealTimeUpdateManagerQuestValidator RealTimeUpdateManagerQuestValidator { get; private set; }
@@ -78,7 +79,9 @@ namespace GameOfRevenge.GameApplication
             CacheStructureDataManager.LoadCacheMemory();
             CacheResourceDataManager.LoadCacheMemory();
             CacheTroopDataManager.LoadCacheMemory();
-            CacheAcademyDataManager.LoadCacheMemoryAsync();
+            CacheAcademyDataManager.LoadCacheMemory();
+            CacheItemManager.LoadCacheMemory();
+            CacheMonsterManager.LoadCacheMemory();
             log.InfoFormat("Cache data loaded");
 
             GameLobby = new GameLobbyHandler();
@@ -101,6 +104,7 @@ namespace GameOfRevenge.GameApplication
             BAccountManager = new AccountManager();
             BChatManager = new ChatManager();
             BClanManager = new ClanManager();
+            BMonsterManager = new MonsterManager();
 
             var adminManager = new AdminDataManager(BPlayerManager, BClanManager, BUserQuestManager, BUserItemManager);
             RealTimeUpdateManagerQuestValidator = new RealTimeUpdateManagerQuestValidator(adminManager, BUserQuestManager);

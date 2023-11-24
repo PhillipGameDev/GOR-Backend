@@ -30,6 +30,8 @@ namespace GameOfRevenge.GameHandlers
     using GameOfRevenge.GameApplication;
     using GameOfRevenge.Common;
     using GameOfRevenge.Business.Manager.Kingdom;
+    using GameOfRevenge.Common.Models.Monster;
+    using System.Threading;
 
     /// <summary>
     /// Grid used to divide the world.
@@ -61,14 +63,14 @@ namespace GameOfRevenge.GameHandlers
         public IPlayersManager PlayersManager { get; set; }
 
         public List<PlayerID> WorldPlayers { get; private set; }
-        public List<EntityID> WorldMonsters { get; private set; }
+        public List<MonsterTable> WorldMonsters { get; private set; }
         public List<ZoneFortressTable> WorldForts { get; private set; }
 
         public IFiber WorldFiber { get; private set; }
 
         private readonly Random rd = new Random();
 
-        public WorldGrid(WorldTable world, List<PlayerID> worldPlayers, List<EntityID> worldMonsters, List<ZoneFortressTable> worldForts)
+        public WorldGrid(WorldTable world, List<PlayerID> worldPlayers, List<MonsterTable> worldMonsters, List<ZoneFortressTable> worldForts)
         {
             var w = GlobalConst.GetPopWorld(world.ZoneX, world.ZoneY);
             var worldId = world.Id;
@@ -275,8 +277,8 @@ namespace GameOfRevenge.GameHandlers
                                 if (defPower != null)
                                 {
                                     memfortress.HitPoints = defPower.HitPoints;
-                                    memfortress.Attack = defPower.TempAttack;
-                                    memfortress.Defense = defPower.TempDefense;
+                                    memfortress.Attack = defPower.AttackCalc;
+                                    memfortress.Defense = defPower.DefenseCalc;
                                 }
 
                                 var task = kingdomManager.GetZoneFortressById(atkData.TargetId);
@@ -320,6 +322,21 @@ namespace GameOfRevenge.GameHandlers
             {
                 actor = PlayersManager.GetPlayer(result.TargetId);
                 if (actor != null) actor.SendEvent(EventCode.MarchingResult, result);
+            } else if (notify == RealTimeUpdateManager.NOTIFY_ATTACKER)
+            {
+                actor = PlayersManager.GetPlayer(result.AttackerId);
+                if (actor != null)
+                {
+                    actor.SendEvent(EventCode.BattleResult, result);
+
+                    if (marchingArmy.MarchingType == MarchingType.AttackMonster && result.WinnerId == result.AttackerId)
+                    {
+                        WorldMonsters.RemoveAll(e => e.Id == result.TargetId);
+
+                        var exitEvent = new EntityExitResponse((byte)EntityType.Monster, result.TargetId);
+                        actor.SendEvent(EventCode.EntityExit, exitEvent);
+                    }
+                }
             }
 
             if (marchingArmy.MarchingType == MarchingType.ReinforcementPlayer)

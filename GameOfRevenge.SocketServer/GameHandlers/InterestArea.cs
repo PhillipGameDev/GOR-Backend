@@ -82,14 +82,12 @@ namespace GameOfRevenge.GameHandlers
                         }
                     }
 
-                    if (PlayerInstance.IsInKingdomView)
-//                    var monster = World.WorldMonsters.Find(entity => (entity.X == x) && (entity.Y == y));
-//                    if (monster != null)
+                    var monster = World.WorldMonsters.Find(e => e.X == x && e.Y == y);
+                    if (monster != null)
                     {
-                        var monsterId = (y * 2000) + x;
+                        var monsterId = monster.Id;
                         var seed = monsterId;
-                        var hitPoints = 10000;
-                        var enterEvent = new EntityEnterResponse(x, y, seed, EntityType.Monster, monsterId, hitPoints);
+                        var enterEvent = new EntityEnterResponse(x, y, seed, EntityType.Monster, monsterId, monster.Health);
                         PlayerInstance.SendEvent(EventCode.EntityEnter, enterEvent);
                     }
                 }
@@ -116,10 +114,10 @@ namespace GameOfRevenge.GameHandlers
                         }
                     }
 
-                    if (PlayerInstance.IsInKingdomView)
+                    var monster = World.WorldMonsters.Find(e => e.X == region.X && e.Y == region.Y);
+                    if (monster != null)
                     {
-                        var monsterId = (region.Y * 2000) + region.X;
-                        var exitEvent = new EntityExitResponse(1, monsterId);
+                        var exitEvent = new EntityExitResponse((byte)EntityType.Monster, monster.Id);
                         PlayerInstance.SendEvent(EventCode.EntityExit, exitEvent);
                     }
 

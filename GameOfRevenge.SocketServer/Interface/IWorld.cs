@@ -3,6 +3,7 @@ using System.Threading.Tasks;
 using ExitGames.Concurrency.Fibers;
 using GameOfRevenge.Common.Models;
 using GameOfRevenge.Common.Models.Kingdom;
+using GameOfRevenge.Common.Models.Monster;
 using GameOfRevenge.GameHandlers;
 using GameOfRevenge.Model;
 
@@ -20,7 +21,7 @@ namespace GameOfRevenge.Interface
         IPlayersManager PlayersManager { get; }
 
         List<PlayerID> WorldPlayers { get; }
-        List<EntityID> WorldMonsters { get; }
+        List<MonsterTable> WorldMonsters { get; }
         List<ZoneFortressTable> WorldForts { get; }
 
         IFiber WorldFiber { get; }

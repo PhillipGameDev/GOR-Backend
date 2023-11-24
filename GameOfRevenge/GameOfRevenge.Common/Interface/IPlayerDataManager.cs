@@ -1,6 +1,7 @@
 ﻿using System.Collections.Generic;
 using System.Threading.Tasks;
 using GameOfRevenge.Common.Models;
+using GameOfRevenge.Common.Models.Kingdom;
 using GameOfRevenge.Common.Net;
 
 namespace GameOfRevenge.Common.Interface
@@ -11,7 +12,10 @@ namespace GameOfRevenge.Common.Interface
         Task<Response<List<PlayerDataTable>>> GetAllPlayerData(int playerId, DataType type, int valueId);
 
         Task<Response> AddOrUpdateAllPlayerData(List<PlayerDataTable> playerDatas);
-//        Task<Response<PlayerDataTable>> AddOrUpdatePlayerData(int playerId, DataType type, int valueId, string value);
+        //        Task<Response<PlayerDataTable>> AddOrUpdatePlayerData(int playerId, DataType type, int valueId, string value);
+
+        Task<Response<BattleHistory>> AddBattleHistory(int playerId, bool isAttacker, string history);
+        Task<Response<BattleHistory>> GetBattleHistory(int id);
 
         Task<Response<PlayerDataTableUpdated>> AddOrUpdatePlayerData(int playerId, DataType type, int valueId, string value, bool unique = true);
 

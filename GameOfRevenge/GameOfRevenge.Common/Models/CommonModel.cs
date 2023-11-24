@@ -13,6 +13,8 @@ namespace GameOfRevenge.Common.Models
         public BattlePower AttackerPower { get; set; }
         public BattlePower DefenderPower { get; set; }
 
+        public BattleReplay Replay { get; set; }
+
         public int State { get; set; }
     }
 

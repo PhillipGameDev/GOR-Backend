@@ -7,6 +7,8 @@ using GameOfRevenge.Common.Interface.UserData;
 using GameOfRevenge.Common.Models.Inventory;
 using GameOfRevenge.Common.Net;
 using System;
+using Microsoft.AspNetCore.Authorization;
+using GameOfRevenge.Business.CacheData;
 
 namespace GameOfRevenge.WebServer.Controllers.Api
 {
@@ -28,6 +30,10 @@ namespace GameOfRevenge.WebServer.Controllers.Api
             var response = await itemManager.GetUserAllItems(Token.PlayerId);
             return ReturnResponse(response);
         }
+
+        [HttpGet]
+        [AllowAnonymous]
+        public IActionResult GetAllItems() => ReturnResponse(CacheItemManager.AllItems);
 
         [HttpPost]
         public async Task<IActionResult> ConsumeItem(long playerDataId, int count, string context = null)

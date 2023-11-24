@@ -50,6 +50,12 @@ namespace GameOfRevenge.Business.CacheData
             isLoaded = true;
         }
 
+        public static void LoadCacheMemory()
+        {
+            var tsk = LoadCacheMemoryAsync();
+            tsk.Wait();
+        }
+
         public static void CheckCacheMemory()
         {
             if (isLoaded) return;

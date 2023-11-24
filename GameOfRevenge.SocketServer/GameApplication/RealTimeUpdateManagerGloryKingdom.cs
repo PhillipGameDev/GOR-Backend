@@ -160,8 +160,8 @@ namespace GameOfRevenge.GameApplication
             };
             var json = JsonConvert.SerializeObject(fortressData);
             var resp = await GameService.BKingdomManager.UpdateZoneFortress(fortressId,
-                    hitPoints: fortressPower.HitPoints, attack: fortressPower.TempAttack,
-                    defense: fortressPower.TempDefense, finished: false, data: json);
+                    hitPoints: fortressPower.HitPoints, attack: fortressPower.AttackCalc,
+                    defense: fortressPower.DefenseCalc, finished: false, data: json);
             if (!resp.IsSuccess) log.Info("Error reinitializing zone fortress "+fortressId);
         }
 

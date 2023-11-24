@@ -19,6 +19,7 @@ using GameOfRevenge.Business.CacheData;
 using GameOfRevenge.Business.Manager.Base;
 using GameOfRevenge.Business.Manager.Kingdom;
 using GameOfRevenge.Common.Net;
+using GameOfRevenge.Business.Manager.GameDef;
 
 namespace GameOfRevenge.Business.Manager.UserData
 {
@@ -31,6 +32,7 @@ namespace GameOfRevenge.Business.Manager.UserData
         private readonly IUserResourceManager resManager = new UserResourceManager();
         private readonly IUserStructureManager structManager = new UserStructureManager();
         public readonly IKingdomManager kingdomManager = new KingdomManager();
+        public readonly IMonsterManager monsterManager = new MonsterManager();
 
         private Random randm = new Random();
 
@@ -401,7 +403,7 @@ namespace GameOfRevenge.Business.Manager.UserData
 
         public async Task<BattleReport> FinishBattleData(PlayerCompleteData attackerData, BattlePower attackerPower,
                                                         PlayerCompleteData defenderData, BattlePower defenderPower,
-                                                        MarchingArmy marchingArmy)
+                                                        MarchingArmy marchingArmy, BattleReplay replay)
         {
             log.Debug("------------FINISH BATTLE SIMULATION " + attackerPower.EntityId + " vs " + defenderPower.EntityId);
             //TODO: implement atkHealingBoost, defHealingBoost percentage based on level (maybe we need to add level to item)
@@ -473,11 +475,35 @@ namespace GameOfRevenge.Business.Manager.UserData
             var response = await manager.UpdatePlayerDataID(attackerPower.EntityId, marchingArmy.MarchingId, json);
             if (!response.IsSuccess) log.Debug("Error updating marching data "+response.Message);
 
+            replay.Attacker = report.Attacker;
+            replay.Defender = report.Defender;
+            replay.WinnerId = report.WinnerId;
+
+            json = JsonConvert.SerializeObject(replay);
+            var resp = await manager.AddBattleHistory(attackerPower.EntityId, true, json);
+            if (!resp.IsSuccess) log.Debug("Error inserting attacker battle history " + response.Message);
+
+            report.Attacker.ReplayDataId = resp.Data.Id;
+
+            if (marchingArmy.MarchingType == MarchingType.AttackPlayer)
+            {
+                json = JsonConvert.SerializeObject(replay);
+                resp = await manager.AddBattleHistory(defenderPower.EntityId, false, json);
+                if (!resp.IsSuccess) log.Debug("Error inserting defender battle history " + resp.Message);
+
+                report.Defender.ReplayDataId = resp.Data.Id;
+            }
+
             //SAVE DEFENDER REPORT
             if (marchingArmy.MarchingType == MarchingType.AttackPlayer)
             {
                 log.Debug("ApplyDefenderChangesAndSendReport!!!");
                 await ApplyDefenderChangesAndSendReport(report);
+            }
+            else if (marchingArmy.MarchingType == MarchingType.AttackMonster)
+            {
+                log.Debug("ApplyMonsterChanges!!");
+                await ApplyMonsterChanges(report);
             }
             else if (marchingArmy.MarchingType == MarchingType.AttackGloryKingdom)
             {
@@ -528,6 +554,7 @@ namespace GameOfRevenge.Business.Manager.UserData
 
         private void GiveLoot(PlayerCompleteData defenderData, BattlePower attackerPower, BattleReport report, bool heroReward)
         {
+            const int minAmount = 1000;
             long loadAmount = (long)(attackerPower.TotalLoad / 6);
             long oreLoad = loadAmount;
             long woodLoad = loadAmount * 2;
@@ -577,73 +604,66 @@ namespace GameOfRevenge.Business.Manager.UserData
                     wood += (defWood > remain) ? (int)remain : (int)defWood;
                 }
             }
-            if (food < 300) food = 300;
-            if (wood < 300) wood = 300;
+            if (food < minAmount) food = minAmount;
+            if (wood < minAmount) wood = minAmount;
 
 
-            var items = new BattleItem[]{BattleItem.NewItemResource(347, ResourceType.Food, 1000000),
-                                            BattleItem.NewItemResource(348, ResourceType.Food, 100000),
-                                            BattleItem.NewItemResource(349, ResourceType.Food, 10000),
-                                            BattleItem.NewItemResource(350, ResourceType.Food, 1000),
-                                            BattleItem.NewItemResource(351, ResourceType.Food, 300)};
-            var rewards = new List<DataReward>();
+            var items = new BattleItem[]{   BattleItem.NewItemResource(5, ResourceType.Food, 10000000),
+                                            BattleItem.NewItemResource(4, ResourceType.Food, 1000000),
+                                            BattleItem.NewItemResource(3, ResourceType.Food, 100000),
+                                            BattleItem.NewItemResource(2, ResourceType.Food, 10000),
+                                            BattleItem.NewItemResource(1, ResourceType.Food, 1000)};
+            var rewards = new List<ItemData>();
             var foodItems = Split(items, food, 2);
-            food = 0;
             foreach (var item in foodItems)
             {
-                rewards.Add(new DataReward(item.Id, 0, item.DataType, item.ItemType, item.Value, item.Count));
-                food += (item.Value * item.Count);
+                rewards.Add(new ItemData(item.Id, item.Count));
             }
 
-            items = new BattleItem[]{BattleItem.NewItemResource(367, ResourceType.Wood, 1000000),
-                                            BattleItem.NewItemResource(352, ResourceType.Wood, 100000),
-                                            BattleItem.NewItemResource(353, ResourceType.Wood, 10000),
-                                            BattleItem.NewItemResource(354, ResourceType.Wood, 1000),
-                                            BattleItem.NewItemResource(355, ResourceType.Wood, 300)};
+            items = new BattleItem[]{       BattleItem.NewItemResource(10, ResourceType.Wood, 10000000),
+                                            BattleItem.NewItemResource(9, ResourceType.Wood, 1000000),
+                                            BattleItem.NewItemResource(8, ResourceType.Wood, 100000),
+                                            BattleItem.NewItemResource(7, ResourceType.Wood, 10000),
+                                            BattleItem.NewItemResource(6, ResourceType.Wood, 1000)};
             var woodItems = Split(items, wood, 2);
-            wood = 0;
             foreach (var item in woodItems)
             {
-                rewards.Add(new DataReward(item.Id, 0, item.DataType, item.ItemType, item.Value, item.Count));
-                wood += (item.Value * item.Count);
+                rewards.Add(new ItemData(item.Id, item.Count));
             }
 
-            items = new BattleItem[]{BattleItem.NewItemResource(356, ResourceType.Ore, 10000),
-                                            BattleItem.NewItemResource(357, ResourceType.Ore, 1000),
-                                            BattleItem.NewItemResource(358, ResourceType.Ore, 300),
-                                            BattleItem.NewItemResource(359, ResourceType.Ore, 100)};
+            items = new BattleItem[]{BattleItem.NewItemResource(15, ResourceType.Ore, 1000000),
+                                            BattleItem.NewItemResource(14, ResourceType.Ore, 100000),
+                                            BattleItem.NewItemResource(13, ResourceType.Ore, 10000),
+                                            BattleItem.NewItemResource(12, ResourceType.Ore, 1000),
+                                            BattleItem.NewItemResource(11, ResourceType.Ore, 100)};
             var oreItems = Split(items, ore, 2);
-            ore = 0;
             foreach (var item in oreItems)
             {
-                rewards.Add(new DataReward(item.Id, 0, item.DataType, item.ItemType, item.Value, item.Count));
-                ore += (item.Value * item.Count);
+                rewards.Add(new ItemData(item.Id, item.Count));
             }
 
-            items = new BattleItem[]{BattleItem.NewItemCustom(360, 1, 10000),
-                                            BattleItem.NewItemCustom(361, 1, 1000),
-                                            BattleItem.NewItemCustom(362, 1, 100),
-                                            BattleItem.NewItemCustom(363, 1, 10)};
-            var maxRewardValue = 10;
+            var resourceCount = rewards.Count;
+
+            items = new BattleItem[]{       BattleItem.NewItemCustom(103, 1, 100000),
+                                            BattleItem.NewItemCustom(102, 1, 10000),
+                                            BattleItem.NewItemCustom(101, 1, 1000),
+                                            BattleItem.NewItemCustom(100, 1, 100)};
+            var maxRewardValue = 100;
             var kingExpItems = Split(items, maxRewardValue, 2);
             foreach (var item in kingExpItems)//king experience 10
             {
-                rewards.Add(new DataReward(item.Id, 0, item.DataType, item.ItemType, item.Value, item.Count));
+                rewards.Add(new ItemData(item.Id, item.Count));
             }
 
             if (heroReward)
             {
-                rewards.Add(new DataReward(366, 0, DataType.Custom, (int)CustomRewardType.HeroPoints, 1, 1));//hero points 1
+                rewards.Add(new ItemData(115, 1));
             }
             report.Attacker.Items = rewards;
 
             if (defenderData != null)
             {
-                rewards = new List<DataReward>();
-                if (food != 0) rewards.Add(new DataReward(0, 0, DataType.Resource, (int)ResourceType.Food, -food, 1));
-                if (wood != 0) rewards.Add(new DataReward(0, 0, DataType.Resource, (int)ResourceType.Wood, -wood, 1));
-                if (ore != 0) rewards.Add(new DataReward(0, 0, DataType.Resource, (int)ResourceType.Ore, -ore, 1));
-                report.Defender.Items = rewards;
+                report.Defender.Items = rewards.Take(resourceCount).Select(e => new ItemData(e.ItemId, -e.Count)).ToList();
             }
         }
 
@@ -768,20 +788,24 @@ namespace GameOfRevenge.Business.Manager.UserData
 
                 if (defenderPower.Items != null)
                 {
+                    var AllItems = CacheItemManager.AllItems;
+
                     var food = 0;
                     var wood = 0;
                     var ore = 0;
                     foreach (var item in defenderPower.Items)
                     {
-                        if (item.DataType != DataType.Resource) continue;
+                        var itemInfo = AllItems.First(e => e.Id == item.ItemId);
 
-                        switch ((ResourceType)item.ValueId)
+                        if (itemInfo.DataType != DataType.Resource) continue;
+
+                        switch ((ResourceType)itemInfo.ValueId)
                         {
-                            case ResourceType.Food: food += item.Value * item.Count; break;
-                            case ResourceType.Wood: wood += item.Value * item.Count; break;
-                            case ResourceType.Ore: ore += item.Value * item.Count; break;
+                            case ResourceType.Food: food += itemInfo.Value * item.Count; break;
+                            case ResourceType.Wood: wood += itemInfo.Value * item.Count; break;
+                            case ResourceType.Ore: ore += itemInfo.Value * item.Count; break;
                         }
-                        log.Debug("defender item = " + item.RewardId + "  " + item.DataType + " " + item.ValueId + "  " + item.Value + "  " + item.Count);
+                        log.Debug("defender item = " + item.ItemId + "  " + itemInfo.DataType + " " + itemInfo.ValueId + "  " + itemInfo.Value + "  " + item.Count);
                     }
                     var respResources = await resManager.SumMainResource(defenderId, food, wood, ore, 0, 0);
                     if (!respResources.IsSuccess)
@@ -805,6 +829,15 @@ namespace GameOfRevenge.Business.Manager.UserData
             };
 
             return true;
+        }
+
+        private async Task<bool> ApplyMonsterChanges(BattleReport report)
+        {
+            var defenderPower = (BattlePower)report.Defender;
+
+            var resp = await monsterManager.UpdateMonsterHealth(defenderPower.EntityId, defenderPower.TroopChanges.First().MonsterHP);
+
+            return resp.IsSuccess;
         }
 
         private async Task<bool> ApplyGloryKingdomChanges(BattleReport report)
@@ -865,8 +898,8 @@ namespace GameOfRevenge.Business.Manager.UserData
             }
             var json = JsonConvert.SerializeObject(data);
             var updateResp = await kingdomManager.UpdateZoneFortress(defenderPower.EntityId,
-                    hitPoints: defenderPower.HitPoints, attack: defenderPower.TempAttack,
-                    defense: defenderPower.TempDefense, playerId: playerId, data: json);
+                    hitPoints: defenderPower.HitPoints, attack: defenderPower.AttackCalc,
+                    defense: defenderPower.DefenseCalc, playerId: playerId, data: json);
 
             return updateResp.IsSuccess;
         }
@@ -1050,11 +1083,18 @@ namespace GameOfRevenge.Business.Manager.UserData
                 }*/
                 if (report.Attacker.Items != null)
                 {
+                    var rewards = new List<DataReward>();
+
                     foreach (var item in report.Attacker.Items)
                     {
-                        log.Debug("attacker item = " + item.RewardId + "  " + item.DataType+" "+ item.ValueId +"  "+ item.Value + "  " + item.Count);
+                        rewards.Add(new DataReward()
+                        {
+                            ItemId = item.ItemId,
+                            Count = item.Count
+                        });
+                        log.Debug("attacker item = " + item.ItemId + ", " + item.Count);
                     }
-                    var resp = await UserQuestManager.CollectRewards(report.Attacker.EntityId, report.Attacker.Items);
+                    var resp = await UserQuestManager.CollectRewards(report.Attacker.EntityId, rewards);
                 }
 
                 try
@@ -1288,7 +1328,7 @@ namespace GameOfRevenge.Business.Manager.UserData
             if (infirmaryCapacity < 0) infirmaryCapacity = 0;
             foreach (var troop in troopBattle.TroopChanges)
             {
-                int survived = (int)Math.Ceiling(troop.RemainUnits);
+                int survived = troop.Count;
                 troopBattle.TotalLoad += survived * troop.LoadPerUnit;
                 troopBattle.TotalArmy += troop.InitialCount;
 

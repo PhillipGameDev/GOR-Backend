@@ -1,4 +1,5 @@
-﻿using System;
+﻿using GameOfRevenge.Common.Models.Kingdom;
+using System;
 using System.Collections.Generic;
 using System.Runtime.Serialization;
 
@@ -20,7 +21,9 @@ namespace GameOfRevenge.Common.Models
     public class TroopInfos
     {
         public long Id { get; set; }
+        public BattleTroopType TroopMainType { get; set; }
         public TroopType TroopType { get; set; }
+        public MonsterType MonsterType { get; set; }
         public List<TroopDetails> TroopData { get; set; }
 
         public TroopInfos()

@@ -15,6 +15,8 @@
         UpdateMarchingArmyEvent = 11,
         EntityEnter = 12,
         EntityExit = 13,
-        HelpStructure = 14
+        HelpStructure = 14,
+        FortressStatus = 15,
+        BattleResult = 16
     }
 }

@@ -11,6 +11,9 @@ using GameOfRevenge.Common;
 using GameOfRevenge.Common.Models.Structure;
 using GameOfRevenge.Common.Models.Hero;
 using GameOfRevenge.Business.Manager.Base;
+using GameOfRevenge.Common.Interface;
+using GameOfRevenge.Business.Manager.UserData;
+using GameOfRevenge.Common.Models.Kingdom;
 
 namespace GameOfRevenge.WebServer.Controllers.Api
 {
@@ -26,6 +29,7 @@ namespace GameOfRevenge.WebServer.Controllers.Api
         private readonly IInstantProgressManager instantProgressManager;
         private readonly IUserHeroManager userHeroManager;
         private readonly IUserFriendsManager userFriendsManager;
+        private readonly IPlayerDataManager playerDataManager;
 
         private readonly ILogger<PlayerController> _logger;
 
@@ -33,7 +37,7 @@ namespace GameOfRevenge.WebServer.Controllers.Api
                                 IUserInventoryManager userInventoryManager, IUserActiveBoostsManager userActiveBoostManager,
                                 IUserTechnologyManager userTechnologyManager, IUserTroopManager userTroopManager,
                                 IInstantProgressManager instantProgressManager, IUserHeroManager userHeroManager,
-                                IUserFriendsManager userFriendsManager, ILogger<PlayerController> logger)
+                                IUserFriendsManager userFriendsManager, IPlayerDataManager playerDataManager, ILogger<PlayerController> logger)
         {
             userManager = userResourceManager;
             this.userResourceManager = userResourceManager;
@@ -45,6 +49,7 @@ namespace GameOfRevenge.WebServer.Controllers.Api
             this.instantProgressManager = instantProgressManager;
             this.userHeroManager = userHeroManager;
             this.userFriendsManager = userFriendsManager;
+            this.playerDataManager = playerDataManager;
             _logger = logger;
         }
 
@@ -73,7 +78,25 @@ namespace GameOfRevenge.WebServer.Controllers.Api
             return ReturnResponse(response);
         }
 
-#region Gate
+        #region Battle
+        [HttpGet]
+        public async Task<PlayerDataTable> GetPlayerData(long playerDataId)
+        {
+            var resp = await playerDataManager.GetPlayerDataById(playerDataId);
+
+            return resp.Data;
+        }
+
+        [HttpGet]
+        public async Task<BattleHistory> GetBattleHistory(int id)
+        {
+            var resp = await playerDataManager.GetBattleHistory(id);
+
+            return resp.Data;
+        }
+        #endregion
+
+        #region Gate
         [HttpGet]
         public async Task<IActionResult> GetGateHp() => ReturnResponse(await userStructureManager.GetGateHp(Token.PlayerId));
 

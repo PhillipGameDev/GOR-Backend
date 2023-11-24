@@ -87,13 +87,11 @@ namespace GameOfRevenge.GameHandlers
                     dist = world.GetDistance(attacker.WorldRegion, Enemy.WorldRegion);
                     break;
                 case EntityType.Monster:
-                    //                request.TargetId; //moster id
-                    //attacker.World.WorldMonsters.Find(x => x.EntityId == request.TargetId);
-
-                    targetId = request.TargetId;//TODO: set monster id from database
-                    var targetX = (targetId % 2000);
-                    var targetY = (targetId - targetX) / 2000;
-                    log.Debug("@@@@@@@@ x:"+targetX+"  y:"+targetY);
+                    var monster = world.WorldMonsters.Find(e => e.Id == request.TargetId);
+                    targetId = monster.Id;//TODO: set monster id from database
+                    var targetX = monster.X;
+                    var targetY = monster.Y;
+                    log.Debug("@@@@@@@@ MONSTER x:"+targetX+"  y:"+targetY);
                     dist = world.GetDistance(attacker.WorldRegion.X, attacker.WorldRegion.Y, targetX, targetY);
                     break;
                 case EntityType.Fortress:
