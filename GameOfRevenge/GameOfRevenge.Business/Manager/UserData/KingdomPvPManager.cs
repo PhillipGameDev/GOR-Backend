@@ -745,19 +745,21 @@ namespace GameOfRevenge.Business.Manager.UserData
                     success = false;
                 }
             }
-            await SendSimpleMail(targetPlayerData.PlayerId, "Reinforcements Arrived", message);
+            await SendSimpleMail(playerData, targetPlayerData.PlayerId, "Reinforcements Arrived", message);
 
             return success;
         }
 
-        public async Task SendSimpleMail(int targetPlayerId, string subject, string message)
+        public async Task SendSimpleMail(PlayerCompleteData fromPlayer, int targetPlayerId, string subject, string message)
         {
             try
             {
                 var mail = new MailMessage()
                 {
                     Subject = subject,
-                    Message = message
+                    Message = message,
+                    SenderId = fromPlayer.PlayerId,
+                    SenderName = fromPlayer.PlayerName
                 };
                 var json = JsonConvert.SerializeObject(mail);
                 await mailManager.SendMail(targetPlayerId, MailType.Message, json);
@@ -773,13 +775,10 @@ namespace GameOfRevenge.Business.Manager.UserData
             var defenderDataResp = await manager.GetAllPlayerData(defenderId);
             if (!defenderDataResp.IsSuccess || !defenderDataResp.HasData) return false;
 
-            log.Info("Report -- 2");
-
             var msg = JsonConvert.SerializeObject(report);
 
             //SAVE PROCESS
             var playerTroops = GetUserPlayerTroops(defenderId, defenderDataResp.Data);
-            log.Info("Report -- 3");
             try
             {
                 await ApplyTroopChanges(playerTroops, defenderPower.TroopChanges, SAVE);
@@ -787,7 +786,6 @@ namespace GameOfRevenge.Business.Manager.UserData
             {
                 log.Error(exp.Message);
             }
-            log.Info("Report -- 4");
             if (SAVE)
             {
                 var response = await structManager.UpdateGate(defenderId, defenderPower.GateHP);
@@ -795,8 +793,6 @@ namespace GameOfRevenge.Business.Manager.UserData
                 {
                     log.Debug(response.Message);
                 }
-
-                log.Info("Report -- 5");
 
                 if (defenderPower.Items != null)
                 {
@@ -817,16 +813,13 @@ namespace GameOfRevenge.Business.Manager.UserData
                             case ResourceType.Wood: wood += itemInfo.Value * item.Count; break;
                             case ResourceType.Ore: ore += itemInfo.Value * item.Count; break;
                         }
-                        log.Debug("defender item = " + item.ItemId + "  " + itemInfo.DataType + " " + itemInfo.ValueId + "  " + itemInfo.Value + "  " + item.Count);
                     }
 
-                    log.Info("Report -- 6");
                     var respResources = await resManager.SumMainResource(defenderId, food, wood, ore, 0, 0);
                     if (!respResources.IsSuccess)
                     {
                         log.Debug(respResources.Message);
                     }
-                    log.Info("Report -- 7");
                 }
 
                 try

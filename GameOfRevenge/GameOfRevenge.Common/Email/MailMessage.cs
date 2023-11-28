@@ -9,6 +9,12 @@ namespace GameOfRevenge.Common.Email
         public string Subject;
         [DataMember]
         public string Message;
+        [DataMember]
+        public int SenderId;
+        [DataMember]
+        public string SenderName;
+
+        public string Date;
 
         public MailMessage()
         {

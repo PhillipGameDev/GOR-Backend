@@ -26,6 +26,15 @@ namespace GameOfRevenge.Business.Manager.UserData
             });
         }
 
+        public async Task<Response<List<MailTable>>> GetAllMail(int playerId, DateTime lastTime)
+        {
+            return await Db.ExecuteSPMultipleRow<MailTable>("GetAllMail", new Dictionary<string, object>()
+            {
+                { "PlayerId", playerId },
+                { "LastTime", lastTime }
+            });
+        }
+
         public async Task<Response> ReadMail(int mailId)
         {
             return await Db.ExecuteSPNoData("ReadMail", new Dictionary<string, object>()

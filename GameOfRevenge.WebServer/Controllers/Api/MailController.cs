@@ -42,7 +42,9 @@ namespace GameOfRevenge.WebServer.Controllers.Api
             var mailMessage = new MailMessage()
             {
                 Subject = subject,
-                Message = message
+                Message = message,
+                SenderId = Token.PlayerId,
+                SenderName = Token.PlayerIdentifier
             };
             string content = null;
             try
