@@ -12,6 +12,6 @@ namespace GameOfRevenge.Common.Interface
         Task<Response> ReadMail(int mailId);
         Task<Response> SaveMail(int mailId, bool saved);
         Task<Response> DeleteMail(int mailId);
-        Task<Response<List<MailTable>>> GetAllMail(int playerId, DateTime? lastTime);
+        Task<Response<List<MailTable>>> GetAllMail(int playerId, int? lastId);
     }
 }

@@ -65,9 +65,9 @@ namespace GameOfRevenge.WebServer.Controllers.Api
         }
 
         [HttpGet]
-        public async Task<IActionResult> GetAllMail(DateTime? lastTime)
+        public async Task<IActionResult> GetAllMail(int? lastId)
         {
-            var response = await mailManager.GetAllMail(Token.PlayerId, lastTime);
+            var response = await mailManager.GetAllMail(Token.PlayerId, lastId);
             return ReturnResponse(response);
         }
     }
