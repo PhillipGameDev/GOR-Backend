@@ -342,7 +342,13 @@ namespace GameOfRevenge.Business.Manager.UserData
 //                    multiplier = (Math.Ceiling(troopInfo.TimeLeft / 30f) * 30) / troopInfo.Duration;
                     // trainingCount = troopInfo.Count;
                     cost = (int)Math.Ceiling(troopInfo.TimeLeft / 60f) * 3;
+                } else
+                {
+                    var troopData = CacheTroopDataManager.TroopInfos.First(e => e.Info.Code == type).Levels.First(e => e.Data.Level == troopLevel).Data;
+                    cost = (int)Math.Ceiling((troopData.TraningTime * count) / 60f) * 3;
                 }
+
+                log.Info("Instant Recruit Gem Count: " + cost);
 
 //                var cost = RecruitCost(type, troopLevel, trainingCount);
                 var finalCost = (int)Math.Ceiling(cost * multiplier);
