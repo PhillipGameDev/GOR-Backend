@@ -21,6 +21,7 @@ namespace GameOfRevenge.Common.Models
         public int AllianceId { get; set; }
         public DateTime RegisteredDate { get; set; }
         public DateTime LastLogin { get; set; }
+        public int WorldTileId { get; set; }
 
         [JsonIgnore]
         public int VIPLevel => UserVIPDetails.VIPLevel(VIPPoints);
@@ -41,7 +42,8 @@ namespace GameOfRevenge.Common.Models
             VIPPoints = reader.GetValue(index) == DBNull.Value ? 0 : reader.GetInt32(index); index++;
             AllianceId = reader.GetValue(index) == DBNull.Value ? 0 : reader.GetInt32(index); index++;
             RegisteredDate = reader.GetValue(index) == DBNull.Value ? new DateTime() : reader.GetDateTime(index); index++;
-            LastLogin = reader.GetValue(index) == DBNull.Value ? new DateTime() : reader.GetDateTime(index);
+            LastLogin = reader.GetValue(index) == DBNull.Value ? new DateTime() : reader.GetDateTime(index); index++;
+            WorldTileId = reader.GetValue(index) == DBNull.Value ? 0 : reader.GetInt32(index);
         }
     }
 }

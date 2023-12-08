@@ -10,11 +10,13 @@ namespace GameOfRevenge.WebServer.Controllers.Api
     {
         private readonly IMonsterManager monsterManager;
         private readonly IPlayerDataManager playerDataManager;
+        private readonly IAccountManager accountManager;
 
-        public MonsterController(IMonsterManager monsterManager, IPlayerDataManager playerDataManager)
+        public MonsterController(IMonsterManager monsterManager, IPlayerDataManager playerDataManager, IAccountManager accountManager)
         {
             this.monsterManager = monsterManager;
             this.playerDataManager = playerDataManager;
+            this.accountManager = accountManager;
         }
 
         #region Monsters
@@ -25,7 +27,9 @@ namespace GameOfRevenge.WebServer.Controllers.Api
         [HttpGet]
         public async Task<IActionResult> GetAllWorldMonsters()
         {
-            var response = await monsterManager.GetMonstersByWorldTileId(Token.WorldTileId);
+            var resp = accountManager.GetAccountInfo(Token.PlayerId);
+            var playerInfo = resp.Result.Data;
+            var response = await monsterManager.GetMonstersByWorldTileId(playerInfo.WorldTileId);
             return ReturnResponse(response);
         }
         #endregion
