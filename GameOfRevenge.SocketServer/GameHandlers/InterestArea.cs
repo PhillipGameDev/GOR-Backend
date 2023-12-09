@@ -55,8 +55,8 @@ namespace GameOfRevenge.GameHandlers
             var ecXPos = CameraRegion.X + GlobalConst.PadTilesX;
             var ecYPos = CameraRegion.Y + GlobalConst.PadTilesY;
 
-            var scXPos = CameraRegion.X - GlobalConst.PadTilesX;
-            var scYPos = CameraRegion.Y - GlobalConst.PadTilesY;
+            var scXPos = CameraRegion.X - GlobalConst.PadTilesX / 2;
+            var scYPos = CameraRegion.Y - GlobalConst.PadTilesY / 2;
             var eC = new Vector(Math.Min(maxPosX - 1, ecXPos), Math.Min(maxPosX - 1, ecYPos));    // last cordinate position of tiles which is part of IA
             var sC = new Vector(Math.Max(0, scXPos), Math.Max(0, scYPos));   //start cordinate position of tiles which is part of IA
 
