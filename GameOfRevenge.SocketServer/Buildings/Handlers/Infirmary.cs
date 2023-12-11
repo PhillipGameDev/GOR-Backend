@@ -74,7 +74,7 @@ namespace GameOfRevenge.Buildings.Handlers
                             continue;
                         }
 
-                        log.InfoFormat("Error in RecoverWounded {0} {1} ", recoverResponse.Result.Message);
+                        log.InfoFormat("Error in RecoverWounded {0}", recoverResponse.Result.Message);
                         throw new Exception(recoverResponse.Result.Message);
                     }
                 }

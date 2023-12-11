@@ -316,10 +316,13 @@ namespace GameOfRevenge.GameHandlers
                 }
             }
 
-            if (actor != null) actor.SendEvent(EventCode.MarchingResult, result);
+            // if (actor != null) actor.SendEvent(EventCode.MarchingResult, result);
 
             if (notify == RealTimeUpdateManager.NOTIFY_ALL)
             {
+                actor = PlayersManager.GetPlayer(result.AttackerId);
+                if (actor != null) actor.SendEvent(EventCode.MarchingResult, result);
+
                 actor = PlayersManager.GetPlayer(result.TargetId);
                 if (actor != null) actor.SendEvent(EventCode.MarchingResult, result);
             } else if (notify == RealTimeUpdateManager.NOTIFY_ATTACKER)
@@ -327,16 +330,26 @@ namespace GameOfRevenge.GameHandlers
                 actor = PlayersManager.GetPlayer(result.AttackerId);
                 if (actor != null)
                 {
-                    actor.SendEvent(EventCode.BattleResult, result);
-
-                    if (marchingArmy.MarchingType == MarchingType.AttackMonster && result.WinnerId == result.AttackerId)
+                    if (data.State == 3)
                     {
-                        WorldMonsters.RemoveAll(e => e.Id == result.TargetId);
+                        actor.SendEvent(EventCode.BattleResult, result);
 
-                        var exitEvent = new EntityExitResponse((byte)EntityType.Monster, result.TargetId);
-                        actor.SendEvent(EventCode.EntityExit, exitEvent);
+                        if (marchingArmy.MarchingType == MarchingType.AttackMonster && result.WinnerId == result.AttackerId)
+                        {
+                            WorldMonsters.RemoveAll(e => e.Id == result.TargetId);
+
+                            var exitEvent = new EntityExitResponse((byte)EntityType.Monster, result.TargetId);
+                            actor.BroadcastEventToAllUsers(EventCode.EntityExit, exitEvent);
+                        }
+                    } else if (data.State == 5)
+                    {
+                        actor.SendEvent(EventCode.MarchingResult, result);
                     }
                 }
+            } else if (notify == RealTimeUpdateManager.NOTIFY_TARGET)
+            {
+                actor = PlayersManager.GetPlayer(result.TargetId);
+                if (actor != null) actor.SendEvent(EventCode.MarchingResult, result);
             }
 
             if (marchingArmy.MarchingType == MarchingType.ReinforcementPlayer)
