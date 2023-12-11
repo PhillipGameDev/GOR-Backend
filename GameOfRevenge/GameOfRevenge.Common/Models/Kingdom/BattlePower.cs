@@ -339,20 +339,20 @@ namespace GameOfRevenge.Common.Models.Kingdom
             BattleStep prevStep = null;
             BattleStep currentStep = new BattleStep();
 
-            do
+            foreach (var troop in replay.Troops)
+            {
+                currentStep.Troops.Add(new BattleStatus()
+                {
+                    TroopId = troop.Id,
+                    Health = troop.Health,
+                    AttackingId = -1 // Not Attack Status
+                });
+            }
+
+            while (currentStep.Troops.Where(t => replay.Troops.Find(r => r.Id == t.TroopId).IsAttacker).Sum(t => t.Health) > 0
+               && currentStep.Troops.Where(t => !replay.Troops.Find(r => r.Id == t.TroopId).IsAttacker).Sum(t => t.Health) > 0)
             {
                 // Find Targets
-                if (prevStep == null) {
-                    foreach (var troop in replay.Troops)
-                    {
-                        currentStep.Troops.Add(new BattleStatus()
-                        {
-                            TroopId = troop.Id,
-                            Health = troop.Health,
-                            AttackingId = -1 // Not Attack Status
-                        });
-                    }
-                }
                 FindTarget(replay, currentStep, gateId);
 
                 // Calculate the battle result
@@ -362,8 +362,7 @@ namespace GameOfRevenge.Common.Models.Kingdom
                 replay.Steps.Add(JsonConvert.DeserializeObject<BattleStep>(JsonConvert.SerializeObject(currentStep)));
 
                 prevStep = currentStep;
-            } while (currentStep.Troops.Where(t => replay.Troops.Find(r => r.Id == t.TroopId).IsAttacker).Sum(t => t.Health) > 0 
-                    && currentStep.Troops.Where(t => !replay.Troops.Find(r => r.Id == t.TroopId).IsAttacker).Sum(t => t.Health) > 0);
+            }
 
             SyncBattleStatus(replay, currentStep, attackerPower, defenderPower);
         }
