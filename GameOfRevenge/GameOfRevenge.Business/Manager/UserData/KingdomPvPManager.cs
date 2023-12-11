@@ -1020,7 +1020,7 @@ namespace GameOfRevenge.Business.Manager.UserData
                 }
             }
 
-            var msg = JsonConvert.SerializeObject(report);
+            // var msg = JsonConvert.SerializeObject(report);
 
             var playerTroops = GetUserPlayerTroops(attackerId, attackerDataResp.Data);
             await ApplyTroopChanges(playerTroops, marchingArmy.TroopChanges, SAVE);
@@ -1106,7 +1106,7 @@ namespace GameOfRevenge.Business.Manager.UserData
                     var resp = await UserQuestManager.CollectRewards(report.Attacker.EntityId, rewards);
                 }
 
-                try
+                /*try
                 {
                     var respMail = await mailManager.SendMail(attackerId, MailType.BattleReport, msg);
                     if (!respMail.IsSuccess)
@@ -1117,7 +1117,7 @@ namespace GameOfRevenge.Business.Manager.UserData
                 catch (Exception ex)
                 {
                     log.Debug(ex.Message);
-                }
+                }*/
             }
             return true;
         }

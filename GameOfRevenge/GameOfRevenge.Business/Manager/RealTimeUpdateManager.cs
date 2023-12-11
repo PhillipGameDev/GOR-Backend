@@ -8,6 +8,7 @@ using GameOfRevenge.Business.Manager.Base;
 using GameOfRevenge.Business.Manager.GameDef;
 using GameOfRevenge.Business.Manager.UserData;
 using GameOfRevenge.Common;
+using GameOfRevenge.Common.Email;
 using GameOfRevenge.Common.Interface;
 using GameOfRevenge.Common.Models;
 using GameOfRevenge.Common.Models.Boost;
@@ -15,6 +16,7 @@ using GameOfRevenge.Common.Models.Kingdom;
 using GameOfRevenge.Common.Models.PlayerData;
 using GameOfRevenge.Common.Models.Structure;
 using GameOfRevenge.Common.Services;
+using Newtonsoft.Json;
 
 namespace GameOfRevenge.Business.Manager
 {
@@ -26,6 +28,7 @@ namespace GameOfRevenge.Business.Manager
 
         private readonly KingdomPvPManager pvpManager = new KingdomPvPManager();
         private readonly MonsterManager monsterManager = new MonsterManager();
+        private readonly UserMailManager mailManager = new UserMailManager();
 
         protected readonly object SyncRoot = new object(); // that is for world user access
 
@@ -223,6 +226,20 @@ namespace GameOfRevenge.Business.Manager
                                 log.Debug("send attacker attack end event");
                                 attackResultCallback(item, NOTIFY_ATTACKER);
 
+                                // Send Mail to Attacker
+                                try
+                                {
+                                    var respMail = await mailManager.SendMail(item.Attacker.PlayerId, MailType.BattleReport, JsonConvert.SerializeObject(marchingArmy.Report));
+                                    if (!respMail.IsSuccess)
+                                    {
+                                        log.Debug(respMail.Message);
+                                    }
+                                }
+                                catch (Exception ex)
+                                {
+                                    log.Debug(ex.Message);
+                                }
+
                                 item.State++;
                             }
                             break;
@@ -248,6 +265,7 @@ namespace GameOfRevenge.Business.Manager
                                     //SAVE PLAYER REPORT
                                     log.Debug("ApplyAttackerChangesAndSendReport!!!");
                                     await pvpManager.ApplyAttackerChangesAndSendReport(marchingArmy);
+
                                     attackResultCallback(item, NOTIFY_ATTACKER);
                                 }
 
