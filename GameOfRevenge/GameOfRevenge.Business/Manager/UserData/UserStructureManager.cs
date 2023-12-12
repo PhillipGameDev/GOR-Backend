@@ -344,7 +344,7 @@ namespace GameOfRevenge.Business.Manager.UserData
 //            System.Console.WriteLine("building time = " + secs);
 
             Response<UserRecordBuilderDetails> currWorker = null;
-            if (secs > 0)
+            if (secs > 0 || createWorker)
             {
                 currWorker = await SetWorkerLocation(playerId, playerData.Data.Structures, playerData.Data.Workers, location, createWorker);
                 if (!currWorker.IsSuccess) return new Response<BuildingStructureData>(204, currWorker.Message);

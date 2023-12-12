@@ -131,22 +131,28 @@ namespace GameOfRevenge.Business.Manager.UserData
 
                 bool createWorker = false;
                 var cost = structureLevelData.Data.InstantBuildCost;
-                if (cost == 0)
-                {
-                    var freeWorkerFound = playerData.Workers.Exists(x => (x.TimeLeft(playerData.Structures) == 0));
-                    if (!freeWorkerFound)
-                    {
-                        if (playerData.Workers.Count >= 2) return new Response<BuildingStructureData>(200, "No worker available");
-                        cost = 1;
-                        createWorker = true;
-                    }
-                }
-                else//override cost based on remain time. 1minute = 3 gems
+                if (cost != 0)//override cost based on remain time. 1minute = 3 gems
                 {
                     cost = (int)Math.Ceiling(structureLevelData.Data.TimeToBuild / 60f) * 3;
                 }
+
+                var freeWorkerFound = playerData.Workers.Exists(x => (x.TimeLeft(playerData.Structures) == 0));
+                if (!freeWorkerFound)
+                {
+                    if (playerData.Workers.Count >= 2)
+                    {
+                        if (cost > 0) return new Response<BuildingStructureData>(200, "No worker available");
+                    }
+                    else
+                    {
+                        createWorker = true;
+                        if (cost == 0) cost = 99;
+                    }
+                }
+
                 if (cost > 0)
                 {
+
                     var playerGems = playerData.Resources.Gems;
                     if (playerGems < cost) throw new RequirementExecption("Not enough gems");
 
