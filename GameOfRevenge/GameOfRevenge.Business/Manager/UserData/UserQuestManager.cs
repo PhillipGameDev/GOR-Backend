@@ -303,10 +303,10 @@ namespace GameOfRevenge.Business.Manager.UserData
                     userChapter.Redeemed = chapterRedeemed.Redemeed;
                 }
 
-                var completedFound = false;
+                int len = questRewards.Count;
+                /*var completedFound = false;
                 var completedIdx = 0;
                 var lastIdx = -1;
-                int len = questRewards.Count;
                 for (var num = 0; num < len; num++)
                 {
                     var questData = questRewards[num].Quest;
@@ -323,7 +323,7 @@ namespace GameOfRevenge.Business.Manager.UserData
                         }
                     }
                 }
-                if (lastIdx == -1) lastIdx = completedIdx;
+                if (lastIdx == -1) lastIdx = completedIdx;*/
 
                 var moveNext = true;
                 for (var num = 0; num < len; num++)
@@ -342,12 +342,12 @@ namespace GameOfRevenge.Business.Manager.UserData
                         userQuest.ProgressData = questProgress.ProgressData;
                     }
 
-                    if (moveNext) moveNext = userQuest.Completed;
+                    if (!userQuest.Completed) moveNext = false;
 //                    if (!fullTree && !completed && (questProgress == null)) break;
 
                     userChapter.Quests.Add(userQuest);
 //                    if (!fullTree && !completed) break;
-                    if (!fullTree && (num == lastIdx)) break;
+                    // if (!fullTree && (num == lastIdx)) break;
                 }
 
                 chapterQuestRels.Add(userChapter);
