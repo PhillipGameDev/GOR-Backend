@@ -227,7 +227,7 @@ namespace GameOfRevenge.Business.Manager
                                 attackResultCallback(item, NOTIFY_ATTACKER);
 
                                 // Send Mail to Attacker
-                                try
+                                /*try
                                 {
                                     var respMail = await mailManager.SendMail(item.Attacker.PlayerId, MailType.BattleReport, JsonConvert.SerializeObject(marchingArmy.Report));
                                     if (!respMail.IsSuccess)
@@ -238,7 +238,7 @@ namespace GameOfRevenge.Business.Manager
                                 catch (Exception ex)
                                 {
                                     log.Debug(ex.Message);
-                                }
+                                }*/
 
                                 item.State++;
                             }
