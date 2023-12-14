@@ -358,7 +358,7 @@ namespace GameOfRevenge.GameHandlers
 //                await UpdatePlayerData(targetPlayerData);
             }
 
-            if (notifyAttacker)
+            if (notifyAttacker && data.State == 5)
             {
                 var task = manager.UpdatePlayerDataID(result.AttackerId, marchingArmy.MarchingId, string.Empty);
                 task.Wait();

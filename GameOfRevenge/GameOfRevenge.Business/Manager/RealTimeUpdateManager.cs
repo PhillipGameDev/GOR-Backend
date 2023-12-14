@@ -265,9 +265,9 @@ namespace GameOfRevenge.Business.Manager
                                     //SAVE PLAYER REPORT
                                     log.Debug("ApplyAttackerChangesAndSendReport!!!");
                                     await pvpManager.ApplyAttackerChangesAndSendReport(marchingArmy);
-
-                                    attackResultCallback(item, NOTIFY_ATTACKER);
                                 }
+
+                                attackResultCallback(item, NOTIFY_ATTACKER);
 
                                 log.Debug("** END ** " + item.AttackData.AttackerId + " vs " + item.AttackData.TargetId);
                                 lock (SyncRoot) attackInProgress.Remove(item);
