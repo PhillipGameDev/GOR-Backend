@@ -27,6 +27,7 @@ using GameOfRevenge.Model;
 using GameOfRevenge.Buildings.Handlers;
 using GameOfRevenge.Model.Common;
 using GameOfRevenge.Business;
+using GameOfRevenge.Common.Email;
 
 namespace GameOfRevenge.GameHandlers
 {
@@ -38,7 +39,6 @@ namespace GameOfRevenge.GameHandlers
 
         private readonly IUserTroopManager _userTroopManager = new UserTroopManager();
         private readonly IUserQuestManager questManager = new UserQuestManager();
-        private readonly IUserMailManager mailManager = new UserMailManager();
 
         private readonly string[][] badWords = new string[][]{
 new string[]{
@@ -96,6 +96,7 @@ new string[]{
                     case OperationCode.SendReinforcementsRequest: return await HandleSendReinforcementsRequest(peer, operationRequest); 
 
                     case OperationCode.WoundedHealReqeust: return HandleWoundedHealRequest(peer, operationRequest);//16
+                    case OperationCode.InstantWoundedHealReqeust: return HandleWoundedHealRequest(peer, operationRequest);//53
                     case OperationCode.WoundedHealTimerRequest: return HandleWoundedHealTimerStatus(peer, operationRequest);//17
                     case OperationCode.UpgradeTechnology: return UpgradeTechnologyRequest(peer, operationRequest);//18
                     case OperationCode.RepairGate: return RepairGateRequest(peer, operationRequest);//19
@@ -138,6 +139,8 @@ new string[]{
 
                     case OperationCode.CreateClan: return await HandleCreateClan(peer, operationRequest); //51
                     case OperationCode.DeleteClan: return await HandleDeleteClan(peer, operationRequest); //52
+
+                    case OperationCode.SendMail: return await HandleSendMessageRequest(peer, operationRequest); //52
 
                     default: return peer.SendOperation(operationRequest.OperationCode, ReturnCode.InvalidOperation);
                 }
@@ -806,6 +809,37 @@ new string[]{
             return peer.Broadcast(operationRequest.OperationCode, ReturnCode.OK);
         }
 
+        private async Task<SendResult> HandleSendMessageRequest(IGorMmoPeer peer, OperationRequest operationRequest)
+        {
+            log.Info("**************** HandleSendMessageRequest Start************************");
+            var operation = new MessageRequest(peer.Protocol, operationRequest);
+
+            var infoResp = await GameService.BAccountManager.GetAccountInfo(operation.SenderPlayerId);
+
+            if (!infoResp.IsSuccess) return peer.SendOperation(operationRequest.OperationCode, ReturnCode.InvalidOperation, debuMsg: infoResp.Message);
+
+            var mailMessage = new MailMessage()
+            {
+                Subject = operation.Subject,
+                Message = operation.Message,
+                SenderId = operation.SenderPlayerId,
+                SenderName = infoResp.Data.Name
+            };
+            string content = null;
+            try
+            {
+                content = JsonConvert.SerializeObject(mailMessage);
+            }
+            catch { }
+
+            var mailResp = await GameService.BMailManager.SendMail(operation.TargetPlayerId, MailType.Message, content);
+            if (!mailResp.IsSuccess) return peer.SendOperation(operationRequest.OperationCode, ReturnCode.InvalidOperation, debuMsg: mailResp.Message);
+
+            log.Info("**************** HandleSendMessageRequest End************************");
+
+            return peer.Broadcast(operationRequest.OperationCode, ReturnCode.OK);
+        }
+
         private async Task<SendResult> DeleteChat(IGorMmoPeer peer, OperationRequest operationRequest)
         {
             GameLobbyHandler.log.Info(">>>>>DELETE CHAT");
@@ -952,6 +986,21 @@ new string[]{
         }
 
         public SendResult HandleWoundedHealRequest(IGorMmoPeer peer, OperationRequest operationRequest)
+        {
+            var operation = new WoundedTroopHealRequest(peer.Protocol, operationRequest);
+            if (!operation.IsValid) return peer.SendOperation(operationRequest.OperationCode, ReturnCode.InvalidOperation, debuMsg: operation.GetErrorMessage());
+
+            var building = peer.PlayerInstance.InternalPlayerDataManager.GetPlayerBuildingByLocationId(operation.BuildingLocationId);
+            if (building == null)
+            {
+                return peer.SendOperation(operationRequest.OperationCode, ReturnCode.InvalidOperation, debuMsg: "building not found in server.");
+            }
+
+            building.HandleWoundedTroops(operation);
+            return SendResult.Ok;
+        }
+
+        public SendResult HandleInstantWoundedHealRequest(IGorMmoPeer peer, OperationRequest operationRequest)
         {
             var operation = new WoundedTroopHealRequest(peer.Protocol, operationRequest);
             if (!operation.IsValid) return peer.SendOperation(operationRequest.OperationCode, ReturnCode.InvalidOperation, debuMsg: operation.GetErrorMessage());

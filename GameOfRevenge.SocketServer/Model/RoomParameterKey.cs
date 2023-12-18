@@ -83,6 +83,8 @@
         ClanName = 79,
         ClanTag = 80,
         ClanDescription = 81,
-        EmbassyLevel = 82
+        EmbassyLevel = 82,
+        Subject = 83,
+        Message = 84
     }
 }

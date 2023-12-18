@@ -148,7 +148,9 @@ namespace GameOfRevenge.Business.Manager.UserData
             marchingArmy.MarchingId = response.Data.Id;
             var report = GenerateAlertMail(attackerData, marchingArmy, location, watchLevel);
             var json = JsonConvert.SerializeObject(report);
+
             await mailManager.SendMail(defenderId, MailType.UnderAttack, json);
+
 
 //            report.StartTime = marchingArmy.StartTime;
 //            report.ReachedTime = marchingArmy.Distance;

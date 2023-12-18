@@ -143,6 +143,7 @@
     <Compile Include="Model\Common\StructureCreateUpgradeResponse.cs" />
     <Compile Include="Model\Common\UserProfileResponse.cs" />
     <Compile Include="Model\Common\WoundedTroopTimerStatusResponse.cs" />
+    <Compile Include="Model\Operation\MessageRequest.cs" />
     <Compile Include="Model\Operation\GateRequest.cs" />
     <Compile Include="Model\Operation\InstantBuildRequest.cs" />
     <Compile Include="Model\Operation\PlayerBuildingBuildingStatusRequest.cs" />

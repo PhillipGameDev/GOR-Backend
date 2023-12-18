@@ -63,6 +63,11 @@
         AcceptUnionRequest = 49,
         LeaveUnionRequest = 50,
         CreateClan = 51,
-        DeleteClan = 52
+        DeleteClan = 52,
+
+        InstantWoundedHealReqeust = 53,
+
+        // Mail
+        SendMail = 60
     }
 }

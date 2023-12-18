@@ -43,6 +43,7 @@ namespace GameOfRevenge.GameApplication
         public static IRealTimeUpdateManager BRealTimeUpdateManager { get; private set; }
         public static IUserTechnologyManager BUserTechnologyManager { get; private set; }
         public static IInstantProgressManager InstantProgressManager { get; private set; }
+        public static IUserMailManager BMailManager { get; private set; }
         public static IMonsterManager BMonsterManager { get; private set; }
         public static GameLobbyHandler GameLobby { get; private set; }
         public static IWorldHandler WorldHandler { get; private set; }
@@ -105,6 +106,7 @@ namespace GameOfRevenge.GameApplication
             BChatManager = new ChatManager();
             BClanManager = new ClanManager();
             BMonsterManager = new MonsterManager();
+            BMailManager = new UserMailManager();
 
             var adminManager = new AdminDataManager(BPlayerManager, BClanManager, BUserQuestManager, BUserItemManager);
             RealTimeUpdateManagerQuestValidator = new RealTimeUpdateManagerQuestValidator(adminManager, BUserQuestManager);

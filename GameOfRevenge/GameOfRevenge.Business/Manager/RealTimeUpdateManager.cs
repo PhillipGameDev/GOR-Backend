@@ -28,7 +28,6 @@ namespace GameOfRevenge.Business.Manager
 
         private readonly KingdomPvPManager pvpManager = new KingdomPvPManager();
         private readonly MonsterManager monsterManager = new MonsterManager();
-        private readonly UserMailManager mailManager = new UserMailManager();
 
         protected readonly object SyncRoot = new object(); // that is for world user access
 

@@ -17,6 +17,7 @@
         EntityExit = 13,
         HelpStructure = 14,
         FortressStatus = 15,
-        BattleResult = 16
+        BattleResult = 16,
+        ReceiveMail = 17
     }
 }
