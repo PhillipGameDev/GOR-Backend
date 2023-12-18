@@ -41,6 +41,7 @@ namespace GameOfRevenge.Common.Interface
         Task<Response<StoredPlayerDataTable>> StoreResource(int playerId, int locationId, int resId, int value);
         Task<Response<RankingElement>> GetRanking(int playerId);
         Task<Response<List<RankingElement>>> GetRankings(long rankId);
+        Task<Response<List<RankingClanElement>>> GetRankingsByClan(long rankId);
         Task<Response<List<PlayerIdDataTable>>> GetAllMarchingTroops();
         Task<Response<PlayerDataTableUpdated>> AddKingExperience(int playerId, int kingExperience);
     }

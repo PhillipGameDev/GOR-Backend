@@ -643,7 +643,14 @@ namespace GameOfRevenge.WebServer.Controllers.Api
             return ReturnResponse(response);
         }
 
-#region Friends
+        [HttpPost]
+        public async Task<IActionResult> GetRankingsByClan(long rankId = 0)
+        {
+            var response = await userManager.GetRankingsByClan(rankId);
+            return ReturnResponse(response);
+        }
+
+        #region Friends
         [HttpPost]
         public async Task<IActionResult> GetFriendRequests(byte filter)
         {

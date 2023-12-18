@@ -26,5 +26,6 @@ namespace GameOfRevenge.Common.Interface.UserData
 
         Task<Response<RankingElement>> GetRanking(int playerId);
         Task<Response<List<RankingElement>>> GetRankings(long rankId = 0);
+        Task<Response<List<RankingClanElement>>> GetRankingsByClan(long rankId = 0);
     }
 }

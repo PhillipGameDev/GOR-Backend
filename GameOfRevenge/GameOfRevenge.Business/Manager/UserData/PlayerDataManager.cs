@@ -725,6 +725,35 @@ namespace GameOfRevenge.Business.Manager.UserData
             }
         }
 
+        public async Task<Response<List<RankingClanElement>>> GetRankingsByClan(long rankId = 0)
+        {
+            var spParams = new Dictionary<string, object>()
+            {
+                { "RankId", rankId }
+            };
+
+            try
+            {
+                return await Db.ExecuteSPMultipleRow<RankingClanElement>("GetRankingsGroupByClan", spParams);
+            }
+            catch (InvalidModelExecption ex)
+            {
+                return new Response<List<RankingClanElement>>()
+                {
+                    Case = 200,
+                    Message = ex.Message
+                };
+            }
+            catch (Exception ex)
+            {
+                return new Response<List<RankingClanElement>>()
+                {
+                    Case = 0,
+                    Message = ErrorManager.ShowError(ex)
+                };
+            }
+        }
+
         public async Task<Response<List<PlayerIdDataTable>>> GetAllMarchingTroops()
         {
             try

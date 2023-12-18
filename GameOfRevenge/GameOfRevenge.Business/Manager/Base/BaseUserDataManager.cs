@@ -960,5 +960,43 @@ namespace GameOfRevenge.Business.Manager.Base
                 };
             }
         }
+
+        public async Task<Response<List<RankingClanElement>>> GetRankingsByClan(long rankId = 0)
+        {
+            try
+            {
+                var response = await manager.GetRankingsByClan(rankId);
+                if (!response.IsSuccess) throw new InvalidModelExecption(response.Message);
+
+                return response;
+            }
+            catch (InvalidModelExecption ex)
+            {
+                return new Response<List<RankingClanElement>>()
+                {
+                    Case = 200,
+                    Message = ErrorManager.ShowError(ex),
+                    Data = null
+                };
+            }
+            catch (DataNotExistExecption ex)
+            {
+                return new Response<List<RankingClanElement>>()
+                {
+                    Case = 201,
+                    Message = ErrorManager.ShowError(ex),
+                    Data = null
+                };
+            }
+            catch (Exception ex)
+            {
+                return new Response<List<RankingClanElement>>()
+                {
+                    Case = 0,
+                    Message = ErrorManager.ShowError(ex),
+                    Data = null
+                };
+            }
+        }
     }
 }

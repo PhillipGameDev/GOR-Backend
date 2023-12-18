@@ -527,6 +527,7 @@ namespace GameOfRevenge.Business.Manager.UserData
         public Dictionary<int, UserStructureData> GetMultipleBuildings(UserStructureData structure) => throw new NotImplementedException();
         public Task<Response<RankingElement>> GetRanking(int playerId) => throw new NotImplementedException();
         public Task<Response<List<RankingElement>>> GetRankings(long rankId = 0) => throw new NotImplementedException();
+        public Task<Response<List<RankingClanElement>>> GetRankingsByClan(long rankId = 0) => throw new NotImplementedException();
         public bool HasActiveBoostRequirements(IReadOnlyList<IReadOnlyDataRequirement> requirements, List<UserRecordNewBoost> boosts) => throw new NotImplementedException();
         public bool HasRequirements(IReadOnlyList<IReadOnlyDataRequirement> requirements, PlayerCompleteData playerData) => throw new NotImplementedException();
         public bool HasRequirements(IReadOnlyList<IReadOnlyDataRequirement> requirements, PlayerCompleteData playerData, int count) => throw new NotImplementedException();
