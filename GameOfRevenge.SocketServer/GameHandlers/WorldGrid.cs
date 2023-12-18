@@ -333,14 +333,14 @@ namespace GameOfRevenge.GameHandlers
                     if (data.State == 3)
                     {
                         actor.SendEvent(EventCode.BattleResult, result);
-
+                        /*
                         if (marchingArmy.MarchingType == MarchingType.AttackMonster && result.WinnerId == result.AttackerId)
                         {
                             WorldMonsters.RemoveAll(e => e.Id == result.TargetId);
 
                             var exitEvent = new EntityExitResponse((byte)EntityType.Monster, result.TargetId);
                             actor.BroadcastEventToAllUsers(EventCode.EntityExit, exitEvent);
-                        }
+                        }*/
                     } else if (data.State == 5)
                     {
                         actor.SendEvent(EventCode.MarchingResult, result);

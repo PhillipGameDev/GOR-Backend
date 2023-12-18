@@ -35,6 +35,7 @@ namespace GameOfRevenge.GameHandlers
         }
 
         public const int MONSTERS_PER_WORLD = 1000;
+        public const int MONSTERS_PER_TILE = 3;
 
         public async Task<List<MonsterTable>> GetMonsters(WorldTable world)
         { 
@@ -46,14 +47,22 @@ namespace GameOfRevenge.GameHandlers
 
             log.Info("--- PREPARE MONSTER ---: " + world.Id + "," + CacheMonsterManager.AllItems.Count);
 
-            for (int i = MONSTERS_PER_WORLD - currentMonsters.Count - 1; i >= 0; i --)
+            if (currentMonsters.Count == world.ZoneSize * world.ZoneSize * MONSTERS_PER_TILE) return currentMonsters;
+
+            for (int x = 0; x < world.ZoneSize; x ++)
             {
-                var ms = await GameService.BMonsterManager.AddNewMonster(world, currentMonsters, random);
-                currentMonsters.Add(new MonsterTable()
+                for (int y = 0; y < world.ZoneSize; y ++)
                 {
-                    X = ms.Item1,
-                    Y = ms.Item2
-                });
+                    for (int l = currentMonsters.FindAll(m => m.X == x && m.Y == y).Count; l < MONSTERS_PER_TILE; l ++)
+                    {
+                        var ms = await GameService.BMonsterManager.AddNewMonster(world, currentMonsters, x, y, random);
+                        currentMonsters.Add(new MonsterTable()
+                        {
+                            X = ms.Item1,
+                            Y = ms.Item2
+                        });
+                    }
+                }
             }
 
             resp = await GameService.BMonsterManager.GetMonsterWorldData(world.Id);

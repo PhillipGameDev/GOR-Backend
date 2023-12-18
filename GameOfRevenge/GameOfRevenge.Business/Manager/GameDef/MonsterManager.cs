@@ -105,16 +105,8 @@ namespace GameOfRevenge.Business.Manager.GameDef
             }
         }
 
-        public async Task<(int, int)> AddNewMonster(WorldTable world, List<MonsterTable> monsters, Random random, Action<string> log = null)
+        public async Task<(int, int)> AddNewMonster(WorldTable world, List<MonsterTable> monsters, int x, int y, Random random, Action<string> log = null)
         {
-            int x = 0, y = 0;
-
-            do
-            {
-                x = random.Next(world.ZoneSize);
-                y = random.Next(world.ZoneSize);
-            } while (monsters.FirstOrDefault(e => e.X == x && e.Y == y) != null);
-
             var monsterData = CacheMonsterManager.AllItems[random.Next(CacheMonsterManager.AllItems.Count)];
 
             var resp = await AddMonsterToWorld(world.Id, monsterData.Id, x, y);
@@ -197,7 +189,7 @@ namespace GameOfRevenge.Business.Manager.GameDef
                     { "Health", health }
                 };
 
-                return await Db.ExecuteSPNoData("UpdateMonsterHealth", spParams);
+                return await Db.ExecuteSPNoData("UpdateMonsterHealthWithRespawn", spParams);
             }
             catch (InvalidModelExecption ex)
             {
