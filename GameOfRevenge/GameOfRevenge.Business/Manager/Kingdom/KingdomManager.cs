@@ -8,6 +8,8 @@ using GameOfRevenge.Common.Interface;
 using GameOfRevenge.Common.Services;
 using GameOfRevenge.Common.Models;
 using GameOfRevenge.Common.Models.Kingdom;
+using GameOfRevenge.Business.Manager.GameDef;
+using GameOfRevenge.Common.Models.Monster;
 
 namespace GameOfRevenge.Business.Manager.Kingdom
 {
@@ -294,6 +296,80 @@ namespace GameOfRevenge.Business.Manager.Kingdom
             catch (Exception ex)
             {
                 return new Response<WorldDataTable>()
+                {
+                    Case = 0,
+                    Data = null,
+                    Message = ErrorManager.ShowError(ex)
+                };
+            }
+        }
+
+        public async Task AddMonsters(WorldTable world, int zone)
+        {
+            var monsterManager = new MonsterManager();
+            var resp = await monsterManager.GetMonsterWorldData(world.Id);
+
+            if (!resp.IsSuccess) return;
+
+            var monsters = resp.Data;
+            int offsetX = (zone % world.ZoneX) * world.ZoneSize;
+            int offsetY = (zone / world.ZoneY) * world.ZoneSize;
+
+            var random = new Random();
+
+            for (int x = 0; x < world.ZoneSize; x++)
+            {
+                for (int y = 0; y < world.ZoneSize; y++)
+                {
+                    int finalX = offsetX + x, finalY = offsetY + y;
+
+                    for (int l = monsters.FindAll(m => m.X == finalX && m.Y == finalY).Count; l < 3; l++)
+                    {
+                        var ms = await monsterManager.AddNewMonster(world, monsters, finalX, finalY, random);
+                        monsters.Add(new MonsterTable()
+                        {
+                            X = ms.Item1,
+                            Y = ms.Item2
+                        });
+                    }
+                }
+            }
+        }
+
+        public async Task<Response<ZoneFortressTable>> AddZoneFortress(int worldId, int zoneIndex)
+        {
+            var spParams = new Dictionary<string, object>()
+            {
+                { "WorldId", worldId },
+                { "ZoneIndex", zoneIndex }
+            };
+
+            try
+            {
+                var resp = await Db.ExecuteSPSingleRow<ZoneFortressTable>("AddZoneFortress", spParams);
+                if (!resp.IsSuccess || !resp.HasData) throw new InvalidModelExecption(resp.Message);
+
+                var fortressResp = resp.Data;
+
+                return new Response<ZoneFortressTable>()
+                {
+                    Case = resp.Case,
+                    Data = resp.Data,
+                    Message = resp.Message
+                };
+            }
+            catch (InvalidModelExecption ex)
+            {
+                return new Response<ZoneFortressTable>()
+                {
+                    Case = 200,
+                    Data = null,
+                    Message = ex.Message
+                };
+            }
+            catch (Exception ex)
+            {
+                return new Response<ZoneFortressTable>()
                 {
                     Case = 0,
                     Data = null,
