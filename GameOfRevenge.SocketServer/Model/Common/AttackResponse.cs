@@ -11,6 +11,12 @@ namespace GameOfRevenge.Model
         [DataMember(Code = (byte)RoomParameterKey.MarchingType, IsOptional = true)]
         public string MarchingType { get; set; }
 
+        [DataMember(Code = (byte)RoomParameterKey.X, IsOptional = true)]
+        public int X { get; set; }
+
+        [DataMember(Code = (byte)RoomParameterKey.Y, IsOptional = true)]
+        public int Y { get; set; }
+
         [DataMember(Code = (byte)RoomParameterKey.AttackerId, IsOptional = true)]
         public int AttackerId { get; set; }
 
@@ -22,9 +28,6 @@ namespace GameOfRevenge.Model
 
         [DataMember(Code = (byte)RoomParameterKey.TargetName, IsOptional = true)]
         public string TargetName { get; set; }
-
-//        [DataMember(Code = (byte)RoomParameterKey.Invaded, IsOptional = true)]
-//        public int MonsterId { get; set; }
 
         [DataMember(Code = (byte)RoomParameterKey.StartTime, IsOptional = true)]
         public string StartTime { get; set; }
@@ -66,8 +69,6 @@ namespace GameOfRevenge.Model
 
             TargetId = res.TargetId;
             TargetName = res.TargetName;
-
-//            MonsterId = res.MonsterId;//obsolete, use marchingType+targetId
 
             StartTime = res.StartTime;
             Recall = res.Recall;

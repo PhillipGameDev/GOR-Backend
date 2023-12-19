@@ -1475,7 +1475,14 @@ new string[]{
                 foreach (var item in attackList)
                 {
                     item.AttackData.WatchLevel = watchLevel;
-                    playerDataManager.player.SendEvent(EventCode.UnderAttack, new AttackResponse(item.AttackData));
+                    var attkResp = new AttackResponse(item.AttackData);
+                    var attacker = GridWorld.WorldPlayers.Find(x => (x.PlayerId == item.AttackData.AttackerId));
+                    if (attacker != null)
+                    {
+                        attkResp.X = attacker.X;
+                        attkResp.Y = attacker.Y;
+                    }
+                    playerDataManager.player.SendEvent(EventCode.UnderAttack, attkResp);
                 }
             }
 

@@ -211,6 +211,9 @@ namespace GameOfRevenge.GameHandlers
                 log.InfoFormat(str, attacker.PlayerId, JsonConvert.SerializeObject(marchingArmy), targetId);
 
                 var attackResponse = new AttackResponse(attackData);
+                attackResponse.X = attacker.WorldRegion.X;
+                attackResponse.Y = attacker.WorldRegion.Y;
+
                 attacker.SendEvent(EventCode.AttackEvent, attackResponse);
 
                 if (marchingArmy.MarchingType == MarchingType.AttackPlayer)
