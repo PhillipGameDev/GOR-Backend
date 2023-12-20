@@ -9,7 +9,8 @@ namespace GameOfRevenge.Common.Models.Kingdom
         Other = 0,
         Troop = 1,
         Gate = 2,
-        Monster = 3
+        Monster = 3,
+        GloryKingdom = 4
     }
 
     [DataContract]

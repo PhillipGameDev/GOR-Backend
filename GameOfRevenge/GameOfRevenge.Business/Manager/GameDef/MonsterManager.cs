@@ -105,6 +105,37 @@ namespace GameOfRevenge.Business.Manager.GameDef
             }
         }
 
+        public async Task<Response<MonsterTable>> GetNearestMonsterByPlayerId(int playerId = 0)
+        {
+            try
+            {
+                var spParams = new Dictionary<string, object>()
+                {
+                    { "PlayerId", playerId }
+                };
+
+                return await Db.ExecuteSPSingleRow<MonsterTable>("GetNearestMonsterByPlayerId", spParams);
+            }
+            catch (InvalidModelExecption ex)
+            {
+                return new Response<MonsterTable>()
+                {
+                    Case = 200,
+                    Data = null,
+                    Message = ex.Message
+                };
+            }
+            catch (Exception ex)
+            {
+                return new Response<MonsterTable>()
+                {
+                    Case = 0,
+                    Data = null,
+                    Message = ErrorManager.ShowError(ex)
+                };
+            }
+        }
+
         public async Task<(int, int)> AddNewMonster(WorldTable world, List<MonsterTable> monsters, int x, int y, Random random, Action<string> log = null)
         {
             var monsterData = CacheMonsterManager.AllItems[random.Next(CacheMonsterManager.AllItems.Count)];
