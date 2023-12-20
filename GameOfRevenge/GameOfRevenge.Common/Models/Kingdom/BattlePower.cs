@@ -327,12 +327,12 @@ namespace GameOfRevenge.Common.Models.Kingdom
             SyncBattleStatus(replay, currentStep, attackerPower, defenderPower);
         }
 
-        public void AttackPlayer(BattlePower defenderPower, BattleReplay replay, Action<string> log = null)
+        public void AttackPlayer(BattlePower defenderPower, BattleReplay replay, Action<string> log = null, BattleTroopType type = BattleTroopType.Gate)
         {
             var attackerPower = this;
             replay.DateTime = DateTime.UtcNow;
 
-            int gateId = GenerateTroops(replay, attackerPower, defenderPower, BattleTroopType.Gate);
+            int gateId = GenerateTroops(replay, attackerPower, defenderPower, type);
 
             replay.Steps = new List<BattleStep>();
 
@@ -516,8 +516,30 @@ namespace GameOfRevenge.Common.Models.Kingdom
                 }
 
                 return gateId;
-            } else
+            } else if (battleType == BattleTroopType.GloryKingdom)
             {
+                foreach (var troop in defenderPower.Troops)
+                {
+                    var details = defenderPower.TroopChanges.FindAll(t => t.TroopType == troop.TroopType).ToList();
+                    if (details.Sum(e => e.Count) > 0)
+                    {
+                        replay.Troops.Add(new BattleTroopInfo()
+                        {
+                            Id = troopId++,
+                            TroopMainType = BattleTroopType.Troop,
+                            TroopType = troop.TroopType,
+                            Attack = details.Sum(e => e.Data.AttackDamage * e.Count),
+                            Defense = details.Sum(e => e.Data.Defense * e.Count),
+                            Health = details.Sum(e => e.Data.Health * e.Count),
+                            Count = details.Sum(e => e.Count),
+                            IsAttacker = false,
+                            AttackMultiplier = defenseMulti[troop.TroopType].attack,
+                            DefenseMultiplier = defenseMulti[troop.TroopType].defense,
+                        });
+                    }
+                }
+                return -1;
+            } else {
                 int monsterId = troopId++;
                 var detail = defenderPower.TroopChanges.First();
 
@@ -561,7 +583,7 @@ namespace GameOfRevenge.Common.Models.Kingdom
                 if (troop.AttackingId == -1 || currentStep.Troops.Find(e => e.TroopId == troop.AttackingId).Health == 0)
                 {
                     int index = random.Next(isAttacker ? defenderTroopCount : attackerTroopCount);
-                    if (gate.Health > 0)
+                    if (gate != null && gate.Health > 0)
                     {
                         if (isAttacker) troop.AttackingId = gateId;
                         else

@@ -173,60 +173,51 @@ namespace GameOfRevenge.GameHandlers
                         continue;
                     }
                     var attackerData = task.Result.Data;
+                    AttackResponseData attackRespData = null;
 
-                    //TODO: resume marching for monsters, glory kingdom
-                    var defenderId = marching.TargetId;
-                    task = BaseUserDataManager.GetFullPlayerData(defenderId);
-                    task.Wait();
-                    if (!task.Result.IsSuccess || !task.Result.HasData)
+                    switch (marching.MarchingType)
                     {
-                        log.Error("Error: defender " + defenderId + " data not found");
-                        continue;
+                        case MarchingType.AttackPlayer:
+                            {
+                                var defenderId = marching.TargetId;
+                                task = BaseUserDataManager.GetFullPlayerData(defenderId);
+                                task.Wait();
+                                if (!task.Result.IsSuccess || !task.Result.HasData)
+                                {
+                                    log.Error("Error: defender " + defenderId + " data not found");
+
+                                    continue;
+                                }
+                                var defenderData = task.Result.Data;
+
+                                byte watchLevel = 0;
+                                foreach (var structures in defenderData.Structures)
+                                {
+                                    if (structures.StructureType != StructureType.WatchTower) continue;
+
+                                    var watchTowers = structures.Buildings;
+                                    if (watchTowers?.Count > 0)
+                                    {
+                                        watchLevel = (byte)watchTowers.Max(x => x.CurrentLevel);
+                                    }
+                                    break;
+                                }
+                                attackRespData = new AttackResponseData(attackerData, marching, defenderId, defenderData.PlayerName, watchLevel);
+                            }
+                            break;
+                        case MarchingType.AttackMonster:
+                            attackRespData = new AttackResponseData(attackerData, marching, marching.TargetId);
+                            break;
+                        case MarchingType.AttackGloryKingdom:
+                            attackRespData = new AttackResponseData(attackerData, marching, marching.TargetId);
+                            break;
                     }
-                    var defenderData = task.Result.Data;
 
-                    byte watchLevel = 0;
-                    foreach (var structures in defenderData.Structures)
-                    {
-                        if (structures.StructureType != StructureType.WatchTower) continue;
-
-                        var watchTowers = structures.Buildings;
-                        if (watchTowers?.Count > 0)
-                        {
-                            watchLevel = (byte)watchTowers.Max(x => x.CurrentLevel);
-                        }
-                        break;
-                    }
-
-                    var response = new AttackResponseData()
-                    {
-                        MarchingId = marching.MarchingId,
-                        MarchingType = marching.MarchingType,
-
-                        AttackerId = attackerId,
-                        AttackerName = attackerData.PlayerName,
-
-                        KingLevel = attackerData.King.Level,
-                        WatchLevel = watchLevel,
-
-                        TargetId = defenderId,
-                        TargetName = defenderData.PlayerName,
-
-                        Troops = marching.TroopsToArray(),
-                        Heroes = marching.HeroesToArray(attackerData.Heroes),
-
-                        StartTime = marching.StartTime.ToUniversalTime().ToString("s") + "Z",
-                        Distance = marching.Distance,
-                        AdvanceReduction = marching.AdvanceReduction,
-                        ReturnReduction = marching.ReturnReduction,
-                        Duration = marching.Duration
-                    };
                     var attackStatus = new AttackStatusData()
                     {
                         MarchingArmy = marching,
-                        AttackData = response
+                        AttackData = attackRespData
                     };
-                    //                            attackStatus.State = 1;
 
                     GameService.BRealTimeUpdateManager.AddNewMarchingArmy(attackStatus);
                     count++;
@@ -341,7 +332,7 @@ namespace GameOfRevenge.GameHandlers
                             var exitEvent = new EntityExitResponse((byte)EntityType.Monster, result.TargetId);
                             actor.BroadcastEventToAllUsers(EventCode.EntityExit, exitEvent);
                         }*/
-                    } else if (data.State == 5)
+                    } else if (data.State == 5 || data.State == 1)
                     {
                         actor.SendEvent(EventCode.MarchingResult, result);
                     }

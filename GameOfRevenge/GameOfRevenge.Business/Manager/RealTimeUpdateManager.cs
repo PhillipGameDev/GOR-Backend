@@ -383,15 +383,17 @@ namespace GameOfRevenge.Business.Manager
                     PlayerId = fortress.ZoneFortressId,
                     Troops = fortress.GetAllTroops()
                 };
-                data.DefenderPower = new BattlePower(data.Defender, null, CacheTroopDataManager.GetFullTroopData, null,(ss)=> { log.Debug(ss); });
+                data.DefenderPower = new BattlePower(data.Defender, null, CacheTroopDataManager.GetFullTroopData, null, (ss)=> { log.Debug(ss); });
                 data.DefenderPower.EntityType = EntityType.Fortress;
 
                 log.Debug("battle: atk pwr= " + data.AttackerPower.HitPoints + " xx def pwr=" + data.DefenderPower.HitPoints);
                 log.Debug("attacker troops: " + Newtonsoft.Json.JsonConvert.SerializeObject(data.AttackerPower.TroopChanges));
                 log.Debug("defender troops: " + Newtonsoft.Json.JsonConvert.SerializeObject(data.DefenderPower.TroopChanges));
-                while ((data.DefenderPower.HitPoints > 0) && (data.AttackerPower.HitPoints > 0))
+                // while ((data.DefenderPower.HitPoints > 0) && (data.AttackerPower.HitPoints > 0))
                 {
-                    data.AttackerPower.AttackPlayer(data.DefenderPower, data.Replay, (ss)=> { log.Debug(ss); });
+                    data.Replay = new BattleReplay();
+
+                    data.AttackerPower.AttackPlayer(data.DefenderPower, data.Replay, (ss)=> { log.Debug(ss); }, BattleTroopType.GloryKingdom);
                     log.Debug("atk pwr= " + data.AttackerPower.HitPoints + "  "+data.AttackerPower.AttackCalc+"/"+data.AttackerPower.DefenseCalc +
                                 "   xx def pwr=" + data.DefenderPower.HitPoints+" "+data.DefenderPower.AttackCalc+"/"+data.DefenderPower.DefenseCalc);
                 }
