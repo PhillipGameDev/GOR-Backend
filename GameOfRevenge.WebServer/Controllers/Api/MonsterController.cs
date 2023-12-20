@@ -32,6 +32,13 @@ namespace GameOfRevenge.WebServer.Controllers.Api
             var response = await monsterManager.GetMonstersByWorldTileId(playerInfo.WorldTileId);
             return ReturnResponse(response);
         }
+
+        [HttpGet]
+        public async Task<IActionResult> GetNearestMonster()
+        {
+            var response = await monsterManager.GetNearestMonsterByPlayerId(Token.PlayerId);
+            return ReturnResponse(response);
+        }
         #endregion
     }
 }
