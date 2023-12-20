@@ -28,6 +28,30 @@ namespace GameOfRevenge.Model
         }
     }
 
+    public class MonsterEnterResponse : EntityEnterResponse
+    {
+        [DataMember(Code = (byte)RoomParameterKey.Attack, IsOptional = false)]
+        public int Attack { get; set; }
+
+        [DataMember(Code = (byte)RoomParameterKey.Defense, IsOptional = false)]
+        public int Defense { get; set; }
+
+        [DataMember(Code = (byte)RoomParameterKey.TroopLevel, IsOptional = false)]
+        public int Level { get; set; }
+
+        [DataMember(Code = (byte)RoomParameterKey.TroopType, IsOptional = false)]
+        public byte MonsterType { get; set; }
+
+        public MonsterEnterResponse(int x, int y, int seed, EntityType entityType, int entityId, int hitPoints, int level, MonsterType monsterType, int attack, int defense) :
+                base(x, y, seed, entityType, entityId, hitPoints)
+        {
+            Attack = attack;
+            Defense = defense;
+            Level = level;
+            MonsterType = (byte)monsterType;
+        }
+    }
+
     public class FortressEnterResponse : EntityEnterResponse
     {
         [DataMember(Code = (byte)RoomParameterKey.Attack, IsOptional = false)]
