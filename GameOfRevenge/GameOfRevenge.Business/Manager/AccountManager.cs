@@ -92,7 +92,7 @@ namespace GameOfRevenge.Business.Manager
                 if (response.Data.WorldTileId == 0)
                 {
                     var offsetX = (world.CurrentZone % world.ZoneX) * world.ZoneSize;
-                    var offsetY = (int)Math.Ceiling(world.CurrentZone / (float)world.ZoneY) * world.ZoneSize;
+                    var offsetY = (world.CurrentZone / world.ZoneY) * world.ZoneSize;
                     var maxX = (offsetX + world.ZoneSize) - 1;
                     var maxY = (offsetY + world.ZoneSize) - 1;
                     var zonePlyResp = await kingdomManager.GetWorldZonePlayers(offsetX, offsetY, maxX, maxY);
@@ -124,7 +124,10 @@ namespace GameOfRevenge.Business.Manager
 
                     if (zonePlayers.Count >= zoneCapacity)
                     {
-                        await kingdomManager.UpdateWorld(world.Id, world.CurrentZone + 1);
+                        int zoneId = world.CurrentZone + 1;
+                        await kingdomManager.UpdateWorld(world.Id, zoneId);
+                        await kingdomManager.AddZoneFortress(world.Id, zoneId);
+                        await kingdomManager.AddMonsters(world, zoneId);
                     }
                     zonePlayers.Clear();
                 }

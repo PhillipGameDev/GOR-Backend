@@ -20,6 +20,8 @@ namespace GameOfRevenge.Common.Interface
         Task<Response<List<WorldDataTable>>> GetWorldTilesData(int id);
         Task<Response<WorldDataTable>> UpdateWorldTileData(int x, int y, int? tileId = null, int? worldId = null);
 
+        Task AddMonsters(WorldTable world, int zone);
+        Task<Response<ZoneFortressTable>> AddZoneFortress(int worldId, int zoneIndex);
         Task<Response<List<ZoneFortressTable>>> GetAllZoneFortress();
         Task<Response<ZoneFortress>> GetZoneFortressByIndex(int playerId, int zoneIndex);
         Task<Response<ZoneFortress>> GetZoneFortressById(int zoneFortressId);

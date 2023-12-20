@@ -87,7 +87,7 @@ namespace GameOfRevenge.GameHandlers
                     {
                         var monsterId = monster.Id;
                         var seed = monsterId;
-                        var enterEvent = new EntityEnterResponse(x, y, seed, EntityType.Monster, monsterId, monster.Health);
+                        var enterEvent = new MonsterEnterResponse(x, y, seed, EntityType.Monster, monsterId, monster.Health, monster.Level, monster.MonsterType, monster.Attack, monster.Defense);
                         PlayerInstance.SendEvent(EventCode.EntityEnter, enterEvent);
                     }
                 }
@@ -136,8 +136,8 @@ namespace GameOfRevenge.GameHandlers
                     if (AreaForts.Contains(fortress)) continue;
 
                     AreaForts.Add(fortress);
-                    var x = (fortress.ZoneIndex % totalZonesX) + centerZone;
-                    var y = (int)Math.Floor(fortress.ZoneIndex / (float)totalZonesX) + centerZone;
+                    var x = (fortress.ZoneIndex % totalZonesX) * World.ZoneSize + centerZone;
+                    var y = (fortress.ZoneIndex / totalZonesX) * World.ZoneSize + centerZone;
                     var enterEvent = new FortressEnterResponse(x, y, 0, EntityType.Fortress, fortress.ZoneFortressId, fortress.HitPoints, fortress.Attack, fortress.Defense);
                     enterEvent.ClanId = fortress.ClanId;
                     enterEvent.Name = fortress.Name;

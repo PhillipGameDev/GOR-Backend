@@ -7,7 +7,6 @@ using GameOfRevenge.Interface;
 using GameOfRevenge.Common.Models.Kingdom;
 using GameOfRevenge.GameApplication;
 using GameOfRevenge.Common.Models;
-using GameOfRevenge.Business.Manager;
 using GameOfRevenge.Business.CacheData;
 using GameOfRevenge.Common.Models.Monster;
 using System.Threading.Tasks;
@@ -37,26 +36,23 @@ namespace GameOfRevenge.GameHandlers
         public const int MONSTERS_PER_WORLD = 1000;
         public const int MONSTERS_PER_TILE = 3;
 
-        public async Task<List<MonsterTable>> GetMonsters(WorldTable world)
-        { 
-            var resp = await GameService.BMonsterManager.GetMonsterWorldData(world.Id);
-            if (!resp.IsSuccess || !resp.HasData) throw new Exception(resp.Message);
+        public async Task AddMonsters(List<MonsterTable> monsters, WorldTable world, int zone)
+        {
+            int offsetX = zone % world.ZoneX;
+            int offsetY = zone / world.ZoneY;
 
-            var currentMonsters = resp.Data;
             var random = new Random();
 
-            log.Info("--- PREPARE MONSTER ---: " + world.Id + "," + CacheMonsterManager.AllItems.Count);
-
-            if (currentMonsters.Count == world.ZoneSize * world.ZoneSize * MONSTERS_PER_TILE) return currentMonsters;
-
-            for (int x = 0; x < world.ZoneSize; x ++)
+            for (int x = 0; x < world.ZoneSize; x++)
             {
-                for (int y = 0; y < world.ZoneSize; y ++)
+                for (int y = 0; y < world.ZoneSize; y++)
                 {
-                    for (int l = currentMonsters.FindAll(m => m.X == x && m.Y == y).Count; l < MONSTERS_PER_TILE; l ++)
+                    int finalX = offsetX + x, finalY = offsetY + y;
+
+                    for (int l = monsters.FindAll(m => m.X == finalX && m.Y == finalY).Count; l < MONSTERS_PER_TILE; l++)
                     {
-                        var ms = await GameService.BMonsterManager.AddNewMonster(world, currentMonsters, x, y, random);
-                        currentMonsters.Add(new MonsterTable()
+                        var ms = await GameService.BMonsterManager.AddNewMonster(world, monsters, finalX, finalY, random);
+                        monsters.Add(new MonsterTable()
                         {
                             X = ms.Item1,
                             Y = ms.Item2
@@ -64,11 +60,42 @@ namespace GameOfRevenge.GameHandlers
                     }
                 }
             }
+        }
+
+        public async Task<List<MonsterTable>> GetMonsters(WorldTable world)
+        { 
+            var resp = await GameService.BMonsterManager.GetMonsterWorldData(world.Id);
+            if (!resp.IsSuccess || !resp.HasData) throw new Exception(resp.Message);
+
+            var currentMonsters = resp.Data;
+
+            log.Info("--- PREPARE MONSTER ---: " + world.Id + "," + CacheMonsterManager.AllItems.Count);
+
+            if (currentMonsters.Count == (world.CurrentZone + 1) * world.ZoneSize * world.ZoneSize * MONSTERS_PER_TILE) return currentMonsters;
+
+            for (int zone = 0; zone < world.CurrentZone; zone++)
+            {
+                await AddMonsters(currentMonsters, world, zone);
+            }
 
             resp = await GameService.BMonsterManager.GetMonsterWorldData(world.Id);
             if (!resp.IsSuccess || !resp.HasData) throw new Exception(resp.Message);
 
             return resp.Data;
+        }
+
+        public async Task AddNewZone(WorldTable worldTable, int zoneId)
+        {
+            var world = Worlds[worldTable.Id];
+
+            await GameService.BKingdomManager.UpdateWorld(worldTable.Id, zoneId);
+            await AddMonsters(world.WorldMonsters, worldTable, zoneId);
+
+            var resp = await GameService.BKingdomManager.AddZoneFortress(worldTable.Id, zoneId);
+            if (resp.IsSuccess && resp.HasData)
+            {
+                world.WorldForts.Add(resp.Data);
+            }
         }
 
         public void SetupWorld(string worldCode)
