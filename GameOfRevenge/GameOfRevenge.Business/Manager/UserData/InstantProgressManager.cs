@@ -403,6 +403,48 @@ namespace GameOfRevenge.Business.Manager.UserData
             catch (Exception ex) { return new Response<UserTroopData>(0, ErrorManager.ShowError(ex)); }
         }
 
+        public async Task<Response<UserTroopData>> InstantHandleWounded(int playerId, TroopType type, int troopLevel, long startTime)
+        {
+            try
+            {
+                var playerData = await GetFullPlayerData(playerId);
+                if (!playerData.IsSuccess || !playerData.HasData) throw new DataNotExistExecption(playerData.Message);
+
+                List<TroopDetails> troopDataList = null;
+                TroopDetails data = null;
+                var troops = playerData.Data.Troops.Find(x => (x.TroopType == type));
+                if (troops != null)
+                {
+                    troopDataList = troops.TroopData;
+                    data = troopDataList.Find(x => (x.Level == troopLevel));
+
+                    if (data != null)
+                    {
+                        var troop = data.InRecovery.Find(e => e.StartTime.ToBinary() == startTime);
+
+                        var cost = (int)Math.Ceiling(troop.TimeLeft / 60f) * 3;
+                        log.Info("Instant Handle Wounded Cost: " + cost);
+
+                        var playerGems = playerData.Data.Resources.Gems;
+                        if (playerGems < cost) throw new RequirementExecption("Not enough gems");
+
+                        var resCut = await _userResourceManager.SumGemsResource(playerId, -cost);
+                        if (!resCut.IsSuccess) throw new RequirementExecption("Issue removing gems");
+
+                        data.InRecovery.Remove(troop);
+
+                        return await _userTroopManager.UpdateTroops(playerId, type, troopDataList);
+                    }
+                }
+
+                return new Response<UserTroopData>(0, "Data Not Found");
+            }
+            catch (InvalidModelExecption ex) { return new Response<UserTroopData>(200, ErrorManager.ShowError(ex)); }
+            catch (DataNotExistExecption ex) { return new Response<UserTroopData>(201, ErrorManager.ShowError(ex)); }
+            catch (RequirementExecption ex) { return new Response<UserTroopData>(202, ErrorManager.ShowError(ex)); }
+            catch (Exception ex) { return new Response<UserTroopData>(0, ErrorManager.ShowError(ex)); }
+        }
+
         public async Task<Response<AcademyUserDataTable>> InstantAcademyItemUpgrade(int playerId, int itemId)
         {
             try
