@@ -131,7 +131,6 @@ namespace GameOfRevenge.Buildings.Handlers
             Player.SendOperation(OperationCode.BoostResourceTime, ReturnCode.InvalidOperation, debuMsg: msg);
         }*/
         public virtual void HandleWoundedTroops(WoundedTroopHealRequest request) { }
-        public virtual void HandleInstantWoundedTroops(WoundedTroopHealRequest request) { }
         public virtual void WoundedTroopTimerStatusRequest(WoundedTroopTimerStatusRequest request) { }
         public virtual void HandleUpgradeTechnology(UpgradeTechnologyRequest operation) { }
 

@@ -14,6 +14,7 @@ namespace GameOfRevenge.Common.Interface.UserData
         Task<Response<BuildingStructureData>> InstantBuildStructure(int playerId, StructureType structureType, int level, int location);
         Task<Response<UserStructureData>> SpeedUpBuildStructure(int playerId, int location, PlayerCompleteData playerData = null);
         Task<Response<UserTroopData>> InstantRecruitTroops(int playerId, int location, TroopType troopType, int troopLevel, int troopCount);
+        Task<Response<UserTroopData>> InstantHandleWounded(int playerId, TroopType type, int troopLevel, long startTime);
         Response<int> GetInstantRecruitCost(TroopType type, int troopLevel, int count);
         Task<Response<AcademyUserDataTable>> InstantAcademyItemUpgrade(int playerId, int itemId);
     }

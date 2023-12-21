@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using GameOfRevenge.Buildings.Interface;
 using GameOfRevenge.Business;
+using GameOfRevenge.Business.Manager.UserData;
 using GameOfRevenge.Common;
 using GameOfRevenge.Common.Models;
 using GameOfRevenge.Common.Models.Troop;
@@ -94,83 +95,6 @@ namespace GameOfRevenge.Buildings.Handlers
             Player.SendOperation(OperationCode.WoundedHealReqeust, success? ReturnCode.OK : ReturnCode.Failed, debuMsg: message);
 
             log.Debug("****************************************HandleWoundedTroops END**********************************************");
-        }
-
-        public override void HandleInstantWoundedTroops(WoundedTroopHealRequest request)
-        {
-            log.Debug("****************************************HandleInstantWoundedTroops START**********************************************");
-            bool success = true;
-            string message = "OK";
-            try
-            {
-                var dict = new Dictionary<TroopType, List<WoundeAndDeadTroopsUpdate>>();
-                for (int j = 0; j < request.TroopLevel.Length; j++)
-                {
-                    List<WoundeAndDeadTroopsUpdate> troopList = null;
-                    var troopType = (TroopType)request.TroopType[j];
-                    var troopLevel = request.TroopLevel[j];
-                    if (!dict.ContainsKey(troopType))
-                    {
-                        dict.Add(troopType, new List<WoundeAndDeadTroopsUpdate>());
-                    }
-                    troopList = dict[troopType];
-                    WoundeAndDeadTroopsUpdate obj = troopList.Find(d => (d.Level == troopLevel));
-                    if (obj == null)
-                    {
-                        obj = new WoundeAndDeadTroopsUpdate();
-                        troopList.Add(obj);
-                    }
-                    obj.BuildingLocation = request.BuildingLocationId;
-                    obj.Level = troopLevel;
-                    obj.WoundedCount += request.WoundedCount[j];
-                }
-                string test = "";
-                try
-                {
-                    foreach (var element in dict)
-                    {
-                        test = "1";
-                        var recoverResponse = GameService.BUsertroopManager.RecoverWounded(Player.PlayerId, element.Key, element.Value);
-                        test = "2";
-                        if ((recoverResponse.Result.Case >= 100) && recoverResponse.Result.Case < 200)
-                        {
-                            test = "3";
-                            var result = recoverResponse.Result.Data;
-                            test = "4";
-                            foreach (var item in result.Value)
-                            {
-                                test = "5";
-                                if (item.InRecovery == null) continue;
-
-                                foreach (var items in item.InRecovery)
-                                {
-                                    test = "6";
-                                    RecoverList.Add(items);
-                                }
-                            }
-                            continue;
-                        }
-
-                        log.InfoFormat("Error in RecoverWounded {0}", recoverResponse.Result.Message);
-                        throw new Exception(recoverResponse.Result.Message);
-                    }
-                }
-                catch (Exception ex)
-                {
-                    success = false;
-                    message = ex.Message;
-                    log.InfoFormat("Exception in HandleInstantWoundedTroops Block2 {0} {1} ", test + " " + ex.Message, ex.StackTrace);
-                }
-            }
-            catch (Exception ex)
-            {
-                success = false;
-                message = ex.Message;
-                log.InfoFormat("Exception in HandleInstantWoundedTroops Block1 {0} {1} ", ex.Message, ex.StackTrace);
-            }
-            Player.SendOperation(OperationCode.InstantWoundedHealReqeust, success ? ReturnCode.OK : ReturnCode.Failed, debuMsg: message);
-
-            log.Debug("****************************************HandleInstantWoundedTroops END**********************************************");
         }
 
         public override void WoundedTroopTimerStatusRequest(WoundedTroopTimerStatusRequest request)

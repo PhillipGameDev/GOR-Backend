@@ -154,6 +154,7 @@
     <Compile Include="Model\Operation\TroopTrainingStatusRequest.cs" />
     <Compile Include="Model\Operation\UpgradeStructureRequest.cs" />
     <Compile Include="Model\Operation\UpgradeTechnologyRequest.cs" />
+    <Compile Include="Model\Operation\WoundedInstantTroopHealRequest.cs" />
     <Compile Include="Model\Operation\WoundedTroopHealRequest.cs" />
     <Compile Include="Model\Operation\WoundedTroopTimerStatusRequest.cs" />
     <Compile Include="Model\RoomParameterKey.cs" />

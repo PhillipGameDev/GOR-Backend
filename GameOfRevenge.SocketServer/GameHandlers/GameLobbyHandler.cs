@@ -96,7 +96,7 @@ new string[]{
                     case OperationCode.SendReinforcementsRequest: return await HandleSendReinforcementsRequest(peer, operationRequest); 
 
                     case OperationCode.WoundedHealReqeust: return HandleWoundedHealRequest(peer, operationRequest);//16
-                    case OperationCode.InstantWoundedHealReqeust: return HandleWoundedHealRequest(peer, operationRequest);//53
+                    case OperationCode.InstantWoundedHealReqeust: return HandleInstantWoundedHealRequest(peer, operationRequest);//53
                     case OperationCode.WoundedHealTimerRequest: return HandleWoundedHealTimerStatus(peer, operationRequest);//17
                     case OperationCode.UpgradeTechnology: return UpgradeTechnologyRequest(peer, operationRequest);//18
                     case OperationCode.RepairGate: return RepairGateRequest(peer, operationRequest);//19
@@ -1002,17 +1002,28 @@ new string[]{
 
         public SendResult HandleInstantWoundedHealRequest(IGorMmoPeer peer, OperationRequest operationRequest)
         {
-            var operation = new WoundedTroopHealRequest(peer.Protocol, operationRequest);
+            var operation = new WoundedInstantTroopHealRequest(peer.Protocol, operationRequest);
             if (!operation.IsValid) return peer.SendOperation(operationRequest.OperationCode, ReturnCode.InvalidOperation, debuMsg: operation.GetErrorMessage());
 
-            var building = peer.PlayerInstance.InternalPlayerDataManager.GetPlayerBuildingByLocationId(operation.BuildingLocationId);
-            if (building == null)
+            var troopType = (TroopType)operation.TroopType;
+            var troopLevel = operation.TroopLevel;
+            var startTime = operation.StartTime;
+            var recruitResp = GameService.InstantProgressManager.InstantHandleWounded(peer.PlayerInstance.PlayerId, troopType, troopLevel, startTime);
+
+            string msg = null;
+            if (!recruitResp.Result.IsSuccess)
             {
-                return peer.SendOperation(operationRequest.OperationCode, ReturnCode.InvalidOperation, debuMsg: "building not found in server.");
+                msg = recruitResp.Result.Message;
+            }
+            else if (!recruitResp.Result.HasData)
+            {
+                msg = "player data not found";
             }
 
-            building.HandleWoundedTroops(operation);
-            return SendResult.Ok;
+            if (msg != null)
+                return SendOperationResponse(peer, operationRequest, ReturnCode.InvalidOperation, msg);
+
+            return SendOperationResponse(peer, operationRequest, ReturnCode.OK);
         }
 
         public SendResult HandleWoundedHealTimerStatus(IGorMmoPeer peer, OperationRequest operationRequest)

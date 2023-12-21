@@ -38,7 +38,6 @@ namespace GameOfRevenge.Buildings.Interface
 
         ITroop IsAnyTroopInTraining();
         void HandleWoundedTroops(WoundedTroopHealRequest request);
-        void HandleInstantWoundedTroops(WoundedTroopHealRequest request);
         void WoundedTroopTimerStatusRequest(WoundedTroopTimerStatusRequest request);
         void HandleUpgradeTechnology(UpgradeTechnologyRequest operation);
         void RepairGate(GateRequest operation);
