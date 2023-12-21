@@ -96,7 +96,7 @@ new string[]{
                     case OperationCode.SendReinforcementsRequest: return await HandleSendReinforcementsRequest(peer, operationRequest); 
 
                     case OperationCode.WoundedHealReqeust: return HandleWoundedHealRequest(peer, operationRequest);//16
-                    case OperationCode.InstantWoundedHealReqeust: return HandleInstantWoundedHealRequest(peer, operationRequest);//53
+                    case OperationCode.InstantWoundedHealRequest: return HandleInstantWoundedHealRequest(peer, operationRequest);//53
                     case OperationCode.WoundedHealTimerRequest: return HandleWoundedHealTimerStatus(peer, operationRequest);//17
                     case OperationCode.UpgradeTechnology: return UpgradeTechnologyRequest(peer, operationRequest);//18
                     case OperationCode.RepairGate: return RepairGateRequest(peer, operationRequest);//19
