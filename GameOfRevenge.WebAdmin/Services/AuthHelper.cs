@@ -84,11 +84,11 @@ namespace GameOfRevenge.WebAdmin.Services
                     };
                     var token = tokenHandler.CreateToken(tokenDescriptor);
                     var tokenString = tokenHandler.WriteToken(token);
-                    user.JwtToken = tokenString;
+                    user.Token = tokenString;
                 }
                 catch (Exception)
                 {
-                    user.JwtToken = string.Empty;
+                    user.Token = string.Empty;
                 }
             }
         }

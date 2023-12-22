@@ -27,9 +27,36 @@ namespace GameOfRevenge.WebServer.Controllers.Api
 
         [HttpPost]
         [AllowAnonymous]
-        public async Task<IActionResult> LoginOrRegister(string identifier, bool accept, int version = 0)
+        public async Task<IActionResult> Handshake(string identifier, bool accept, int version, string platform)
         {
-            var response = await accountManager.TryLoginOrRegister(identifier, accept, version);
+            var response = await accountManager.Handshake(identifier, accept, version, platform);
+            if (response.IsSuccess && response.HasData)
+            {
+                string str;
+                if (response.Data.IsDeveloper)
+                {
+                    //we can opt to change the server for this user
+                    //webserver and photonserver address:port
+                    str = "141.95.53.0:9001,141.95.53.0:4530";
+                }
+                else//default
+                {
+                    //we return ports for webserver and photonserver
+                    str = "9001,4530";
+                }
+                return ReturnResponse(new Common.Net.Response<string>() { Case = response.Case, Data = StringCipher.Encrypt(str, "2r2#818ir98$&@av") });
+            }
+            else
+            {
+                return ReturnResponse(new Common.Net.Response<string>() { Case = response.Case, Data = null, Message = response.Message });
+            }
+        }
+
+        [HttpPost]
+        [AllowAnonymous]
+        public async Task<IActionResult> LoginOrRegister(string identifier, bool accept, int version, string platform)
+        {
+            var response = await accountManager.TryLoginOrRegister(identifier, accept, version, platform);
             if (response.IsSuccess && response.HasData) response.Data.GenerateToken();
 
             return ReturnResponse(response);
