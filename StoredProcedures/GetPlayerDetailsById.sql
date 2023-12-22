@@ -1,6 +1,6 @@
 USE [GameOfRevenge]
 GO
-/****** Object:  StoredProcedure [dbo].[GetPlayerDetailsById]    Script Date: 6/15/2023 11:41:44 PM ******/
+/****** Object:  StoredProcedure [dbo].[GetPlayerDetailsById]    Script Date: 12/22/2023 3:07:47 AM ******/
 SET ANSI_NULLS ON
 GO
 SET QUOTED_IDENTIFIER ON
@@ -30,9 +30,10 @@ BEGIN
 	DECLARE @clanId INT = NULL;
 	DECLARE @creationDate DATETIME = NULL;
 	DECLARE @lastLogin DATETIME = NULL;
+	DECLARE @worldTileId INT = NULL;
 
 	SELECT @existingId = [PlayerId], @name = [Name], @isAdmin = [IsAdmin], @isDeveloper = [IsDeveloper],
-			@vipPoints = [VIPPoints], @creationDate = [CreateDate], @lastLogin = [LastLogin] FROM [dbo].[Player] 
+			@vipPoints = [VIPPoints], @creationDate = [CreateDate], @lastLogin = [LastLogin], @worldTileId = [WorldTileId] FROM [dbo].[Player] 
 	WHERE [PlayerId] = @userId;
 
 	IF (@existingId IS NULL)
@@ -159,7 +160,7 @@ BEGIN
 			'KingLevel' = @kingLevel, 'CastleLevel' = @castleLevel, 'WatchLevel' = @watchLevel,
 			'ShieldEndTime' = @shieldEndTime,
 			'VIPPoints' = @vipPoints, 'ClanId' = @clanId,
-			'RegisteredDate' = @creationDate, 'LastLogin' = @lastLogin;
+			'RegisteredDate' = @creationDate, 'LastLogin' = @lastLogin, 'WorldTileId' = @worldTileId;
 
 	IF (@Log = 1) EXEC [dbo].[GetMessage] @userId, @message, @case, @error, @time, 1, 1;
 END
