@@ -324,14 +324,25 @@ namespace GameOfRevenge.GameHandlers
                     if (data.State == 3)
                     {
                         actor.SendEvent(EventCode.BattleResult, result);
-                        /*
-                        if (marchingArmy.MarchingType == MarchingType.AttackMonster && result.WinnerId == result.AttackerId)
-                        {
-                            WorldMonsters.RemoveAll(e => e.Id == result.TargetId);
 
-                            var exitEvent = new EntityExitResponse((byte)EntityType.Monster, result.TargetId);
-                            actor.BroadcastEventToAllUsers(EventCode.EntityExit, exitEvent);
-                        }*/
+                        if (marchingArmy.MarchingType == MarchingType.AttackMonster)
+                        {
+                            // Apply Monster Health
+                            var defenderPower = marchingArmy.Report.Defender;
+
+                            var monster = WorldMonsters.Find(e => e.Id == defenderPower.EntityId);
+                            if (monster != null)
+                            {
+                                monster.Health = defenderPower.TroopChanges.First().MonsterHP;
+                                var monsterId = monster.Id;
+                                var seed = monsterId;
+
+                                var enterEvent = new MonsterEnterResponse(monster.X, monster.Y, seed, EntityType.Monster, monsterId, monster.Health, monster.Level, monster.MonsterType, monster.Attack, monster.Defense);
+                                actor.BroadcastEventToAllUsers(EventCode.EntityExit, new EntityExitResponse((byte)EntityType.Monster, defenderPower.EntityId));
+
+                                actor.BroadcastEventToAllUsers(EventCode.EntityEnter, enterEvent);
+                            }
+                        }
                     } else if (data.State == 5 || data.State == 1)
                     {
                         actor.SendEvent(EventCode.MarchingResult, result);
