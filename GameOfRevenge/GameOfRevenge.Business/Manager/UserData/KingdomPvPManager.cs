@@ -845,6 +845,8 @@ namespace GameOfRevenge.Business.Manager.UserData
         {
             var defenderPower = (BattlePower)report.Defender;
 
+
+
             var resp = await monsterManager.UpdateMonsterHealth(defenderPower.EntityId, defenderPower.TroopChanges.First().MonsterHP);
 
             return resp.IsSuccess;
