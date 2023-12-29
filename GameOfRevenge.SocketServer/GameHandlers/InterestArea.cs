@@ -82,8 +82,8 @@ namespace GameOfRevenge.GameHandlers
                         }
                     }
 
-                    var monster = World.WorldMonsters.Find(e => e.X == x && e.Y == y);
-                    if (monster != null)
+                    var monsters = World.WorldMonsters.FindAll(e => e.X == x && e.Y == y);
+                    foreach (var monster in monsters)
                     {
                         var monsterId = monster.Id;
                         var seed = monsterId;
@@ -114,8 +114,8 @@ namespace GameOfRevenge.GameHandlers
                         }
                     }
 
-                    var monster = World.WorldMonsters.Find(e => e.X == region.X && e.Y == region.Y);
-                    if (monster != null)
+                    var monsters = World.WorldMonsters.FindAll(e => e.X == region.X && e.Y == region.Y);
+                    foreach (var monster in monsters)
                     {
                         var exitEvent = new EntityExitResponse((byte)EntityType.Monster, monster.Id);
                         PlayerInstance.SendEvent(EventCode.EntityExit, exitEvent);
