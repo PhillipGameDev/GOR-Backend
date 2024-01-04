@@ -1,6 +1,6 @@
 USE [GameOfRevenge]
 GO
-/****** Object:  StoredProcedure [dbo].[GetAllMail]    Script Date: 12/1/2023 4:08:46 AM ******/
+/****** Object:  StoredProcedure [dbo].[GetAllMail]    Script Date: 12/27/2023 11:22:40 PM ******/
 SET ANSI_NULLS ON
 GO
 SET QUOTED_IDENTIFIER ON
@@ -9,7 +9,8 @@ GO
 
 ALTER   PROCEDURE [dbo].[GetAllMail]
 	@PlayerId INT,
-	@LastTime DATETIME = NULL
+	@LastTime DATETIME = NULL,
+	@LastId INT = NULL
 AS
 BEGIN
 	DECLARE @case INT = 1, @error INT = 0;
@@ -36,7 +37,10 @@ BEGIN
 	SELECT e.[MailId], CAST(e.[MailContentTypeId] AS TINYINT) AS 'MailType', e.[Content], e.[IsRead], e.[IsSaved], e.[CreateDate]
 	FROM [dbo].[Mail] AS e
 /*	INNER JOIN [dbo].[MailContentType] AS c ON c.[MailContentTypeId] = e.[MailContentTypeId]*/
-	WHERE e.[PlayerId] = @cId AND (@LastTime IS NULL OR e.[CreateDate] > @LastTime) AND (e.[IsSaved] = 1 OR e.[CreateDate] >= @timeAgo);
+	WHERE e.[PlayerId] = @cId 
+	AND (@LastTime IS NULL OR e.[CreateDate] > @LastTime) 
+	AND (@LastId IS NULL OR e.[MailId] > @LastId)
+	AND (e.[IsSaved] = 1 OR e.[CreateDate] >= @timeAgo);
 
 	EXEC [dbo].[GetMessage] @userId, @message, @case, @error, @time, 1, 1;
 END
