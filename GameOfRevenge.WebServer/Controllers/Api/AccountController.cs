@@ -1,6 +1,7 @@
 ﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using System.Threading.Tasks;
+using GameOfRevenge.Common.Models;
 using GameOfRevenge.Common.Interface;
 using GameOfRevenge.WebServer.Services;
 
@@ -42,9 +43,38 @@ namespace GameOfRevenge.WebServer.Controllers.Api
                 else//default
                 {
                     //we return ports for webserver and photonserver
-                    str = "9001,4530";
+                    if (version >= 915)//https
+                    {
+                        str = "2053,gameofrevenge.com:2083";
+                    }
+                    else//http
+                    {
+                        str = "9001,4530";
+                    }
                 }
-                return ReturnResponse(new Common.Net.Response<string>() { Case = response.Case, Data = StringCipher.Encrypt(str, "2r2#818ir98$&@av") });
+                str = StringCipher.Encrypt(str, "2r2#818ir98$&@av");
+                string data = str;
+                if (version >= 10000)//1.00.00
+                {
+                    var config = new GameConfig()
+                    {
+                        ServerConfig = data,
+                        Data1Version = 1,
+                        Data2Version = 1,
+                        Data3Version = 1,
+//                        PolicyURL = "https://www.privacypolicygenerator.info/live.php?token=RPjMfHISZFvhOyqUjAQwEvhckbyG4N4Y",
+//                        ContactURL = "https://gamelegendstudio.com/contact-us",
+//                        VetURL = "https://discord.gg/QEBNBteg"
+                    };
+                    switch (platform)
+                    {
+                        case "IOS": config.ShareURL = "https://apps.apple.com/us/app/id1662056046"; break;
+                        case "Android": config.ShareURL = "https://play.google.com/store/apps/details?id=com.gamelegendsestab.gameofrevenge"; break;
+                    }
+                    data = Newtonsoft.Json.JsonConvert.SerializeObject(config);
+                }
+
+                return ReturnResponse(new Common.Net.Response<string>() { Case = response.Case, Data = data });
             }
             else
             {
