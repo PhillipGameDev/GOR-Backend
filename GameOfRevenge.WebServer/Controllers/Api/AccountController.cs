@@ -74,7 +74,7 @@ namespace GameOfRevenge.WebServer.Controllers.Api
                     data = Newtonsoft.Json.JsonConvert.SerializeObject(config);
                 }
 
-                return ReturnResponse(new Common.Net.Response<string>() { Case = response.Case, Data = data });
+                return ReturnResponse(new Common.Net.Response<string>() { Case = response.Case, Data = data, Message = response.Message });
             }
             else
             {
