@@ -71,9 +71,9 @@ namespace GameOfRevenge.GameHandlers
 
             log.Info("--- PREPARE MONSTER ---: " + world.Id + "," + CacheMonsterManager.AllItems.Count);
 
-            if (currentMonsters.Count == (world.CurrentZone + 1) * world.ZoneSize * world.ZoneSize * MONSTERS_PER_TILE) return currentMonsters;
+            if (currentMonsters.Count >= (world.CurrentZone + 1) * world.ZoneSize * world.ZoneSize * MONSTERS_PER_TILE) return currentMonsters;
 
-            for (int zone = 0; zone < world.CurrentZone; zone++)
+            for (int zone = 0; zone <= world.CurrentZone; zone++)
             {
                 await AddMonsters(currentMonsters, world, zone);
             }
