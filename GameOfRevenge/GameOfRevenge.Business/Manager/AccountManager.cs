@@ -15,6 +15,8 @@ using GameOfRevenge.Common.Models.Structure;
 using GameOfRevenge.Business.Manager.Base;
 using GameOfRevenge.Business.Manager.UserData;
 using GameOfRevenge.Business.Manager.Kingdom;
+using GameOfRevenge.Common.Email;
+using Newtonsoft.Json.Linq;
 
 namespace GameOfRevenge.Business.Manager
 {
@@ -26,13 +28,14 @@ namespace GameOfRevenge.Business.Manager
         private readonly IUserQuestManager questManager = new UserQuestManager();
         private readonly IKingdomManager kingdomManager = new KingdomManager();
         private readonly IPlayerDataManager dataManager = new PlayerDataManager();
+        private readonly IUserMailManager mailManager = new UserMailManager();
 
         private const bool underMaintenance = false;
         private const int devVersion = 906;
         private const int recommendVersion = 905;
         private const int requireMinVersion = 904;
 
-        public async Task<Response<Player>> TryLoginOrRegister(string identifier, bool accepted, int version)
+        public async Task<Response<Player>> TryLoginOrRegister(string identifier, bool accepted, int version, bool isReferred = false)
         {
             var updateAvailable = false;
             try
@@ -139,6 +142,18 @@ namespace GameOfRevenge.Business.Manager
                     await CreateBackup(playerId);
                     var infoResp = await GetAccountInfo(playerId);
                     response.Data.Info = infoResp.Data;
+
+                    if (!isReferred)
+                    {
+                        // Add records to the table
+                        var addResp = await AddPlayerReferredData(response.Data.PlayerId, null);
+                        if (!addResp.IsSuccess)
+                        {
+                            response.Case = addResp.Case; response.Message = addResp.Message;
+                        }
+                    }
+
+                    return response;
                 }
                 else if (response.Case == 101)// && (version > 0))
                 {
@@ -228,6 +243,90 @@ namespace GameOfRevenge.Business.Manager
             catch (Exception ex)
             {
                 return new Response<Player>() { Case = 0, Data = null, Message = ErrorManager.ShowError(ex) };
+            }
+        }
+
+        public async Task<Response<Player>> TryLoginOrRegister(string identifier, int referredPlayerId, bool accepted, int version)
+        {
+            try
+            {
+                var loginResp = await this.TryLoginOrRegister(identifier, accepted, version, true);
+
+                if (loginResp.Case != 100) return loginResp;
+
+                // Create new account by refered playerId
+
+                // 1. Add 1,000 Gold to two players
+                var resp = await dataManager.AddPlayerResourceData(loginResp.Data.PlayerId, 0, 0, 0, 0, 1000);
+                if (!resp.IsSuccess)
+                {
+                    loginResp.Case = resp.Case; loginResp.Message = resp.Message; return loginResp;
+                }
+
+                resp = await dataManager.AddPlayerResourceData(referredPlayerId, 0, 0, 0, 0, 1000);
+                if (!resp.IsSuccess)
+                {
+                    loginResp.Case = resp.Case; loginResp.Message = resp.Message; return loginResp;
+                }
+
+                // 2. Send Notification Messages
+                var msgResp = await mailManager.SendMail(referredPlayerId, MailType.Message, JsonConvert.SerializeObject(new MailMessage()
+                {
+                    Subject = "Referred Reward",
+                    Message = "You received a bonus of 1,000 gold by referring a new player.",
+                    SenderId = loginResp.Data.PlayerId,
+                    SenderName = loginResp.Data.Name
+                }));
+                if (!msgResp.IsSuccess)
+                {
+                    loginResp.Case = msgResp.Case; loginResp.Message = msgResp.Message; return loginResp;
+                }
+
+                msgResp = await mailManager.SendMail(loginResp.Data.PlayerId, MailType.Message, JsonConvert.SerializeObject(new MailMessage()
+                {
+                    Subject = "Referred Reward",
+                    Message = "You received a bonus of 1,000 gold for entering this game through a referred player.",
+                    SenderId = loginResp.Data.PlayerId,
+                    SenderName = loginResp.Data.Name
+                }));
+                if (!msgResp.IsSuccess)
+                {
+                    loginResp.Case = msgResp.Case; loginResp.Message = msgResp.Message; return loginResp;
+                }
+
+                // 3. Add records to the table
+                var addResp = await AddPlayerReferredData(loginResp.Data.PlayerId, referredPlayerId);
+                if (!addResp.IsSuccess)
+                {
+                    loginResp.Case = addResp.Case; loginResp.Message = addResp.Message; return loginResp;
+                }
+
+                return loginResp;
+            } catch (Exception ex)
+            {
+                return new Response<Player>() { Case = 0, Data = null, Message = ErrorManager.ShowError(ex) };
+            }
+        }
+
+        private async Task<Response> AddPlayerReferredData(int playerId, int? referredPlayerId)
+        {
+            var spParams = new Dictionary<string, object>()
+            {
+                { "PlayerId", playerId },
+                { "ReferredPlayerId", referredPlayerId }
+            };
+
+            try
+            {
+                return await Db.ExecuteSPNoData("AddPlayerReferredData", spParams);
+            }
+            catch (Exception ex)
+            {
+                return new Response()
+                {
+                    Case = 0,
+                    Message = ErrorManager.ShowError(ex)
+                };
             }
         }
 
