@@ -9,8 +9,8 @@ namespace GameOfRevenge.Model
         [DataMember(Code = (byte)RoomParameterKey.ChatId, IsOptional = true)]
         public long ChatId { get; set; }
 
-//        [DataMember(Code = (byte)RoomParameterKey.PlayerId, IsOptional = true)]
-//        public int PlayerId { get; set; }
+        [DataMember(Code = (byte)RoomParameterKey.AllianceId, IsOptional = true)]
+        public int AllianceId { get; set; }
 
         [DataMember(Code = (byte)RoomParameterKey.Flags, IsOptional = true)]
         public byte Flags { get; set; }

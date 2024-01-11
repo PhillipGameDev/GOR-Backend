@@ -22,9 +22,9 @@ namespace GameOfRevenge.WebServer.Controllers.Api
         }*/
 
         [HttpPost]
-        public async Task<IActionResult> GetMessages(long chatId = 0)
+        public async Task<IActionResult> GetMessages(long chatId = 0, int allianceId = 0)
         {
-            var response = await chatManager.GetMessages(chatId);
+            var response = await chatManager.GetMessages(chatId, allianceId);
             return ReturnResponse(response);
         }
 
@@ -36,9 +36,9 @@ namespace GameOfRevenge.WebServer.Controllers.Api
         }
 */
         [HttpPost]
-        public async Task<IActionResult> ReportMessage(long chatId, byte reportType)
+        public async Task<IActionResult> ReportMessage(long chatId, byte reportType, int allianceId = 0)
         {
-            var response = await chatManager.ReportMessage(Token.PlayerId, chatId, reportType);
+            var response = await chatManager.ReportMessage(Token.PlayerId, chatId, reportType, allianceId);
             return ReturnResponse(response);
         }
 
