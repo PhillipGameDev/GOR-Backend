@@ -1,6 +1,6 @@
 USE [GameOfRevenge]
 GO
-/****** Object:  StoredProcedure [dbo].[TryLoginOrRegister]    Script Date: 3/18/2023 11:35:18 PM ******/
+/****** Object:  StoredProcedure [dbo].[TryLoginOrRegister]    Script Date: 12/22/2023 3:24:31 AM ******/
 SET ANSI_NULLS ON
 GO
 SET QUOTED_IDENTIFIER ON
@@ -84,7 +84,8 @@ BEGIN
 							VIPPoints INT,
 							ClanId INT,
 							RegisteredDate DATETIME,
-							LastLogin DATETIME
+							LastLogin DATETIME,
+							WorldTileId INT
 						);
 						INSERT INTO @temp EXEC [dbo].[GetPlayerDetailsById] @existingAccount, 0;
 						SET @info = (
@@ -100,7 +101,8 @@ BEGIN
 						        VIPPoints,
 						        ClanId AS AllianceId,
 						        RegisteredDate,
-						        LastLogin
+						        LastLogin,
+								WorldTileId
 						    FROM @temp
 						    FOR JSON PATH, WITHOUT_ARRAY_WRAPPER
 						);

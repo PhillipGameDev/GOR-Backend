@@ -1,6 +1,6 @@
 USE [GameOfRevenge]
 GO
-/****** Object:  StoredProcedure [dbo].[UpdatePlayerProperties]    Script Date: 6/13/2023 7:35:16 AM ******/
+/****** Object:  StoredProcedure [dbo].[UpdatePlayerProperties]    Script Date: 12/27/2023 8:56:14 PM ******/
 SET ANSI_NULLS ON
 GO
 SET QUOTED_IDENTIFIER ON
@@ -68,7 +68,7 @@ BEGIN
 	END CATCH
 
 	SELECT p.[PlayerId], p.[PlayerIdentifier], p.[FirebaseId], p.[AcceptedTermAndCondition], p.[IsAdmin], p.[IsDeveloper],
-			wt.[X], wt.[Y], p.[WorldTileId], p.[Name], p.[VIPPoints], 'Info' = NULL
+			p.[WorldTileId], wt.[X], wt.[Y], p.[Name], p.[VIPPoints], 'Info' = NULL
 	FROM [dbo].[Player] AS p 
 	LEFT JOIN [dbo].[WorldTileData] AS wt ON wt.[WorldTileDataId] = p.[WorldTileId]
 	WHERE p.[PlayerId] = @userId;

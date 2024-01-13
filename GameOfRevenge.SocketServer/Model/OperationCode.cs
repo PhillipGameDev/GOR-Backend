@@ -65,7 +65,7 @@
         CreateClan = 51,
         DeleteClan = 52,
 
-        InstantWoundedHealReqeust = 53,
+        InstantWoundedHealRequest = 53,
 
         // Mail
         SendMail = 60

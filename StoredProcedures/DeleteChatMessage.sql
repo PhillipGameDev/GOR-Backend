@@ -9,7 +9,8 @@ GO
 
 ALTER   PROCEDURE [dbo].[DeleteChatMessage]
 	@PlayerId INT,
-	@ChatId BIGINT
+	@ChatId BIGINT,
+	@AllianceId INT = NULL
 AS
 BEGIN
 	DECLARE @case INT = 1, @error INT = 0;
@@ -17,10 +18,14 @@ BEGIN
 	DECLARE @time DATETIME = GETUTCDATE();
 
 	DECLARE @userId INT = @PlayerId;
+	DECLARE @clanId INT = ISNULL(@AllianceId, 0);
 	DECLARE @ownerId INT = NULL;
 	DECLARE @flags TINYINT = NULL;
 
-	SELECT @ownerId = [PlayerId], @flags = [Flags] FROM [dbo].[Chat] WHERE [ChatId] = @ChatId;
+	IF (@clanID <> 0)
+		SELECT @ownerId = [PlayerId], @flags = [Flags] FROM [dbo].[ClanChat] WHERE [ChatId] = @ChatId AND [ClanId] = @clanID;
+	ELSE
+		SELECT @ownerId = [PlayerId], @flags = [Flags] FROM [dbo].[Chat] WHERE [ChatId] = @ChatId;
 
 	IF (@ownerId IS NULL)
 		BEGIN
@@ -36,7 +41,10 @@ BEGIN
 		BEGIN
 			BEGIN TRY
 				SET @flags = 128;/*@flags | 128;*/
-				UPDATE [dbo].[Chat] SET [Flags] = @flags WHERE [ChatId] = @ChatId;
+				IF (@clanID <> 0)
+					UPDATE [dbo].[ClanChat] SET [Flags] = @flags WHERE [ChatId] = @ChatId;
+				ELSE
+					UPDATE [dbo].[Chat] SET [Flags] = @flags WHERE [ChatId] = @ChatId;
 				SET @case = 100;
 				SET @message = 'Message marked as deleted';
 			END TRY

@@ -11,6 +11,7 @@ using GameOfRevenge.Common.Interface.UserData;
 using GameOfRevenge.Common.Models;
 using GameOfRevenge.Common.Models.Quest;
 using GameOfRevenge.Common.Models.Quest.Template;
+using GameOfRevenge.Common.Models.Kingdom;
 using GameOfRevenge.Common.Models.Structure;
 using GameOfRevenge.Business.Manager.Base;
 using GameOfRevenge.Business.Manager.UserData;
@@ -35,9 +36,12 @@ namespace GameOfRevenge.Business.Manager
         private const int recommendVersion = 905;
         private const int requireMinVersion = 904;
 
-        public async Task<Response<Player>> TryLoginOrRegister(string identifier, bool accepted, int version, bool isReferred = false)
+        private async Task<(WorldTable, bool, Exception)> ValidateAccess(string identifier, bool accepted, int version)
         {
             var updateAvailable = false;
+            WorldTable world = null;
+            Exception exp = null;
+
             try
             {
                 if (underMaintenance && (version < devVersion))
@@ -60,10 +64,9 @@ namespace GameOfRevenge.Business.Manager
                 var worldResp = await kingdomManager.GetWorld(Config.DefaultWorldCode);
                 if (!worldResp.IsSuccess) throw new DataNotExistExecption();
                 if (!worldResp.HasData) throw new DataNotExistExecption("Unable to assign world");
-                var world = worldResp.Data;
+                world = worldResp.Data;
 
                 identifier = identifier.Trim();
-                var zoneCapacity = (world.ZoneSize * world.ZoneSize) - 4;
                 var respInfo = await GetAccountInfo(identifier);
                 if (!respInfo.IsSuccess)
                 {
@@ -73,15 +76,89 @@ namespace GameOfRevenge.Business.Manager
                         throw new DataNotExistExecption("Unable to assign world");
                     }
 
+                    var zoneCapacity = (world.ZoneSize * world.ZoneSize) - 4;
                     if (respCount.Data.Value >= (zoneCapacity * world.TotalZones))
                     {
                         throw new InvalidModelExecption("Server capacity reached.");
                     }
                 }
+            }
+            catch (Exception ex)
+            {
+                exp = ex;
+            }
+
+            return (world, updateAvailable, exp);
+        }
+
+        public async Task<Response<Player>> Handshake(string identifier, bool accepted, int version, string platform)
+        {
+            var updateAvailable = false;
+
+            try
+            {
+                WorldTable world;
+                Exception exp;
+                (world, updateAvailable, exp) = await ValidateAccess(identifier, accepted, version);
+                if (exp != null) throw exp;
 
                 var spParams = new Dictionary<string, object>()
                 {
-                    { "Identifier", identifier },
+                    { "Identifier", identifier.Trim() },
+                    { "Version", version }
+                };
+                var response = await Db.ExecuteSPSingleRow<Player>("TryLoginOrRegister", spParams);
+                if (!response.IsSuccess) throw new InvalidModelExecption(response.Message);
+                if (!response.HasData)
+                {
+                    throw new InvalidModelExecption("Unable to validate your user account.");
+                }
+
+                int playerId = response.Data.PlayerId;
+                if (response.Case == 100)// new account
+                {
+                    //TODO: move initial data for stored procedure
+                    await SetNewAccount(playerId, version);
+                    await CreateBackup(playerId);
+                }
+                if (updateAvailable) response.Case += 50;
+
+                return response;
+            }
+            catch (DataNotExistExecption ex)
+            {
+                return new Response<Player>() { Case = 202, Data = null, Message = ex.Message };
+            }
+            catch (RequirementExecption ex)
+            {
+                return new Response<Player>() { Case = 201, Data = null, Message = ex.Message };
+            }
+            catch (InvalidModelExecption ex)
+            {
+                var caseCode = updateAvailable ? 250 : 200;
+                return new Response<Player>() { Case = caseCode, Data = null, Message = ex.Message };
+            }
+            catch (Exception ex)
+            {
+                return new Response<Player>() { Case = 0, Data = null, Message = ErrorManager.ShowError(ex) };
+            }
+        }
+
+        public async Task<Response<Player>> TryLoginOrRegister(string identifier, bool accepted, int version, string platform, bool isReferred = false)
+        {
+            var updateAvailable = false;
+
+            try
+            {
+                WorldTable world;
+                Exception exp;
+                (world, updateAvailable, exp) = await ValidateAccess(identifier, accepted, version);
+                if (exp != null) throw exp;
+                var zoneCapacity = (world.ZoneSize * world.ZoneSize) - 4;
+
+                var spParams = new Dictionary<string, object>()
+                {
+                    { "Identifier", identifier.Trim() },
                     { "Version", version }
                 };
                 var response = await Db.ExecuteSPSingleRow<Player>("TryLoginOrRegister", spParams);
@@ -246,11 +323,11 @@ namespace GameOfRevenge.Business.Manager
             }
         }
 
-        public async Task<Response<Player>> TryLoginOrRegister(string identifier, int referredPlayerId, bool accepted, int version)
+        public async Task<Response<Player>> TryLoginOrRegister(string identifier, int referredPlayerId, bool accepted, int version, string platform)
         {
             try
             {
-                var loginResp = await this.TryLoginOrRegister(identifier, accepted, version, true);
+                var loginResp = await this.TryLoginOrRegister(identifier, accepted, version, platform, true);
 
                 if (loginResp.Case != 100) return loginResp;
 

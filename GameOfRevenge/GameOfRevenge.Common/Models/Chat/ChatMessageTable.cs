@@ -28,7 +28,6 @@ namespace GameOfRevenge.Common.Models.Chat
         int PlayerId { get; }
         string Username { get; }
         int VIPPoints { get; }
-//        int AllianceId { get; }
         DateTime Date { get; }
         byte Flags { get; }
     }
@@ -44,7 +43,6 @@ namespace GameOfRevenge.Common.Models.Chat
         public int PlayerId { get; set; }
         public string Username { get; set; }
         public int VIPPoints { get; set; }
-//        public int AllianceId { get; set; }
         public DateTime Date { get; set; }
         public byte Flags { get; set; }
         public T Content { get; set; }

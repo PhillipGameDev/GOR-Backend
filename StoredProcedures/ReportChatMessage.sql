@@ -10,6 +10,7 @@ GO
 ALTER   PROCEDURE [dbo].[ReportChatMessage]
 	@PlayerId INT,
 	@ChatId BIGINT,
+	@AllianceId INT = NULL,
 	@ReportType TINYINT
 AS
 BEGIN
@@ -18,9 +19,13 @@ BEGIN
 	DECLARE @time DATETIME = GETUTCDATE();
 
 	DECLARE @userId INT = @PlayerId;
+	DECLARE @clanId INT = ISNULL(@AllianceId, 0);
 	DECLARE @flags TINYINT = NULL;
 
-	SELECT @flags = [Flags] FROM [dbo].[Chat] WHERE [ChatId] = @ChatId;
+	IF (@clanID <> 0)
+		SELECT @flags = [Flags] FROM [dbo].[ClanChat] WHERE [ChatId] = @ChatId AND [ClanId] = @clanID;
+	ELSE
+		SELECT @flags = [Flags] FROM [dbo].[Chat] WHERE [ChatId] = @ChatId;
 
 	IF (@flags IS NULL)
 		BEGIN
@@ -30,7 +35,10 @@ BEGIN
 	ELSE IF ((@flags & @ReportType) = 0)
 		BEGIN
 			BEGIN TRY
-				UPDATE [dbo].[Chat] SET [Flags] = (@flags | @ReportType) WHERE [ChatId] = @ChatId;
+				IF (@clanID <> 0)
+					UPDATE [dbo].[ClanChat] SET [Flags] = (@flags | @ReportType) WHERE [ChatId] = @ChatId;
+				ELSE
+					UPDATE [dbo].[Chat] SET [Flags] = (@flags | @ReportType) WHERE [ChatId] = @ChatId;
 				SET @case = 100;
 				SET @message = 'Message reported';
 			END TRY

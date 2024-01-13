@@ -237,7 +237,14 @@ namespace GameOfRevenge.GameHandlers
                 log.Info(attackList.Count + "Attack data found for user " + PlayerInstance.PlayerId);
                 foreach (var item in attackList)
                 {
-                    PlayerInstance.SendEvent(EventCode.AttackEvent, new AttackResponse(item.AttackData));
+                    var attkResp = new AttackResponse(item.AttackData);
+                    var attacker = World.WorldPlayers.Find(x => (x.PlayerId == item.AttackData.AttackerId));
+                    if (attacker != null)
+                    {
+                        attkResp.X = attacker.X;
+                        attkResp.Y = attacker.Y;
+                    }
+                    PlayerInstance.SendEvent(EventCode.AttackEvent, attkResp);
                 }
             }
         }

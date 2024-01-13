@@ -13,7 +13,7 @@ namespace GameOfRevenge.Business.Manager.Kingdom
 {
     public class ChatManager : BaseManager, IChatManager
     {
-        public async Task<Response<ChatMessageTable>> CreateMessage(int playerId, string content)
+        public async Task<Response<ChatMessageTable>> CreateMessage(int playerId, string content, int allianceId = 0)
         {
             try
             {
@@ -22,6 +22,7 @@ namespace GameOfRevenge.Business.Manager.Kingdom
                     { "PlayerId", playerId },
                     { "Content", content }
                 };
+                if (allianceId > 0) spParams.Add("AllianceId", allianceId);
 
                 return await Db.ExecuteSPSingleRow<ChatMessageTable>("CreateChatMessage", spParams);
             }
@@ -45,13 +46,13 @@ namespace GameOfRevenge.Business.Manager.Kingdom
             }
         }
 
-        public async Task<Response<ChatMessages>> GetMessages(long chatId = 0)//, int length)
+        public async Task<Response<ChatMessages>> GetMessages(long chatId = 0, int allianceId = 0)
         {
             try
             {
                 var spParams = new Dictionary<string, object>();
                 if (chatId > 0) spParams.Add("ChatId", chatId);
-//                    { "Length", length }
+                if (allianceId > 0) spParams.Add("AllianceId", allianceId);
 
                 var msgResp = await Db.ExecuteSPMultipleRow<ChatMessageTable>("GetChatMessages", spParams);
 
@@ -106,7 +107,7 @@ namespace GameOfRevenge.Business.Manager.Kingdom
             }
         }
 
-        public async Task<Response<ChatMessageFlagTable>> DeleteMessage(int playerId, long chatId)
+        public async Task<Response<ChatMessageFlagTable>> DeleteMessage(int playerId, long chatId, int allianceId = 0)
         {
             try
             {
@@ -115,6 +116,7 @@ namespace GameOfRevenge.Business.Manager.Kingdom
                     { "PlayerId", playerId },
                     { "ChatId", chatId }
                 };
+                if (allianceId > 0) spParams.Add("AllianceId", allianceId);
 
                 return await Db.ExecuteSPSingleRow<ChatMessageFlagTable>("DeleteChatMessage", spParams);
             }
@@ -138,7 +140,7 @@ namespace GameOfRevenge.Business.Manager.Kingdom
             }
         }
 
-        public async Task<Response> ReportMessage(int playerId, long chatId, byte reportType)
+        public async Task<Response> ReportMessage(int playerId, long chatId, byte reportType, int allianceId = 0)
         {
             try
             {
@@ -148,6 +150,7 @@ namespace GameOfRevenge.Business.Manager.Kingdom
                     { "ChatId", chatId },
                     { "ReportType", reportType }
                 };
+                if (allianceId > 0) spParams.Add("AllianceId", allianceId);
 
                 return await Db.ExecuteSPNoData("ReportChatMessage", spParams);
             }

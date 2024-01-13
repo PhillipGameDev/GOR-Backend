@@ -96,14 +96,14 @@ new string[]{
                     case OperationCode.SendReinforcementsRequest: return await HandleSendReinforcementsRequest(peer, operationRequest); 
 
                     case OperationCode.WoundedHealReqeust: return HandleWoundedHealRequest(peer, operationRequest);//16
-                    case OperationCode.InstantWoundedHealReqeust: return HandleInstantWoundedHealRequest(peer, operationRequest);//53
+                    case OperationCode.InstantWoundedHealRequest: return HandleInstantWoundedHealRequest(peer, operationRequest);//53
                     case OperationCode.WoundedHealTimerRequest: return HandleWoundedHealTimerStatus(peer, operationRequest);//17
                     case OperationCode.UpgradeTechnology: return UpgradeTechnologyRequest(peer, operationRequest);//18
                     case OperationCode.RepairGate: return RepairGateRequest(peer, operationRequest);//19
                     case OperationCode.GateHp: return GetGateHpRequest(peer, operationRequest);//20
 
                     case OperationCode.GlobalChat: return await GlobalChat(peer, operationRequest);//21
-                    case OperationCode.AllianceChat: return AllianceChat(peer, operationRequest);//29
+                    case OperationCode.AllianceChat: return await AllianceChat(peer, operationRequest);//29
                     case OperationCode.DeleteChat: return await DeleteChat(peer, operationRequest);
 
                     case OperationCode.Ping: return peer.SendOperation(operationRequest.OperationCode, ReturnCode.OK);//2
@@ -850,7 +850,7 @@ new string[]{
                 return peer.SendOperation(operationRequest.OperationCode, ReturnCode.InvalidOperation, debuMsg: msg);
             }
 
-            var resp = await GameService.BChatManager.DeleteMessage(peer.PlayerInstance.PlayerId, operation.ChatId);
+            var resp = await GameService.BChatManager.DeleteMessage(peer.PlayerInstance.PlayerId, operation.ChatId, operation.AllianceId);
             if (!resp.IsSuccess || !resp.HasData)
             {
                 var dbgMsg = "Failed to delete message";
@@ -860,20 +860,20 @@ new string[]{
             var obj = new DeleteChatMessageRespose()
             {
                 ChatId = operation.ChatId,
+                AllianceId = operation.AllianceId,
                 Flags = resp.Data.Flags
             };
 
             return peer.Broadcast(operationRequest.OperationCode, ReturnCode.OK, obj.GetDictionary());
         }
 
-        private async Task<SendResult> GlobalChat(IGorMmoPeer peer, OperationRequest operationRequest)
+        async Task<Dictionary<byte, object>> SendChatMessage(IGorMmoPeer peer, OperationRequest operationRequest)
         {
-            GameLobbyHandler.log.Info(">>>>>GLOBAL CHAT");
             var operation = new ChatMessageRequest(peer.Protocol, operationRequest);
             if (!operation.IsValid)
             {
                 var msg = operation.GetErrorMessage();
-                return peer.SendOperation(operationRequest.OperationCode, ReturnCode.InvalidOperation, debuMsg: msg);
+                throw new InvalidOperationException(msg);
             }
 
             var message = operation.ChatMessage;
@@ -889,8 +889,8 @@ new string[]{
                 }
             }
 
-            var resp = await GameService.BChatManager.CreateMessage(peer.PlayerInstance.PlayerId, message);
-            GameLobbyHandler.log.Info("success = "+resp.IsSuccess+"  "+Newtonsoft.Json.JsonConvert.SerializeObject(resp.Data));
+            var resp = await GameService.BChatManager.CreateMessage(peer.PlayerInstance.PlayerId, message, operation.AllianceId);
+            GameLobbyHandler.log.Info("success = " + resp.IsSuccess + "  " + Newtonsoft.Json.JsonConvert.SerializeObject(resp.Data));
             if (resp.IsSuccess && resp.HasData)
             {
                 var response = new ChatMessageRespose()
@@ -899,13 +899,35 @@ new string[]{
                     PlayerId = peer.PlayerInstance.PlayerInfo.PlayerId, //operation.PlayerId,
                     Username = peer.PlayerInstance.PlayerInfo.Name, //operation.Username,
                     VIPPoints = peer.PlayerInstance.PlayerInfo.VIPPoints,
-                    AllianceId = 0,//global chat alliance is zero. //operation.AllianceId,
+                    AllianceId = operation.AllianceId,
                     Timestamp = DateTimeOffset.Now.ToUnixTimeSeconds(), //ToString("dd/MM/yyyy HH:mm:ss"),
                     ChatMessage = message
                 };
                 var data = response.GetDictionary();
-                GameLobbyHandler.log.Info(">>>>>data =" + data);
+                GameLobbyHandler.log.Info(">>>>>data =" + JsonConvert.SerializeObject(data));
+                return data;
+            }
+            else
+            {
+                return null;
+            }
+        }
 
+        private async Task<SendResult> GlobalChat(IGorMmoPeer peer, OperationRequest operationRequest)
+        {
+            GameLobbyHandler.log.Info(">>>>>GLOBAL CHAT");
+            Dictionary<byte, object> data = null;
+            try
+            {
+                data = await SendChatMessage(peer, operationRequest);
+            }
+            catch (InvalidOperationException ex)
+            {
+                return peer.SendOperation(operationRequest.OperationCode, ReturnCode.InvalidOperation, debuMsg: ex.Message);
+            }
+
+            if (data != null)
+            {
                 var questUpdated = await CompleteCustomTaskQuest(peer.PlayerInstance.PlayerId, CustomTaskType.SendGlobalChat);
                 if (questUpdated)
                 {
@@ -919,23 +941,26 @@ new string[]{
             return peer.SendOperation(operationRequest.OperationCode, ReturnCode.Failed, debuMsg: dbgMsg);
         }
 
-        private SendResult AllianceChat(IGorMmoPeer peer, OperationRequest operationRequest)
+        private async Task<SendResult> AllianceChat(IGorMmoPeer peer, OperationRequest operationRequest)
         {
             GameLobbyHandler.log.Info(">>>>>ALLIANCE CHAT");
-            var operation = new ChatMessageRequest(peer.Protocol, operationRequest);
-            ChatMessageRespose response = new ChatMessageRespose()
+            Dictionary<byte, object> data = null;
+            try
             {
-                PlayerId = peer.PlayerInstance.PlayerInfo.PlayerId, //operation.PlayerId,
-                Username = peer.PlayerInstance.PlayerInfo.Name, //operation.Username,
-                VIPPoints = peer.PlayerInstance.PlayerInfo.VIPPoints,
-                AllianceId = operation.AllianceId,
-                Timestamp = DateTimeOffset.Now.ToUnixTimeSeconds(),//ToString("dd/MM/yyyy HH:mm:ss"),
-                ChatMessage = operation.ChatMessage,
-            };
-            var data = response.GetDictionary();
-            GameLobbyHandler.log.Info(">>>>>data =" + data);
+                data = await SendChatMessage(peer, operationRequest);
+            }
+            catch (InvalidOperationException ex)
+            {
+                return peer.SendOperation(operationRequest.OperationCode, ReturnCode.InvalidOperation, debuMsg: ex.Message);
+            }
 
-            return peer.Broadcast(OperationCode.AllianceChat, ReturnCode.OK, data);
+            if (data != null)
+            {
+                return peer.Broadcast(OperationCode.AllianceChat, ReturnCode.OK, data);
+            }
+
+            var dbgMsg = "Failed delivery message";
+            return peer.SendOperation(operationRequest.OperationCode, ReturnCode.Failed, debuMsg: dbgMsg);
         }
 
         private SendResult GetGateHpRequest(IGorMmoPeer peer, OperationRequest operationRequest)
@@ -1486,7 +1511,14 @@ new string[]{
                 foreach (var item in attackList)
                 {
                     item.AttackData.WatchLevel = watchLevel;
-                    playerDataManager.player.SendEvent(EventCode.UnderAttack, new AttackResponse(item.AttackData));
+                    var attkResp = new AttackResponse(item.AttackData);
+                    var attacker = GridWorld.WorldPlayers.Find(x => (x.PlayerId == item.AttackData.AttackerId));
+                    if (attacker != null)
+                    {
+                        attkResp.X = attacker.X;
+                        attkResp.Y = attacker.Y;
+                    }
+                    playerDataManager.player.SendEvent(EventCode.UnderAttack, attkResp);
                 }
             }
 
