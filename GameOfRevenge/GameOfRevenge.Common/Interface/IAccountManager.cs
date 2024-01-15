@@ -8,11 +8,11 @@ namespace GameOfRevenge.Common.Interface
     public interface IAccountManager
     {
         Task<Response<Player>> Handshake(string identifier, bool accepted, int version, string platform);
-        Task<Response<Player>> TryLoginOrRegister(string identifier, bool accepted, int version, string platform, bool isReferred = false);
-        Task<Response<Player>> TryLoginOrRegister(string identifier, int referredPlayerId, bool accepted, int version, string platform);
+        Task<Response<Player>> TryLoginOrRegister(string identifier, bool accepted, int version, string platform, int? referredPlayerId = null);
         PlayerID AddPlayerToZone(int playerId, int zoneSize, List<PlayerID> list);
 
         Task<Response<Player>> SetProperties(int playerId, string firebaseId = null, bool? terms = null, int? worldTileId = null, string name = null, int? vipPoints = null);
+        Task UpdatePlayerReferredData(int playerId);
 
         Task<Response<string[]>> ChangeName(int playerId, string name);
 

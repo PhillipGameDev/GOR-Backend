@@ -96,7 +96,7 @@ namespace GameOfRevenge.WebServer.Controllers.Api
         [AllowAnonymous]
         public async Task<IActionResult> LoginOrRegisterWithReferredId(string identifier, int referredPlayerId, bool accept, int version, string platform)
         {
-            var response = await accountManager.TryLoginOrRegister(identifier, referredPlayerId, accept, version, platform);
+            var response = await accountManager.TryLoginOrRegister(identifier, accept, version, platform, referredPlayerId);
             if (response.IsSuccess && response.HasData) response.Data.GenerateToken();
 
             return ReturnResponse(response);
