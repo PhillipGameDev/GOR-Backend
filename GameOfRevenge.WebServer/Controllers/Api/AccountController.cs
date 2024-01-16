@@ -60,7 +60,7 @@ namespace GameOfRevenge.WebServer.Controllers.Api
                     {
                         ServerConfig = data,
                         Data1Version = 1,
-                        Data2Version = 1,
+                        Data2Version = 2,
                         Data3Version = 1,
 //                        PolicyURL = "https://www.privacypolicygenerator.info/live.php?token=RPjMfHISZFvhOyqUjAQwEvhckbyG4N4Y",
 //                        ContactURL = "https://gamelegendstudio.com/contact-us",

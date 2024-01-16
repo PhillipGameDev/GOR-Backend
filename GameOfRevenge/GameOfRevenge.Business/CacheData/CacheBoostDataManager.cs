@@ -958,7 +958,8 @@ namespace GameOfRevenge.Business.CacheData
 70,
 70,
 75,
-75
+80,
+80
 };
 
         private static int[] Table74 = new int[]//VIP TROOPATTACK
