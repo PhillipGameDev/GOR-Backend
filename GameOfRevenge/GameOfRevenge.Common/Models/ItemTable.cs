@@ -5,6 +5,7 @@ using System.Runtime.Serialization;
 using GameOfRevenge.Common.Helper;
 using GameOfRevenge.Common.Interface.Model.Table;
 using GameOfRevenge.Common.Models.Boost;
+using GameOfRevenge.Common.Models.Inventory;
 using GameOfRevenge.Common.Models.Table;
 
 namespace GameOfRevenge.Common.Models
@@ -108,6 +109,12 @@ namespace GameOfRevenge.Common.Models
                             desc = string.Format(str, item.Value);
                             break;
                     }
+                    break;
+                case DataType.Inventory:
+                    str = Localization.GetText("{0}", Helper.Localization.REWARDS);
+                    title = string.Format(str, ((InventoryItemType)item.ValueId).ToString());
+                    str = Localization.GetText("Use this item to add {0} inventory to your King", Helper.Localization.REWARDS);
+                    desc = string.Format(str, ((InventoryItemType)item.ValueId).ToString());
                     break;
                 case DataType.Resource:
                     var type = (ResourceType)item.ValueId;
