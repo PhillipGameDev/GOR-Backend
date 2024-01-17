@@ -177,6 +177,7 @@ namespace GameOfRevenge.Business.CacheData
                 newBoosts.VIPBoosts.Remove(VIPBoostType.Unknown);
 
                 newBoosts.Boosts.Add(GetSpecForVIPBoosts());
+                newBoosts.Boosts.Add(GetSpecForKINGBoosts());
 
                 //kingdom technologies
                 newBoosts.Boosts.Add(GetSpecForConstructionTechnology());
@@ -371,8 +372,17 @@ namespace GameOfRevenge.Business.CacheData
             return new SpecNewBoostData(NewBoostType.VIP, techs, 70, Table70);
         }
 
+        private static SpecNewBoostData GetSpecForKINGBoosts()
+        {
+            var techs = new List<NewBoostTechSpec>();
 
+            foreach (KINGBoostTech tech in Enum.GetValues(typeof(KINGBoostTech)))
+            {
+                techs.Add(new NewBoostTechSpec().VIPBoostTechSpec((NewBoostTech)tech, 80, Table80, 1, "+{0:N0}%"));
+            }
 
+            return new SpecNewBoostData(NewBoostType.KING, techs);
+        }
 
         private static SpecNewBoostData GetSpecForConstructionTechnology()
         {
@@ -1032,6 +1042,40 @@ namespace GameOfRevenge.Business.CacheData
 10,
 10,
 10
+};
+
+        private static int[] Table80 = new int[]
+{
+5,
+10,
+12,
+14,
+16,
+20,
+24,
+28,
+32,
+35,
+37,
+40,
+42,
+45,
+47,
+50,
+52,
+55,
+57,
+60,
+62,
+65,
+67,
+70,
+72,
+75,
+77,
+80,
+82,
+85
 };
 
         private const int DAY = 24 * HOUR;

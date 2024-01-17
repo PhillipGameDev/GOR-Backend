@@ -35,6 +35,7 @@ namespace GameOfRevenge.Common.Models.Boost
         Fog,//=NewBoostTech.ProtectionFog
 
         VIP = 15,
+        KING = 16,
         //SVIP
 
         Construction = 20,
@@ -68,6 +69,20 @@ namespace GameOfRevenge.Common.Models.Boost
         InfirmaryCapacityMultiplier = NewBoostTech.InfirmaryCapacityMultiplier,
         TroopTrainingSpeedMultiplier = NewBoostTech.TroopTrainingSpeedMultiplier,
         ResourceStorageMultiplier = NewBoostTech.ResourceStorageMultiplier
+    }
+
+    public enum KINGBoostTech : byte
+    {
+        TroopAttackMultiplier = NewBoostTech.TroopAttackMultiplier,
+        TroopDefenseMultiplier = NewBoostTech.TroopDefenseMultiplier,
+        InfantryAttackMultiplier = NewBoostTech.InfantryAttackMultiplier,
+        InfantryDefenseMultiplier = NewBoostTech.InfantryDefenseMultiplier,
+        SiegeAttackMultiplier = NewBoostTech.SiegeAttackMultiplier,
+        SiegeDefenseMultiplier = NewBoostTech.SiegeDefenseMultiplier,
+        CavalryAttackMultiplier = NewBoostTech.CavalryAttackMultiplier,
+        CavalryDefenseMultiplier = NewBoostTech.CavalryDefenseMultiplier,
+        BowmenAttackMultiplier = NewBoostTech.BowmenAttackMultiplier,
+        BowmenDefenseMultiplier = NewBoostTech.BowmenDefenseMultiplier,
     }
 
     public enum NewBoostTech : byte
