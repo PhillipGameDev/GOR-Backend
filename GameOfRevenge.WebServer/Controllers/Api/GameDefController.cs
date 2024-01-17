@@ -10,149 +10,131 @@ namespace GameOfRevenge.WebServer.Controllers.Api
     [AllowAnonymous]
     public class GameDefController : BaseApiController
     {
-//        private readonly IBaseUserManager baseUserManager;
-
-//        public GameDefController(IBaseUserManager baseUserManager)
-//        {
-//            this.baseUserManager = baseUserManager;
-//        }
-
-        [HttpGet]
-        public IActionResult GetAllBoosts()
-        {
-//            var response = new Response<IReadOnlyList<IReadOnlyBoostTypeTable>>(CacheBoostDataManager.BoostInfos, 100, "City boost list");
-//            CacheBoostDataManager.boostTypes;
-            var response = CacheBoostDataManager.SpecNewBoostDataTables;
-            return ReturnResponse(response);
-        }
-
-        [HttpGet]
-        public IActionResult GetAllHeroes()
-        {
-            var response = CacheHeroDataManager.HeroInfos;
-            return ReturnResponse(response);
-        }
-
-/*        [HttpGet]
-        public IActionResult GetAllBoost()
-        {
-//            var response = CacheBoostDataManager.BoostInfos;
-            return ReturnResponse();
-        }*/
-
-        [HttpGet]
-        public IActionResult GetAllItems()
-        {
-            var response = CacheInventoryDataManager.AllInventoryItems;
-//            var response = new List<InventoryDataTable> ();
-//            response.Add(new InventoryDataTable {Id = 111,Code=InventoryItemType.Weapon,Name="name test",Rarity = Common.RarityType.Rare });
-            if (response != null)
-            {
-
-                //config.Formatters.JsonFormatter.S‌​erializerSettings
-/*                JsonSerializerSettings settings = new JsonSerializerSettings
-                {
-                    Formatting = Formatting.None,
-                    NullValueHandling = NullValueHandling.Ignore,
-                    ReferenceLoopHandling = ReferenceLoopHandling.Ignore,
-                    PreserveReferencesHandling = PreserveReferencesHandling.None
-                };*/
-                //                System.Web.Http.GlobalConfiguration.Configuration.Formatters.JsonFormatter.UseDataContractJsonSerializer = true;
-
-//                string json = JsonConvert.SerializeObject(response);//, settings);
-
-                return ReturnResponse(response);//, "application/json");
-
-
-                //                return ReturnResponse(Content(JsonConvert.SerializeObject(response), "application/json"));
-                //                var json = JsonConvert.SerializeObject(response);
-                //return ReturnResponse(json);
-            }
-            else
-            {
-                return ReturnResponse();
-            }
-        }
-
-        [HttpGet]
-        public IActionResult GetAllTechnologies()
-        {
-//            var response = new Response<IReadOnlyList<Common.Models.Technology.IReadOnlyTechnologyDataRequirementRel>>(CacheTechnologyDataManager.TechnologyInfos, 100, "Technology list");
-            var response = CacheTechnologyDataManager.TechnologyGroups;
-            return ReturnResponse(response);
-        }
-
-/*        [HttpGet]
-        public IActionResult GetAllSubTechnology()
-        {
-            var response = CacheTechnologyDataManager.SubTechnologyInfos;
-            return ReturnResponse(response);
-        }*/
-
-        [HttpGet]
-        public IActionResult GetAllResources()
-        {
-            var response = CacheResourceDataManager.ResourceInfos;
-            return ReturnResponse(response);
-        }
-
-        [HttpGet]
-        public IActionResult GetAllStructureData()
+        [HttpGet]//group data 1
+        [ResponseCache(Duration = 120, VaryByQueryKeys = new string[] { "ver" })]
+        public IActionResult GetAllStructureData([FromQuery(Name = "ver")] int ver)
         {
             var response = CacheStructureDataManager.StructureInfos;
             return ReturnResponse(response);
         }
 
-        [HttpGet]
-        public IActionResult GetAllTroopData()
-        {
-            var response = CacheTroopDataManager.TroopInfos;
-            return ReturnResponse(response);
-        }
-
-        [HttpGet]
-        public IActionResult GetAllChapters()
-        {
-            var response = CacheQuestDataManager.ChapterQuests;
-            return ReturnResponse(response);
-        }
-
-        [HttpGet]
-        public IActionResult GetAllSideQuests()
-        {
-            return ReturnResponse(null);
-        }
-
-        [HttpGet]
-        public IActionResult GetAllDailyQuests()
-        {
-            var response = CacheQuestDataManager.DailyQuests;
-            return ReturnResponse(response);
-        }
-
-        [HttpGet]
-        public IActionResult GetAllTroopBuildingRelation()
-        {
-/*            var response = new Response<IReadOnlyList<IReadOnlyTroopBuildingRelation>>(CaseType.Success, "Troop and building relation")
-            {
-                Data = CacheTroopDataManager.TroopBuildingRelation
-            };*/
-            var response = CacheTroopDataManager.TroopBuildingRelation;
-
-            return ReturnResponse(response);
-        }
-
-        [HttpGet]
-        public IActionResult BuildingLevelDescription()
+        [HttpGet]//group data 1
+        [ResponseCache(Duration = 120, VaryByQueryKeys = new string[] { "ver" })]
+        public IActionResult BuildingLevelDescription([FromQuery(Name = "ver")] int ver)
         {
             var response = CacheStructureDataManager.StructureInfoFactory;
             return ReturnResponse(response);
         }
 
-        readonly string[] monsterNames = new string[] { "Cyclops", "Darkness Spider", "Ghoul", "Golem Rock", "Oak Tree", "Troll", "Vampire" };
+        [HttpGet]//group data 1
+        [ResponseCache(Duration = 120, VaryByQueryKeys = new string[] { "ver" })]
+        public IActionResult GetAllTroopData([FromQuery(Name = "ver")] int ver)
+        {
+            var response = CacheTroopDataManager.TroopInfos;
+            return ReturnResponse(response);
+        }
 
+        [HttpGet]//group data 1
+        [ResponseCache(Duration = 120, VaryByQueryKeys = new string[] { "ver" })]
+        public IActionResult GetAllTroopBuildingRelation([FromQuery(Name = "ver")] int ver)
+        {
+            var response = CacheTroopDataManager.TroopBuildingRelation;
+            return ReturnResponse(response);
+        }
+
+        [HttpGet]//group data 1
+        [ResponseCache(Duration = 120, VaryByQueryKeys = new string[] { "ver" })]
+        public IActionResult GetAllHeroes([FromQuery(Name = "ver")] int ver)
+        {
+            var response = CacheHeroDataManager.HeroInfos;
+            return ReturnResponse(response);
+        }
+
+        [HttpGet]//group data 1
+        [ResponseCache(Duration = 120, VaryByQueryKeys = new string[] { "ver" })]
+        public IActionResult GetAllItems([FromQuery(Name = "ver")] int ver)
+        {
+            return ReturnResponse(CacheItemManager.AllItems);
+        }
+
+        [HttpGet]//group data 1
+        [ResponseCache(Duration = 120, VaryByQueryKeys = new string[] { "ver" })]
+        public IActionResult GetAllInventories([FromQuery(Name = "ver")] int ver)
+        {
+            return ReturnResponse(CacheInventoryDataManager.AllInventoryItems);
+        }
+
+        [HttpGet]//group data 1
+        [ResponseCache(Duration = 120, VaryByQueryKeys = new string[] { "ver" })]
+        public IActionResult GetAllInventoryData([FromQuery(Name = "ver")] int ver)
+        {
+            return ReturnResponse(CacheInventoryDataManager.AllInventoryData);
+        }
+
+
+        [HttpGet]//group data 2
+        [ResponseCache(Duration = 120, VaryByQueryKeys = new string[] { "ver" })]
+        public IActionResult GetAllBoosts([FromQuery(Name = "ver")] int ver)
+        {
+            SpecNewBoostDataTable response;
+            if (ver < 3)//old version, king type not declared
+            {
+                var data = CacheBoostDataManager.SpecNewBoostDataTables;
+                response = new SpecNewBoostDataTable();
+                response.CityBoosts = data.CityBoosts;
+                response.VIPBoosts = data.VIPBoosts;
+                response.Tables = data.Tables;
+
+                var kingBoosts = data.Boosts.Find(x => x.Type == Common.Models.Boost.NewBoostType.KING);
+                if (kingBoosts != null)
+                {
+                    response.Boosts = new List<SpecNewBoostData>(data.Boosts);
+                    response.Boosts.Remove(kingBoosts);
+                }
+                else
+                {
+                    response.Boosts = data.Boosts;
+                }
+            }
+            else
+            {
+                response = CacheBoostDataManager.SpecNewBoostDataTables;
+            }
+
+            return ReturnResponse(response);
+        }
+
+        [HttpGet]//group data 2
+        [ResponseCache(Duration = 120, VaryByQueryKeys = new string[] { "ver" })]
+        public IActionResult GetAllTechnologies([FromQuery(Name = "ver")] int ver)
+        {
+            var response = CacheTechnologyDataManager.TechnologyGroups;
+            return ReturnResponse(response);
+        }
+
+        [HttpGet]//group data 2
+        [ResponseCache(Duration = 120, VaryByQueryKeys = new string[] { "ver" })]
+        public IActionResult GetAllChapters([FromQuery(Name = "ver")] int ver)
+        {
+            var response = CacheQuestDataManager.ChapterQuests;
+            return ReturnResponse(response);
+        }
+
+        [HttpGet]//group data 2
+        [ResponseCache(Duration = 120, VaryByQueryKeys = new string[] { "ver" })]
+        public IActionResult GetAllDailyQuests([FromQuery(Name = "ver")] int ver)
+        {
+            var response = CacheQuestDataManager.DailyQuests;
+            return ReturnResponse(response);
+        }
+
+
+
+
+
+        readonly string[] monsterNames = new string[] { "Cyclops", "Darkness Spider", "Ghoul", "Golem Rock", "Oak Tree", "Troll", "Vampire" };
         [HttpGet]
-        public IActionResult GetAllMonsters()
+        public IActionResult GetAllMonsters()//obsolete
         {
             var response = new List<EntityData>();
             foreach (var name in monsterNames)
@@ -167,16 +149,50 @@ namespace GameOfRevenge.WebServer.Controllers.Api
         }
 
         [HttpGet]
-        public IActionResult GetAllInventories() => ReturnResponse(CacheInventoryDataManager.AllInventoryItems);
+        public IActionResult GetAllResources()//obsolete
+        {
+            var response = CacheResourceDataManager.ResourceInfos;
+            return ReturnResponse(response);
+        }
 
         [HttpGet]
-        public IActionResult GetAllInventoryData() => ReturnResponse(CacheInventoryDataManager.AllInventoryData);
+        public IActionResult GetAllSideQuests()//obsolete or not used in new version
+        {
+            return ReturnResponse(null);
+        }
 
-        /*        [HttpGet]
-                public IActionResult GetInstantBuildCost(int timeLeft)//obsolete -> playercontroller.instantbuild
-                {
-                    var response = baseUserManager.GetInstantBuildCost(timeLeft);
-                    return ReturnResponse(new Response<int>(response, 100, "Instant build cost"));
-                }*/
+/*        [HttpGet]
+        public IActionResult GetAllItems()//obsolete use GetAllInventories
+        {
+            var response = CacheInventoryDataManager.AllInventoryItems;
+            //            var response = new List<InventoryDataTable> ();
+            //            response.Add(new InventoryDataTable {Id = 111,Code=InventoryItemType.Weapon,Name="name test",Rarity = Common.RarityType.Rare });
+            if (response != null)
+            {
+
+                //config.Formatters.JsonFormatter.S‌​erializerSettings
+                /*                JsonSerializerSettings settings = new JsonSerializerSettings
+                                {
+                                    Formatting = Formatting.None,
+                                    NullValueHandling = NullValueHandling.Ignore,
+                                    ReferenceLoopHandling = ReferenceLoopHandling.Ignore,
+                                    PreserveReferencesHandling = PreserveReferencesHandling.None
+                                };* /
+                //                System.Web.Http.GlobalConfiguration.Configuration.Formatters.JsonFormatter.UseDataContractJsonSerializer = true;
+
+                //                string json = JsonConvert.SerializeObject(response);//, settings);
+
+                return ReturnResponse(response);//, "application/json");
+
+
+                //                return ReturnResponse(Content(JsonConvert.SerializeObject(response), "application/json"));
+                //                var json = JsonConvert.SerializeObject(response);
+                //return ReturnResponse(json);
+            }
+            else
+            {
+                return ReturnResponse();
+            }
+        }*/
     }
 }

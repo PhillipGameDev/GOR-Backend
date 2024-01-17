@@ -174,9 +174,21 @@ namespace GameOfRevenge.WebServer.Controllers.Api
         }
 
         [HttpGet]
-        public async Task<IActionResult> GetUserResources()
+        [ResponseCache(NoStore = true, VaryByQueryKeys = new string[] { "ver" })]
+        public async Task<IActionResult> GetUserResources([FromQuery(Name = "ver")] int ver)
         {
-            return ReturnResponse(await userResourceManager.GetResources(Token.PlayerId));
+            var resp = await userResourceManager.GetResources(Token.PlayerId);
+            if (resp.HasData && (ver < 1))
+            {
+                var res = resp.Data.Find(x => x.ResourceType == ResourceType.Red);
+                if (res != null) resp.Data.Remove(res);
+                res = resp.Data.Find(x => x.ResourceType == ResourceType.Green);
+                if (res != null) resp.Data.Remove(res);
+                res = resp.Data.Find(x => x.ResourceType == ResourceType.Blue);
+                if (res != null) resp.Data.Remove(res);
+            }
+
+            return ReturnResponse(resp);
         }
 
         [HttpPost]

@@ -104,6 +104,7 @@ namespace GameOfRevenge.WebServer
             //            services.AddControllers();
             //            services.AddControllersWithViews();
             services.AddRazorPages();
+            services.AddResponseCaching();
 
             
 /*            services.AddSwaggerGen(setup =>
@@ -178,6 +179,7 @@ namespace GameOfRevenge.WebServer
             app.UseRouting();
             app.UseAuthentication();
             app.UseAuthorization();
+            app.UseResponseCaching();
 
             app.UseEndpoints(endpoints =>
             {

@@ -33,7 +33,7 @@ namespace GameOfRevenge.WebServer.Controllers.Api
 
         [HttpGet]
         [AllowAnonymous]
-        public IActionResult GetAllItems() => ReturnResponse(CacheItemManager.AllItems);
+        public IActionResult GetAllItems() => ReturnResponse(CacheItemManager.AllItems);//obsolete starting from v1 moved to gamedefcontroller
 
         [HttpPost]
         public async Task<IActionResult> ConsumeItem(long playerDataId, int count, string context = null)
