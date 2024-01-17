@@ -637,9 +637,9 @@ namespace GameOfRevenge.Business.Manager.UserData
 
                 foreach (var req in inventoryData.RequirementValues)
                 {
-                    if (req.Type == RawResourceType.Steel) await userResourceManager.SumSteelResource(playerId, -req.Value);
-                    else if (req.Type == RawResourceType.Stone) await userResourceManager.SumStoneResource(playerId, -req.Value);
-                    else if (req.Type == RawResourceType.Ruby) await userResourceManager.SumRubyResource(playerId, -req.Value);
+                    if (req.Type == RawResourceType.Red) await userResourceManager.SumSteelResource(playerId, -req.Value);
+                    else if (req.Type == RawResourceType.Green) await userResourceManager.SumStoneResource(playerId, -req.Value);
+                    else if (req.Type == RawResourceType.Blue) await userResourceManager.SumRubyResource(playerId, -req.Value);
                 }
 
                 return await Db.ExecuteSPSingleRow<InventoryUserDataTable>("UpgradeUserInventory", spParams);

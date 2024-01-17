@@ -60,7 +60,7 @@ namespace GameOfRevenge.WebServer.Controllers.Api
                     {
                         ServerConfig = data,
                         Data1Version = 1,
-                        Data2Version = 1,
+                        Data2Version = 3,
                         Data3Version = 1,
 //                        PolicyURL = "https://www.privacypolicygenerator.info/live.php?token=RPjMfHISZFvhOyqUjAQwEvhckbyG4N4Y",
 //                        ContactURL = "https://gamelegendstudio.com/contact-us",
@@ -87,16 +87,6 @@ namespace GameOfRevenge.WebServer.Controllers.Api
         public async Task<IActionResult> LoginOrRegister(string identifier, bool accept, int version, string platform)
         {
             var response = await accountManager.TryLoginOrRegister(identifier, accept, version, platform);
-            if (response.IsSuccess && response.HasData) response.Data.GenerateToken();
-
-            return ReturnResponse(response);
-        }
-
-        [HttpPost]
-        [AllowAnonymous]
-        public async Task<IActionResult> LoginOrRegisterWithReferredId(string identifier, int referredPlayerId, bool accept, int version, string platform)
-        {
-            var response = await accountManager.TryLoginOrRegister(identifier, accept, version, platform, referredPlayerId);
             if (response.IsSuccess && response.HasData) response.Data.GenerateToken();
 
             return ReturnResponse(response);

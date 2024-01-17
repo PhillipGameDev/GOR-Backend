@@ -140,7 +140,9 @@ new string[]{
                     case OperationCode.CreateClan: return await HandleCreateClan(peer, operationRequest); //51
                     case OperationCode.DeleteClan: return await HandleDeleteClan(peer, operationRequest); //52
 
-                    case OperationCode.SendMail: return await HandleSendMessageRequest(peer, operationRequest); //52
+                    case OperationCode.GetKingdomInformation: return HandlePlayerJoinKingdomView(peer, operationRequest);//54
+
+                    case OperationCode.SendMail: return await HandleSendMessageRequest(peer, operationRequest); //60
 
                     default: return peer.SendOperation(operationRequest.OperationCode, ReturnCode.InvalidOperation);
                 }

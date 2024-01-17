@@ -66,6 +66,7 @@
         DeleteClan = 52,
 
         InstantWoundedHealRequest = 53,
+        GetKingdomInformation = 54,
 
         // Mail
         SendMail = 60

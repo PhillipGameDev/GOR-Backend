@@ -78,9 +78,9 @@ namespace GameOfRevenge.Business.CacheData
                 gems = resourceInfos.Find(x => (x.Code == ResourceType.Gems));
                 gold = resourceInfos.Find(x => (x.Code == ResourceType.Gold));
 
-                steel = resourceInfos.Find(x => (x.Code == ResourceType.Steel));
-                stone = resourceInfos.Find(x => (x.Code == ResourceType.Stone));
-                ruby = resourceInfos.Find(x => (x.Code == ResourceType.Ruby));
+                steel = resourceInfos.Find(x => (x.Code == ResourceType.Red));
+                stone = resourceInfos.Find(x => (x.Code == ResourceType.Green));
+                ruby = resourceInfos.Find(x => (x.Code == ResourceType.Blue));
 
                 isLoaded = true;
             }
