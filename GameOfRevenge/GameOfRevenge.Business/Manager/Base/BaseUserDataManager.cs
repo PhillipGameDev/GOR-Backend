@@ -203,6 +203,15 @@ namespace GameOfRevenge.Business.Manager.Base
 
                     resVal = resourceList.Find(x => (x.ValueId == ResourceType.Gold));
                     finalData.Data.Resources.Gold = (resVal != null) ? resVal.Value : 0;
+
+                    resVal = resourceList.Find(x => (x.ValueId == ResourceType.Red));
+                    finalData.Data.Resources.Red = (resVal != null) ? resVal.Value : 0;
+
+                    resVal = resourceList.Find(x => (x.ValueId == ResourceType.Green));
+                    finalData.Data.Resources.Green = (resVal != null) ? resVal.Value : 0;
+
+                    resVal = resourceList.Find(x => (x.ValueId == ResourceType.Blue));
+                    finalData.Data.Resources.Blue = (resVal != null) ? resVal.Value : 0;
                 }
 
                 line = "8";

@@ -124,6 +124,14 @@ namespace GameOfRevenge.Common.Models
                     str = Localization.GetText("Use it to receive {0:N0} {1}", Helper.Localization.REWARDS);
                     desc = string.Format(str, item.Value, resName);
                     break;
+                case DataType.RawResource:
+                    var resType = (RawResourceType)item.ValueId;
+                    resName = Localization.GetText(resType.ToString(), Helper.Localization.ENUMS);
+                    str = Localization.GetText("{0} {1}", Helper.Localization.REWARDS);
+                    title = string.Format(str, value, resName);
+                    str = Localization.GetText("Use it to receive {0:N0} {1} Crystals", Helper.Localization.REWARDS);
+                    desc = string.Format(str, item.Value, resName);
+                    break;
                 case DataType.CityBoost:
                     string str3;
                     switch ((CityBoostType)item.ValueId)

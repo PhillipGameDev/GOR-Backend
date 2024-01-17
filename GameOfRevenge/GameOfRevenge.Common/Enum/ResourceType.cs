@@ -9,8 +9,8 @@
         Gems = 4,
         Gold = 5,
 
-        Steel = 10,
-        Stone = 11,
-        Ruby = 12
+        Red = 10,
+        Green = 11,
+        Blue = 12
     }
 }

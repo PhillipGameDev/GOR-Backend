@@ -15,6 +15,7 @@ using GameOfRevenge.Common.Models.PlayerData;
 using System;
 using GameOfRevenge.Common.Models.Quest;
 using GameOfRevenge.Common.Services;
+using GameOfRevenge.Common.Models.Inventory;
 
 namespace GameOfRevenge.Business.Manager.UserData
 {
@@ -147,6 +148,22 @@ namespace GameOfRevenge.Business.Manager.UserData
                             case DataType.Resource:
                                 var sumResp = await resmanager.SumResource(playerId, itemData.ValueId, value);
                                 if (!sumResp.IsSuccess) throw new InvalidModelExecption(sumResp.Message);
+                                break;
+                            case DataType.RawResource:
+                                Response<UserResourceData> rawResp = null; 
+                                switch ((RawResourceType)itemData.ValueId)
+                                {
+                                    case RawResourceType.Red: 
+                                        rawResp = await resmanager.SumSteelResource(playerId, value);
+                                        break;
+                                    case RawResourceType.Green:
+                                        rawResp = await resmanager.SumStoneResource(playerId, value);
+                                        break;
+                                    case RawResourceType.Blue:
+                                        rawResp = await resmanager.SumRubyResource(playerId, value);
+                                        break;
+                                }
+                                if (rawResp != null && !rawResp.IsSuccess) throw new InvalidModelExecption(rawResp.Message);
                                 break;
                             case DataType.CityBoost:
                                 await boostManager.ActivateBoost(playerId, (CityBoostType)itemData.ValueId, value, 0);
@@ -304,7 +321,7 @@ namespace GameOfRevenge.Business.Manager.UserData
                     }
                     catch (Exception ex)
                     {
-                        return new Response<PlayerDataTableUpdated>(205, "Error consuming reward");
+                        return new Response<PlayerDataTableUpdated>(205, "Error consuming reward: " + ex.Message);
                     }
 
                     return await manager.UpdatePlayerDataID(playerId, playerData.Id, count.ToString());

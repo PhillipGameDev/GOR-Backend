@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Data;
+using System.Runtime.Serialization;
 using GameOfRevenge.Common.Helper;
 using GameOfRevenge.Common.Interface.Model.Table;
 using GameOfRevenge.Common.Models.Table;
@@ -12,9 +13,12 @@ namespace GameOfRevenge.Common.Models.Inventory
     [JsonConverter(typeof(StringEnumConverter))]
     public enum RawResourceType
     {
-        Steel,
-        Stone,
-        Ruby
+        [EnumMember(Value = "Steel")]
+        Red,
+        [EnumMember(Value = "Stone")]
+        Green,
+        [EnumMember(Value = "Ruby")]
+        Blue
     }
 
     public class InventoryRequirement
