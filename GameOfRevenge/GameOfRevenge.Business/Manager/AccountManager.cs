@@ -351,8 +351,8 @@ namespace GameOfRevenge.Business.Manager
             await resManager.SumMainResource(playerId, 100000, 100000, 100000, 10000, 10000);
             await resManager.SumRawResource(playerId, 100, 100, 100);
 
-            for (int i = 1; i <= 3; i ++)
-                await inventoryManager.AddNewInventory(playerId, i);
+            /*for (int i = 1; i <= 3; i ++)
+                await inventoryManager.AddNewInventory(playerId, i);*/
 
 #else
             await resManager.SumMainResource(playerId, 10000, 10000, 10000, 500, 200);
