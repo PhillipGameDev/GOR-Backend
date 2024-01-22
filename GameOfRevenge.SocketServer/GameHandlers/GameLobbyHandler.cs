@@ -140,7 +140,7 @@ new string[]{
                     case OperationCode.CreateClan: return await HandleCreateClan(peer, operationRequest); //51
                     case OperationCode.DeleteClan: return await HandleDeleteClan(peer, operationRequest); //52
 
-                    case OperationCode.GetKingdomInformation: return HandlePlayerJoinKingdomView(peer, operationRequest);//54
+                    case OperationCode.GetKingdomInformation: return HandleGetKingdomInformation(peer, operationRequest);//54
 
                     case OperationCode.SendMail: return await HandleSendMessageRequest(peer, operationRequest); //60
 
@@ -1568,6 +1568,18 @@ new string[]{
                 peer.PlayerInstance.InterestArea.JoinKingdomView();
             }, 100);
 
+            var joinResp = new JoinKingdomResponse()
+            {
+                WorldTilesX = (short)peer.PlayerInstance.World.TilesX,
+                WorldTilesY = (short)peer.PlayerInstance.World.TilesY,
+                ZoneSize = (byte)peer.PlayerInstance.World.ZoneSize
+            };
+
+            return peer.SendOperation(operationRequest.OperationCode, ReturnCode.OK, joinResp.GetDictionary());
+        }
+
+        public SendResult HandleGetKingdomInformation(IGorMmoPeer peer, OperationRequest operationRequest)
+        {
             var joinResp = new JoinKingdomResponse()
             {
                 WorldTilesX = (short)peer.PlayerInstance.World.TilesX,
