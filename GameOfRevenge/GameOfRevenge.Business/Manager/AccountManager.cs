@@ -16,8 +16,6 @@ using GameOfRevenge.Common.Models.Structure;
 using GameOfRevenge.Business.Manager.Base;
 using GameOfRevenge.Business.Manager.UserData;
 using GameOfRevenge.Business.Manager.Kingdom;
-using GameOfRevenge.Common.Email;
-using Newtonsoft.Json.Linq;
 
 namespace GameOfRevenge.Business.Manager
 {
@@ -29,7 +27,6 @@ namespace GameOfRevenge.Business.Manager
         private readonly IUserQuestManager questManager = new UserQuestManager();
         private readonly IKingdomManager kingdomManager = new KingdomManager();
         private readonly IPlayerDataManager dataManager = new PlayerDataManager();
-        private readonly IUserMailManager mailManager = new UserMailManager();
 
         private const bool underMaintenance = false;
         private const int devVersion = 906;
@@ -120,7 +117,6 @@ namespace GameOfRevenge.Business.Manager
                     //TODO: move initial data for stored procedure
                     await SetNewAccount(playerId, version);
                     await CreateBackup(playerId);
-                    await UpdatePlayerReferredData(playerId);
                 }
                 if (updateAvailable) response.Case += 50;
 
@@ -145,7 +141,7 @@ namespace GameOfRevenge.Business.Manager
             }
         }
 
-        public async Task<Response<Player>> TryLoginOrRegister(string identifier, bool accepted, int version, string platform, int? referredPlayerId)
+        public async Task<Response<Player>> TryLoginOrRegister(string identifier, bool accepted, int version, string platform)
         {
             var updateAvailable = false;
 
@@ -220,15 +216,6 @@ namespace GameOfRevenge.Business.Manager
                     await CreateBackup(playerId);
                     var infoResp = await GetAccountInfo(playerId);
                     response.Data.Info = infoResp.Data;
-
-                    // Add records to the table
-                    var addResp = await AddPlayerReferredData(response.Data.PlayerId, referredPlayerId);
-                    if (!addResp.IsSuccess)
-                    {
-                        response.Case = addResp.Case; response.Message = addResp.Message;
-                    }
-
-                    return response;
                 }
                 else if (response.Case == 101)// && (version > 0))
                 {
@@ -321,28 +308,6 @@ namespace GameOfRevenge.Business.Manager
             }
         }
 
-        private async Task<Response> AddPlayerReferredData(int playerId, int? referredPlayerId)
-        {
-            var spParams = new Dictionary<string, object>()
-            {
-                { "PlayerId", playerId },
-                { "ReferredPlayerId", referredPlayerId }
-            };
-
-            try
-            {
-                return await Db.ExecuteSPNoData("AddPlayerReferredData", spParams);
-            }
-            catch (Exception ex)
-            {
-                return new Response()
-                {
-                    Case = 0,
-                    Message = ErrorManager.ShowError(ex)
-                };
-            }
-        }
-
         async Task SetNewAccount(int playerId, int version)
         {
             var structureData = CacheData.CacheStructureDataManager.GetFullStructureData(StructureType.CityCounsel);
@@ -386,8 +351,8 @@ namespace GameOfRevenge.Business.Manager
             await resManager.SumMainResource(playerId, 100000, 100000, 100000, 10000, 10000);
             await resManager.SumRawResource(playerId, 100, 100, 100);
 
-            for (int i = 1; i <= 3; i ++)
-                await inventoryManager.AddNewInventory(playerId, i);
+            /*for (int i = 1; i <= 3; i ++)
+                await inventoryManager.AddNewInventory(playerId, i);*/
 
 #else
             await resManager.SumMainResource(playerId, 10000, 10000, 10000, 500, 200);
@@ -550,51 +515,6 @@ namespace GameOfRevenge.Business.Manager
                     Case = 0,
                     Message = ErrorManager.ShowError(ex)
                 };
-            }
-        }
-
-        public async Task UpdatePlayerReferredData(int playerId)
-        {
-            var spParams = new Dictionary<string, object>()
-            {
-                { "PlayerId", playerId }
-            };
-
-            try
-            {
-                var updateResp = await Db.ExecuteSPSingleRow<UpdateReferredDataResp>("UpdatePlayerReferredData", spParams);
-
-                if (updateResp.IsSuccess && updateResp.Data.ADD_REWARD == 1)
-                {
-                    int referredId = updateResp.Data.ReferredPlayerId;
-                    // 1. Add 1,000 Gold to two players
-                    var resp = await dataManager.AddPlayerResourceData(playerId, 0, 0, 0, 0, 1000);
-                    if (!resp.IsSuccess) return;
-
-                    resp = await dataManager.AddPlayerResourceData(referredId, 0, 0, 0, 0, 1000);
-                    if (!resp.IsSuccess) return;
-
-                    // 2. Send Notification Messages
-                    var msgResp = await mailManager.SendMail(referredId, MailType.Message, JsonConvert.SerializeObject(new MailMessage()
-                    {
-                        Subject = "Referred Reward",
-                        Message = "You received a bonus of 1,000 gold by referring a new player.",
-                        SenderId = playerId,
-                        SenderName = "Admin"
-                    }));
-                    if (!msgResp.IsSuccess) return;
-
-                    msgResp = await mailManager.SendMail(playerId, MailType.Message, JsonConvert.SerializeObject(new MailMessage()
-                    {
-                        Subject = "Referred Reward",
-                        Message = "You received a bonus of 1,000 gold for entering this game through a referred player.",
-                        SenderId = playerId,
-                        SenderName = "Admin"
-                    }));
-                }
-            }
-            catch (Exception)
-            {
             }
         }
 
