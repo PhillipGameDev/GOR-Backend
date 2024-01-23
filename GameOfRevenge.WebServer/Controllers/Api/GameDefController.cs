@@ -77,7 +77,7 @@ namespace GameOfRevenge.WebServer.Controllers.Api
         public IActionResult GetAllBoosts([FromQuery(Name = "ver")] int ver)
         {
             SpecNewBoostDataTable response;
-            if (ver < 3)//old version, king type not declared
+            if (ver < 1)//old version, king type not declared
             {
                 var data = CacheBoostDataManager.SpecNewBoostDataTables;
                 response = new SpecNewBoostDataTable();
