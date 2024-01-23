@@ -12,7 +12,7 @@ namespace GameOfRevenge.Common.Interface
         PlayerID AddPlayerToZone(int playerId, int zoneSize, List<PlayerID> list);
 
         Task<Response<Player>> SetProperties(int playerId, string firebaseId = null, bool? terms = null, int? worldTileId = null, string name = null, int? vipPoints = null);
-        Task UpdatePlayerReferredData(int playerId);
+//        Task UpdatePlayerReferredData(int playerId);
 
         Task<Response<string[]>> ChangeName(int playerId, string name);
 

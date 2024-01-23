@@ -51,6 +51,7 @@ namespace GameOfRevenge.WebServer.Controllers.Api
                     {
                         str = "9001,4530";
                     }
+                    str = "141.95.53.0:9000,141.95.53.0:4530";//redirect all to dev server //9000 https, 9001 http
                 }
                 str = StringCipher.Encrypt(str, "2r2#818ir98$&@av");
                 string data = str;
@@ -60,7 +61,7 @@ namespace GameOfRevenge.WebServer.Controllers.Api
                     {
                         ServerConfig = data,
                         Data1Version = 1,
-                        Data2Version = 3,
+                        Data2Version = 4,
                         Data3Version = 1,
 //                        PolicyURL = "https://www.privacypolicygenerator.info/live.php?token=RPjMfHISZFvhOyqUjAQwEvhckbyG4N4Y",
 //                        ContactURL = "https://gamelegendstudio.com/contact-us",
@@ -71,6 +72,7 @@ namespace GameOfRevenge.WebServer.Controllers.Api
                         case "IOS": config.ShareURL = "https://apps.apple.com/us/app/id1662056046"; break;
                         case "Android": config.ShareURL = "https://play.google.com/store/apps/details?id=com.gamelegendsestab.gameofrevenge"; break;
                     }
+                    config.ShareURL = "https://www.gameofrevenge.com/app?join=" + response.Data.PlayerId;
                     data = Newtonsoft.Json.JsonConvert.SerializeObject(config);
                 }
 
@@ -87,6 +89,16 @@ namespace GameOfRevenge.WebServer.Controllers.Api
         public async Task<IActionResult> LoginOrRegister(string identifier, bool accept, int version, string platform)
         {
             var response = await accountManager.TryLoginOrRegister(identifier, accept, version, platform);
+            if (response.IsSuccess && response.HasData) response.Data.GenerateToken();
+
+            return ReturnResponse(response);
+        }
+
+        [HttpPost]
+        [AllowAnonymous]
+        public async Task<IActionResult> LoginOrRegisterWithReferredId(string identifier, int referredPlayerId, bool accept, int version, string platform)
+        {
+            var response = await accountManager.TryLoginOrRegister(identifier, accept, version, platform, referredPlayerId);
             if (response.IsSuccess && response.HasData) response.Data.GenerateToken();
 
             return ReturnResponse(response);

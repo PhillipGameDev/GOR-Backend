@@ -141,7 +141,7 @@ namespace GameOfRevenge.Business.Manager
             }
         }
 
-        public async Task<Response<Player>> TryLoginOrRegister(string identifier, bool accepted, int version, string platform)
+        public async Task<Response<Player>> TryLoginOrRegister(string identifier, bool accepted, int version, string platform, int? referredPlayerId = null)
         {
             var updateAvailable = false;
 
