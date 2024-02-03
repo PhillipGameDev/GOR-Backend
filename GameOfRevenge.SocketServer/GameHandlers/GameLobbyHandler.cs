@@ -1297,6 +1297,13 @@ new string[]{
                     {
                         peer.PlayerInstance.SendEvent(EventCode.UpdateQuest, new Dictionary<byte, object>());
                     }
+                } else if (operation.TargetType == (byte)EntityType.Monster)
+                {
+                    var questUpdated = await CompleteCustomTaskQuest(peer.PlayerInstance.PlayerId, CustomTaskType.AttackMonster);
+                    if (questUpdated)
+                    {
+                        peer.PlayerInstance.SendEvent(EventCode.UpdateQuest, new Dictionary<byte, object>());
+                    }
                 }
 
                 return SendResult.Ok;
@@ -1845,8 +1852,33 @@ new string[]{
                 var userQuest = allUserQuests.Find(x => (x.QuestId == quest.Quest.QuestId));
                 if ((userQuest == null) || !userQuest.Completed)
                 {
+
+                    bool isCompleted = true;
                     string initialString = (userQuest == null) ? quest.Quest.DataString : null;
-                    var resp = await questManager.UpdateQuestData(playerId, quest.Quest.QuestId, true, initialString);
+
+                    if (taskType == CustomTaskType.AttackMonster)
+                    {
+                        isCompleted = false;
+
+                        if (userQuest == null)
+                        {
+                            questData.Count = 1;
+                        } else
+                        {
+                            var count = JsonConvert.DeserializeObject<QuestCustomData>(userQuest.ProgressData).Count + 1;
+
+                            if (count >= questData.Count)
+                            {
+                                isCompleted = true;
+                            }
+
+                            questData.Count = count;
+                        }
+
+                        initialString = JsonConvert.SerializeObject(questData);
+                    }
+
+                    var resp = await questManager.UpdateQuestData(playerId, quest.Quest.QuestId, isCompleted, initialString);
                     if (resp.IsSuccess)
                     {
                         questUpdated = true;
