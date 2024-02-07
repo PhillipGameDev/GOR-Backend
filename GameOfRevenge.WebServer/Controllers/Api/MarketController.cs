@@ -36,7 +36,7 @@ namespace GameOfRevenge.WebServer.Controllers.Api
             iapProducts = new List<IAPProduct>()
             {
                 new IAPProduct("t_a002", 500), new IAPProduct("t_a004", 1000),
-                new IAPProduct("t_a014", 5000), new IAPProduct("t_a018", 10000)
+                new IAPProduct("t_a014", 5000), new IAPProduct("t_a024", 10000)
             };
         }
 
@@ -132,29 +132,34 @@ namespace GameOfRevenge.WebServer.Controllers.Api
         {
             var playerId = Token.PlayerId;
 
-            var valid = true;
+            var approved = true;
 
             var product = iapProducts.Find(x => (x.ProductId == productId));
-            if (product == null) valid = false;
             try
             {
-                if (valid)
+                if (product == null) throw new InvalidModelExecption("Product not found");
+
+                if (approved)
                 {
                     var response = await resourceManager.SumGoldResource(playerId, product.Value);
                     if (!response.IsSuccess) throw new InvalidModelExecption(response.Message);
                 }
+                else
+                {
+                    throw new InvalidModelExecption("Product not valid");
+                }
             }
             catch (InvalidModelExecption ex)
             {
-                return ReturnResponse(new Response<bool>(valid, 200, ex.Message));
+                return ReturnResponse(new Response<bool>(approved, 200, ex.Message));
             }
             catch (Exception ex)
             {
-                return ReturnResponse(new Response<bool>(valid, 201, "Unknown error."));
+                return ReturnResponse(new Response<bool>(approved, 201, "Unknown error."));
             }
 
-            var msg = valid ? "Valid product purchase" : "Invalid product purchase";
-            return ReturnResponse(new Response<bool>(valid, CaseType.Success, msg));
+            var msg = approved ? "Product purchase approved" : "Product purchase already approved";
+            return ReturnResponse(new Response<bool>(approved, CaseType.Success, msg));
         }
     }
 }

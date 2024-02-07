@@ -26,6 +26,9 @@ namespace GameOfRevenge.Business.CacheData
         private static List<PackageItemTable> allPackageItems = null;
         public static IReadOnlyList<PackageItemTable> AllPackageItems { get { CheckLoadCacheMemory(); return allPackageItems.ToList(); } }
 
+        private static List<PackageList> allSubscriptionPackages = null;
+        public static IReadOnlyList<PackageList> AllSubscriptionPackages { get { CheckLoadCacheMemory(); return allSubscriptionPackages.ToList(); } }
+
         #region Cache Check, Load and Clear
         public static async Task LoadCacheMemoryAsync()
         {
@@ -78,18 +81,32 @@ namespace GameOfRevenge.Business.CacheData
             allPackageItems = packageItemsResp.Data;
 
             var packageLists = new List<PackageList>();
+            var subscriptionPackages = new List<PackageList>();
             foreach (var packageList in packageListsResp.Data)
             {
-                packageLists.Add(new PackageList()
+                if (packageList.Cost > 0)
                 {
-                    ListId = packageList.Id,
-                    Name = packageList.Name,
-                    Cost = packageList.Cost,
-                    Items = packageItemsResp.Data.FindAll(e => e.PackageId == packageList.Id)
-                });
+                    packageLists.Add(new PackageList()
+                    {
+                        ListId = packageList.Id,
+                        Name = packageList.Name,
+                        Cost = packageList.Cost,
+                        Items = packageItemsResp.Data.FindAll(e => e.PackageId == packageList.Id)
+                    });
+                }
+                else
+                {
+                    subscriptionPackages.Add(new PackageList()
+                    {
+                        ListId = packageList.Id,
+                        Name = packageList.Name,
+                        Items = packageItemsResp.Data.FindAll(e => e.PackageId == packageList.Id)
+                    });
+                }
             }
 
             allPackageLists = packageLists;
+            allSubscriptionPackages = subscriptionPackages;
 
             isLoaded = true;
         }

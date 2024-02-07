@@ -1,13 +1,14 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Threading.Tasks;
 using System.Linq;
-using GameOfRevenge.Business.Manager.Base;
-using GameOfRevenge.Common.Net;
-using GameOfRevenge.Common.Models.Structure;
-using GameOfRevenge.Common.Interface;
 using GameOfRevenge.Business.CacheData;
+using GameOfRevenge.Business.Manager.Base;
 using GameOfRevenge.Common;
+using GameOfRevenge.Common.Net;
+using GameOfRevenge.Common.Interface;
 using GameOfRevenge.Common.Models;
+using GameOfRevenge.Common.Models.PlayerData;
 
 namespace GameOfRevenge.Business.Manager.UserData
 {
@@ -129,6 +130,11 @@ namespace GameOfRevenge.Business.Manager.UserData
         {
             var packageLists = CacheShopDataManager.AllPackageLists;
             var package = packageLists.FirstOrDefault(item => item.ListId == packageId);
+            if (package == null)
+            {
+                packageLists = CacheShopDataManager.AllSubscriptionPackages;
+                package = packageLists.FirstOrDefault(x => x.ListId == packageId);
+            }
 
             var resp = await CollectPackage(playerId, package);
             if (resp != ReturnCode.OK)
@@ -158,6 +164,59 @@ namespace GameOfRevenge.Business.Manager.UserData
 
                 return new Response(CaseType.Success, "Shop item redeemed");
             }
+        }
+
+        public async Task<Response> AddSubscription(int playerId, string store, string transactionId, DateTime transactionDate, string productId, int days)
+        {
+            var spParam = new Dictionary<string, object>()
+            {
+                { "PlayerId", playerId },
+                { "Store", store },
+                { "TransactionId", transactionId },
+                { "TransactionDate", transactionDate },
+                { "ProductId", productId },
+                { "Days", days }
+            };
+
+            return await Db.ExecuteSPNoData("AddPlayerSubscription", spParam);
+        }
+
+        public async Task<Response<SubscriptionTable>> GetSubscription(int playerId)
+        {
+            var spParam = new Dictionary<string, object>()
+            {
+                { "PlayerId", playerId }
+            };
+
+            return await Db.ExecuteSPSingleRow<SubscriptionTable>("GetPlayerSubscription", spParam);
+        }
+
+        public async Task<Response> ValidateSubscription(int playerId, string transactionId, bool active)
+        {
+            var spParam = new Dictionary<string, object>()
+            {
+                { "PlayerId", playerId },
+                { "TransactionId", transactionId },
+                { "Active", active }
+            };
+
+            return await Db.ExecuteSPNoData("ValidateSubscription", spParam);
+        }
+
+        public async Task<Response> AddSubscriptionDailyReward(int playerId, int subscriptionId)
+        {
+            var spParam = new Dictionary<string, object>()
+            {
+                { "PlayerId", playerId },
+                { "SubscriptionId", subscriptionId }
+            };
+
+            return await Db.ExecuteSPNoData("AddSubscriptionDailyReward", spParam);
+        }
+
+        public async Task<Response<List<SubscriptionProduct>>> GetAllSubscriptionsNotRewarded()
+        {
+            return await Db.ExecuteSPMultipleRow<SubscriptionProduct>("GetAllSubscriptionsNotRewarded");
         }
     }
 }

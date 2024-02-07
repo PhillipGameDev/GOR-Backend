@@ -1,12 +1,12 @@
 ﻿using System.Linq;
-using GameOfRevenge.Model;
-using GameOfRevenge.Common;
-using GameOfRevenge.Common.Models.Troop;
-using GameOfRevenge.Buildings.Interface;
-using GameOfRevenge.GameHandlers;
 using ExitGames.Logging;
 using Newtonsoft.Json;
-using GameOfRevenge.Business;
+using GameOfRevenge.Common;
+using GameOfRevenge.Common.Net;
+using GameOfRevenge.Common.Models.Troop;
+using GameOfRevenge.Buildings.Interface;
+using GameOfRevenge.Model;
+using GameOfRevenge.GameHandlers;
 
 namespace GameOfRevenge.Troops
 {

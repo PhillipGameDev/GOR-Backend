@@ -1,14 +1,13 @@
 ﻿using System;
 using System.Collections.Generic;
-using GameOfRevenge.Buildings.Interface;
-using GameOfRevenge.Business;
-using GameOfRevenge.Business.Manager.UserData;
 using GameOfRevenge.Common;
+using GameOfRevenge.Common.Net;
 using GameOfRevenge.Common.Models;
 using GameOfRevenge.Common.Models.Troop;
-using GameOfRevenge.GameApplication;
-using GameOfRevenge.GameHandlers;
+using GameOfRevenge.Buildings.Interface;
 using GameOfRevenge.Model;
+using GameOfRevenge.GameHandlers;
+using GameOfRevenge.GameApplication;
 
 namespace GameOfRevenge.Buildings.Handlers
 {

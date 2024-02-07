@@ -1,16 +1,13 @@
 ﻿using System;
 using System.Collections.Generic;
+using Photon.SocketServer;
 using PhotonHostRuntimeInterfaces;
 using ExitGames.Logging;
-using GameOfRevenge.GameHandlers;
+using GameOfRevenge.Model;
+using GameOfRevenge.Common.Net;
 using GameOfRevenge.Helpers;
 using GameOfRevenge.Interface;
-using Photon.SocketServer;
-using GameOfRevenge.Model;
-using GameOfRevenge.Common.Models;
-using GameOfRevenge.Common.Models.Quest;
-using GameOfRevenge.Common.Services;
-using GameOfRevenge.Business;
+using GameOfRevenge.GameHandlers;
 
 namespace GameOfRevenge.GameApplication
 {

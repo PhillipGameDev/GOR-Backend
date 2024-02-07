@@ -1,12 +1,11 @@
 ﻿using System.Collections.Generic;
 using System.Threading.Tasks;
 using System.Linq;
-using GameOfRevenge.Business.Manager.Base;
 using GameOfRevenge.Common.Net;
-using GameOfRevenge.Common.Models.Structure;
 using GameOfRevenge.Common.Interface;
+using GameOfRevenge.Common.Models.Structure;
 using GameOfRevenge.Business.CacheData;
-using GameOfRevenge.Common;
+using GameOfRevenge.Business.Manager.Base;
 
 namespace GameOfRevenge.Business.Manager.UserData
 {

@@ -21,11 +21,116 @@ namespace GameOfRevenge.WebServer.Controllers.Api
     {
         private readonly IPlayerDataManager manager;
         private readonly IUserShopManager userShopManager;
+        private readonly IUserResourceManager resourceManager;
+        private readonly List<IAPProduct> iapProducts;
+        private readonly List<IAPProduct> subscriptionPlans;
 
-        public ShopController(IPlayerDataManager playerDataManager, IUserShopManager userShopManager)
+        public ShopController(IPlayerDataManager playerDataManager, IUserShopManager userShopManager,
+                            IUserResourceManager resourceManager)
         {
             this.manager = playerDataManager;
             this.userShopManager = userShopManager;
+            this.resourceManager = resourceManager;
+
+            iapProducts = new List<IAPProduct>()
+            {
+                new IAPProduct("t_a002", 500), new IAPProduct("t_a004", 1000),
+                new IAPProduct("t_a014", 5000), new IAPProduct("t_a024", 10000)
+            };
+            subscriptionPlans = new List<IAPProduct>()
+            {
+                new IAPProduct("s_d007", 7), new IAPProduct("s_d030", 30)
+            };
+        }
+
+        [HttpGet]
+        public IActionResult GetIAPProducts()
+        {
+            return ReturnResponse(new Response<List<IAPProduct>>(iapProducts, CaseType.Success, "Available IAP Products"));
+        }
+
+        [HttpGet]
+        public IActionResult GetSubscriptionPlans()
+        {
+            return ReturnResponse(new Response<List<IAPProduct>>(subscriptionPlans, CaseType.Success, "Available Subscription Plans"));
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> GetSubscription()
+        {
+            return ReturnResponse(await userShopManager.GetSubscription(Token.PlayerId));
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> ValidateSubscription(string transactionId, bool active)
+        {
+            return ReturnResponse(await userShopManager.ValidateSubscription(Token.PlayerId, transactionId, active));
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> ValidatePurchase(int version, string productId, string transactionId, string store, string signature, string data)
+        {
+            var playerId = Token.PlayerId;
+
+            var approved = true;
+            var subscription = false;
+
+            var product = iapProducts.Find(x => (x.ProductId == productId));
+            if (product == null)
+            {
+                product = subscriptionPlans.Find(x => (x.ProductId == productId));
+                if (product != null) subscription = true;
+            }
+            try
+            {
+                if (product == null) throw new DataNotExistExecption("Product not found");
+
+                if (approved)
+                {
+                    if (subscription)
+                    {
+                        var packageLists = CacheShopDataManager.AllSubscriptionPackages;
+                        var package = packageLists.FirstOrDefault(x => x.Name == productId);
+                        if (package == null) throw new DataNotExistExecption("Package list not found");
+
+                        var transactionDate = DateTime.UtcNow;
+                        var getResp = await userShopManager.GetSubscription(playerId);
+                        if (getResp.IsSuccess && getResp.HasData)
+                        {
+                            transactionDate = getResp.Data.TransactionDate;
+                        }
+                        var response = await userShopManager.AddSubscription(playerId, store, transactionId, transactionDate, productId, product.Value);
+                        if (!response.IsSuccess) throw new InvalidModelExecption(response.Message);
+
+                        var reddemResponse = await userShopManager.CollectPackage(playerId, package);
+                        if (reddemResponse != ReturnCode.OK) throw new DataNotExistExecption("Error when collecting package");
+                    }
+                    else
+                    {
+                        var response = await resourceManager.SumGoldResource(playerId, product.Value);
+                        if (!response.IsSuccess) throw new InvalidModelExecption(response.Message);
+                    }
+                }
+                else
+                {
+                    throw new InvalidModelExecption("Product not valid");
+                }
+            }
+            catch (InvalidModelExecption ex)
+            {
+                return ReturnResponse(new Response<bool>(approved, 200, ex.Message));
+            }
+            catch (DataNotExistExecption ex)
+            {
+                return ReturnResponse(new Response<bool>(approved, 201, ex.Message));
+            }
+            catch (Exception ex)
+            {
+                return ReturnResponse(new Response<bool>(approved, 202, "Unknown error."));
+            }
+
+            var msg = approved ? "Product purchase approved" : "Product purchase already approved";
+            return ReturnResponse(new Response<bool>(approved, CaseType.Success, msg));
         }
 
         [HttpGet]
@@ -33,6 +138,9 @@ namespace GameOfRevenge.WebServer.Controllers.Api
 
         [HttpGet]
         public IActionResult GetAllPackageLists() => ReturnResponse(new Response<IReadOnlyList<PackageList>>(CacheShopDataManager.AllPackageLists, CaseType.Success, "Available Package Lists"));
+
+        [HttpGet]
+        public IActionResult GetAllSubscriptionPackages() => ReturnResponse(new Response<IReadOnlyList<PackageList>>(CacheShopDataManager.AllSubscriptionPackages, CaseType.Success, "Available Subscription Packages"));
 
         [HttpPost]
         public async Task<IActionResult> PurchaseShopItem(int itemId)

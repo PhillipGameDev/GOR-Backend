@@ -36,6 +36,7 @@ namespace GameOfRevenge.GameApplication
         public static IUserStructureManager BPlayerStructureManager { get; private set; }
         public static IUserResourceManager BPlayerResourceManager { get; private set; }
         public static IUserFriendsManager BUserFriendsManager { get; private set; }
+        public static IUserShopManager BUserShopManager { get; private set; }
 
         public static IKingdomManager BKingdomManager { get; private set; }
         public static KingdomPvPManager BkingdomePvpManager { get; private set; }
@@ -49,6 +50,7 @@ namespace GameOfRevenge.GameApplication
         public static IWorldHandler WorldHandler { get; private set; }
         public static RealTimeUpdateManagerQuestValidator RealTimeUpdateManagerQuestValidator { get; private set; }
         public static RealTimeUpdateManagerGloryKingdom RealTimeUpdateManagerGloryKingdom { get; private set; }
+        public static RealTimeUpdateManagerSubscriptions RealTimeUpdateManagerSubscriptions { get; private set; }
         public static IAccountManager BAccountManager { get; private set; }
 
 
@@ -107,11 +109,13 @@ namespace GameOfRevenge.GameApplication
             BClanManager = new ClanManager();
             BMonsterManager = new MonsterManager();
             BMailManager = new UserMailManager();
+            BUserShopManager = new UserShopManager();
 
             var adminManager = new AdminDataManager(BPlayerManager, BClanManager, BUserQuestManager, BUserItemManager);
             RealTimeUpdateManagerQuestValidator = new RealTimeUpdateManagerQuestValidator(adminManager, BUserQuestManager);
 
             RealTimeUpdateManagerGloryKingdom = new RealTimeUpdateManagerGloryKingdom(BKingdomManager);
+            RealTimeUpdateManagerSubscriptions = new RealTimeUpdateManagerSubscriptions(BUserShopManager);
 
             instance = new object();
 

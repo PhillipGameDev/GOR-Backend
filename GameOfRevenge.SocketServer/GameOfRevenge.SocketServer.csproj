@@ -203,6 +203,7 @@
     <Compile Include="Model\Operation\CreateClanRequest.cs" />
     <Compile Include="Model\Common\SendJoinResponse.cs" />
     <Compile Include="Model\Common\InstantResearchResponse.cs" />
+    <Compile Include="GameApplication\RealTimeUpdateManagerSubscriptions.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="GameOfRevenge.dll.config">

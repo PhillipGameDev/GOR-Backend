@@ -1,14 +1,14 @@
 ﻿using System;
 using System.Threading.Tasks;
 using System.Collections.Generic;
+using Newtonsoft.Json;
 using ExitGames.Logging;
+using GameOfRevenge.Common.Net;
+using GameOfRevenge.Common.Models;
 using GameOfRevenge.Common.Services;
 using GameOfRevenge.Common.Interface;
 using GameOfRevenge.Common.Models.Kingdom;
-using GameOfRevenge.Business;
-using GameOfRevenge.Common.Models;
 using GameOfRevenge.Business.CacheData;
-using Newtonsoft.Json;
 
 namespace GameOfRevenge.GameApplication
 {

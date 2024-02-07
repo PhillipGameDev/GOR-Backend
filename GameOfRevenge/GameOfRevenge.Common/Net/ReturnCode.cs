@@ -1,4 +1,4 @@
-﻿namespace GameOfRevenge.Business
+﻿namespace GameOfRevenge.Common.Net
 {
     public enum ReturnCode : byte
     {

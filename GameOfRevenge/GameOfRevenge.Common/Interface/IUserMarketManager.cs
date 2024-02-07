@@ -1,7 +1,7 @@
 ﻿using System.Collections.Generic;
 using System.Threading.Tasks;
-using GameOfRevenge.Common.Models.Structure;
 using GameOfRevenge.Common.Net;
+using GameOfRevenge.Common.Models.Structure;
 
 namespace GameOfRevenge.Common.Interface
 {
