@@ -308,6 +308,45 @@ namespace GameOfRevenge.Business.Manager
             }
         }
 
+        public async Task<Response> ClaimRewards(int playerId, string itemName, int amount, string eventId, string timestamp)
+        {
+            var spParams = new Dictionary<string, object>()
+            {
+                { "PlayerId", playerId },
+                { "ItemName", itemName },
+                { "Amount", amount },
+                { "EventId", eventId },
+                { "Timestamp", timestamp }
+            };
+
+            try
+            {
+                var response = await Db.ExecuteSPNoData("AddClaimRewardsRequest", spParams);
+
+                if (response.Case == 100)
+                {
+                    var playerResp = await GetAccountInfo(playerId);
+                    if (playerResp.IsSuccess)
+                    {
+                        switch (itemName)
+                        {
+                            case "Gold": await resManager.SumGoldResource(playerId, amount); break;
+                        }
+                    }
+                }
+
+                return response;
+            }
+            catch (Exception ex)
+            {
+                return new Response()
+                {
+                    Case = 0,
+                    Message = ErrorManager.ShowError(ex)
+                };
+            }
+        }
+
         async Task SetNewAccount(int playerId, int version)
         {
             var structureData = CacheData.CacheStructureDataManager.GetFullStructureData(StructureType.CityCounsel);

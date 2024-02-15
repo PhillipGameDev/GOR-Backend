@@ -11,6 +11,8 @@ namespace GameOfRevenge.Common.Interface
         Task<Response<Player>> TryLoginOrRegister(string identifier, bool accepted, int version, string platform, int? referredPlayerId = null);
         PlayerID AddPlayerToZone(int playerId, int zoneSize, List<PlayerID> list);
 
+        Task<Response> ClaimRewards(int playerId, string itemName, int amount, string eventId, string timestamp);
+
         Task<Response<Player>> SetProperties(int playerId, string firebaseId = null, bool? terms = null, int? worldTileId = null, string name = null, int? vipPoints = null);
 //        Task UpdatePlayerReferredData(int playerId);
 

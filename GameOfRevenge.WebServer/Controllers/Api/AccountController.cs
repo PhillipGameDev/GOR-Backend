@@ -1,6 +1,10 @@
-﻿using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Mvc;
+﻿using System.Net;
+using System.Text;
+using System.Net.Sockets;
+using System.Security.Cryptography;
 using System.Threading.Tasks;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Authorization;
 using GameOfRevenge.Common.Models;
 using GameOfRevenge.Common.Interface;
 using GameOfRevenge.WebServer.Services;
@@ -86,15 +90,15 @@ namespace GameOfRevenge.WebServer.Controllers.Api
 
         [HttpPost]
         [AllowAnonymous]
-        public async Task<IActionResult> LoginOrRegister(string identifier, bool accept, int version, string platform)
+        public async Task<IActionResult> LoginOrRegister(string identifier, bool accept, int version, string platform, int? referredPlayerId)
         {
-            var response = await accountManager.TryLoginOrRegister(identifier, accept, version, platform);
+            var response = await accountManager.TryLoginOrRegister(identifier, accept, version, platform, referredPlayerId);
             if (response.IsSuccess && response.HasData) response.Data.GenerateToken();
 
             return ReturnResponse(response);
         }
 
-        [HttpPost]
+/*        [HttpPost]
         [AllowAnonymous]
         public async Task<IActionResult> LoginOrRegisterWithReferredId(string identifier, int referredPlayerId, bool accept, int version, string platform)
         {
@@ -102,6 +106,106 @@ namespace GameOfRevenge.WebServer.Controllers.Api
             if (response.IsSuccess && response.HasData) response.Data.GenerateToken();
 
             return ReturnResponse(response);
+        }*/
+
+        private string GetLocalIPAddress()
+        {
+            var host = Dns.GetHostEntry(Dns.GetHostName());
+            foreach (var ip in host.AddressList)
+            {
+                if (ip.AddressFamily == AddressFamily.InterNetwork)
+                {
+                    return ip.ToString();
+                }
+            }
+            return "";
+//            throw new Exception("No network adapters with an IPv4 address in the system!");
+        }
+
+        [HttpGet]
+        [AllowAnonymous]
+        public async Task<IActionResult> ClaimRewards(string userId, string dynamicUserId, string platform, string placementName,
+                                                    string itemName, int amount, string eventId, string timestamp, string signature)//country, publisherSubId
+        {
+            if (!GetLocalIPAddress().Contains("141.95.53.0"))
+            {
+                var url = "http://141.95.53.0:9001/api/account/claimRewards/";
+                var args = "?userId=" + userId;
+                args += "&dynamicUserId=" + dynamicUserId;
+                args += "&platform=" + platform;
+                args += "&placementName=" + placementName;
+                args += "&itemName=" + itemName;
+                args += "&amount=" + amount;
+                args += "&eventId=" + eventId;
+                args += "&timestamp=" + timestamp;
+                args += "&signature=" + signature;
+                var request = (HttpWebRequest)WebRequest.Create(url + args);
+                request.Method = "GET";
+                request.ServerCertificateValidationCallback += (sender, certificate, chain, sslPolicyErrors) => true;
+
+                using (var resp = (HttpWebResponse)request.GetResponse())
+                {
+                    return Ok(eventId + ":OK");
+
+/*                    if (resp.StatusCode == HttpStatusCode.OK)
+                    {
+                    }
+                    else
+                    {
+                        using (var stream = resp.GetResponseStream())
+                        {
+                            return StatusCode((int)resp.StatusCode, new StreamReader(stream).ReadToEnd());
+                        }
+                    }*/
+                }
+            }
+
+
+
+            //            var remoteIpAddress = HttpContext.Connection.RemoteIpAddress.ToString();
+            var key = "";
+            switch (platform)
+            {
+                case "IOS": key = "ff878f"; break;
+                case "Android": key = "e9947b"; break;
+            }
+            var input = timestamp + eventId + userId + amount + key;
+            string hash = null;
+            using (var md5 = MD5.Create())
+            {
+                byte[] inputBytes = Encoding.ASCII.GetBytes(input);
+                byte[] hashBytes = md5.ComputeHash(inputBytes);
+
+                var sb = new StringBuilder();
+                for (int idx = 0; idx < hashBytes.Length; idx++)
+                {
+                    sb.Append(hashBytes[idx].ToString("x2"));
+                }
+                hash = sb.ToString();
+            }
+
+            if (hash == signature)
+            {
+                var playerId = 0;
+                if (dynamicUserId != null)
+                {
+                    int.TryParse(dynamicUserId, out playerId);
+                }
+                else if (userId != null)
+                {
+                    int.TryParse(userId, out playerId);
+                }
+
+                var response = await accountManager.ClaimRewards(playerId, itemName, amount, eventId, timestamp);
+                if (response.IsSuccess)
+                {
+                    if (response.Case == 100)
+                    {
+                    }
+                }
+            }
+
+            return Ok(eventId + ":OK");
         }
 
         [HttpPost]
