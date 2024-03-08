@@ -44,6 +44,7 @@
 
         SendFriendRequest = 34,
         RespondToFriendRequest = 35,
+        SetPlayerContact = 55,
 
         ClaimRewardsRequest = 38,
 

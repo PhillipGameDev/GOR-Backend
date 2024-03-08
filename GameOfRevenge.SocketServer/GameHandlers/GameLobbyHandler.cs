@@ -120,6 +120,7 @@ new string[]{
 
                     case OperationCode.SendFriendRequest: return await HandleSendFriendRequest(peer, operationRequest);//34
                     case OperationCode.RespondToFriendRequest: return await HandleRespondToFriendRequest(peer, operationRequest);//35
+                    case OperationCode.SetPlayerContact: return await HandleSetPlayerContact(peer, operationRequest);//55
 //                    OperationCode.CheckUnderAttack = 22
 
                     case OperationCode.ClaimRewardsRequest: return await HandleClaimRewardsRequest(peer, operationRequest);
@@ -414,6 +415,62 @@ new string[]{
             return peer.SendOperation(operationRequest.OperationCode, ReturnCode.OK, resp.GetDictionary());
         }
 
+        async Task<SendResult> HandleSetPlayerContact(IGorMmoPeer peer, OperationRequest operationRequest)
+        {
+            log.Info("**************** HandleSetPlayerContact Start ************************");
+            var operation = new PlayerContactRequest(peer.Protocol, operationRequest);
+            if (!operation.IsValid) return peer.SendOperation(operationRequest.OperationCode, ReturnCode.InvalidOperation, debuMsg: operation.GetErrorMessage());
+
+            var playerId = peer.PlayerInstance.PlayerId;
+            var targetPlayerId = operation.TargetPlayerId;
+            var status = (ContactStatus)operation.Value;
+            var response = await GameService.BUserFriendsManager.SetContact(playerId, targetPlayerId, status);
+            log.Info("set contact response = " + JsonConvert.SerializeObject(response));
+            if (!response.IsSuccess || !response.HasData)
+            {
+                var retCode = ReturnCode.InvalidOperation;
+                if (response.Case == 200)
+                {
+                    retCode = ReturnCode.InvalidOperationParameter;
+                }
+                return peer.SendOperation(operationRequest.OperationCode, retCode, debuMsg: response.Message);
+            }
+
+            var resData = response.Data;
+            var resp = new PlayerContactResponse()
+            {
+                ContactId = resData.ContactId,
+                PlayerId = playerId,
+                TargetId = targetPlayerId,
+                Data = JsonConvert.SerializeObject(resData)
+            };
+            var respObj = resp.GetDictionary();
+
+            if (response.Case == 100)
+            {
+                var targetActor = peer.PlayerInstance.World.PlayersManager.GetPlayer(targetPlayerId);
+                if ((targetActor != null) && (targetActor.Peer != null))
+                {
+                    log.Info("GET CONTACT STATUS FOR SECOND PLAYER");
+                    var respList = await GameService.BUserFriendsManager.GetContacts(targetPlayerId, playerId);
+                    if (respList.IsSuccess && respList.HasData && (respList.Data.Count > 0))
+                    {
+                        resData = respList.Data[0];
+                        var resp2 = new PlayerContactResponse()
+                        {
+                            ContactId = resData.ContactId,
+                            PlayerId = playerId,
+                            TargetId = targetPlayerId,
+                            Data = JsonConvert.SerializeObject(resData)
+                        };
+                        targetActor.Peer.SendOperation(OperationCode.SetPlayerContact, ReturnCode.OK, resp2.GetDictionary());
+                    }
+                }
+            }
+            log.Info("**************** HandleSetPlayerContact End ************************");
+
+            return peer.SendOperation(operationRequest.OperationCode, ReturnCode.OK, respObj);
+        }
 
         private async Task<SendResult> HandleInstantRecruit(IGorMmoPeer peer, OperationRequest operationRequest)
         {

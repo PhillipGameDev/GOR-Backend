@@ -662,7 +662,31 @@ namespace GameOfRevenge.WebServer.Controllers.Api
             return ReturnResponse(response);
         }
 
-        #region Friends
+#region Contacts
+        [HttpPost]
+        public async Task<IActionResult> FollowPlayer(int playerId)
+        {
+            var response = await userFriendsManager.SetContact(Token.PlayerId, playerId, ContactStatus.Following);
+            return ReturnResponse(response);
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> BlockPlayer(int playerId)
+        {
+            var response = await userFriendsManager.SetContact(Token.PlayerId, playerId, ContactStatus.Blocked);
+            return ReturnResponse(response);
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> GetContacts()
+        {
+            var response = await userFriendsManager.GetContacts(Token.PlayerId);
+            return ReturnResponse(response);
+        }
+
+#endregion
+
+#region Friends
         [HttpPost]
         public async Task<IActionResult> GetFriendRequests(byte filter)
         {

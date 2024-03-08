@@ -12,6 +12,30 @@ namespace GameOfRevenge.Business.Manager.UserData
 {
     public class UserFriendsManager : BaseManager, IUserFriendsManager
     {
+        public async Task<Response<ContactElement>> SetContact(int playerId, int targetId, ContactStatus status)
+        {
+            var spParams = new Dictionary<string, object>()
+            {
+                { "PlayerId", playerId },
+                { "TargetId", targetId },
+                { "Status", (byte)status }
+            };
+
+            return await Db.ExecuteSPSingleRow<ContactElement>("SetPlayerContact", spParams);
+        }
+
+        public async Task<Response<List<ContactElement>>> GetContacts(int playerId, int? targetPlayerId = null)
+        {
+            var spParams = new Dictionary<string, object>()
+            {
+                { "PlayerId", playerId }
+            };
+            if (targetPlayerId != null) spParams.Add("TargetPlayerId", (int)targetPlayerId);
+
+            return await Db.ExecuteSPMultipleRow<ContactElement>("GetPlayerContacts", spParams);
+        }
+
+
         public async Task<Response<List<FriendRequestElement>>> GetFriendRequests(int playerId, byte filter)
         {
             var spParams = new Dictionary<string, object>()
@@ -42,7 +66,7 @@ namespace GameOfRevenge.Business.Manager.UserData
             }
         }
 
-        public async Task<Response<List<FriendElement>>> GetFriends(int playerId)
+        public async Task<Response<List<ContactElement>>> GetFriends(int playerId)
         {
             var spParams = new Dictionary<string, object>()
             {
@@ -51,11 +75,11 @@ namespace GameOfRevenge.Business.Manager.UserData
 
             try
             {
-                return await Db.ExecuteSPMultipleRow<FriendElement>("GetPlayerFriends", spParams);
+                return await Db.ExecuteSPMultipleRow<ContactElement>("GetPlayerFriends", spParams);
             }
             catch (InvalidModelExecption ex)
             {
-                return new Response<List<FriendElement>>()
+                return new Response<List<ContactElement>>()
                 {
                     Case = 200,
                     Message = ex.Message
@@ -63,7 +87,7 @@ namespace GameOfRevenge.Business.Manager.UserData
             }
             catch (Exception ex)
             {
-                return new Response<List<FriendElement>>()
+                return new Response<List<ContactElement>>()
                 {
                     Case = 0,
                     Message = ErrorManager.ShowError(ex)
@@ -116,7 +140,7 @@ namespace GameOfRevenge.Business.Manager.UserData
             }
             catch (InvalidModelExecption ex)
             {
-                return new Response<List<FriendElement>>()
+                return new Response<List<ContactElement>>()
                 {
                     Case = 200,
                     Message = ex.Message
@@ -124,7 +148,7 @@ namespace GameOfRevenge.Business.Manager.UserData
             }
             catch (Exception ex)
             {
-                return new Response<List<FriendElement>>()
+                return new Response<List<ContactElement>>()
                 {
                     Case = 0,
                     Message = ErrorManager.ShowError(ex)

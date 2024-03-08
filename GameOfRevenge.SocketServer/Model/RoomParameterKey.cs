@@ -43,7 +43,7 @@
         Name = 39,
         QuestType = 40,
         Completed = 41,
-        ProgressData = 42,
+        Data = 42,
         InitialData = 43,
         InstantBuildCost = 44,
         SpeedUpCost = 45,
@@ -85,6 +85,7 @@
         ClanDescription = 81,
         EmbassyLevel = 82,
         Subject = 83,
-        Message = 84
+        Message = 84,
+        Id = 85
     }
 }

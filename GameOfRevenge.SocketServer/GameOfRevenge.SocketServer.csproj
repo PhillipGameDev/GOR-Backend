@@ -204,6 +204,7 @@
     <Compile Include="Model\Common\SendJoinResponse.cs" />
     <Compile Include="Model\Common\InstantResearchResponse.cs" />
     <Compile Include="GameApplication\RealTimeUpdateManagerSubscriptions.cs" />
+    <Compile Include="Model\Operation\PlayerContact.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="GameOfRevenge.dll.config">

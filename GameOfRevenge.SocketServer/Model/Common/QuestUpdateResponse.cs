@@ -11,7 +11,7 @@ namespace GameOfRevenge.Model
         [DataMember(Code = (byte)RoomParameterKey.Completed, IsOptional = false)]
         public bool Completed { get; set; }
 
-        [DataMember(Code = (byte)RoomParameterKey.ProgressData, IsOptional = true)]
+        [DataMember(Code = (byte)RoomParameterKey.Data, IsOptional = true)]
         public string ProgressData { get; set; }
     }
 }
