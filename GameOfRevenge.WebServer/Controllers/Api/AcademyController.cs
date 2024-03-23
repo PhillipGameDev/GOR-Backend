@@ -1,11 +1,10 @@
-﻿using Microsoft.AspNetCore.Mvc;
-using GameOfRevenge.Business.CacheData;
-using Microsoft.AspNetCore.Authorization;
-using GameOfRevenge.Business.Manager.GameDef;
+﻿using System;
+using System.Collections.Generic;
 using System.Threading.Tasks;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Authorization;
+using GameOfRevenge.Business.CacheData;
 using GameOfRevenge.Common.Interface;
-using Microsoft.AspNetCore.DataProtection.KeyManagement;
-using System;
 
 namespace GameOfRevenge.WebServer.Controllers.Api
 {
@@ -23,7 +22,12 @@ namespace GameOfRevenge.WebServer.Controllers.Api
         [AllowAnonymous]
         public IActionResult GetAllAcademyItem()
         {
-            var items = CacheAcademyDataManager.AllAcademyItems;
+            var items = new List<Common.Models.Academy.AcademyItemTable>(CacheAcademyDataManager.AllAcademyItems);
+            foreach (var item in items)
+            {
+//                item.Name = item.TechnologyType.ToString() + " " + item.Name;
+            }
+
             return ReturnResponse(items);
         }
 

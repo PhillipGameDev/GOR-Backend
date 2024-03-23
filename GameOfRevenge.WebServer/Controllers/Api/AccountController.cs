@@ -67,7 +67,8 @@ namespace GameOfRevenge.WebServer.Controllers.Api
                         Data1Version = 1,
                         Data2Version = 4,
                         Data3Version = 1,
-//                        PolicyURL = "https://www.privacypolicygenerator.info/live.php?token=RPjMfHISZFvhOyqUjAQwEvhckbyG4N4Y",
+//                        TermsURL = "https://www.gameofrevenge.com/termsofuse",
+//                        PolicyURL = "https://www.gameofrevenge.com/privacypolicy",
 //                        ContactURL = "https://gamelegendstudio.com/contact-us",
 //                        VetURL = "https://discord.gg/QEBNBteg"
                     };

@@ -22,7 +22,6 @@ namespace GameOfRevenge.Common.Models
         public PlayerInfo Info { get; set; }
 
         public string Token { get; set; }
-        public string JwtToken { get; set; }
 
         public Player()
         {
@@ -55,7 +54,6 @@ namespace GameOfRevenge.Common.Models
             }
 
             Token = string.Empty;
-            JwtToken = string.Empty;
         }
     }
 }

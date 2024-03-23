@@ -7,6 +7,7 @@ namespace GameOfRevenge.Common.Models
         public int Data1Version { get; set; }
         public int Data2Version { get; set; }
         public int Data3Version { get; set; }
+        public string TermsURL { get; set; }
         public string PolicyURL { get; set; }
         public string ShareURL { get; set; }
         public string ContactURL { get; set; }

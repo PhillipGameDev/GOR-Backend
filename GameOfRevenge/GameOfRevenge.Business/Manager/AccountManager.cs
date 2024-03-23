@@ -29,9 +29,9 @@ namespace GameOfRevenge.Business.Manager
         private readonly IPlayerDataManager dataManager = new PlayerDataManager();
 
         private const bool underMaintenance = false;
-        private const int devVersion = 906;
-        private const int recommendVersion = 905;
-        private const int requireMinVersion = 904;
+        private const int devVersion = 10000;
+        private const int recommendVersion = 10000;
+        private const int requireMinVersion = 10000;
 
         private async Task<(WorldTable, bool, Exception)> ValidateAccess(string identifier, bool accepted, int version)
         {
@@ -115,7 +115,8 @@ namespace GameOfRevenge.Business.Manager
                 if (response.Case == 100)// new account
                 {
                     //TODO: move initial data for stored procedure
-                    await SetNewAccount(playerId, version);
+                    var dev = response.Data.IsDeveloper || response.Data.IsAdmin;
+                    await SetNewAccount(playerId, dev, version);
                     await CreateBackup(playerId);
                 }
                 if (updateAvailable) response.Case += 50;
@@ -212,7 +213,8 @@ namespace GameOfRevenge.Business.Manager
                 if (response.Case == 100)// new account
                 {
                     //TODO: move initial data for stored procedure
-                    await SetNewAccount(playerId, version);
+                    var dev = response.Data.IsDeveloper || response.Data.IsAdmin;
+                    await SetNewAccount(playerId, dev, version);
                     await CreateBackup(playerId);
                     var infoResp = await GetAccountInfo(playerId);
                     response.Data.Info = infoResp.Data;
@@ -347,7 +349,7 @@ namespace GameOfRevenge.Business.Manager
             }
         }
 
-        async Task SetNewAccount(int playerId, int version)
+        async Task SetNewAccount(int playerId, bool dev, int version)
         {
             var structureData = CacheData.CacheStructureDataManager.GetFullStructureData(StructureType.CityCounsel);
             var cityCounselHealth = structureData.Levels.OrderBy(x => x.Data.Level).FirstOrDefault().Data.HitPoint;
@@ -386,16 +388,20 @@ namespace GameOfRevenge.Business.Manager
                 structureData = CacheData.CacheStructureDataManager.GetFullStructureData(StructureType.Mine);
                 mineHealth = structureData.Levels.OrderBy(x => x.Data.Level).FirstOrDefault().Data.HitPoint;
             }
-#if DEBUG
-            await resManager.SumMainResource(playerId, 100000, 100000, 100000, 10000, 10000);
-            await resManager.SumRawResource(playerId, 100, 100, 100);
+            if (dev)
+            {
+                await resManager.SumMainResource(playerId, 100000, 100000, 100000, 10000, 10000);
+                await resManager.SumRawResource(playerId, 100, 100, 100);
 
-            /*for (int i = 1; i <= 3; i ++)
-                await inventoryManager.AddNewInventory(playerId, i);*/
+                /*for (int i = 1; i <= 3; i ++)
+                    await inventoryManager.AddNewInventory(playerId, i);*/
+            }
+            else
+            {
+                await resManager.SumMainResource(playerId, 10000, 10000, 10000, 500, 500);
+                await resManager.SumRawResource(playerId, 100, 100, 100);
+            }
 
-#else
-            await resManager.SumMainResource(playerId, 10000, 10000, 10000, 500, 200);
-#endif
             var dataManager = new PlayerDataManager();
             var json = JsonConvert.SerializeObject(new UserKingDetails());
             await dataManager.AddOrUpdatePlayerData(playerId, DataType.Custom, (int)CustomValueType.KingDetails, json);

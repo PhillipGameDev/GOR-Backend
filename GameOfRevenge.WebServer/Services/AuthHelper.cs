@@ -86,12 +86,10 @@ namespace GameOfRevenge.WebServer.Services
                     var token = tokenHandler.CreateToken(tokenDescriptor);
                     var tokenString = tokenHandler.WriteToken(token);
                     user.Token = tokenString;
-                    user.JwtToken = tokenString;
                 }
                 catch (Exception)
                 {
                     user.Token = string.Empty;
-                    user.JwtToken = string.Empty;
                 }
             }
         }

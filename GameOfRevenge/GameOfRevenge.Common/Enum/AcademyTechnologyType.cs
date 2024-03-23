@@ -8,7 +8,7 @@
         WoodProduction = 2,
         OreProduction = 3,
         ProductionBoost = 4,
-        StoreBoost = 5,
+        StorageBoost = 5,
         // War
         TroopTraining = 10,
         TroopAttack = 11,

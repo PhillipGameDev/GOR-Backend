@@ -128,6 +128,23 @@ namespace GameOfRevenge.WebServer.Controllers.Api
             return ReturnResponse(response);
         }
 
+        [HttpGet]//group data 2
+        [ResponseCache(Duration = 120, VaryByQueryKeys = new string[] { "ver" })]
+        public IActionResult GetAllAcademyItem([FromQuery(Name = "ver")] int ver)
+        {
+            var response = CacheAcademyDataManager.AllAcademyItems;
+            return ReturnResponse(response);
+        }
+
+        [HttpGet]//group data 2
+        [ResponseCache(Duration = 120, VaryByQueryKeys = new string[] { "ver" })]
+        public IActionResult GetAllAcademyRequirements([FromQuery(Name = "ver")] int ver)
+        {
+            var response = CacheAcademyDataManager.AllAcademyRequirements;
+            return ReturnResponse(response);
+        }
+
+
 
 
 
