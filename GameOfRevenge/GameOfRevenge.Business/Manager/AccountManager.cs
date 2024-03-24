@@ -45,12 +45,12 @@ namespace GameOfRevenge.Business.Manager
                 {
                     throw new InvalidModelExecption("Server under maintenance, sorry for the inconvenience!");
                 }
-                if (version <= requireMinVersion)
+                if (version < requireMinVersion)
                 {
                     updateAvailable = true;
                     throw new InvalidModelExecption("Update Required");
                 }
-                if (version <= recommendVersion) updateAvailable = true;
+                if (version < recommendVersion) updateAvailable = true;
 
                 if (string.IsNullOrWhiteSpace(identifier))
                 {

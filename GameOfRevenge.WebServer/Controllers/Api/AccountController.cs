@@ -55,7 +55,7 @@ namespace GameOfRevenge.WebServer.Controllers.Api
                     {
                         str = "9001,4530";
                     }
-                    str = "141.95.53.0:9000,141.95.53.0:4530";//redirect all to dev server //9000 https, 9001 http
+//                    str = "141.95.53.0:9000,141.95.53.0:4530";//redirect all to dev server //9000 https, 9001 http
                 }
                 str = StringCipher.Encrypt(str, "2r2#818ir98$&@av");
                 string data = str;
