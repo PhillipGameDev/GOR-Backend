@@ -1,6 +1,6 @@
 USE [GameOfRevenge]
 GO
-/****** Object:  StoredProcedure [dbo].[CreateMail]    Script Date: 1/3/2023 8:55:56 PM ******/
+/****** Object:  StoredProcedure [dbo].[CreateMail]    Script Date: 3/23/2024 6:51:23 AM ******/
 SET ANSI_NULLS ON
 GO
 SET QUOTED_IDENTIFIER ON
@@ -8,7 +8,7 @@ GO
 
 ALTER   PROCEDURE [dbo].[CreateMail]
 	@PlayerId INT,
-	@Content VARCHAR(MAX),
+	@Content NVARCHAR(MAX),
 	@ContentType VARCHAR(100)
 AS
 BEGIN
@@ -16,7 +16,7 @@ BEGIN
 	DECLARE @message NVARCHAR(MAX) = NULL;
 	DECLARE @time DATETIME = GETUTCDATE();
 	DECLARE @userId INT = @PlayerId;
-	DECLARE @tcontent VARCHAR(MAX) = LTRIM(RTRIM(@Content));
+	DECLARE @tcontent NVARCHAR(MAX) = LTRIM(RTRIM(@Content));
 	DECLARE @tcontentcode VARCHAR(100) = LTRIM(RTRIM(@ContentType));
 	DECLARE @cId INT = NULL;
 	SELECT @cId = [MailContentTypeId] FROM [dbo].[MailContentType] WHERE [Code] = @tcontentcode;

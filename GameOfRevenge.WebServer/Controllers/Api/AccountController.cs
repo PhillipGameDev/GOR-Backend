@@ -38,7 +38,7 @@ namespace GameOfRevenge.WebServer.Controllers.Api
             if (response.IsSuccess && response.HasData)
             {
                 string str;
-                if (response.Data.IsDeveloper)
+                if (response.Data.IsDeveloper || GetLocalIPAddress().Contains("141.95.53.0"))
                 {
                     //we can opt to change the server for this user
                     //webserver and photonserver address:port
@@ -128,7 +128,7 @@ namespace GameOfRevenge.WebServer.Controllers.Api
         public async Task<IActionResult> ClaimRewards(string userId, string dynamicUserId, string platform, string placementName,
                                                     string itemName, int amount, string eventId, string timestamp, string signature)//country, publisherSubId
         {
-            if (!GetLocalIPAddress().Contains("141.95.53.0"))
+/*            if (!GetLocalIPAddress().Contains("141.95.53.0"))
             {
                 var url = "http://141.95.53.0:9001/api/account/claimRewards/";
                 var args = "?userId=" + userId;
@@ -157,9 +157,9 @@ namespace GameOfRevenge.WebServer.Controllers.Api
                         {
                             return StatusCode((int)resp.StatusCode, new StreamReader(stream).ReadToEnd());
                         }
-                    }*/
+                    }* /
                 }
-            }
+            }*/
 
 
 

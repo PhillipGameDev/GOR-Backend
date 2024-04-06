@@ -1,6 +1,6 @@
 USE [GameOfRevenge]
 GO
-/****** Object:  StoredProcedure [dbo].[RequestJoiningToClan]    Script Date: 11/20/2023 9:47:44 AM ******/
+/****** Object:  StoredProcedure [dbo].[RequestJoiningToClan]    Script Date: 3/23/2024 6:28:31 AM ******/
 SET ANSI_NULLS ON
 GO
 SET QUOTED_IDENTIFIER ON
@@ -95,7 +95,7 @@ GO
 ALTER   PROCEDURE [dbo].[RequestJoiningToClan]
 	@PlayerId INT,
 	@ClanId INT,
-	@AboutMe VARCHAR(1000) = NULL
+	@AboutMe NVARCHAR(1000) = NULL
 AS
 BEGIN
 	DECLARE @case INT = 1, @error INT = 0;
@@ -104,7 +104,7 @@ BEGIN
 	DECLARE @time DATETIME = CURRENT_TIMESTAMP;
 	DECLARE @userId INT = @PlayerId;
 	DECLARE @tempCId INT = @ClanId;
-	DECLARE @tAboutMe VARCHAR(1000) = LTRIM(RTRIM(@AboutMe));
+	DECLARE @tAboutMe NVARCHAR(1000) = LTRIM(RTRIM(@AboutMe));
 
 	BEGIN TRY
 		DECLARE @currentId INT = NULL, @currentId2 INT = NULL;

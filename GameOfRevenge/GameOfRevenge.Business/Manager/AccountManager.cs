@@ -29,9 +29,9 @@ namespace GameOfRevenge.Business.Manager
         private readonly IPlayerDataManager dataManager = new PlayerDataManager();
 
         private const bool underMaintenance = false;
-        private const int devVersion = 10000;
-        private const int recommendVersion = 10000;
-        private const int requireMinVersion = 10000;
+        private const int devVersion = 10001;
+        private const int recommendVersion = 10001;
+        private const int requireMinVersion = 10001;
 
         private async Task<(WorldTable, bool, Exception)> ValidateAccess(string identifier, bool accepted, int version)
         {

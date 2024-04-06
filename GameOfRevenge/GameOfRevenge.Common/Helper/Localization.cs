@@ -10,10 +10,13 @@
         public const string OTHER = "Other";
         public const string TIME = "Time";
         public const string ACADEMY = "Academy";
+        public const string ACADEMY_ITEM_ID = "AcademyItem";
+        public const string BLACK_SMITH = "BlackSmith";
         public const string BATTLE_REPORT = "BattleReport";
         public const string BUILDING_UPGRADE = "BuildingUpgrade";
         public const string BUILDINGS_ID = "Buildings";
         public const string BUILDINGS_INFO = "Buildings.Info";
+        public const string MONSTERS = "Monsters";
         public const string TECHNOLOGIES_ID = "Technologies";
         public const string TECHNOLOGIES_INFO = "Technologies.Info";
         public const string CITY_BOOSTS_ID = "CityBoosts";
@@ -26,7 +29,7 @@
         public const string SOLDIER = "Soldier";
         public const string ACCOUNT = "Account";
         public const string PLAYER_PROFILE = "PlayerProfile";
-        public const string CHARACTER_SELECTION = "CharacterSelection";
+        public const string AVATAR_SELECTION = "AvatarSelection";
         public const string KING = "King";
         public const string EQUIPMENT_ID = "Equipment";
         public const string EQUIPMENT_INFO = "Equipment.Info";
@@ -43,14 +46,18 @@
         public const string MAIL = "Mail";
         public const string FRIENDSHIP = "Friendship";
         public const string SEND_ARMY = "SendArmy";
+        public const string MARCHING_ARMIES = "MarchingArmies";
         public const string COORDINATES = "Coordinates";
         public const string COLUMNS = "Columns";
         public const string LANGUAGE = "Language";
         public const string ENUMS = "Enums";
+        public const string CLAN_ROLE = "ClanRole";
+        public const string EVENT = "Event";
 
-//        private readonly ILocalizationBase localizationBase;
 
-//        public static string LanguageCode { get; private set; } = DEFAULT_LANGUAGE;
+        //        private readonly ILocalizationBase localizationBase;
+
+        //        public static string LanguageCode { get; private set; } = DEFAULT_LANGUAGE;
 
         public bool IsArabic => false;//(LanguageCode == "AR");
 
@@ -93,13 +100,13 @@
 //            return localizationBase.GetText(text, groupName);
         }
 
-        public void SetText(object component, string text, string groupName = null, bool forced = false)
+        public void SetText(object component, string text, string groupName, bool forced = false)
         {
             throw new System.NotImplementedException();
 //            localizationBase.SetText(component, text, groupName, forced);
         }
 
-        public void SetTextForced(object component, string text, string groupName = null)
+        public void SetTextForced(object component, string text, string groupName)
         {
             throw new System.NotImplementedException();
 //            localizationBase.SetText(component, text, groupName, true);

@@ -1,6 +1,6 @@
 USE [GameOfRevenge]
 GO
-/****** Object:  StoredProcedure [dbo].[CreateClan]    Script Date: 10/18/2023 4:13:17 AM ******/
+/****** Object:  StoredProcedure [dbo].[CreateClan]    Script Date: 3/23/2024 5:45:25 AM ******/
 SET ANSI_NULLS ON
 GO
 SET QUOTED_IDENTIFIER ON
@@ -8,9 +8,9 @@ GO
 
 ALTER   PROCEDURE [dbo].[CreateClan]
 	@PlayerId INT,
-	@Name VARCHAR(100),
-	@Tag VARCHAR(10),
-	@Description VARCHAR(5000),
+	@Name NVARCHAR(100),
+	@Tag NVARCHAR(20),
+	@Description NVARCHAR(4000),
 	@IsPublic BIT,
 	@Capacity INT
 AS
@@ -21,9 +21,9 @@ BEGIN
 	DECLARE @message NVARCHAR(MAX) = NULL;
 	DECLARE @time DATETIME = CURRENT_TIMESTAMP;
 	DECLARE @userId INT = @PlayerId;
-	DECLARE @tempName VARCHAR(100) = LTRIM(RTRIM(@Name));
-	DECLARE @tempTag VARCHAR(10) = LTRIM(RTRIM(@Tag));
-	DECLARE @tempDescription VARCHAR(5000) = LTRIM(RTRIM(@Description));
+	DECLARE @tempName NVARCHAR(100) = LTRIM(RTRIM(@Name));
+	DECLARE @tempTag NVARCHAR(20) = LTRIM(RTRIM(@Tag));
+	DECLARE @tempDescription NVARCHAR(4000) = LTRIM(RTRIM(@Description));
 	DECLARE @clanId INT = NULL;
 	DECLARE @tisp BIT = ISNULL(@IsPublic, 0);
 	DECLARE @tempCapacity INT = ISNULL(@Capacity, 10);
@@ -31,7 +31,7 @@ BEGIN
 	BEGIN TRY
 		DECLARE @currentId INT = NULL;
 		DECLARE @currentClanMemberId INT = NULL;
-		DECLARE @nameTag VARCHAR(10) = NULL;
+		DECLARE @nameTag NVARCHAR(20) = NULL;
 
 		SELECT @currentId = p.[PlayerId] FROM [dbo].[Player] AS p WHERE p.[PlayerId] = @userId;
 

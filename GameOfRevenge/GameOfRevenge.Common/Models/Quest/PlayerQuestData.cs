@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Data;
 using System.Runtime.Serialization;
+using GameOfRevenge.Common.Helper;
 using GameOfRevenge.Common.Models.Quest.Template;
 using GameOfRevenge.Common.Models.Table;
 using Newtonsoft.Json;
@@ -15,7 +16,7 @@ namespace GameOfRevenge.Common.Models.Quest
         IReadOnlyQuestTable QuestInfo { get; }
         PlayerQuestDataTable UserData { get; }
 
-        string Description { get; }
+//        string Description { get; }
     }
 
     public struct UserQuestProgressData : IReadOnlyUserQuestProgressData
@@ -33,7 +34,7 @@ namespace GameOfRevenge.Common.Models.Quest
         public PlayerQuestDataTable UserData { get; set; }
 //        public int QuestGroup { get; set; }
 
-        public string Description => PlayerQuestDataTable.GetDescription(QuestType, Completed, InitialData, ProgressData);
+//        public string Description => PlayerQuestDataTable.GetDescription(QuestType, Completed, InitialData, ProgressData);
 
         public UserQuestProgressData(IReadOnlyQuestTable questData, PlayerQuestDataTable userQuestData)
         {
@@ -70,6 +71,8 @@ namespace GameOfRevenge.Common.Models.Quest
         [DataMember(Order = 30, EmitDefaultValue = false)]
         public string ProgressData { get; set; }
 
+        public static ILocalizationBase Localization = new Localization();
+
         public void LoadFromDataReader(IDataReader reader)
         {
             int index = 0;
@@ -82,7 +85,7 @@ namespace GameOfRevenge.Common.Models.Quest
             ProgressData = reader.GetValue(index) == DBNull.Value ? null : reader.GetString(index);
         }
 
-        public static string GetDescription(QuestType questType, bool completed, string initialData, string progressData)
+/*        public static string GetDescription(QuestType questType, bool completed, string initialData, string progressData)
         {
             var name = string.Empty;
 
@@ -102,7 +105,8 @@ namespace GameOfRevenge.Common.Models.Quest
                         {
                             format = "Have {0:N0} {1}";
                         }
-                        var bldStr = data1.StructureType.ToString();
+                        format = Localization.GetText(format, Localization.QUESTS);
+                        var bldStr = Localization.GetText(data1.StructureType.ToString(), Localization.BUILDINGS_ID);
                         name = string.Format(format, data1.Count, bldStr, data1.Level);
                         break;
                     case QuestType.ResourceCollection://3
@@ -209,6 +213,6 @@ namespace GameOfRevenge.Common.Models.Quest
             catch { }
 
             return name;
-        }
+        }*/
     }
 }

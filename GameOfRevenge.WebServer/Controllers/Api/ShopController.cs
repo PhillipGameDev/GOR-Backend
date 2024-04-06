@@ -34,8 +34,10 @@ namespace GameOfRevenge.WebServer.Controllers.Api
 
             iapProducts = new List<IAPProduct>()
             {
-                new IAPProduct("t_a002", 500), new IAPProduct("t_a004", 1000),
-                new IAPProduct("t_a014", 5000), new IAPProduct("t_a024", 10000)
+                new IAPProduct("t_a001", 110), new IAPProduct("t_a005", 500),
+                new IAPProduct("t_a010", 1200), new IAPProduct("t_a014", 2300),
+                new IAPProduct("t_a020", 4800), new IAPProduct("t_a025", 10000),
+                new IAPProduct("t_a035", 25000), new IAPProduct("t_a055", 60000)
             };
             subscriptionPlans = new List<IAPProduct>()
             {
@@ -72,7 +74,7 @@ namespace GameOfRevenge.WebServer.Controllers.Api
         {
             var playerId = Token.PlayerId;
 
-            var approved = true;
+            var approved = false;
             var subscription = false;
 
             var product = iapProducts.Find(x => (x.ProductId == productId));
@@ -85,6 +87,7 @@ namespace GameOfRevenge.WebServer.Controllers.Api
             {
                 if (product == null) throw new DataNotExistExecption("Product not found");
 
+                approved = true;
                 if (approved)
                 {
                     if (subscription)
