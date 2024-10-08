@@ -14,7 +14,7 @@ AS
 BEGIN
 	DECLARE @case INT = 1, @error INT = 0;
 	DECLARE @message NVARCHAR(MAX) = NULL;
-	DECLARE @time DATETIME = GETUTCDATE();
+	DECLARE @time DATETIME = CURRENT_TIMESTAMP;
 
 	DECLARE @userId INT = NULL;
 	DECLARE @blockUserId INT = NULL;
@@ -33,23 +33,33 @@ BEGIN
 		END
 	ELSE
 		BEGIN TRY
-			INSERT INTO [dbo].[BlockedPlayers] ([PlayerId], [BlockedPlayerId], [BlockedDate])
-			VALUES (@userId, @blockUserId, @time);
+			DECLARE @contactId BIGINT = NULL;
+			DECLARE @status TINYINT = NULL;
+			SELECT @contactId = [ContactId], @status = [Status] FROM [dbo].[Contacts] 
+			WHERE ([PlayerId] = @PlayerId) AND ([Player2Id] = @BlockPlayerId);
 
-			SET @case = 100;
-			SET @message = 'Player blocked';
-		END TRY
-		BEGIN CATCH
-			IF (ERROR_NUMBER() = 2601)
+			IF (@status = 2)
 				BEGIN
 					SET @case = 101;
-					SET @message = 'Player already blocked'
+					SET @message = 'Player already blocked';
 				END
 			ELSE
 				BEGIN
-					SET @case = 300;
-					SET @message = 'An error occurred'
+					IF (@contactId IS NULL)
+						INSERT INTO [dbo].[Contacts] ([PlayerId], [Player2Id], [Status])
+						VALUES (@userId, @blockUserId, 2);
+					ELSE
+						UPDATE [dbo].[Contacts] SET [Status] = 2 WHERE [ContactId] = @contactId;
+
+					SET @case = 100;
+					SET @message = 'Player blocked';
 				END
+		END TRY
+		BEGIN CATCH
+			BEGIN
+				SET @case = 300;
+				SET @message = 'An error occurred'
+			END
 		END CATCH
 
 	EXEC [dbo].[GetMessage] @userId, @message, @case, @error, @time, 1, 1;

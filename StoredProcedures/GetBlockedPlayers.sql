@@ -12,7 +12,7 @@ AS
 BEGIN
 	DECLARE @case INT = 1, @error INT = 0;
 	DECLARE @message NVARCHAR(MAX) = NULL;
-	DECLARE @time DATETIME = GETUTCDATE();
+	DECLARE @time DATETIME = CURRENT_TIMESTAMP;
 
 	DECLARE @userId INT = @PlayerId;
 	DECLARE @currentId INT = NULL;
@@ -27,13 +27,13 @@ BEGIN
 	ELSE
 		BEGIN
 			BEGIN TRY
-				SELECT [BlockedPlayerId] FROM [dbo].[BlockedPlayers] WHERE [PlayerId] = @currentId;
+				SELECT [Player2Id] AS BlockedPlayerId FROM [dbo].[Contacts] WHERE ([PlayerId] = @currentId) AND ([Status] = 2);
 
 				SET @case = 100;
 				SET @message = 'Blocked players';
 			END TRY
 			BEGIN CATCH
-				SET @case = 200;
+				SET @case = 201;
 				SET @message = 'Account does not exist';
 			END CATCH
 		END
